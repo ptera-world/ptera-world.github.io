@@ -56,6 +56,8 @@ function prepareContent(container: HTMLElement): void {
         if (!sec.classList.contains("expanded")) {
           e.stopPropagation();
           sec.classList.add("expanded");
+        } else if (!(e.target as HTMLElement).closest?.("a")) {
+          sec.classList.remove("expanded");
         }
       });
 
