@@ -6,9 +6,7 @@ Where rhi focuses on software infrastructure, exo focuses on the human layer: ro
 
 ## What it isn't
 
-- Not a game engine — these are tools for interactive fiction and roleplay
 - Not social media — the focus is on collaborative storytelling, not content feeds
-- Not AI-first — AI augments the experience but doesn't drive it
 
 ## Projects
 
