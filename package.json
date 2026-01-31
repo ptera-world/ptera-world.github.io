@@ -1,0 +1,16 @@
+{
+  "name": "pteraworld",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun run src/dev.ts",
+    "build": "bun build src/main.ts --outdir dist --minify",
+    "preview": "bun run src/dev.ts --production",
+    "lint": "oxlint src/",
+    "check:types": "bun x tsgo --check"
+  },
+  "devDependencies": {
+    "oxlint": "^1.0.0"
+  }
+}
