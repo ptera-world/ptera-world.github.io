@@ -1,12 +1,7 @@
-A big pile of LuaJIT code - libraries, FFI bindings, and little CLI tools that grew over time.
+a luajit monorepo that kept growing. libraries, ffi bindings, cli experiments.
 
-## What it is
+## what it is
 
-A monorepo where things get tried out:
+`lib/` has pure lua stuff - http, lsp, filesystem, discord, matrix, game things, markdown. `cli/` has tools built on those, including a wayland compositor somehow. `dep/` has ffi bindings to tree-sitter, wlroots, and other things.
 
-- **lib/** - pure Lua libraries: HTTP, LSP, filesystem, DNS, Discord, Matrix, ActivityPub, game stuff, markdown, and more
-- **cli/** - tools built on the libraries: a Wayland compositor, coreutils, 3D viewer, static file server
-- **dep/** - FFI bindings and embedded deps: tree-sitter grammars for 100+ languages, wlroots, PulseAudio
-- **world/** - game world experiments
-
-Mostly a playground for seeing how far LuaJIT's FFI can stretch.
+a lot of it is just trying things out to see if they work.
