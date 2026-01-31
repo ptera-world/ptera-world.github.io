@@ -10,17 +10,20 @@ self.addEventListener("activate", (e) => {
   );
 });
 
-// Network-first: try the network, fall back to cache when offline
+// Stale-while-revalidate: serve cached immediately, update in background
+// Never cache the service worker script itself
 self.addEventListener("fetch", (e) => {
+  if (e.request.url.endsWith("/sw.js")) return;
+
   e.respondWith(
-    fetch(e.request)
-      .then((response) => {
-        if (response.ok) {
-          const clone = response.clone();
-          caches.open(CACHE).then((cache) => cache.put(e.request, clone));
-        }
-        return response;
+    caches.open(CACHE).then((cache) =>
+      cache.match(e.request).then((cached) => {
+        const fetched = fetch(e.request).then((response) => {
+          if (response.ok) cache.put(e.request, response.clone());
+          return response;
+        });
+        return cached || fetched;
       })
-      .catch(() => caches.open(CACHE).then((cache) => cache.match(e.request)))
+    )
   );
 });
