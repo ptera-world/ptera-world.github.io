@@ -1,6 +1,12 @@
 import type { Graph, Node } from "./graph";
 import { openPanel, fetchContent, contentCache } from "./panel";
 
+let navigateFn: ((node: Node, graph: Graph) => void) | null = null;
+
+export function setCardNavigate(fn: (node: Node, graph: Graph) => void): void {
+  navigateFn = fn;
+}
+
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
   cls?: string,
@@ -21,10 +27,15 @@ function setSummary(descEl: HTMLElement, html: string): void {
   }
 }
 
-function refEntry(other: Node): HTMLDivElement {
+function refEntry(other: Node, graph: Graph): HTMLDivElement {
   const div = el("div", "card-ref");
   const strong = el("strong", undefined, other.label);
   div.appendChild(strong);
+  div.style.cursor = "pointer";
+  div.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (navigateFn) navigateFn(other, graph);
+  });
   return div;
 }
 
@@ -79,7 +90,7 @@ function buildCard(node: Node, graph: Graph): DocumentFragment {
     .map((e) => {
       const otherId = e.from === node.id ? e.to : e.from;
       const other = nodeMap.get(otherId);
-      return other ? refEntry(other) : null;
+      return other ? refEntry(other, graph) : null;
     })
     .filter((e): e is HTMLDivElement => e !== null);
 

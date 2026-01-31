@@ -1,7 +1,7 @@
 import type { Camera } from "./camera";
 import type { Graph } from "./graph";
 import { updateTransform, setFocus, getHitNode, animateTo } from "./dom";
-import { showCard, hideCard, isCardOpen } from "./card";
+import { showCard, hideCard, isCardOpen, setCardNavigate } from "./card";
 import { isPanelOpen, closePanel, openPanel, panelNode } from "./panel";
 
 export function setupInput(
@@ -14,6 +14,16 @@ export function setupInput(
   let lastY = 0;
   let downX = 0;
   let downY = 0;
+
+  setCardNavigate((node) => {
+    if (isPanelOpen()) {
+      openPanel(node.id, node.label);
+    } else {
+      showCard(node, graph);
+    }
+    animateTo(camera, node.x, node.y, 3);
+    setFocus(graph, node);
+  });
 
   viewport.addEventListener("mousedown", (e) => {
     dragging = true;
@@ -73,6 +83,8 @@ export function setupInput(
       } else {
         showCard(node, graph);
       }
+    } else if (isPanelOpen()) {
+      closePanel();
     } else if (isCardOpen()) {
       hideCard();
     }
