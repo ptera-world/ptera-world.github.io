@@ -33,7 +33,7 @@ export function parseMarkdown(src: string): string {
   while (i < lines.length) {
     const line = lines[i]!;
 
-    // Blank line — skip
+    // Blank line - skip
     if (line.trim() === "") {
       i++;
       continue;
@@ -81,7 +81,7 @@ export function parseMarkdown(src: string): string {
       continue;
     }
 
-    // Paragraph — collect consecutive non-blank, non-special lines
+    // Paragraph - collect consecutive non-blank, non-special lines
     const pLines: string[] = [];
     while (
       i < lines.length &&

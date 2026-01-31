@@ -5,12 +5,12 @@ Composable derive macros for Rust. Write your implementation once, project it in
 A set of derive macros that generate protocol-specific code from a single Rust impl block. You write business logic once and stack macros to get:
 
 **Runtime handlers:**
-- `#[http]` — Axum + OpenAPI
-- `#[cli]` — Clap argument parsing
-- `#[mcp]` — Model Context Protocol
-- `#[ws]` — WebSocket JSON-RPC 2.0
-- `#[json_rpc]` — JSON-RPC
-- `#[graphql]` — async-graphql
+- `#[http]` - Axum + OpenAPI
+- `#[cli]` - Clap argument parsing
+- `#[mcp]` - Model Context Protocol
+- `#[ws]` - WebSocket JSON-RPC 2.0
+- `#[json_rpc]` - JSON-RPC
+- `#[graphql]` - async-graphql
 
 **Schema generators:** gRPC (Protocol Buffers), Cap'n Proto, Apache Thrift, AWS Smithy, Connect RPC
 
@@ -28,4 +28,4 @@ Method naming drives routing: `create_*` maps to POST, `get_*` to GET, `list_*` 
 
 ## Related projects
 
-- [concord](/concord) — generates client bindings (server-less generates server implementations)
+- [concord](/concord) - generates client bindings (server-less generates server implementations)

@@ -60,7 +60,7 @@ export function setupInput(
     }
   });
 
-  // Click — only act if the mouse didn't drag
+  // Click - only act if the mouse didn't drag
   viewport.addEventListener("click", (e) => {
     if ((e.target as HTMLElement).closest?.("#card")) return;
     const dx = e.clientX - downX;

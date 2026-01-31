@@ -1,4 +1,4 @@
-Places to exist — digital spaces for identity, narrative, and interaction.
+Places to exist - digital spaces for identity, narrative, and interaction.
 
 ## What it is
 
@@ -6,9 +6,9 @@ exo builds tools for inhabiting digital spaces. [hologram](/hologram) is a Disco
 
 ## What it isn't
 
-- Not social media — the focus is on collaborative storytelling, not content feeds
+- Not social media - the focus is on collaborative storytelling, not content feeds
 
 ## Projects
 
-- [hologram](/hologram) — Discord bot with entity-facts model and multi-provider LLM integration
-- [aspect](/aspect) — card-based identity exploration sandbox with real-time multiplayer
+- [hologram](/hologram) - Discord bot with entity-facts model and multi-provider LLM integration
+- [aspect](/aspect) - card-based identity exploration sandbox with real-time multiplayer

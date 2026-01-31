@@ -2,7 +2,7 @@ Standard library of interfaces inspired by WASI. Capability-based, async-first t
 
 ## What it is
 
-Trait definitions — not implementations. Portals defines *what* operations are available without dictating *how*. Any runtime that implements portals interfaces gets access to the full ecosystem.
+Trait definitions - not implementations. Portals defines *what* operations are available without dictating *how*. Any runtime that implements portals interfaces gets access to the full ecosystem.
 
 Interface categories: clocks, cli, crypto, encoding, filesystem, http, io, random, sockets, sql, blobstore, cache, config, cron, dns, keyvalue, logging, markdown, messaging, nanoid, observe, snowflake, timezone, websocket.
 
@@ -18,4 +18,4 @@ Backends: native (OS implementations), wasm (browser), portable (pure Rust), moc
 
 ## Related projects
 
-- [moonlet](/moonlet) — uses portals-io and portals-filesystem
+- [moonlet](/moonlet) - uses portals-io and portals-filesystem

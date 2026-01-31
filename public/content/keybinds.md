@@ -1,12 +1,10 @@
-Declarative, contextual keybindings for the web. Zero dependencies. Define shortcuts as data, separate triggers from handlers.
+Keyboard shortcuts for the web, defined as data. Zero dependencies.
 
 ## What it is
 
-A framework-agnostic JavaScript library for keyboard shortcuts. Commands are plain objects with triggers, labels, context conditions, and handlers. `$mod` maps to Cmd on Mac, Ctrl elsewhere.
+A small JavaScript library for keybindings. You describe your shortcuts as plain objects and keybinds handles the rest - matching keys, respecting context, letting users rebind things.
 
-Features:
-
-- **Schema-driven** — bindings are data, not imperative listeners
-- **Context-aware** — commands activate based on application state
-- **User-rebindable** — `BindingsStore` persists overrides to localStorage
-- **Discoverable** — built-in `<command-palette>` and `<keybind-cheatsheet>` web components
+- **Schema-driven** - bindings are data, not imperative listeners
+- **Context-aware** - commands activate based on app state
+- **User-rebindable** - overrides persist to localStorage
+- **Discoverable** - ships with `<command-palette>` and `<keybind-cheatsheet>` web components

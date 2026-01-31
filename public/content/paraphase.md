@@ -6,10 +6,10 @@ A route planner for data conversion. You describe what you have (Properties) and
 
 Supported format families:
 
-- **Serde** — JSON, YAML, TOML, RON, JSON5, XML, S-expressions, URL-encoded, MessagePack, CBOR, Bincode, Postcard, BSON, FlexBuffers, Bencode, Pickle, Property Lists
-- **Image** — PNG, JPEG, WebP, GIF, BMP, ICO, TIFF, TGA, PNM, Farbfeld, QOI, AVIF, OpenEXR, Radiance HDR
-- **Video** — MP4, WebM, MKV, AVI, MOV, GIF (requires FFmpeg)
-- **Audio** — WAV, FLAC, MP3, OGG, AAC
+- **Serde** - JSON, YAML, TOML, RON, JSON5, XML, S-expressions, URL-encoded, MessagePack, CBOR, Bincode, Postcard, BSON, FlexBuffers, Bencode, Pickle, Property Lists
+- **Image** - PNG, JPEG, WebP, GIF, BMP, ICO, TIFF, TGA, PNM, Farbfeld, QOI, AVIF, OpenEXR, Radiance HDR
+- **Video** - MP4, WebM, MKV, AVI, MOV, GIF (requires FFmpeg)
+- **Audio** - WAV, FLAC, MP3, OGG, AAC
 
 Image transforms: resize, scale, crop (aspect + gravity), watermark. Workflows in YAML/TOML/JSON with auto-planning or explicit steps.
 
@@ -22,4 +22,4 @@ Image transforms: resize, scale, crop (aspect + gravity), watermark. Workflows i
 
 ## Related projects
 
-- [rescribe](/rescribe) — lossless document conversion plugs into paraphase as a backend
+- [rescribe](/rescribe) - lossless document conversion plugs into paraphase as a backend

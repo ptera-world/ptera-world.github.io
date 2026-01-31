@@ -9,7 +9,7 @@ export interface Node {
   tier: "ecosystem" | "project" | "detail";
   /** Parent ecosystem id, if any. */
   parent?: string;
-  /** Base position — layout shifts these based on focus. */
+  /** Base position - layout shifts these based on focus. */
   x: number;
   y: number;
   /** Visual radius at native zoom. */
@@ -54,7 +54,7 @@ export function createGraph(): Graph {
       color: "oklch(0.7 0.12 320)",
     },
 
-    // rhi projects — ring of radius 220 around (-420, 0)
+    // rhi projects - ring of radius 220 around (-420, 0)
     {
       id: "normalize",
       label: "normalize",
@@ -240,7 +240,7 @@ export function createGraph(): Graph {
     {
       id: "hologram",
       label: "hologram",
-      description: "Discord bot — entities with text-based definitions",
+      description: "Discord bot - entities with text-based definitions",
       url: "https://docs.exo.place/hologram",
       tier: "project",
       parent: "exo",
@@ -299,7 +299,7 @@ export function createGraph(): Graph {
     {
       id: "pad",
       label: "pad",
-      description: "CLI stdin sink — captures and structures data locally",
+      description: "CLI stdin sink - captures and structures data locally",
       url: "https://pterror.github.io/pad",
       tier: "project",
       x: 80,
@@ -310,7 +310,7 @@ export function createGraph(): Graph {
     {
       id: "lua",
       label: "lua",
-      description: "LuaJIT sandbox — libraries, bindings, and CLI experiments",
+      description: "LuaJIT sandbox - libraries, bindings, and CLI experiments",
       url: "https://github.com/pterror/lua",
       tier: "project",
       x: 0,

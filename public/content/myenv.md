@@ -1,8 +1,8 @@
-Configuration manager for the rhi ecosystem. Generates per-tool config files from a central `myenv.toml` manifest. Tools never read myenv.toml directly — they only read generated native configs.
+Configuration manager for the rhi ecosystem. Generates per-tool config files from a central `myenv.toml` manifest. Tools never read myenv.toml directly - they only read generated native configs.
 
 ## What it is
 
-One source of truth for project configuration. You define everything in `myenv.toml`, and myenv generates native config files for each tool. Tools stay dumb — they have no idea myenv exists at runtime.
+One source of truth for project configuration. You define everything in `myenv.toml`, and myenv generates native config files for each tool. Tools stay dumb - they have no idea myenv exists at runtime.
 
 Features:
 
@@ -19,5 +19,5 @@ Features:
 
 ## Related projects
 
-- [zone](/zone) — hosts seed templates that myenv reads for project scaffolding
-- [moonlet](/moonlet) — runtime configured via myenv manifests
+- [zone](/zone) - hosts seed templates that myenv reads for project scaffolding
+- [moonlet](/moonlet) - runtime configured via myenv manifests

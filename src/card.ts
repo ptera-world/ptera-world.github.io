@@ -47,7 +47,7 @@ function buildCard(node: Node, graph: Graph): DocumentFragment {
   header.appendChild(close);
   frag.appendChild(header);
 
-  // Description — show first paragraph from content, fall back to short desc
+  // Description - show first paragraph from content, fall back to short desc
   const desc = el("p", "card-desc", node.description);
   frag.appendChild(desc);
 

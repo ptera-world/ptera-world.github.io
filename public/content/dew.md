@@ -6,8 +6,8 @@ A small, focused language for mathematical expressions with let bindings and opt
 
 Domain crates provide independent type systems:
 
-- **Scalar** — f32, f64, i32, i64 math
-- **Linear algebra** — vectors and matrices
+- **Scalar** - f32, f64, i32, i64 math
+- **Linear algebra** - vectors and matrices
 - **Complex numbers**
 - **Quaternions**
 
@@ -16,11 +16,11 @@ Each domain has its own FunctionRegistry and eval(). Expression optimization inc
 ## Key design decisions
 
 - Feature-gated conditionals and functions (not in core)
-- Domain crates are independent — no monolithic type system
+- Domain crates are independent - no monolithic type system
 - Generic over numeric type T
 - Small and ephemeral by design
 
 ## Related projects
 
-- [unshape](/unshape) — uses dew for procedural generation parameters
-- [moonlet](/moonlet) — hosts dew's Lua backend
+- [unshape](/unshape) - uses dew for procedural generation parameters
+- [moonlet](/moonlet) - hosts dew's Lua backend

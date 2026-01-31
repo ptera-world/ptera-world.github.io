@@ -6,8 +6,8 @@ The operational layer of the rhi ecosystem. Zone contains Lua projects that run 
 
 Components:
 
-- **Wisteria** — autonomous task execution with LLM integration and code understanding via moss
-- **Seeds** — project templates (creation: new from scratch, archaeology: lift legacy game, lab: full ecosystem sandbox)
+- **Wisteria** - autonomous task execution with LLM integration and code understanding via moss
+- **Seeds** - project templates (creation: new from scratch, archaeology: lift legacy game, lab: full ecosystem sandbox)
 
 Each Lua project is self-contained with an `init.lua` entry point and submodules in a nested directory. Seeds have a `seed.toml` manifest with `{{variable}}` substitution in template files.
 
@@ -20,6 +20,6 @@ Each Lua project is self-contained with an `init.lua` entry point and submodules
 
 ## Related projects
 
-- [moonlet](/moonlet) — Lua runtime that executes zone scripts
-- [myenv](/myenv) — reads zone seeds for project scaffolding
-- [normalize](/normalize) — code intelligence used via moonlet-normalize plugin
+- [moonlet](/moonlet) - Lua runtime that executes zone scripts
+- [myenv](/myenv) - reads zone seeds for project scaffolding
+- [normalize](/normalize) - code intelligence used via moonlet-normalize plugin
