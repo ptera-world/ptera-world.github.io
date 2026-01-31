@@ -291,10 +291,6 @@ export function createGraph(): Graph {
     { from: "moonlet", to: "normalize", label: "plugin" },
     { from: "moonlet", to: "portals", label: "capabilities" },
 
-    // Thematic links
-    { from: "playmate", to: "hologram", label: "game patterns" },
-    { from: "interconnect", to: "hologram", label: "federation" },
-    { from: "interconnect", to: "aspect", label: "federation" },
   ];
 
   return { nodes, edges };
