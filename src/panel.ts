@@ -85,7 +85,9 @@ export function initPanel(camera: Camera, graph: Graph): void {
   window.addEventListener("touchmove", (e) => {
     if (!dragging) return;
     const t = e.touches[0];
-    onDrag(t.clientX, t.clientY);
+    if (t) {
+      onDrag(t.clientX, t.clientY);
+    }
   });
   window.addEventListener("touchend", endDrag);
 

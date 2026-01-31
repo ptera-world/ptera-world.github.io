@@ -15,6 +15,7 @@ export interface Node {
   /** Visual radius at native zoom. */
   radius: number;
   color: string;
+  tags: string[];
 }
 
 /** Edge connecting two nodes. */
@@ -41,6 +42,7 @@ export function createGraph(): Graph {
       y: 0,
       radius: 200,
       color: "oklch(0.7 0.12 155)",
+      tags: ["ecosystem"],
     },
     {
       id: "exo",
@@ -52,6 +54,7 @@ export function createGraph(): Graph {
       y: 0,
       radius: 140,
       color: "oklch(0.7 0.12 320)",
+      tags: ["ecosystem"],
     },
 
     // rhi projects - ring of radius 220 around (-420, 0)
@@ -66,6 +69,7 @@ export function createGraph(): Graph {
       y: -220,
       radius: 30,
       color: "oklch(0.78 0.09 155)",
+      tags: ["project", "rust", "cli"],
     },
     {
       id: "unshape",
@@ -78,6 +82,7 @@ export function createGraph(): Graph {
       y: -201,
       radius: 28,
       color: "oklch(0.78 0.09 155)",
+      tags: ["project", "creative"],
     },
     {
       id: "dew",
@@ -90,6 +95,7 @@ export function createGraph(): Graph {
       y: -147,
       radius: 22,
       color: "oklch(0.78 0.09 155)",
+      tags: ["project", "rust", "lua"],
     },
     {
       id: "moonlet",
@@ -102,6 +108,7 @@ export function createGraph(): Graph {
       y: -68,
       radius: 26,
       color: "oklch(0.78 0.09 155)",
+      tags: ["project", "rust", "lua"],
     },
     {
       id: "paraphase",
@@ -114,6 +121,7 @@ export function createGraph(): Graph {
       y: 23,
       radius: 24,
       color: "oklch(0.78 0.09 155)",
+      tags: ["project", "rust", "data"],
     },
     {
       id: "dusklight",
@@ -126,6 +134,7 @@ export function createGraph(): Graph {
       y: 110,
       radius: 25,
       color: "oklch(0.78 0.09 155)",
+      tags: ["project", "typescript", "ui"],
     },
     {
       id: "server-less",
@@ -138,6 +147,7 @@ export function createGraph(): Graph {
       y: 178,
       radius: 23,
       color: "oklch(0.78 0.09 155)",
+      tags: ["project", "rust", "infrastructure"],
     },
     {
       id: "concord",
@@ -150,6 +160,7 @@ export function createGraph(): Graph {
       y: 215,
       radius: 22,
       color: "oklch(0.78 0.09 155)",
+      tags: ["project", "rust", "infrastructure"],
     },
     {
       id: "rescribe",
@@ -162,6 +173,7 @@ export function createGraph(): Graph {
       y: 215,
       radius: 22,
       color: "oklch(0.78 0.09 155)",
+      tags: ["project", "rust", "data"],
     },
     {
       id: "playmate",
@@ -174,6 +186,7 @@ export function createGraph(): Graph {
       y: 178,
       radius: 24,
       color: "oklch(0.78 0.09 155)",
+      tags: ["project", "creative", "games"],
     },
     {
       id: "interconnect",
@@ -186,6 +199,7 @@ export function createGraph(): Graph {
       y: 110,
       radius: 23,
       color: "oklch(0.78 0.09 155)",
+      tags: ["project", "rust", "infrastructure", "games"],
     },
     {
       id: "reincarnate",
@@ -198,6 +212,7 @@ export function createGraph(): Graph {
       y: 23,
       radius: 22,
       color: "oklch(0.78 0.09 155)",
+      tags: ["project", "rust", "games"],
     },
     {
       id: "myenv",
@@ -210,6 +225,7 @@ export function createGraph(): Graph {
       y: -68,
       radius: 20,
       color: "oklch(0.78 0.09 155)",
+      tags: ["project", "rust", "cli", "infrastructure"],
     },
     {
       id: "portals",
@@ -222,6 +238,7 @@ export function createGraph(): Graph {
       y: -147,
       radius: 20,
       color: "oklch(0.78 0.09 155)",
+      tags: ["project", "infrastructure"],
     },
     {
       id: "zone",
@@ -234,6 +251,7 @@ export function createGraph(): Graph {
       y: -201,
       radius: 20,
       color: "oklch(0.78 0.09 155)",
+      tags: ["project", "lua", "cli"],
     },
 
     // exo projects
@@ -248,6 +266,7 @@ export function createGraph(): Graph {
       y: -87,
       radius: 30,
       color: "oklch(0.78 0.09 320)",
+      tags: ["project", "typescript", "ai", "social"],
     },
     {
       id: "aspect",
@@ -260,6 +279,7 @@ export function createGraph(): Graph {
       y: 87,
       radius: 28,
       color: "oklch(0.78 0.09 320)",
+      tags: ["project", "typescript", "social"],
     },
 
     // Standalone projects
@@ -273,6 +293,7 @@ export function createGraph(): Graph {
       y: -280,
       radius: 26,
       color: "oklch(0.78 0.09 85)",
+      tags: ["project", "ai"],
     },
     {
       id: "keybinds",
@@ -284,6 +305,7 @@ export function createGraph(): Graph {
       y: -280,
       radius: 24,
       color: "oklch(0.78 0.09 85)",
+      tags: ["project", "javascript", "ui"],
     },
     {
       id: "ooxml",
@@ -295,6 +317,7 @@ export function createGraph(): Graph {
       y: 280,
       radius: 24,
       color: "oklch(0.78 0.09 85)",
+      tags: ["project", "rust", "data"],
     },
     {
       id: "pad",
@@ -306,6 +329,7 @@ export function createGraph(): Graph {
       y: 280,
       radius: 22,
       color: "oklch(0.78 0.09 85)",
+      tags: ["project", "lua", "cli"],
     },
     {
       id: "lua",
@@ -317,6 +341,31 @@ export function createGraph(): Graph {
       y: 330,
       radius: 22,
       color: "oklch(0.78 0.09 85)",
+      tags: ["project", "lua"],
+    },
+
+    // Essays
+    {
+      id: "problems",
+      label: "problems",
+      description: "Before solutions. Before tools. What's actually wrong?",
+      tier: "project",
+      x: 0,
+      y: -130,
+      radius: 24,
+      color: "oklch(0.78 0.09 45)",
+      tags: ["essay", "design", "social"],
+    },
+    {
+      id: "why-software-is-hard",
+      label: "why software is hard",
+      description: "You're not bad at computers. Software is actually hard to use.",
+      tier: "project",
+      x: -60,
+      y: -80,
+      radius: 24,
+      color: "oklch(0.78 0.09 45)",
+      tags: ["essay", "design"],
     },
   ];
 

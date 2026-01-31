@@ -13,7 +13,7 @@ for (const file of files) {
   const id = file.replace(/\.md$/, "");
   const text = await readFile(join(contentDir, file), "utf-8");
 
-  const match = text.match(/## Related projects\n([\s\S]*?)(?=\n## |\n$|$)/);
+  const match = text.match(/## (?:Related projects|See also)\n([\s\S]*?)(?=\n## |\n$|$)/);
   if (!match) continue;
 
   const section = match[1]!;

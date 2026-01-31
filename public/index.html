@@ -198,6 +198,29 @@
     #panel-body hr { border: none; border-top: 1px solid #333; margin: 16px 0; }
     #panel-body strong { color: #ddd; }
 
+    /* Essay dot shape */
+    .node[data-kind="essay"] .node-dot { border-radius: 25%; }
+
+    /* Filter bar */
+    #filter-bar {
+      position: absolute; bottom: 12px; left: 12px; z-index: 5;
+      display: flex; gap: 6px; flex-wrap: wrap;
+    }
+    .filter-pill {
+      padding: 4px 12px; border-radius: 12px; border: 1px solid #444;
+      background: #1a1a1a; color: #999; font-size: 12px;
+      cursor: pointer; user-select: none;
+      transition: background 200ms, color 200ms, border-color 200ms;
+    }
+    .filter-pill:hover { border-color: #888; }
+    .filter-pill[data-active] { background: #2a2a2a; color: #ddd; border-color: #666; }
+
+    /* Filtered / surfaced states */
+    .node[data-filtered="hidden"],
+    .edge[data-filtered="hidden"] { display: none; }
+    .node[data-filtered="surfaced"] { opacity: 0.4; }
+    .edge[data-filtered="surfaced"] { opacity: 0.3; }
+
     /* Mobile: vertical stack */
     @media (max-width: 640px) {
       #app { flex-direction: column; }
@@ -222,6 +245,7 @@
       <div id="world">
         <div id="card" hidden></div>
       </div>
+      <div id="filter-bar"></div>
     </div>
     <div id="panel" hidden>
       <div id="panel-divider"></div>

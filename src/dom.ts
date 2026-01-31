@@ -1,6 +1,7 @@
 import type { Camera } from "./camera";
 import { currentTier } from "./camera";
 import type { Graph, Node } from "./graph";
+import type { FilterState } from "./filter";
 
 const viewport = document.getElementById("viewport")!;
 const world = document.getElementById("world")!;
@@ -12,10 +13,17 @@ interface EdgeRef {
   labelEl: HTMLElement | null;
 }
 
-const nodeEls = new Map<string, HTMLElement>();
+export const nodeEls = new Map<string, HTMLElement>();
 const hitNodes = new Map<HTMLElement, Node>();
 const edgeRefs: EdgeRef[] = [];
 let landingEl: HTMLElement;
+
+let filterRef: FilterState | null = null;
+const surfacedNodes = new Set<string>();
+
+export function setFilterRef(filter: FilterState): void {
+  filterRef = filter;
+}
 
 export function buildWorld(graph: Graph): void {
   // Landing intro
@@ -41,6 +49,8 @@ export function buildWorld(graph: Graph): void {
     const el = document.createElement("div");
     el.className = "edge";
     if (to.parent === edge.from) el.dataset.type = "containment";
+    el.dataset.from = from.id;
+    el.dataset.to = to.id;
     el.style.left = `${from.x}px`;
     el.style.top = `${from.y}px`;
     el.style.width = `${len}px`;
@@ -55,6 +65,7 @@ export function buildWorld(graph: Graph): void {
     const el = document.createElement("div");
     el.className = `node ${node.tier}`;
     el.dataset.id = node.id;
+    if (node.tags.includes("essay")) el.dataset.kind = "essay";
     el.style.left = `${node.x}px`;
     el.style.top = `${node.y}px`;
     el.style.setProperty("--color", node.color);
@@ -120,6 +131,18 @@ export function animateTo(camera: Camera, tx: number, ty: number, tz: number): v
 }
 
 export function setFocus(graph: Graph, hovered: Node | null): void {
+  // Restore any previously surfaced nodes
+  for (const id of surfacedNodes) {
+    const el = nodeEls.get(id);
+    if (el) el.dataset.filtered = "hidden";
+  }
+  for (const ref of edgeRefs) {
+    if (ref.el.dataset.filtered === "surfaced") {
+      ref.el.dataset.filtered = "hidden";
+    }
+  }
+  surfacedNodes.clear();
+
   if (!hovered) {
     delete world.dataset.hovering;
     for (const el of nodeEls.values()) el.classList.remove("focused");
@@ -149,6 +172,28 @@ export function setFocus(graph: Graph, hovered: Node | null): void {
   for (const ref of edgeRefs) {
     const f = ref.el.dataset.type !== "containment" && focused.has(ref.from) && focused.has(ref.to);
     ref.el.classList.toggle("focused", f);
+  }
+
+  // Surface filtered-out nodes that are connected to the hovered node
+  if (filterRef) {
+    for (const id of focused) {
+      const el = nodeEls.get(id);
+      if (el && el.dataset.filtered === "hidden") {
+        el.dataset.filtered = "surfaced";
+        surfacedNodes.add(id);
+      }
+    }
+    for (const ref of edgeRefs) {
+      if (ref.el.dataset.filtered === "hidden") {
+        const fromEl = nodeEls.get(ref.from);
+        const toEl = nodeEls.get(ref.to);
+        const fromVisible = !fromEl?.dataset.filtered || fromEl.dataset.filtered === "surfaced";
+        const toVisible = !toEl?.dataset.filtered || toEl.dataset.filtered === "surfaced";
+        if (fromVisible && toVisible && focused.has(ref.from) && focused.has(ref.to)) {
+          ref.el.dataset.filtered = "surfaced";
+        }
+      }
+    }
   }
 }
 
