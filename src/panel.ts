@@ -1,6 +1,7 @@
 import type { Camera } from "./camera";
 import type { Graph, Node } from "./graph";
 import { updateTransform, setFocus, animateTo } from "./dom";
+import { hideCard } from "./card";
 import { parseMarkdown } from "./markdown";
 
 let panel: HTMLElement;
@@ -102,6 +103,7 @@ export function initPanel(camera: Camera, graph: Graph): void {
 }
 
 export function openPanel(nodeId: string, nodeLabel?: string): void {
+  hideCard();
   currentNodeId = nodeId;
   panel.hidden = false;
 
