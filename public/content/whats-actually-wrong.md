@@ -2,7 +2,7 @@
 
 Before solutions. Before tools. What's actually wrong?
 
-This isn't about software. It's about people -people who want to create but [don't](#why-do-people-not-do-things), weighed down by a [sadness](#why-are-people-sad) that seems everywhere now. Strange, because some things do [feel genuinely good](#why-are-some-games-good) -so why does [the biggest game of all](#why-is-social-media-the-worst-game) feel so bad? [Some places get it right](#why-does-discord-work). Which means [the damage isn't inevitable](#why-does-software-often-make-things-worse). We can see [what would help](#what-would-actually-help). So [why isn't anyone doing it](#why-isnt-this-obvious)?
+This isn't about software. It's about people - people who want to create but [don't](#why-do-people-not-do-things), weighed down by a [sadness](#why-are-people-sad) that seems everywhere now. Strange, because some things do [feel genuinely good](#why-are-some-games-good) - so why does [the biggest game of all](#why-is-social-media-the-worst-game) feel so bad? [Some places get it right](#why-does-discord-work). Which means [the damage isn't inevitable](#why-does-software-often-make-things-worse). We can see [what would help](#what-would-actually-help). So [why isn't anyone doing it](#why-isnt-this-obvious)?
 
 ## Why do people not do things?
 
