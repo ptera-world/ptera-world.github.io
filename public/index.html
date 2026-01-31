@@ -106,8 +106,10 @@
     /* Focus / dim */
     #world[data-hovering] .node { opacity: 0.15; }
     #world[data-hovering] .node.focused { opacity: 1; }
+    #world[data-hovering] .node[data-filtered="hidden"] { opacity: 0.08; }
     #world[data-hovering] .edge { opacity: 0.12; }
     #world[data-hovering] .edge.focused { opacity: 0.7; background: #aaa; height: 1.5px; }
+    #world[data-hovering] .edge[data-filtered="hidden"] { opacity: 0.06; }
     #world[data-hovering] .edge-label { opacity: 0; }
     #world[data-hovering][data-tier="mid"] .edge-label.focused,
     #world[data-hovering][data-tier="near"] .edge-label.focused { opacity: 0.5; }
@@ -187,7 +189,7 @@
       color: #ddd; font-size: 14px; line-height: 1.6;
     }
     #panel-body h1 { font-size: 22px; color: #fff; margin: 20px 0 8px; }
-    #panel-body h2 { font-size: 18px; color: #eee; margin: 20px 0 8px; }
+    #panel-body h2 { font-size: 18px; color: #eee; margin: 20px 0 8px; cursor: pointer; }
     #panel-body h3 { font-size: 15px; color: #ddd; margin: 16px 0 6px; }
     #panel-body p { margin: 0 0 12px; color: #bbb; }
     #panel-body a { color: #6a9; text-decoration: none; }
@@ -205,6 +207,15 @@
     #panel-body pre code { background: none; padding: 0; font-size: 13px; }
     #panel-body hr { border: none; border-top: 1px solid #333; margin: 16px 0; }
     #panel-body strong { color: #ddd; }
+
+    /* Collapsible content sections */
+    .section-body {
+      opacity: 0.15; pointer-events: none;
+      transition: opacity 200ms;
+    }
+    .collapsible-section.expanded .section-body {
+      opacity: 1; pointer-events: auto;
+    }
 
     /* Essay dot shape */
     .node[data-kind="essay"] .node-dot { border-radius: 25%; }
@@ -225,8 +236,8 @@
 
     /* Filtered / surfaced states */
     .node[data-filtered="hidden"],
-    .edge[data-filtered="hidden"] { display: none; }
-    .node[data-filtered="surfaced"] { opacity: 0.4; }
+    .edge[data-filtered="hidden"] { opacity: 0.08; pointer-events: none; }
+    .node[data-filtered="surfaced"] { opacity: 0.4; pointer-events: auto; }
     .edge[data-filtered="surfaced"] { opacity: 0.3; }
 
     /* Mobile: vertical stack */

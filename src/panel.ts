@@ -17,6 +17,43 @@ export const contentCache = new Map<string, string>();
 
 const FALLBACK = "<p style=\"color:#666\">No detailed page available yet.</p>";
 
+function prepareContent(container: HTMLElement): void {
+  const children: Element[] = [];
+  while (container.firstElementChild) {
+    children.push(container.removeChild(container.firstElementChild) as Element);
+  }
+
+  let section: HTMLElement | null = null;
+  let body: HTMLElement | null = null;
+
+  for (const child of children) {
+    if (child.tagName === "H2") {
+      if (section) container.appendChild(section);
+
+      const sec = document.createElement("section");
+      sec.className = "collapsible-section";
+      sec.appendChild(child);
+
+      const bd = document.createElement("div");
+      bd.className = "section-body";
+      sec.appendChild(bd);
+
+      child.addEventListener("click", () => {
+        sec.classList.toggle("expanded");
+      });
+
+      section = sec;
+      body = bd;
+    } else if (body) {
+      body.appendChild(child);
+    } else {
+      container.appendChild(child);
+    }
+  }
+
+  if (section) container.appendChild(section);
+}
+
 export function fetchContent(nodeId: string): Promise<string> {
   const cached = contentCache.get(nodeId);
   if (cached !== undefined) return Promise.resolve(cached);
@@ -124,6 +161,7 @@ export function openPanel(nodeId: string, nodeLabel?: string): void {
   const cached = contentCache.get(nodeId);
   if (cached !== undefined) {
     panelBody.innerHTML = cached;
+    prepareContent(panelBody);
     updateTransform(cam);
     return;
   }
@@ -134,6 +172,7 @@ export function openPanel(nodeId: string, nodeLabel?: string): void {
   fetchContent(nodeId).then((html) => {
     if (currentNodeId === nodeId) {
       panelBody.innerHTML = html;
+      prepareContent(panelBody);
     }
   });
 }
