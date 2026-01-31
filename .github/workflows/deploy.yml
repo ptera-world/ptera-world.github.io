@@ -27,7 +27,7 @@ jobs:
         run: bun run build
 
       - name: Copy static assets
-        run: cp public/* dist/ 2>/dev/null || true
+        run: cp -r public/* dist/
 
       - uses: actions/configure-pages@v4
       - uses: actions/upload-pages-artifact@v3

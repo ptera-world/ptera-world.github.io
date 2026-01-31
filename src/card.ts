@@ -1,5 +1,5 @@
 import type { Graph, Node } from "./graph";
-import { openPanel } from "./panel";
+import { openPanel, fetchContent, contentCache } from "./panel";
 
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -10,6 +10,15 @@ function el<K extends keyof HTMLElementTagNameMap>(
   if (cls) e.className = cls;
   if (text) e.textContent = text;
   return e;
+}
+
+function setSummary(descEl: HTMLElement, html: string): void {
+  const tmp = document.createElement("div");
+  tmp.innerHTML = html;
+  const firstP = tmp.querySelector("p");
+  if (firstP && firstP.textContent && !firstP.style.color) {
+    descEl.innerHTML = firstP.innerHTML;
+  }
 }
 
 function refEntry(other: Node, label?: string): HTMLDivElement {
@@ -42,8 +51,16 @@ function buildCard(node: Node, graph: Graph): DocumentFragment {
   header.appendChild(close);
   frag.appendChild(header);
 
-  // Description
-  frag.appendChild(el("p", "card-desc", node.description));
+  // Description — show first paragraph from content, fall back to short desc
+  const desc = el("p", "card-desc", node.description);
+  frag.appendChild(desc);
+
+  const cached = contentCache.get(node.id);
+  if (cached) {
+    setSummary(desc, cached);
+  } else {
+    fetchContent(node.id).then((html) => setSummary(desc, html));
+  }
 
   // URL
   if (node.url) {

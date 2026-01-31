@@ -9,7 +9,29 @@ let divider: HTMLElement;
 let cam: Camera;
 
 let currentNodeId: string | null = null;
-const contentCache = new Map<string, string>();
+export const contentCache = new Map<string, string>();
+
+const FALLBACK = "<p style=\"color:#666\">No detailed page available yet.</p>";
+
+export function fetchContent(nodeId: string): Promise<string> {
+  const cached = contentCache.get(nodeId);
+  if (cached !== undefined) return Promise.resolve(cached);
+
+  return fetch(`/content/${nodeId}.md`)
+    .then((res) => {
+      if (!res.ok) throw new Error("not found");
+      return res.text();
+    })
+    .then((md) => {
+      const html = parseMarkdown(md);
+      contentCache.set(nodeId, html);
+      return html;
+    })
+    .catch(() => {
+      contentCache.set(nodeId, FALLBACK);
+      return FALLBACK;
+    });
+}
 
 export function initPanel(camera: Camera): void {
   cam = camera;
@@ -72,28 +94,14 @@ export function openPanel(nodeId: string, nodeLabel?: string): void {
     return;
   }
 
-  panelBody.innerHTML = "<p style=\"color:#666\">Loading…</p>";
+  panelBody.innerHTML = "<p style=\"color:#666\">Loading\u2026</p>";
   updateTransform(cam);
 
-  fetch(`/content/${nodeId}.md`)
-    .then((res) => {
-      if (!res.ok) throw new Error("not found");
-      return res.text();
-    })
-    .then((md) => {
-      const html = parseMarkdown(md);
-      contentCache.set(nodeId, html);
-      if (currentNodeId === nodeId) {
-        panelBody.innerHTML = html;
-      }
-    })
-    .catch(() => {
-      const fallback = "<p style=\"color:#666\">No detailed page available yet.</p>";
-      contentCache.set(nodeId, fallback);
-      if (currentNodeId === nodeId) {
-        panelBody.innerHTML = fallback;
-      }
-    });
+  fetchContent(nodeId).then((html) => {
+    if (currentNodeId === nodeId) {
+      panelBody.innerHTML = html;
+    }
+  });
 }
 
 export function closePanel(): void {
