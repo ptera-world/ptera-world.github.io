@@ -1,10 +1,7 @@
-Keyboard shortcuts for the web, defined as data. Zero dependencies.
+keyboard shortcuts for the web, defined as data instead of imperative listeners.
 
-## What it is
+## what it is
 
-A small JavaScript library for keybindings. You describe your shortcuts as plain objects and keybinds handles the rest - matching keys, respecting context, letting users rebind things.
+you describe your keybindings as plain objects (keys, labels, context, handler) and keybinds takes care of matching and dispatching. users can rebind things and it persists to localStorage.
 
-- **Schema-driven** - bindings are data, not imperative listeners
-- **Context-aware** - commands activate based on app state
-- **User-rebindable** - overrides persist to localStorage
-- **Discoverable** - ships with `<command-palette>` and `<keybind-cheatsheet>` web components
+comes with `<command-palette>` and `<keybind-cheatsheet>` web components if you want discoverability, and works with any framework or none.
