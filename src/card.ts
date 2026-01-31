@@ -21,14 +21,10 @@ function setSummary(descEl: HTMLElement, html: string): void {
   }
 }
 
-function refEntry(other: Node, label?: string): HTMLDivElement {
+function refEntry(other: Node): HTMLDivElement {
   const div = el("div", "card-ref");
   const strong = el("strong", undefined, other.label);
   div.appendChild(strong);
-  if (label && label !== "uses") {
-    const span = el("span", "card-ref-label", label);
-    div.append(" ", span);
-  }
   return div;
 }
 
@@ -72,27 +68,24 @@ function buildCard(node: Node, graph: Graph): DocumentFragment {
     frag.appendChild(a);
   }
 
-  // Cross-references
-  const outgoing = graph.edges
-    .filter(e => e.label && e.from === node.id)
-    .map(e => {
-      const other = graph.nodes.find(n => n.id === e.to);
-      return other ? refEntry(other, e.label) : null;
+  // Cross-references (non-containment edges)
+  const nodeMap = new Map(graph.nodes.map((n) => [n.id, n]));
+  const related = graph.edges
+    .filter((e) => {
+      const toNode = nodeMap.get(e.to);
+      if (toNode?.parent === e.from) return false;
+      return e.from === node.id || e.to === node.id;
+    })
+    .map((e) => {
+      const otherId = e.from === node.id ? e.to : e.from;
+      const other = nodeMap.get(otherId);
+      return other ? refEntry(other) : null;
     })
     .filter((e): e is HTMLDivElement => e !== null);
 
-  const incoming = graph.edges
-    .filter(e => e.label && e.to === node.id)
-    .map(e => {
-      const other = graph.nodes.find(n => n.id === e.from);
-      return other ? refEntry(other, e.label) : null;
-    })
-    .filter((e): e is HTMLDivElement => e !== null);
-
-  if (outgoing.length || incoming.length) {
+  if (related.length) {
     const refs = el("div", "card-refs");
-    if (outgoing.length) refs.appendChild(refGroup("Uses", outgoing));
-    if (incoming.length) refs.appendChild(refGroup("Used by", incoming));
+    refs.appendChild(refGroup("Related", related));
     frag.appendChild(refs);
   }
 

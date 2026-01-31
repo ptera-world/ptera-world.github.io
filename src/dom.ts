@@ -40,24 +40,14 @@ export function buildWorld(graph: Graph): void {
 
     const el = document.createElement("div");
     el.className = "edge";
-    if (!edge.label) el.dataset.type = "containment";
+    if (to.parent === edge.from) el.dataset.type = "containment";
     el.style.left = `${from.x}px`;
     el.style.top = `${from.y}px`;
     el.style.width = `${len}px`;
     el.style.transform = `rotate(${angle}rad)`;
     world.appendChild(el);
 
-    let labelEl: HTMLElement | null = null;
-    if (edge.label) {
-      labelEl = document.createElement("div");
-      labelEl.className = "edge-label";
-      labelEl.textContent = edge.label;
-      labelEl.style.left = `${(from.x + to.x) / 2}px`;
-      labelEl.style.top = `${(from.y + to.y) / 2}px`;
-      world.appendChild(labelEl);
-    }
-
-    edgeRefs.push({ el, from: from.id, to: to.id, labelEl });
+    edgeRefs.push({ el, from: from.id, to: to.id, labelEl: null });
   }
 
   // Nodes

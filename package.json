@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "bun run src/dev.ts",
-    "build": "bun build src/main.ts --outdir dist --minify",
+    "gen-edges": "bun run src/gen-edges.ts",
+    "build": "bun run src/gen-edges.ts && bun build src/main.ts --outdir dist --minify",
     "preview": "bun run src/dev.ts --production",
     "lint": "oxlint src/",
     "check:types": "tsgo --noEmit"

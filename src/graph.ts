@@ -1,3 +1,5 @@
+import { relatedEdges } from "./generated-edges";
+
 /** Node in the world graph. */
 export interface Node {
   id: string;
@@ -19,8 +21,6 @@ export interface Node {
 export interface Edge {
   from: string;
   to: string;
-  /** Relationship label. */
-  label?: string;
 }
 
 export interface Graph {
@@ -287,32 +287,11 @@ export function createGraph(): Graph {
     },
   ];
 
-  const edges: Edge[] = [
-    // Ecosystem containment
-    { from: "rhi", to: "normalize" },
-    { from: "rhi", to: "unshape" },
-    { from: "rhi", to: "dew" },
-    { from: "rhi", to: "moonlet" },
-    { from: "rhi", to: "paraphase" },
-    { from: "rhi", to: "dusklight" },
-    { from: "rhi", to: "server-less" },
-    { from: "rhi", to: "concord" },
-    { from: "rhi", to: "rescribe" },
-    { from: "rhi", to: "playmate" },
-    { from: "rhi", to: "interconnect" },
-    { from: "rhi", to: "reincarnate" },
-    { from: "rhi", to: "myenv" },
-    { from: "rhi", to: "portals" },
-    { from: "rhi", to: "zone" },
-    { from: "exo", to: "hologram" },
-    { from: "exo", to: "aspect" },
+  const containmentEdges: Edge[] = nodes
+    .filter((n) => n.parent)
+    .map((n) => ({ from: n.parent!, to: n.id }));
 
-    // Internal dependencies
-    { from: "unshape", to: "dew", label: "uses" },
-    { from: "moonlet", to: "normalize", label: "plugin" },
-    { from: "moonlet", to: "portals", label: "capabilities" },
-
-  ];
+  const edges: Edge[] = [...containmentEdges, ...relatedEdges];
 
   return { nodes, edges };
 }
