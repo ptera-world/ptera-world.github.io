@@ -58,8 +58,11 @@ export function setupInput(
     if (from && from !== to && !to) setFocus(graph, null);
   });
 
-  // Click
+  // Click — only act if the mouse didn't drag
   viewport.addEventListener("click", (e) => {
+    const dx = e.clientX - downX;
+    const dy = e.clientY - downY;
+    if (dx * dx + dy * dy > 16 * 16) return;
     const node = getHitNode(e.target);
     if (node) {
       showCard(node, graph);
