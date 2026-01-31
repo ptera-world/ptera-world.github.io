@@ -118,8 +118,8 @@ export function render(
       ctx.fillText(node.label, sx, sy + drawRadius + fontSize + 2);
     }
 
-    // Description at near zoom
-    if (tier === "near" && (node.tier === "project" || isHovered) && nodeAlpha > 0.5) {
+    // Description at mid+near zoom
+    if (tier !== "far" && (node.tier === "project" || isHovered) && nodeAlpha > 0.5) {
       const fontSize = Math.max(9, Math.min(11, sr * 0.3));
       ctx.font = `${fontSize}px ${FONT}`;
       ctx.fillStyle = "#888";
