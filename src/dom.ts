@@ -114,6 +114,12 @@ export function updateTransform(camera: Camera): void {
   landingEl.style.opacity = `${landingOpacity}`;
 }
 
+/**
+ * JS-driven camera animation — can't be replaced by a CSS transition on
+ * #world's transform because updateTransform() also interpolates --zoom
+ * (used for inverse-scale on cards/landing), data-tier (visibility), and
+ * landing opacity each frame.  A CSS transition would snap those instantly.
+ */
 export function animateTo(camera: Camera, tx: number, ty: number, tz: number): void {
   const sx = camera.x, sy = camera.y, sz = camera.zoom;
   const start = performance.now();
