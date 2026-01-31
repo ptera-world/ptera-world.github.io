@@ -14,7 +14,7 @@ export function createFilter(nodes: Node[]): FilterState {
     }
   }
   const available = [...tagSet].sort();
-  return { active: new Set(available), available };
+  return { active: new Set<string>(), available };
 }
 
 export function toggleTag(filter: FilterState, tag: string): void {
@@ -33,7 +33,7 @@ export function applyFilter(filter: FilterState, graph: Graph): void {
       visible.add(node.id);
       continue;
     }
-    const passes = node.tags.some((t) => filter.active.has(t));
+    const passes = filter.active.size === 0 || node.tags.some((t) => filter.active.has(t));
     if (passes) visible.add(node.id);
   }
 
@@ -73,7 +73,6 @@ export function buildFilterUI(
     pill.className = "filter-pill";
     pill.textContent = tag;
     pill.dataset.tag = tag;
-    pill.dataset.active = "";
 
     pill.addEventListener("click", () => {
       toggleTag(filter, tag);
