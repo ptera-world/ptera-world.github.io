@@ -77,8 +77,8 @@ export function render(
     // Ecosystem glow at far zoom
     if (node.tier === "ecosystem" && tier === "far") {
       const gradient = ctx.createRadialGradient(sx, sy, 0, sx, sy, sr);
-      gradient.addColorStop(0, node.color + "40");
-      gradient.addColorStop(1, node.color + "00");
+      gradient.addColorStop(0, withAlpha(node.color, 0.25));
+      gradient.addColorStop(1, withAlpha(node.color, 0));
       ctx.beginPath();
       ctx.arc(sx, sy, sr, 0, Math.PI * 2);
       ctx.fillStyle = gradient;
@@ -146,10 +146,18 @@ export function buildFocusSet(graph: Graph, hovered: Node | null): Set<string> {
   return set;
 }
 
-function lighten(hex: string): string {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  const f = 0.3;
-  return `rgb(${Math.round(r + (255 - r) * f)}, ${Math.round(g + (255 - g) * f)}, ${Math.round(b + (255 - b) * f)})`;
+const OKLCH_RE = /oklch\(([\d.]+)\s+([\d.]+)\s+([\d.]+)\)/;
+
+function lighten(color: string): string {
+  const m = color.match(OKLCH_RE);
+  if (!m) return color;
+  const l = Math.min(1, parseFloat(m[1]!) + 0.15);
+  const c = parseFloat(m[2]!) * 0.6;
+  return `oklch(${l} ${c} ${m[3]})`;
+}
+
+function withAlpha(color: string, alpha: number): string {
+  const m = color.match(OKLCH_RE);
+  if (!m) return color;
+  return `oklch(${m[1]} ${m[2]} ${m[3]} / ${alpha})`;
 }

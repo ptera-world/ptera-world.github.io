@@ -40,7 +40,7 @@ export function createGraph(): Graph {
       x: -300,
       y: 0,
       radius: 200,
-      color: "#4a7c59",
+      color: "oklch(0.7 0.12 155)",
     },
     {
       id: "exo",
@@ -51,7 +51,7 @@ export function createGraph(): Graph {
       x: 200,
       y: 0,
       radius: 140,
-      color: "#7c4a6e",
+      color: "oklch(0.7 0.12 320)",
     },
 
     // rhi projects — ring of radius 220 around (-300, 0)
@@ -65,7 +65,7 @@ export function createGraph(): Graph {
       x: -300,
       y: -220,
       radius: 30,
-      color: "#5a9c6a",
+      color: "oklch(0.78 0.09 155)",
     },
     {
       id: "unshape",
@@ -77,7 +77,7 @@ export function createGraph(): Graph {
       x: -211,
       y: -201,
       radius: 28,
-      color: "#5a9c6a",
+      color: "oklch(0.78 0.09 155)",
     },
     {
       id: "dew",
@@ -89,7 +89,7 @@ export function createGraph(): Graph {
       x: -137,
       y: -147,
       radius: 22,
-      color: "#5a9c6a",
+      color: "oklch(0.78 0.09 155)",
     },
     {
       id: "moonlet",
@@ -101,7 +101,7 @@ export function createGraph(): Graph {
       x: -91,
       y: -68,
       radius: 26,
-      color: "#5a9c6a",
+      color: "oklch(0.78 0.09 155)",
     },
     {
       id: "paraphase",
@@ -113,7 +113,7 @@ export function createGraph(): Graph {
       x: -81,
       y: 23,
       radius: 24,
-      color: "#5a9c6a",
+      color: "oklch(0.78 0.09 155)",
     },
     {
       id: "dusklight",
@@ -125,7 +125,7 @@ export function createGraph(): Graph {
       x: -109,
       y: 110,
       radius: 25,
-      color: "#5a9c6a",
+      color: "oklch(0.78 0.09 155)",
     },
     {
       id: "server-less",
@@ -137,7 +137,7 @@ export function createGraph(): Graph {
       x: -171,
       y: 178,
       radius: 23,
-      color: "#5a9c6a",
+      color: "oklch(0.78 0.09 155)",
     },
     {
       id: "concord",
@@ -149,7 +149,7 @@ export function createGraph(): Graph {
       x: -254,
       y: 215,
       radius: 22,
-      color: "#5a9c6a",
+      color: "oklch(0.78 0.09 155)",
     },
     {
       id: "rescribe",
@@ -161,7 +161,7 @@ export function createGraph(): Graph {
       x: -346,
       y: 215,
       radius: 22,
-      color: "#5a9c6a",
+      color: "oklch(0.78 0.09 155)",
     },
     {
       id: "playmate",
@@ -173,7 +173,7 @@ export function createGraph(): Graph {
       x: -429,
       y: 178,
       radius: 24,
-      color: "#5a9c6a",
+      color: "oklch(0.78 0.09 155)",
     },
     {
       id: "interconnect",
@@ -185,7 +185,7 @@ export function createGraph(): Graph {
       x: -491,
       y: 110,
       radius: 23,
-      color: "#5a9c6a",
+      color: "oklch(0.78 0.09 155)",
     },
     {
       id: "reincarnate",
@@ -197,7 +197,7 @@ export function createGraph(): Graph {
       x: -509,
       y: 68,
       radius: 22,
-      color: "#5a9c6a",
+      color: "oklch(0.78 0.09 155)",
     },
     {
       id: "myenv",
@@ -209,7 +209,7 @@ export function createGraph(): Graph {
       x: -519,
       y: -23,
       radius: 20,
-      color: "#5a9c6a",
+      color: "oklch(0.78 0.09 155)",
     },
     {
       id: "portals",
@@ -221,7 +221,7 @@ export function createGraph(): Graph {
       x: -463,
       y: -147,
       radius: 20,
-      color: "#5a9c6a",
+      color: "oklch(0.78 0.09 155)",
     },
     {
       id: "zone",
@@ -233,7 +233,7 @@ export function createGraph(): Graph {
       x: -389,
       y: -201,
       radius: 20,
-      color: "#5a9c6a",
+      color: "oklch(0.78 0.09 155)",
     },
 
     // exo projects
@@ -247,7 +247,7 @@ export function createGraph(): Graph {
       x: 250,
       y: -87,
       radius: 30,
-      color: "#9c5a8a",
+      color: "oklch(0.78 0.09 320)",
     },
     {
       id: "aspect",
@@ -259,7 +259,7 @@ export function createGraph(): Graph {
       x: 150,
       y: 87,
       radius: 28,
-      color: "#9c5a8a",
+      color: "oklch(0.78 0.09 320)",
     },
 
     // Standalone projects
@@ -272,7 +272,7 @@ export function createGraph(): Graph {
       x: 0,
       y: -280,
       radius: 26,
-      color: "#7c7c4a",
+      color: "oklch(0.78 0.09 85)",
     },
     {
       id: "ooxml",
@@ -283,7 +283,7 @@ export function createGraph(): Graph {
       x: 0,
       y: 280,
       radius: 24,
-      color: "#7c7c4a",
+      color: "oklch(0.78 0.09 85)",
     },
   ];
 

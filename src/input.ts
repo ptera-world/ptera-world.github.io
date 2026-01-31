@@ -59,7 +59,7 @@ export function setupInput(
   canvas.addEventListener("click", (e) => {
     const node = hitTest(canvas, camera, graph, e.clientX, e.clientY);
     if (node) {
-      showCard(node, graph);
+      showCard(node, graph, e.clientX, e.clientY);
     } else if (isCardOpen()) {
       hideCard();
     }
@@ -73,7 +73,19 @@ export function setupInput(
       ? node
       : graph.nodes.find(n => n.id === node.parent);
     if (eco) {
-      const fit = Math.min(canvas.width, canvas.height) / (2 * eco.radius * 1.5);
+      // Bounding radius: furthest child edge from ecosystem center
+      let maxDist = eco.radius;
+      for (const n of graph.nodes) {
+        if (n.parent !== eco.id) continue;
+        const dx = n.x - eco.x;
+        const dy = n.y - eco.y;
+        const d = Math.sqrt(dx * dx + dy * dy) + n.radius;
+        if (d > maxDist) maxDist = d;
+      }
+      const fit = Math.min(
+        Math.min(canvas.width, canvas.height) / (2 * maxDist * 1.3 * devicePixelRatio),
+        2.5,
+      );
       animateTo(camera, eco.x, eco.y, fit, requestRender);
     } else {
       // Standalone node — center on it at a comfortable zoom
