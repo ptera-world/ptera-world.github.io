@@ -1,4 +1,5 @@
 import type { Graph, Node } from "./graph";
+import { openPanel } from "./panel";
 
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -77,6 +78,14 @@ function buildCard(node: Node, graph: Graph): DocumentFragment {
     if (incoming.length) refs.appendChild(refGroup("Used by", incoming));
     frag.appendChild(refs);
   }
+
+  // Learn more button
+  const learnMore = el("button", "card-learn-more", "Learn more \u2192");
+  learnMore.addEventListener("click", (e) => {
+    e.stopPropagation();
+    openPanel(node.id, node.label);
+  });
+  frag.appendChild(learnMore);
 
   return frag;
 }

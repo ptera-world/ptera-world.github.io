@@ -2,6 +2,7 @@ import type { Camera } from "./camera";
 import { currentTier } from "./camera";
 import type { Graph, Node } from "./graph";
 
+const viewport = document.getElementById("viewport")!;
 const world = document.getElementById("world")!;
 
 interface EdgeRef {
@@ -94,8 +95,8 @@ export function buildWorld(graph: Graph): void {
 }
 
 export function updateTransform(camera: Camera): void {
-  const tx = window.innerWidth / 2 - camera.x * camera.zoom;
-  const ty = window.innerHeight / 2 - camera.y * camera.zoom;
+  const tx = viewport.clientWidth / 2 - camera.x * camera.zoom;
+  const ty = viewport.clientHeight / 2 - camera.y * camera.zoom;
   world.style.transform = `translate(${tx}px, ${ty}px) scale(${camera.zoom})`;
   world.style.setProperty("--zoom", `${camera.zoom}`);
   world.dataset.tier = currentTier(camera);

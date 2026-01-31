@@ -1,8 +1,8 @@
 import type { Camera } from "./camera";
-import { screenToWorld } from "./camera";
 import type { Graph } from "./graph";
 import { updateTransform, setFocus, getHitNode } from "./dom";
 import { showCard, hideCard, isCardOpen } from "./card";
+import { isPanelOpen, closePanel, openPanel } from "./panel";
 
 export function setupInput(
   viewport: HTMLElement,
@@ -60,12 +60,14 @@ export function setupInput(
 
   // Click — only act if the mouse didn't drag
   viewport.addEventListener("click", (e) => {
+    if ((e.target as HTMLElement).closest?.("#card")) return;
     const dx = e.clientX - downX;
     const dy = e.clientY - downY;
     if (dx * dx + dy * dy > 16 * 16) return;
     const node = getHitNode(e.target);
     if (node) {
       showCard(node, graph);
+      if (isPanelOpen()) openPanel(node.id, node.label);
     } else if (isCardOpen()) {
       hideCard();
     }
@@ -87,7 +89,7 @@ export function setupInput(
         maxDist = Math.max(maxDist, Math.sqrt(dx * dx + dy * dy) + n.radius);
       }
       const fit = Math.min(
-        Math.min(window.innerWidth, window.innerHeight) / (2 * maxDist * 1.3),
+        Math.min(viewport.clientWidth, viewport.clientHeight) / (2 * maxDist * 1.3),
         2.5,
       );
       animateTo(camera, eco.x, eco.y, fit);
@@ -99,10 +101,13 @@ export function setupInput(
   // Wheel zoom
   viewport.addEventListener("wheel", (e) => {
     e.preventDefault();
-    const [wx, wy] = screenToWorld(camera, e.clientX, e.clientY);
+    const vw = viewport.clientWidth;
+    const vh = viewport.clientHeight;
+    const wx = (e.clientX - vw / 2) / camera.zoom + camera.x;
+    const wy = (e.clientY - vh / 2) / camera.zoom + camera.y;
     camera.zoom = Math.max(0.3, Math.min(10, camera.zoom * (e.deltaY > 0 ? 0.9 : 1.1)));
-    const nx = window.innerWidth / 2 + (wx - camera.x) * camera.zoom;
-    const ny = window.innerHeight / 2 + (wy - camera.y) * camera.zoom;
+    const nx = vw / 2 + (wx - camera.x) * camera.zoom;
+    const ny = vh / 2 + (wy - camera.y) * camera.zoom;
     camera.x += (nx - e.clientX) / camera.zoom;
     camera.y += (ny - e.clientY) / camera.zoom;
     updateTransform(camera);
@@ -110,7 +115,10 @@ export function setupInput(
 
   // Escape
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && isCardOpen()) hideCard();
+    if (e.key === "Escape") {
+      if (isPanelOpen()) closePanel();
+      else if (isCardOpen()) hideCard();
+    }
   });
 
   // Touch
