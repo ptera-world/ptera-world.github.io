@@ -10,7 +10,7 @@ const graph = createGraph();
 buildWorld(graph);
 updateTransform(camera);
 setupInput(document.getElementById("viewport")!, camera, graph);
-initPanel(camera);
+initPanel(camera, graph);
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/sw.js").catch(() => {});

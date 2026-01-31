@@ -1,5 +1,6 @@
 import type { Camera } from "./camera";
-import { updateTransform } from "./dom";
+import type { Graph } from "./graph";
+import { updateTransform, setFocus } from "./dom";
 import { parseMarkdown } from "./markdown";
 
 let panel: HTMLElement;
@@ -7,6 +8,7 @@ let panelTitle: HTMLElement;
 let panelBody: HTMLElement;
 let divider: HTMLElement;
 let cam: Camera;
+let graphRef: Graph;
 
 let currentNodeId: string | null = null;
 export const contentCache = new Map<string, string>();
@@ -33,8 +35,9 @@ export function fetchContent(nodeId: string): Promise<string> {
     });
 }
 
-export function initPanel(camera: Camera): void {
+export function initPanel(camera: Camera, graph: Graph): void {
   cam = camera;
+  graphRef = graph;
   panel = document.getElementById("panel")!;
   panelTitle = document.getElementById("panel-title")!;
   panelBody = document.getElementById("panel-body")!;
@@ -83,9 +86,10 @@ export function openPanel(nodeId: string, nodeLabel?: string): void {
   currentNodeId = nodeId;
   panel.hidden = false;
 
-  if (nodeLabel) {
-    panelTitle.textContent = nodeLabel;
-  }
+  panelTitle.textContent = nodeLabel ?? nodeId;
+
+  const node = graphRef.nodes.find(n => n.id === nodeId);
+  if (node) setFocus(graphRef, node);
 
   const cached = contentCache.get(nodeId);
   if (cached !== undefined) {
@@ -107,6 +111,7 @@ export function openPanel(nodeId: string, nodeLabel?: string): void {
 export function closePanel(): void {
   panel.hidden = true;
   currentNodeId = null;
+  setFocus(graphRef, null);
   updateTransform(cam);
 }
 

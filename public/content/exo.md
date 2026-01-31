@@ -15,7 +15,3 @@ Where rhi focuses on software infrastructure, exo focuses on the human layer: ro
 - [hologram](/hologram) — Discord bot for entity-based roleplay with knowledge graph and RAG
 - [aspect](/aspect) — card-based identity exploration sandbox
 
-## Related rhi projects
-
-- [interconnect](/interconnect) — federation protocol that could connect exo worlds
-- [playmate](/playmate) — game design primitives used in exo projects

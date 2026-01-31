@@ -26,4 +26,3 @@ Key features:
 ## Related projects
 
 - [aspect](/aspect) — card-based identity system that could feed hologram entities
-- [interconnect](/interconnect) — federation protocol for connecting hologram worlds
