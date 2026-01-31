@@ -367,6 +367,17 @@ export function createGraph(): Graph {
       color: "oklch(0.78 0.09 45)",
       tags: ["essay", "design"],
     },
+    {
+      id: "what-we-keep-losing",
+      label: "what we keep losing",
+      description: "Technology isn't preserved by existence. It's preserved by continuous practice.",
+      tier: "project",
+      x: 70,
+      y: -170,
+      radius: 24,
+      color: "oklch(0.78 0.09 45)",
+      tags: ["essay", "infrastructure", "games"],
+    },
   ];
 
   const containmentEdges: Edge[] = nodes
