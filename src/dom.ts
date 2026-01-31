@@ -147,9 +147,8 @@ export function setFocus(graph: Graph, hovered: Node | null): void {
     el.classList.toggle("focused", focused.has(id));
   }
   for (const ref of edgeRefs) {
-    const f = focused.has(ref.from) && focused.has(ref.to);
+    const f = ref.el.dataset.type !== "containment" && focused.has(ref.from) && focused.has(ref.to);
     ref.el.classList.toggle("focused", f);
-    ref.labelEl?.classList.toggle("focused", f);
   }
 }
 
