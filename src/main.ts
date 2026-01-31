@@ -10,6 +10,12 @@ buildWorld(graph);
 updateTransform(camera);
 setupInput(document.getElementById("viewport")!, camera, graph);
 
+// Unregister stale service workers and clear their caches
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("/sw.js").catch(() => {});
+  navigator.serviceWorker.getRegistrations().then((regs) => {
+    for (const r of regs) r.unregister();
+  });
+  caches.keys().then((keys) => {
+    for (const k of keys) caches.delete(k);
+  });
 }
