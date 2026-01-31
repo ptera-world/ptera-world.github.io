@@ -12,16 +12,20 @@ export function setupInput(
   let dragging = false;
   let lastX = 0;
   let lastY = 0;
+  let downX = 0;
+  let downY = 0;
 
   viewport.addEventListener("mousedown", (e) => {
     dragging = true;
-    lastX = e.clientX;
-    lastY = e.clientY;
+    lastX = downX = e.clientX;
+    lastY = downY = e.clientY;
   });
 
   viewport.addEventListener("mousemove", (e) => {
     if (!dragging) return;
-    viewport.classList.add("dragging");
+    const dx = e.clientX - downX;
+    const dy = e.clientY - downY;
+    if (dx * dx + dy * dy > 16 * 16) viewport.classList.add("dragging");
     camera.x -= (e.clientX - lastX) / camera.zoom;
     camera.y -= (e.clientY - lastY) / camera.zoom;
     lastX = e.clientX;
