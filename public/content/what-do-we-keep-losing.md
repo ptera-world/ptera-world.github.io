@@ -2,7 +2,7 @@
 
 Technology isn't preserved by existence. It's preserved by continuous practice.
 
-If the guild dies, the funding dies, the use-case disappears, the institution collapses, the knowledge becomes irrelevant — the tech evaporates, even if the idea was known.
+If the guild dies, the funding dies, the use-case disappears, the institution collapses, the knowledge becomes irrelevant — the tech evaporates, even if the idea was known. [This has happened before.](#what-has-already-vanished) And the real loss is never the object — it's [the system that kept it alive](#whats-actually-being-lost). Digital makes this [worse, not better](#is-digital-more-fragile). We used to [align around preservation](#did-we-forget-how-to-align) — entire civilizations did. Games [keep proving](#why-do-games-keep-getting-it-right) it works when friction is removed. So [what does that mean](#what-does-this-mean-for-building) for how we build?
 
 ## What has already vanished?
 

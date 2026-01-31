@@ -40,7 +40,7 @@ function prepareContent(container: HTMLElement): void {
         continue;
       }
 
-      const slug = text.replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+      const slug = text.replace(/'/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
       const sec = document.createElement("section");
       sec.className = "collapsible-section";
