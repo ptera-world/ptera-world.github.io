@@ -1,6 +1,6 @@
 import type { Camera } from "./camera";
 import type { Graph } from "./graph";
-import { updateTransform, setFocus } from "./dom";
+import { updateTransform, setFocus, animateTo } from "./dom";
 import { parseMarkdown } from "./markdown";
 
 let panel: HTMLElement;
@@ -89,7 +89,10 @@ export function openPanel(nodeId: string, nodeLabel?: string): void {
   panelTitle.textContent = nodeLabel ?? nodeId;
 
   const node = graphRef.nodes.find(n => n.id === nodeId);
-  if (node) setFocus(graphRef, node);
+  if (node) {
+    setFocus(graphRef, node);
+    animateTo(cam, node.x, node.y, Math.max(cam.zoom, 1.5));
+  }
 
   const cached = contentCache.get(nodeId);
   if (cached !== undefined) {

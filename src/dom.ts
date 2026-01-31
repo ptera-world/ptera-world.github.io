@@ -102,6 +102,21 @@ export function updateTransform(camera: Camera): void {
   world.dataset.tier = currentTier(camera);
 }
 
+export function animateTo(camera: Camera, tx: number, ty: number, tz: number): void {
+  const sx = camera.x, sy = camera.y, sz = camera.zoom;
+  const start = performance.now();
+  function step(now: number) {
+    const t = Math.min(1, (now - start) / 300);
+    const ease = t * (2 - t);
+    camera.x = sx + (tx - sx) * ease;
+    camera.y = sy + (ty - sy) * ease;
+    camera.zoom = sz + (tz - sz) * ease;
+    updateTransform(camera);
+    if (t < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
 export function setFocus(graph: Graph, hovered: Node | null): void {
   if (!hovered) {
     delete world.dataset.hovering;

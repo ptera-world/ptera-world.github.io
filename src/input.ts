@@ -1,6 +1,6 @@
 import type { Camera } from "./camera";
 import type { Graph } from "./graph";
-import { updateTransform, setFocus, getHitNode } from "./dom";
+import { updateTransform, setFocus, getHitNode, animateTo } from "./dom";
 import { showCard, hideCard, isCardOpen } from "./card";
 import { isPanelOpen, closePanel, openPanel } from "./panel";
 
@@ -158,17 +158,3 @@ function touchDist(e: TouchEvent): number {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
-function animateTo(camera: Camera, tx: number, ty: number, tz: number): void {
-  const sx = camera.x, sy = camera.y, sz = camera.zoom;
-  const start = performance.now();
-  function step(now: number) {
-    const t = Math.min(1, (now - start) / 300);
-    const ease = t * (2 - t);
-    camera.x = sx + (tx - sx) * ease;
-    camera.y = sy + (ty - sy) * ease;
-    camera.zoom = sz + (tz - sz) * ease;
-    updateTransform(camera);
-    if (t < 1) requestAnimationFrame(step);
-  }
-  requestAnimationFrame(step);
-}

@@ -11,17 +11,11 @@ Key features:
 - **RAG** — AI responses grounded in established world knowledge
 - **Session management** — separate roleplay contexts within the same server
 
-## What it isn't
-
-- Not a chatbot — it's a roleplay facilitator with persistent world state
-- Not a game — it provides the infrastructure for collaborative storytelling
-- Not fully autonomous — players drive the narrative, AI maintains consistency
-
 ## Prior art
 
 - [AI Dungeon](https://aidungeon.com/) — AI-driven interactive fiction
 - [World Anvil](https://www.worldanvil.com/) — worldbuilding and lore management
-- [Foundry VTT](https://foundryvtt.com/) — virtual tabletop with entity tracking
+- [Character.AI](https://character.ai/) — AI character interaction
 
 ## Related projects
 
