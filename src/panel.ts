@@ -1,5 +1,5 @@
 import type { Camera } from "./camera";
-import type { Graph } from "./graph";
+import type { Graph, Node } from "./graph";
 import { updateTransform, setFocus, animateTo } from "./dom";
 import { parseMarkdown } from "./markdown";
 
@@ -120,4 +120,9 @@ export function closePanel(): void {
 
 export function isPanelOpen(): boolean {
   return !panel.hidden;
+}
+
+export function panelNode(): Node | null {
+  if (!currentNodeId || panel.hidden) return null;
+  return graphRef.nodes.find(n => n.id === currentNodeId) ?? null;
 }

@@ -2,7 +2,7 @@ import type { Camera } from "./camera";
 import type { Graph } from "./graph";
 import { updateTransform, setFocus, getHitNode, animateTo } from "./dom";
 import { showCard, hideCard, isCardOpen } from "./card";
-import { isPanelOpen, closePanel, openPanel } from "./panel";
+import { isPanelOpen, closePanel, openPanel, panelNode } from "./panel";
 
 export function setupInput(
   viewport: HTMLElement,
@@ -41,7 +41,7 @@ export function setupInput(
   viewport.addEventListener("mouseleave", () => {
     dragging = false;
     viewport.classList.remove("dragging");
-    setFocus(graph, null);
+    setFocus(graph, panelNode());
   });
 
   // Hover
@@ -55,7 +55,9 @@ export function setupInput(
     if (dragging) return;
     const from = (e.target as HTMLElement).closest?.(".node-hit");
     const to = (e.relatedTarget as HTMLElement | null)?.closest?.(".node-hit");
-    if (from && from !== to && !to) setFocus(graph, null);
+    if (from && from !== to && !to) {
+      setFocus(graph, panelNode());
+    }
   });
 
   // Click — only act if the mouse didn't drag
