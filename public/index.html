@@ -10,83 +10,125 @@
       width: 100%; height: 100%; overflow: hidden; background: #0a0a0a;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
-    #viewport { position: relative; width: 100%; height: 100%; }
-    canvas { display: block; width: 100%; height: 100%; }
 
-    #card {
+    /* Viewport + world */
+    #viewport { position: relative; width: 100%; height: 100%; overflow: hidden; cursor: grab; }
+    #viewport.dragging { cursor: grabbing; }
+    #viewport.dragging .node-hit { pointer-events: none; }
+    #world { position: absolute; top: 0; left: 0; transform-origin: 0 0; --zoom: 1; }
+
+    /* Edges */
+    .edge {
+      position: absolute; height: 1px; background: #555;
+      transform-origin: 0 50%; pointer-events: none;
+      opacity: 0.4; transition: opacity 200ms;
+    }
+    .edge-label {
       position: absolute;
-      background: #1a1a1a;
-      border: 1px solid #333;
-      border-radius: 8px;
-      padding: 20px;
-      max-width: 400px;
-      min-width: 280px;
-      color: #ddd;
-      z-index: 10;
+      transform: translate(-50%, -100%) scale(calc(1 / var(--zoom)));
+      transform-origin: center; font-size: 10px; color: #999;
+      pointer-events: none; opacity: 0; transition: opacity 200ms;
     }
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
+    #world[data-tier="far"] .edge[data-type="containment"] { display: none; }
+    #world[data-tier="mid"] .edge-label,
+    #world[data-tier="near"] .edge-label { opacity: 0.5; }
+
+    /* Nodes */
+    .node {
+      position: absolute;
+      width: calc(var(--r) * 2); height: calc(var(--r) * 2);
+      transform: translate(-50%, -50%);
+      transition: opacity 200ms;
     }
-    .card-title {
-      font-size: 18px;
-      font-weight: 600;
-      color: #fff;
+    .node.ecosystem { z-index: 0; }
+    .node.project { z-index: 1; }
+
+    /* Project dot */
+    .node-dot {
+      width: 100%; height: 100%; border-radius: 50%;
+      background: var(--color); cursor: pointer;
+      transition: filter 200ms, box-shadow 200ms;
     }
+    .node-dot:hover { filter: brightness(1.3); box-shadow: 0 0 0 1.5px #fff; }
+
+    /* Ecosystem glow + core */
+    .node-glow {
+      width: 100%; height: 100%; border-radius: 50%;
+      background: radial-gradient(circle, var(--color), transparent 70%);
+      opacity: 0.3; pointer-events: none;
+    }
+    .node-core {
+      position: absolute; top: 50%; left: 50%;
+      width: 30%; height: 30%;
+      transform: translate(-50%, -50%);
+      border-radius: 50%; background: var(--color); cursor: pointer;
+      transition: filter 200ms, box-shadow 200ms;
+    }
+    .node-core:hover { filter: brightness(1.3); box-shadow: 0 0 0 1.5px #fff; }
+
+    /* Counter-scaled text */
+    .node-text {
+      position: absolute; top: 100%; left: 50%;
+      transform: translateX(-50%) scale(calc(1 / var(--zoom)));
+      transform-origin: top center;
+      text-align: center; white-space: nowrap; pointer-events: none;
+      padding-top: 4px;
+    }
+    .node.ecosystem .node-text {
+      top: 50%;
+      transform: translate(-50%, -50%) scale(calc(1 / var(--zoom)));
+      transform-origin: center;
+    }
+    .node-label { font-size: 12px; color: #ccc; }
+    .node.ecosystem .node-label { font-size: 16px; font-weight: bold; color: #ddd; }
+    .node-desc { font-size: 11px; color: #888; margin-top: 2px; }
+
+    /* Tier-based visibility */
+    .node.project .node-label,
+    .node.project .node-desc { opacity: 0; transition: opacity 200ms; }
+    #world[data-tier="mid"] .node.project .node-label,
+    #world[data-tier="near"] .node.project .node-label,
+    #world[data-tier="mid"] .node.project .node-desc,
+    #world[data-tier="near"] .node.project .node-desc { opacity: 1; }
+
+    /* Focus / dim */
+    #world[data-hovering] .node { opacity: 0.15; }
+    #world[data-hovering] .node.focused { opacity: 1; }
+    #world[data-hovering] .edge { opacity: 0.12; }
+    #world[data-hovering] .edge.focused { opacity: 0.7; background: #aaa; height: 1.5px; }
+    #world[data-hovering] .edge-label { opacity: 0; }
+    #world[data-hovering][data-tier="mid"] .edge-label.focused,
+    #world[data-hovering][data-tier="near"] .edge-label.focused { opacity: 0.5; }
+
+    /* Card */
+    #card {
+      position: absolute; background: #1a1a1a;
+      border: 1px solid #333; border-radius: 8px; padding: 20px;
+      max-width: 400px; min-width: 280px; color: #ddd; z-index: 10;
+    }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .card-title { font-size: 18px; font-weight: 600; color: #fff; }
     .card-close {
-      background: none;
-      border: none;
-      color: #888;
-      font-size: 20px;
-      cursor: pointer;
-      padding: 0 4px;
-      line-height: 1;
+      background: none; border: none; color: #888;
+      font-size: 20px; cursor: pointer; padding: 0 4px; line-height: 1;
     }
     .card-close:hover { color: #fff; }
-    .card-desc {
-      color: #aaa;
-      font-size: 14px;
-      margin-bottom: 12px;
-    }
-    .card-link {
-      display: inline-block;
-      color: #6a9;
-      font-size: 13px;
-      text-decoration: none;
-      margin-bottom: 12px;
-    }
+    .card-desc { color: #aaa; font-size: 14px; margin-bottom: 12px; }
+    .card-link { display: inline-block; color: #6a9; font-size: 13px; text-decoration: none; margin-bottom: 12px; }
     .card-link:hover { text-decoration: underline; }
-    .card-refs {
-      border-top: 1px solid #333;
-      padding-top: 8px;
-    }
-    .card-ref {
-      font-size: 13px;
-      color: #999;
-      padding: 2px 0;
-    }
-    .card-ref-label {
-      color: #666;
-      font-style: italic;
-    }
-    .card-ref-group {
-      margin-bottom: 4px;
-    }
+    .card-refs { border-top: 1px solid #333; padding-top: 8px; }
+    .card-ref { font-size: 13px; color: #999; padding: 2px 0; }
+    .card-ref-label { color: #666; font-style: italic; }
+    .card-ref-group { margin-bottom: 4px; }
     .card-ref-heading {
-      display: block;
-      font-size: 11px;
-      color: #666;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 2px;
+      display: block; font-size: 11px; color: #666;
+      text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;
     }
   </style>
 </head>
 <body>
   <div id="viewport">
-    <canvas id="world"></canvas>
+    <div id="world"></div>
     <div id="card" hidden></div>
   </div>
   <script type="module" src="/main.js"></script>
