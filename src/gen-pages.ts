@@ -1,22 +1,28 @@
+import { readdir, mkdir } from "node:fs/promises";
 import { parseMarkdown } from "./markdown";
 import { createGraph } from "./graph";
-
-const isProduction = Bun.argv.includes("--production");
-
-const dir = isProduction ? "dist" : "public";
 
 const graph = createGraph();
 const nodeMap = new Map(graph.nodes.map((n) => [n.id, n]));
 
-function contentPage(id: string, html: string): string {
-  const node = nodeMap.get(id);
-  const title = node?.label ?? id;
+function pageHtml(
+  id: string,
+  title: string,
+  description: string,
+  body: string,
+): string {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${title} — ptera</title>
+  <meta property="og:title" content="${title}">
+  <meta property="og:description" content="${description}">
+  <meta property="og:url" content="https://ptera.world/${id}">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="ptera.world">
+  <meta name="description" content="${description}">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
@@ -60,52 +66,30 @@ function contentPage(id: string, html: string): string {
     <a href="/?focus=${id}">view on map</a>
   </nav>
   <article>
-${html}
+${body}
   </article>
 </body>
 </html>`;
 }
 
-const server = Bun.serve({
-  port: 3000,
-  async fetch(req) {
-    const url = new URL(req.url);
-    let path = url.pathname === "/" ? "/index.html" : url.pathname;
+const contentDir = "public/content";
+const files = await readdir(contentDir);
 
-    // In dev, serve TS files as bundled JS
-    if (!isProduction && path === "/main.js") {
-      const result = await Bun.build({
-        entrypoints: ["src/main.ts"],
-        target: "browser",
-      });
-      const output = result.outputs[0];
-      if (output) {
-        return new Response(output.stream(), {
-          headers: { "Content-Type": "application/javascript" },
-        });
-      }
-    }
+let count = 0;
+for (const file of files) {
+  if (!file.endsWith(".md")) continue;
+  const id = file.slice(0, -3);
+  const md = await Bun.file(`${contentDir}/${file}`).text();
+  const html = parseMarkdown(md);
 
-    const file = Bun.file(dir + path);
-    if (await file.exists()) {
-      return new Response(file);
-    }
+  const node = nodeMap.get(id);
+  const title = node?.label ?? id;
+  const description = node?.description ?? "";
 
-    // Fallback: try serving as a content page
-    const slug = path.replace(/^\/|\/$/g, "");
-    if (slug && !slug.includes("/")) {
-      const mdFile = Bun.file(`${dir}/content/${slug}.md`);
-      if (await mdFile.exists()) {
-        const md = await mdFile.text();
-        const html = parseMarkdown(md);
-        return new Response(contentPage(slug, html), {
-          headers: { "Content-Type": "text/html" },
-        });
-      }
-    }
+  const outDir = `dist/${id}`;
+  await mkdir(outDir, { recursive: true });
+  await Bun.write(`${outDir}/index.html`, pageHtml(id, title, description, html));
+  count++;
+}
 
-    return new Response("Not Found", { status: 404 });
-  },
-});
-
-console.log(`listening on http://localhost:${server.port}`);
+console.log(`generated ${count} content pages`);

@@ -131,7 +131,7 @@
     .card-link { display: inline-block; color: #6a9; font-size: 13px; text-decoration: none; margin-bottom: 12px; }
     .card-link:hover { text-decoration: underline; }
     .card-refs { border-top: 1px solid #333; padding-top: 8px; }
-    .card-ref { font-size: 13px; color: #999; padding: 2px 0; cursor: pointer; }
+    .card-ref { font-size: 13px; color: #999; padding: 2px 0; cursor: pointer; text-decoration: none; display: block; }
     .card-ref:hover { color: #ddd; }
     .card-ref-label { color: #666; font-style: italic; }
     .card-ref-group { margin-bottom: 4px; }
@@ -142,7 +142,8 @@
     .card-learn-more {
       display: block; margin-top: 12px; padding: 6px 14px; width: fit-content;
       background: #2a2a2a; border: 1px solid #444; border-radius: 6px;
-      color: #aaa; font-size: 13px; cursor: pointer; transition: background 200ms, color 200ms;
+      color: #aaa; font-size: 13px; cursor: pointer; text-decoration: none;
+      transition: background 200ms, color 200ms;
     }
     .card-learn-more:hover { background: #333; color: #fff; }
 
@@ -170,6 +171,12 @@
       padding: 16px 20px 12px; border-bottom: 1px solid #333; flex-shrink: 0;
     }
     #panel-title { font-size: 18px; font-weight: 600; color: #fff; margin: 0; }
+    #panel-actions { display: flex; align-items: center; gap: 4px; }
+    #panel-open {
+      color: #888; font-size: 18px; padding: 0 4px; line-height: 1;
+      text-decoration: none;
+    }
+    #panel-open:hover { color: #fff; }
     #panel-close {
       background: none; border: none; color: #888;
       font-size: 22px; cursor: pointer; padding: 0 4px; line-height: 1;
@@ -253,7 +260,10 @@
       <div id="panel-content">
         <div id="panel-header">
           <h2 id="panel-title"></h2>
-          <button id="panel-close">&times;</button>
+          <span id="panel-actions">
+            <a id="panel-open" href="/" target="_blank" title="Open in new tab">&#x2197;</a>
+            <button id="panel-close">&times;</button>
+          </span>
         </div>
         <div id="panel-body"></div>
       </div>

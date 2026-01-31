@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ptera.world</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      background: #0a0a0a; color: #ddd;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.6; font-size: 16px;
+    }
+    nav {
+      padding: 16px 24px; border-bottom: 1px solid #222;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    nav a { color: #6a9; text-decoration: none; font-size: 14px; }
+    nav a:hover { text-decoration: underline; }
+    article {
+      max-width: 680px; margin: 0 auto; padding: 32px 24px 64px;
+    }
+    h1 { font-size: 28px; color: #fff; margin: 24px 0 12px; }
+    h2 { font-size: 22px; color: #eee; margin: 28px 0 10px; }
+    h3 { font-size: 17px; color: #ddd; margin: 20px 0 8px; }
+    p { margin: 0 0 14px; color: #bbb; }
+    a { color: #6a9; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    ul { margin: 0 0 14px; padding-left: 24px; }
+    li { margin: 4px 0; color: #bbb; }
+    code {
+      background: #1a1a1a; padding: 1px 5px; border-radius: 3px;
+      font-size: 14px; color: #ccc;
+    }
+    pre {
+      background: #111; border: 1px solid #333; border-radius: 6px;
+      padding: 14px; overflow-x: auto; margin: 0 0 14px;
+    }
+    pre code { background: none; padding: 0; }
+    hr { border: none; border-top: 1px solid #333; margin: 20px 0; }
+    strong { color: #ddd; }
+    .not-found { text-align: center; padding: 64px 24px; color: #666; }
+    .not-found h1 { color: #888; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="/">← back to map</a>
+    <span id="map-link"></span>
+  </nav>
+  <article id="content">
+    <div class="not-found">
+      <h1>loading...</h1>
+    </div>
+  </article>
+  <script type="module">
+    const id = location.pathname.replace(/^\/|\/$/g, "");
+    if (!id || id.includes("/")) {
+      document.getElementById("content").innerHTML =
+        '<div class="not-found"><h1>not found</h1><p>this page doesn\'t exist. <a href="/">back to map</a></p></div>';
+    } else {
+      const mapLink = document.getElementById("map-link");
+      mapLink.innerHTML = '<a href="/?focus=' + id + '">view on map</a>';
+
+      fetch("/content/" + id + ".md")
+        .then(r => { if (!r.ok) throw new Error(); return r.text(); })
+        .then(md => {
+          document.title = id + " — ptera";
+          document.getElementById("content").innerHTML = parseMd(md);
+        })
+        .catch(() => {
+          document.getElementById("content").innerHTML =
+            '<div class="not-found"><h1>not found</h1><p>this page doesn\'t exist. <a href="/">back to map</a></p></div>';
+        });
+    }
+
+    function esc(s) {
+      return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    }
+    function inline(s) {
+      return esc(s)
+        .replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>")
+        .replace(/\*(.+?)\*/g,"<em>$1</em>")
+        .replace(/`(.+?)`/g,"<code>$1</code>")
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2">$1</a>');
+    }
+    function parseMd(src) {
+      const lines = src.split("\n"), out = [];
+      let i = 0;
+      while (i < lines.length) {
+        const l = lines[i];
+        if (!l.trim()) { i++; continue; }
+        if (l.startsWith("```")) {
+          const code = []; i++;
+          while (i < lines.length && !lines[i].startsWith("```")) { code.push(esc(lines[i])); i++; }
+          i++;
+          out.push("<pre><code>" + code.join("\n") + "</code></pre>");
+          continue;
+        }
+        const hm = l.match(/^(#{1,6})\s+(.+)$/);
+        if (hm) { out.push("<h"+hm[1].length+">"+inline(hm[2])+"</h"+hm[1].length+">"); i++; continue; }
+        if (/^---+$/.test(l.trim())) { out.push("<hr>"); i++; continue; }
+        if (l.match(/^[-*]\s/)) {
+          const items = [];
+          while (i < lines.length && lines[i].match(/^[-*]\s/)) { items.push("<li>"+inline(lines[i].replace(/^[-*]\s/,""))+"</li>"); i++; }
+          out.push("<ul>"+items.join("")+"</ul>");
+          continue;
+        }
+        const p = [];
+        while (i < lines.length && lines[i].trim() && !lines[i].startsWith("#") && !lines[i].startsWith("```") && !lines[i].match(/^[-*]\s/) && !/^---+$/.test(lines[i].trim())) {
+          p.push(inline(lines[i])); i++;
+        }
+        if (p.length) out.push("<p>"+p.join(" ")+"</p>");
+      }
+      return out.join("\n");
+    }
+  </script>
+</body>
+</html>

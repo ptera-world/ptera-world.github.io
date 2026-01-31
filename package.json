@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "bun run src/dev.ts",
     "gen-edges": "bun run src/gen-edges.ts",
-    "build": "bun run src/gen-edges.ts && bun build src/main.ts --outdir dist --minify",
+    "build": "bun run src/gen-edges.ts && bun build src/main.ts --outdir dist --minify && bun run src/gen-pages.ts",
     "preview": "bun run src/dev.ts --production",
     "lint": "oxlint src/",
     "check:types": "tsgo --noEmit"

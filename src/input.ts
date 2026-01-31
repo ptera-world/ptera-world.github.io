@@ -78,6 +78,10 @@ export function setupInput(
     if (dx * dx + dy * dy > 16 * 16) return;
     const node = getHitNode(e.target);
     if (node) {
+      if (e.ctrlKey || e.metaKey) {
+        window.open(`/${node.id}`, "_blank");
+        return;
+      }
       if (isPanelOpen()) {
         openPanel(node.id, node.label);
       } else {

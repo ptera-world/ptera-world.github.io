@@ -7,6 +7,7 @@ import { parseMarkdown } from "./markdown";
 let panel: HTMLElement;
 let panelTitle: HTMLElement;
 let panelBody: HTMLElement;
+let panelOpen: HTMLAnchorElement;
 let divider: HTMLElement;
 let cam: Camera;
 let graphRef: Graph;
@@ -42,6 +43,7 @@ export function initPanel(camera: Camera, graph: Graph): void {
   panel = document.getElementById("panel")!;
   panelTitle = document.getElementById("panel-title")!;
   panelBody = document.getElementById("panel-body")!;
+  panelOpen = document.getElementById("panel-open") as HTMLAnchorElement;
   divider = document.getElementById("panel-divider")!;
 
   // Close button
@@ -91,8 +93,9 @@ export function initPanel(camera: Camera, graph: Graph): void {
   });
   window.addEventListener("touchend", endDrag);
 
-  // Crosslink interception
+  // Crosslink interception — defer to native behavior on ctrl/meta+click
   panelBody.addEventListener("click", (e) => {
+    if (e.ctrlKey || e.metaKey) return;
     const anchor = (e.target as HTMLElement).closest?.("a");
     if (!anchor) return;
     const href = anchor.getAttribute("href");
@@ -110,6 +113,7 @@ export function openPanel(nodeId: string, nodeLabel?: string): void {
   panel.hidden = false;
 
   panelTitle.textContent = nodeLabel ?? nodeId;
+  panelOpen.href = `/${nodeId}`;
 
   const node = graphRef.nodes.find(n => n.id === nodeId);
   if (node) {

@@ -27,19 +27,22 @@ function setSummary(descEl: HTMLElement, html: string): void {
   }
 }
 
-function refEntry(other: Node, graph: Graph): HTMLDivElement {
-  const div = el("div", "card-ref");
+function refEntry(other: Node, graph: Graph): HTMLAnchorElement {
+  const a = document.createElement("a");
+  a.className = "card-ref";
+  a.href = `/${other.id}`;
   const strong = el("strong", undefined, other.label);
-  div.appendChild(strong);
-  div.style.cursor = "pointer";
-  div.addEventListener("click", (e) => {
+  a.appendChild(strong);
+  a.addEventListener("click", (e) => {
+    if (e.ctrlKey || e.metaKey) return;
+    e.preventDefault();
     e.stopPropagation();
     if (navigateFn) navigateFn(other, graph);
   });
-  return div;
+  return a;
 }
 
-function refGroup(heading: string, entries: HTMLDivElement[]): HTMLDivElement {
+function refGroup(heading: string, entries: HTMLAnchorElement[]): HTMLDivElement {
   const group = el("div", "card-ref-group");
   group.appendChild(el("span", "card-ref-heading", heading));
   for (const entry of entries) group.appendChild(entry);
@@ -92,7 +95,7 @@ function buildCard(node: Node, graph: Graph): DocumentFragment {
       const other = nodeMap.get(otherId);
       return other ? refEntry(other, graph) : null;
     })
-    .filter((e): e is HTMLDivElement => e !== null);
+    .filter((e): e is HTMLAnchorElement => e !== null);
 
   if (related.length) {
     const refs = el("div", "card-refs");
@@ -100,9 +103,14 @@ function buildCard(node: Node, graph: Graph): DocumentFragment {
     frag.appendChild(refs);
   }
 
-  // Learn more button
-  const learnMore = el("button", "card-learn-more", "Learn more \u2192");
+  // Learn more link
+  const learnMore = document.createElement("a");
+  learnMore.className = "card-learn-more";
+  learnMore.href = `/${node.id}`;
+  learnMore.textContent = "Learn more \u2192";
   learnMore.addEventListener("click", (e) => {
+    if (e.ctrlKey || e.metaKey) return;
+    e.preventDefault();
     e.stopPropagation();
     openPanel(node.id, node.label);
   });
