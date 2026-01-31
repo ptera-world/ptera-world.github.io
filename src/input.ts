@@ -91,15 +91,14 @@ export function setupInput(
       } else {
         showCard(node, graph);
       }
+    } else if (isPanelOpen()) {
+      closePanel();
+    } else if (isCardOpen()) {
+      hideCard();
     } else {
-      // Background click - clear focus
+      // Background click with nothing open - clear focus
       focusedNode = null;
       setFocus(graph, null);
-      if (isPanelOpen()) {
-        closePanel();
-      } else if (isCardOpen()) {
-        hideCard();
-      }
     }
   });
 
