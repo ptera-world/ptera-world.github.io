@@ -112,8 +112,14 @@ export function showCard(node: Node, graph: Graph): void {
   if (!card) return;
   card.replaceChildren(buildCard(node, graph));
   const coreR = node.tier === "ecosystem" ? node.radius * 0.15 : node.radius;
-  card.style.left = `${node.x + coreR + 12}px`;
-  card.style.top = `${node.y}px`;
+  const vertical = window.matchMedia("(max-width: 640px)").matches;
+  if (vertical) {
+    card.style.left = `${node.x}px`;
+    card.style.top = `${node.y + coreR + 12}px`;
+  } else {
+    card.style.left = `${node.x + coreR + 12}px`;
+    card.style.top = `${node.y}px`;
+  }
   card.hidden = false;
 }
 

@@ -47,27 +47,46 @@ export function initPanel(camera: Camera, graph: Graph): void {
   document.getElementById("panel-close")!.addEventListener("click", closePanel);
 
   // Divider drag
+  const isVertical = () => window.matchMedia("(max-width: 640px)").matches;
   let dragging = false;
-  divider.addEventListener("mousedown", (e) => {
+
+  function startDrag(e: Event) {
     e.preventDefault();
     dragging = true;
-    document.body.style.cursor = "col-resize";
+    document.body.style.cursor = isVertical() ? "row-resize" : "col-resize";
     document.body.style.userSelect = "none";
-  });
+  }
 
-  window.addEventListener("mousemove", (e) => {
+  function onDrag(x: number, y: number) {
     if (!dragging) return;
-    const newWidth = Math.max(240, Math.min(window.innerWidth * 0.6, window.innerWidth - e.clientX));
-    panel.style.width = `${newWidth}px`;
+    if (isVertical()) {
+      const h = Math.max(120, Math.min(window.innerHeight * 0.8, window.innerHeight - y));
+      panel.style.height = `${h}px`;
+    } else {
+      const w = Math.max(240, Math.min(window.innerWidth * 0.6, window.innerWidth - x));
+      panel.style.width = `${w}px`;
+    }
     updateTransform(cam);
-  });
+  }
 
-  window.addEventListener("mouseup", () => {
+  function endDrag() {
     if (!dragging) return;
     dragging = false;
     document.body.style.cursor = "";
     document.body.style.userSelect = "";
+  }
+
+  divider.addEventListener("mousedown", startDrag);
+  window.addEventListener("mousemove", (e) => onDrag(e.clientX, e.clientY));
+  window.addEventListener("mouseup", endDrag);
+
+  divider.addEventListener("touchstart", startDrag, { passive: false });
+  window.addEventListener("touchmove", (e) => {
+    if (!dragging) return;
+    const t = e.touches[0];
+    onDrag(t.clientX, t.clientY);
   });
+  window.addEventListener("touchend", endDrag);
 
   // Crosslink interception
   panelBody.addEventListener("click", (e) => {
