@@ -81,6 +81,20 @@
     .node.ecosystem .node-desc { font-size: 16px; }
     .node-desc { font-size: 11px; color: #888; margin-top: 2px; }
 
+    /* Landing intro */
+    .landing {
+      position: absolute; left: 0; top: 0;
+      transform: translate(-50%, -50%) scale(calc(1 / var(--zoom)));
+      transform-origin: center center;
+      text-align: center; pointer-events: none;
+      transition: opacity 200ms;
+      z-index: 2;
+    }
+    .landing-name { font-size: 28px; font-weight: bold; color: #fff; }
+    .landing-body { font-size: 15px; color: #999; line-height: 1.7; margin-top: 8px; }
+    .landing-trail { font-size: 14px; color: #777; margin-top: 8px; }
+    #world[data-hovering] .landing { opacity: 0.15; }
+
     /* Tier-based visibility */
     .node.project .node-label,
     .node.project .node-desc { opacity: 0; transition: opacity 200ms; }

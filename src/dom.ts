@@ -15,8 +15,18 @@ interface EdgeRef {
 const nodeEls = new Map<string, HTMLElement>();
 const hitNodes = new Map<HTMLElement, Node>();
 const edgeRefs: EdgeRef[] = [];
+let landingEl: HTMLElement;
 
 export function buildWorld(graph: Graph): void {
+  // Landing intro
+  landingEl = document.createElement("div");
+  landingEl.className = "landing";
+  landingEl.innerHTML =
+    `<div class="landing-name">ptera</div>` +
+    `<div class="landing-body">i think a lot about software and people —<br>how they shape each other.</div>` +
+    `<div class="landing-trail">this is a map of things i've been exploring.</div>`;
+  world.appendChild(landingEl);
+
   // Edges (behind nodes)
   for (const edge of graph.edges) {
     const from = graph.nodes.find(n => n.id === edge.from);
@@ -100,6 +110,8 @@ export function updateTransform(camera: Camera): void {
   world.style.transform = `translate(${tx}px, ${ty}px) scale(${camera.zoom})`;
   world.style.setProperty("--zoom", `${camera.zoom}`);
   world.dataset.tier = currentTier(camera);
+  const landingOpacity = Math.max(0, Math.min(1, (3.0 - camera.zoom) / 1.5));
+  landingEl.style.opacity = `${landingOpacity}`;
 }
 
 export function animateTo(camera: Camera, tx: number, ty: number, tz: number): void {
