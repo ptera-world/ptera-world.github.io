@@ -40,8 +40,11 @@ function prepareContent(container: HTMLElement): void {
         continue;
       }
 
+      const slug = text.replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+
       const sec = document.createElement("section");
       sec.className = "collapsible-section";
+      sec.id = slug;
       sec.appendChild(child);
 
       const bd = document.createElement("div");
@@ -149,16 +152,29 @@ export function initPanel(camera: Camera, graph: Graph): void {
   });
   window.addEventListener("touchend", endDrag);
 
-  // Crosslink interception — defer to native behavior on ctrl/meta+click
+  // Link interception — crosslinks and in-page anchors
   panelBody.addEventListener("click", (e) => {
     if (e.ctrlKey || e.metaKey) return;
     const anchor = (e.target as HTMLElement).closest?.("a");
     if (!anchor) return;
     const href = anchor.getAttribute("href");
-    if (href && /^\/[a-z][\w-]*$/.test(href)) {
+    if (!href) return;
+
+    // In-page anchor — scroll to section and expand
+    if (href.startsWith("#")) {
       e.preventDefault();
-      const targetId = href.slice(1);
-      openPanel(targetId);
+      const sec = panelBody.querySelector<HTMLElement>(href);
+      if (sec?.classList.contains("collapsible-section")) {
+        sec.classList.add("expanded");
+        sec.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      return;
+    }
+
+    // Cross-node link
+    if (/^\/[a-z][\w-]*$/.test(href)) {
+      e.preventDefault();
+      openPanel(href.slice(1));
     }
   });
 }
