@@ -20,18 +20,37 @@ export function isCardOpen(): boolean {
   return el ? !el.hidden : false;
 }
 
+function refEntry(other: Node, label?: string): string {
+  const tag = label && label !== "uses"
+    ? ` <span class="card-ref-label">${label}</span>`
+    : "";
+  return `<div class="card-ref"><strong>${other.label}</strong>${tag}</div>`;
+}
+
 function renderCard(node: Node, graph: Graph): string {
-  const refs = graph.edges
-    .filter(e => e.label && (e.from === node.id || e.to === node.id))
+  const outgoing = graph.edges
+    .filter(e => e.label && e.from === node.id)
     .map(e => {
-      const otherId = e.from === node.id ? e.to : e.from;
-      const other = graph.nodes.find(n => n.id === otherId);
-      if (!other) return "";
-      const dir = e.from === node.id ? "\u2192" : "\u2190";
-      return `<div class="card-ref">${dir} <strong>${other.label}</strong> <span class="card-ref-label">${e.label}</span></div>`;
+      const other = graph.nodes.find(n => n.id === e.to);
+      return other ? refEntry(other, e.label) : "";
     })
-    .filter(Boolean)
-    .join("");
+    .filter(Boolean).join("");
+
+  const incoming = graph.edges
+    .filter(e => e.label && e.to === node.id)
+    .map(e => {
+      const other = graph.nodes.find(n => n.id === e.from);
+      return other ? refEntry(other, e.label) : "";
+    })
+    .filter(Boolean).join("");
+
+  let refsHtml = "";
+  if (outgoing || incoming) {
+    refsHtml = '<div class="card-refs">';
+    if (outgoing) refsHtml += `<div class="card-ref-group"><span class="card-ref-heading">Uses</span>${outgoing}</div>`;
+    if (incoming) refsHtml += `<div class="card-ref-group"><span class="card-ref-heading">Used by</span>${incoming}</div>`;
+    refsHtml += "</div>";
+  }
 
   const url = node.url
     ? `<a class="card-link" href="${node.url}" target="_blank" rel="noopener">${node.url}</a>`
@@ -44,6 +63,6 @@ function renderCard(node: Node, graph: Graph): string {
     </div>
     <p class="card-desc">${node.description}</p>
     ${url}
-    ${refs ? `<div class="card-refs">${refs}</div>` : ""}
+    ${refsHtml}
   `;
 }

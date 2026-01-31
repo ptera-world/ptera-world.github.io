@@ -67,9 +67,17 @@ export function setupInput(
 
   canvas.addEventListener("dblclick", (e) => {
     const node = hitTest(canvas, camera, graph, e.clientX, e.clientY);
-    if (node) {
-      // Smooth zoom to node
-      animateTo(camera, node.x, node.y, camera.zoom * 2, requestRender);
+    if (!node) return;
+    // Zoom to show the entire parent ecosystem (or the ecosystem itself)
+    const eco = node.tier === "ecosystem"
+      ? node
+      : graph.nodes.find(n => n.id === node.parent);
+    if (eco) {
+      const fit = Math.min(canvas.width, canvas.height) / (2 * eco.radius * 1.5);
+      animateTo(camera, eco.x, eco.y, fit, requestRender);
+    } else {
+      // Standalone node — center on it at a comfortable zoom
+      animateTo(camera, node.x, node.y, 3, requestRender);
     }
   });
 
