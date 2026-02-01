@@ -64,7 +64,7 @@ export function createGraph(): Graph {
     {
       id: "normalize",
       label: "normalize",
-      description: "Structural code intelligence across 98 languages",
+      description: "Understands the shape of code across languages",
       url: "https://docs.rhi.zone/normalize",
       tier: "project",
       parent: "rhi",
@@ -77,7 +77,7 @@ export function createGraph(): Graph {
     {
       id: "unshape",
       label: "unshape",
-      description: "Constructive media generation",
+      description: "Describing media into existence",
       url: "https://docs.rhi.zone/unshape",
       tier: "project",
       parent: "rhi",
@@ -103,7 +103,7 @@ export function createGraph(): Graph {
     {
       id: "moonlet",
       label: "moonlet",
-      description: "Lua runtime with plugin system",
+      description: "A small Lua engine that grows with plugins",
       url: "https://docs.rhi.zone/moonlet",
       tier: "project",
       parent: "rhi",
@@ -116,7 +116,7 @@ export function createGraph(): Graph {
     {
       id: "paraphase",
       label: "paraphase",
-      description: "Pipeline orchestrator for data conversion",
+      description: "Turns data from one shape into another",
       url: "https://docs.rhi.zone/paraphase",
       tier: "project",
       parent: "rhi",
@@ -129,7 +129,7 @@ export function createGraph(): Graph {
     {
       id: "dusklight",
       label: "dusklight",
-      description: "Universal UI client with control plane",
+      description: "One interface that connects to anything",
       url: "https://docs.rhi.zone/dusklight",
       tier: "project",
       parent: "rhi",
@@ -142,7 +142,7 @@ export function createGraph(): Graph {
     {
       id: "server-less",
       label: "server-less",
-      description: "One impl → many protocols",
+      description: "Write it once, speak every protocol",
       url: "https://docs.rhi.zone/server-less",
       tier: "project",
       parent: "rhi",
@@ -155,7 +155,7 @@ export function createGraph(): Graph {
     {
       id: "concord",
       label: "concord",
-      description: "API bindings IR and codegen",
+      description: "Generates the glue between languages",
       url: "https://docs.rhi.zone/concord",
       tier: "project",
       parent: "rhi",
@@ -168,7 +168,7 @@ export function createGraph(): Graph {
     {
       id: "rescribe",
       label: "rescribe",
-      description: "Lossless document conversion",
+      description: "Converts documents without losing anything",
       url: "https://docs.rhi.zone/rescribe",
       tier: "project",
       parent: "rhi",
@@ -181,7 +181,7 @@ export function createGraph(): Graph {
     {
       id: "playmate",
       label: "playmate",
-      description: "Game design primitives",
+      description: "Building blocks for making games",
       url: "https://docs.rhi.zone/playmate",
       tier: "project",
       parent: "rhi",
@@ -194,7 +194,7 @@ export function createGraph(): Graph {
     {
       id: "interconnect",
       label: "interconnect",
-      description: "Federation protocol for persistent worlds",
+      description: "How game worlds stay connected",
       url: "https://docs.rhi.zone/interconnect",
       tier: "project",
       parent: "rhi",
@@ -207,7 +207,7 @@ export function createGraph(): Graph {
     {
       id: "reincarnate",
       label: "reincarnate",
-      description: "Legacy software lifting",
+      description: "Bringing old software back to life",
       url: "https://docs.rhi.zone/reincarnate",
       tier: "project",
       parent: "rhi",
@@ -220,7 +220,7 @@ export function createGraph(): Graph {
     {
       id: "myenv",
       label: "myenv",
-      description: "Ecosystem orchestrator",
+      description: "Keeps all the pieces running together",
       url: "https://docs.rhi.zone/myenv",
       tier: "project",
       parent: "rhi",
@@ -233,7 +233,7 @@ export function createGraph(): Graph {
     {
       id: "portals",
       label: "portals",
-      description: "Standard library interfaces",
+      description: "Common ground between different tools",
       url: "https://docs.rhi.zone/portals",
       tier: "project",
       parent: "rhi",
@@ -246,7 +246,7 @@ export function createGraph(): Graph {
     {
       id: "zone",
       label: "zone",
-      description: "Lua-based tools and orchestration",
+      description: "Lua scripts that wire things together",
       url: "https://docs.rhi.zone/zone",
       tier: "project",
       parent: "rhi",
@@ -261,7 +261,7 @@ export function createGraph(): Graph {
     {
       id: "hologram",
       label: "hologram",
-      description: "Discord bot - entities with text-based definitions",
+      description: "A Discord bot where you describe things into existence",
       url: "https://docs.exo.place/hologram",
       tier: "project",
       parent: "exo",
@@ -274,7 +274,7 @@ export function createGraph(): Graph {
     {
       id: "aspect",
       label: "aspect",
-      description: "Card-based identity exploration sandbox",
+      description: "Exploring who you are through cards",
       url: "https://docs.exo.place/aspect",
       tier: "project",
       parent: "exo",
@@ -289,7 +289,7 @@ export function createGraph(): Graph {
     {
       id: "claude-code-hub",
       label: "claude-code-hub",
-      description: "Orchestration hub for Claude Code agents",
+      description: "Coordinates multiple Claude Code agents",
       url: "https://github.com/pterror/claude-code-hub",
       tier: "project",
       x: -80,
@@ -325,7 +325,7 @@ export function createGraph(): Graph {
     {
       id: "pad",
       label: "pad",
-      description: "CLI stdin sink - captures and structures data locally",
+      description: "Catches and organizes data from the terminal",
       url: "https://pterror.github.io/pad",
       tier: "project",
       x: 170,
@@ -337,7 +337,7 @@ export function createGraph(): Graph {
     {
       id: "lua",
       label: "lua",
-      description: "LuaJIT sandbox - libraries, bindings, and CLI experiments",
+      description: "A playground for Lua experiments",
       url: "https://github.com/pterror/lua",
       tier: "project",
       x: 50,
@@ -362,7 +362,7 @@ export function createGraph(): Graph {
     {
       id: "why-is-software-hard",
       label: "why is software hard?",
-      description: "You're not bad at computers. Software is actually hard to use.",
+      description: "You're not bad at computers.\nSoftware is actually hard to use.",
       tier: "project",
       x: -80,
       y: 140,
@@ -373,7 +373,7 @@ export function createGraph(): Graph {
     {
       id: "what-do-we-keep-losing",
       label: "what do we keep losing?",
-      description: "Technology isn't preserved by existence. It's preserved by continuous practice.",
+      description: "Technology isn't preserved by existence.\nIt's preserved by continuous practice.",
       tier: "project",
       x: 180,
       y: 140,

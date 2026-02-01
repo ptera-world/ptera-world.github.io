@@ -94,7 +94,11 @@ export function buildWorld(graph: Graph): void {
     if (node.description) {
       const desc = document.createElement("div");
       desc.className = "node-desc";
-      desc.textContent = node.description;
+      const parts = node.description.split("\n");
+      for (let i = 0; i < parts.length; i++) {
+        if (i > 0) desc.appendChild(document.createElement("br"));
+        desc.appendChild(document.createTextNode(parts[i]!));
+      }
       text.appendChild(desc);
     }
 
