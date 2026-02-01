@@ -32,7 +32,8 @@ export function buildWorld(graph: Graph): void {
   landingEl.innerHTML =
     `<div class="landing-name">ptera</div>` +
     `<div class="landing-body">i think about how software and people<br>shape each other.</div>` +
-    `<div class="landing-trail">this is a map of things i've been exploring.</div>`;
+    `<div class="landing-trail">this is a map of things i've been exploring.</div>` +
+    `<div class="landing-hint">scroll to zoom · click to explore · <kbd>/</kbd> to search</div>`;
   world.appendChild(landingEl);
 
   // Edges (behind nodes) — SVG lines for CSS-transitionable coordinates

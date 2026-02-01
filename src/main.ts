@@ -1,9 +1,9 @@
 import { createCamera } from "./camera";
 import { createGraph } from "./graph";
-import { buildWorld, updateTransform, setFilterRef, setFocus, animateTo, updatePositions } from "./dom";
+import { buildWorld, updateTransform, setFilterRef, updatePositions } from "./dom";
 import { setupInput } from "./input";
-import { initPanel, openPanel } from "./panel";
-import { showCard, hideCard } from "./card";
+import { initPanel } from "./panel";
+import { hideCard } from "./card";
 import { createFilter, buildFilterUI, applyFilter, getVisibleIds } from "./filter";
 import { runLayout, resetLayout } from "./layout";
 
@@ -27,7 +27,7 @@ buildFilterUI(document.getElementById("filter-bar")!, filter, () => {
 });
 
 updateTransform(camera);
-setupInput(document.getElementById("viewport")!, camera, graph);
+const input = setupInput(document.getElementById("viewport")!, camera, graph);
 initPanel(camera, graph);
 
 // Handle ?focus= query param
@@ -35,9 +35,8 @@ const focusId = new URLSearchParams(location.search).get("focus");
 if (focusId) {
   const node = graph.nodes.find((n) => n.id === focusId);
   if (node) {
-    setFocus(graph, node);
-    animateTo(camera, node.x, node.y, 3);
-    showCard(node, graph);
+    input.navigateTo(node, false);
+    history.replaceState({ focus: node.id }, "", `?focus=${node.id}`);
   }
 }
 

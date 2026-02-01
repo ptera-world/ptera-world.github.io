@@ -3,12 +3,17 @@ import type { Graph, Node } from "./graph";
 import { updateTransform, setFocus, getHitNode, animateTo } from "./dom";
 import { showCard, hideCard, isCardOpen, setCardNavigate } from "./card";
 import { isPanelOpen, closePanel, openPanel } from "./panel";
+import { initSearch, openSearch, closeSearch, isSearchOpen } from "./search";
+
+export interface InputHandle {
+  navigateTo(node: Node, push?: boolean): void;
+}
 
 export function setupInput(
   viewport: HTMLElement,
   camera: Camera,
   graph: Graph,
-): void {
+): InputHandle {
   let dragging = false;
   let lastX = 0;
   let lastY = 0;
@@ -16,16 +21,36 @@ export function setupInput(
   let downY = 0;
   let focusedNode: Node | null = null;
 
-  setCardNavigate((node) => {
+  // --- Navigation helpers ---
+
+  function navigateTo(node: Node, push = true): void {
     focusedNode = node;
+    setFocus(graph, node);
     if (isPanelOpen()) {
       openPanel(node.id, node.label);
     } else {
       showCard(node, graph);
     }
     animateTo(camera, node.x, node.y, 3);
-    setFocus(graph, node);
-  });
+    if (push) {
+      history.pushState({ focus: node.id }, "", `?focus=${node.id}`);
+    }
+  }
+
+  function clearFocus(push = true): void {
+    focusedNode = null;
+    setFocus(graph, null);
+    hideCard();
+    if (push) {
+      history.pushState(null, "", location.pathname);
+    }
+  }
+
+  // --- Card cross-link navigation ---
+
+  setCardNavigate((node) => navigateTo(node));
+
+  // --- Mouse ---
 
   viewport.addEventListener("mousedown", (e) => {
     dragging = true;
@@ -80,25 +105,17 @@ export function setupInput(
     if (dx * dx + dy * dy > 16 * 16) return;
     const node = getHitNode(e.target);
     if (node) {
-      focusedNode = node;
-      setFocus(graph, node);
       if (e.ctrlKey || e.metaKey) {
         window.open(`/${node.id}`, "_blank");
         return;
       }
-      if (isPanelOpen()) {
-        openPanel(node.id, node.label);
-      } else {
-        showCard(node, graph);
-      }
+      navigateTo(node);
     } else if (isPanelOpen()) {
       closePanel();
     } else if (isCardOpen()) {
       hideCard();
     } else {
-      // Background click with nothing open - clear focus
-      focusedNode = null;
-      setFocus(graph, null);
+      clearFocus();
     }
   });
 
@@ -142,15 +159,53 @@ export function setupInput(
     updateTransform(camera);
   }, { passive: false });
 
-  // Escape
+  // --- Keyboard ---
+
   document.addEventListener("keydown", (e) => {
+    // Escape: close the topmost overlay
     if (e.key === "Escape") {
-      if (isPanelOpen()) closePanel();
-      else if (isCardOpen()) hideCard();
+      if (isSearchOpen()) { closeSearch(); return; }
+      if (isPanelOpen()) { closePanel(); return; }
+      if (isCardOpen()) { hideCard(); return; }
+      if (focusedNode) { clearFocus(); return; }
+      return;
+    }
+
+    // Don't handle other keys when typing in an input
+    const tag = (e.target as HTMLElement).tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA") return;
+
+    // Search
+    if (e.key === "/" || (e.key === "k" && (e.ctrlKey || e.metaKey))) {
+      e.preventDefault();
+      openSearch();
+      return;
+    }
+
+    // Arrow key traversal between connected nodes
+    const dir = arrowDir(e.key);
+    if (dir && focusedNode) {
+      e.preventDefault();
+      const next = bestNeighbor(focusedNode, dir, graph);
+      if (next) navigateTo(next);
     }
   });
 
-  // Touch
+  // --- History (popstate) ---
+
+  window.addEventListener("popstate", (e) => {
+    const id = (e.state as { focus?: string } | null)?.focus
+      ?? new URLSearchParams(location.search).get("focus");
+    if (id) {
+      const node = graph.nodes.find(n => n.id === id);
+      if (node) navigateTo(node, false);
+    } else {
+      clearFocus(false);
+    }
+  });
+
+  // --- Touch ---
+
   let lastTouchDist = 0;
   viewport.addEventListener("touchstart", (e) => {
     if (e.touches.length === 1) {
@@ -179,6 +234,49 @@ export function setupInput(
   }, { passive: false });
 
   viewport.addEventListener("touchend", () => { dragging = false; });
+
+  // --- Search init ---
+
+  initSearch(graph.nodes, (node) => navigateTo(node));
+
+  return { navigateTo };
+}
+
+function arrowDir(key: string): [number, number] | null {
+  switch (key) {
+    case "ArrowRight": return [1, 0];
+    case "ArrowLeft": return [-1, 0];
+    case "ArrowUp": return [0, -1];
+    case "ArrowDown": return [0, 1];
+    default: return null;
+  }
+}
+
+function bestNeighbor(from: Node, dir: [number, number], graph: Graph): Node | null {
+  const candidates = new Set<string>();
+  for (const edge of graph.edges) {
+    if (edge.from === from.id) candidates.add(edge.to);
+    if (edge.to === from.id) candidates.add(edge.from);
+  }
+
+  let best: Node | null = null;
+  let bestScore = 0.2; // minimum cosine threshold
+
+  for (const id of candidates) {
+    const node = graph.nodes.find(n => n.id === id);
+    if (!node) continue;
+    const dx = node.x - from.x;
+    const dy = node.y - from.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist === 0) continue;
+    const cos = (dx * dir[0] + dy * dir[1]) / dist;
+    if (cos > bestScore) {
+      bestScore = cos;
+      best = node;
+    }
+  }
+
+  return best;
 }
 
 function touchDist(e: TouchEvent): number {
@@ -186,4 +284,3 @@ function touchDist(e: TouchEvent): number {
   const dy = e.touches[0]!.clientY - e.touches[1]!.clientY;
   return Math.sqrt(dx * dx + dy * dy);
 }
-
