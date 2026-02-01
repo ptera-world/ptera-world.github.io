@@ -10,6 +10,13 @@ export function runLayout(graph: Graph, visibleIds: Set<string>): void {
   );
   if (nodes.length === 0) return;
 
+  // Fade layout effect to zero as visible count approaches half of all nodes
+  const totalNonEco = graph.nodes.filter((n) => n.tier !== "ecosystem").length;
+  const THRESHOLD = 0.45;
+  const ratio = nodes.length / totalNonEco;
+  const weight = Math.max(0, (THRESHOLD - ratio) / THRESHOLD);
+  if (weight === 0) return;
+
   const nodeMap = new Map(graph.nodes.map((n) => [n.id, n]));
   const edges = graph.edges.filter(
     (e) => visibleIds.has(e.from) && visibleIds.has(e.to),
@@ -110,6 +117,14 @@ export function runLayout(graph: Graph, visibleIds: Set<string>): void {
     }
 
     if (maxV < 0.5) break;
+  }
+
+  // Blend toward base positions: weight 1 = full layout, 0 = base
+  if (weight < 1) {
+    for (const n of nodes) {
+      n.x = n.baseX + (n.x - n.baseX) * weight;
+      n.y = n.baseY + (n.y - n.baseY) * weight;
+    }
   }
 }
 
