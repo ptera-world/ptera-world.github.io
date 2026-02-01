@@ -60,6 +60,38 @@ export function applyFilter(filter: FilterState, graph: Graph): void {
 
   const filtering = filter.active.size > 0;
 
+  // Compute filter strength for non-visible project nodes
+  const structural = new Set(["project", "ecosystem"]);
+  const filterStrength = new Map<string, number>();
+
+  if (filtering) {
+    for (const node of graph.nodes) {
+      if (visible.has(node.id) || node.tags.includes("ecosystem")) continue;
+
+      let maxStr = 0;
+      const nodeTags = new Set(node.tags.filter((t) => !structural.has(t)));
+
+      // Edge strength to any visible node
+      for (const edge of graph.edges) {
+        if (edge.from === node.id && visible.has(edge.to)) maxStr = Math.max(maxStr, edge.strength);
+        if (edge.to === node.id && visible.has(edge.from)) maxStr = Math.max(maxStr, edge.strength);
+      }
+
+      // Tag similarity to visible nodes
+      for (const vId of visible) {
+        const vNode = graph.nodes.find((n) => n.id === vId);
+        if (!vNode || vNode.tags.includes("ecosystem")) continue;
+        const vTags = new Set(vNode.tags.filter((t) => !structural.has(t)));
+        let shared = 0;
+        for (const t of nodeTags) if (vTags.has(t)) shared++;
+        const union = new Set([...nodeTags, ...vTags]).size;
+        if (union > 0) maxStr = Math.max(maxStr, shared / union);
+      }
+
+      if (maxStr > 0) filterStrength.set(node.id, maxStr);
+    }
+  }
+
   // Apply to DOM nodes
   for (const node of graph.nodes) {
     const el = nodeEls.get(node.id);
@@ -86,20 +118,35 @@ export function applyFilter(filter: FilterState, graph: Graph): void {
       }
     } else if (visible.has(node.id)) {
       delete el.dataset.filtered;
+      el.style.removeProperty("--filter-strength");
+    } else if (filterStrength.has(node.id)) {
+      el.dataset.filtered = "adjacent";
+      el.style.setProperty("--filter-strength", `${filterStrength.get(node.id)}`);
     } else {
       el.dataset.filtered = "hidden";
+      el.style.removeProperty("--filter-strength");
     }
   }
 
-  // Apply to DOM edges - hide only when BOTH endpoints are filtered out
+  // Apply to DOM edges
+  const nodeStr = (id: string) => visible.has(id) ? 1 : (filterStrength.get(id) ?? 0);
   const edges = document.querySelectorAll<HTMLElement>(".edge[data-from]");
   for (const el of edges) {
     const from = el.dataset.from!;
     const to = el.dataset.to!;
-    if (!visible.has(from) && !visible.has(to)) {
-      el.dataset.filtered = "hidden";
+    const fromStr = nodeStr(from);
+    const toStr = nodeStr(to);
+    if (fromStr > 0 && toStr > 0) {
+      if (fromStr < 1 || toStr < 1) {
+        el.dataset.filtered = "adjacent";
+        el.style.setProperty("--filter-strength", `${Math.min(fromStr, toStr)}`);
+      } else {
+        delete el.dataset.filtered;
+        el.style.removeProperty("--filter-strength");
+      }
     } else {
-      delete el.dataset.filtered;
+      el.dataset.filtered = "hidden";
+      el.style.removeProperty("--filter-strength");
     }
   }
 }

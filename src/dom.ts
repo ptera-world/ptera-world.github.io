@@ -251,8 +251,10 @@ export function setFocus(graph: Graph, hovered: Node | null): void {
       if (ref.el.dataset.filtered === "hidden") {
         const fromEl = nodeEls.get(ref.from);
         const toEl = nodeEls.get(ref.to);
-        const fromVisible = !fromEl?.dataset.filtered || fromEl.dataset.filtered === "surfaced";
-        const toVisible = !toEl?.dataset.filtered || toEl.dataset.filtered === "surfaced";
+        const fv = fromEl?.dataset.filtered;
+        const fromVisible = !fv || fv === "surfaced" || fv === "adjacent";
+        const tv = toEl?.dataset.filtered;
+        const toVisible = !tv || tv === "surfaced" || tv === "adjacent";
         if (fromVisible && toVisible && focused.has(ref.from) && focused.has(ref.to)) {
           ref.el.dataset.filtered = "surfaced";
         }

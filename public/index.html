@@ -238,9 +238,11 @@
     .filter-pill:hover { border-color: #888; }
     .filter-pill[data-active] { background: #2a2a2a; color: #ddd; border-color: #666; }
 
-    /* Filtered / surfaced states */
+    /* Filtered / surfaced / adjacent states */
     .node[data-filtered="hidden"],
     .edge[data-filtered="hidden"] { opacity: 0.08; pointer-events: none; }
+    .node[data-filtered="adjacent"] { opacity: calc(0.12 + 0.5 * var(--filter-strength, 0.5)); }
+    .edge[data-filtered="adjacent"] { opacity: calc(0.06 + 0.3 * var(--filter-strength, 0.5)); }
     .node[data-filtered="surfaced"] { opacity: 0.4; pointer-events: auto; }
     .edge[data-filtered="surfaced"] { opacity: 0.3; }
 
