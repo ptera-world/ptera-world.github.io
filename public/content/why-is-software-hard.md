@@ -87,7 +87,7 @@ This isn't magic. It's choices. Someone decided to prioritize your experience ov
 
 Software is hard because the people building it benefit from it being hard, or don't prioritize it being easy, or simply don't know how to make it easier.
 
-This isn't inevitable. Different incentives produce different software. The tools that feel good to use prove it's possible. The question is why they're the exception rather than the rule.
+This isn't inevitable. Different incentives produce different software. The tools that feel good to use prove it's possible. The question is [why they're the exception](/whats-actually-wrong) rather than the rule.
 
 ## See also
 

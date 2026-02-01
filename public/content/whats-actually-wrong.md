@@ -67,7 +67,7 @@ It's a game. It has mechanics, rewards, feedback loops. But optimized for what?
 - **Social comparison baked in** - Likes, followers, metrics. Your worth as a number.
 - **Outrage spreads faster** - Anger is engaging. Calm isn't. The algorithm knows.
 - **Performative connection** - Curated highlights. Not real relationships.
-- **Asymmetry baked in** - One broadcasts, millions consume. Parasocial by design.
+- **Asymmetry baked in** - One broadcasts, millions consume. [Parasocial by design](#why-are-people-sad).
 - **Designed to be addictive** - Not an accident. Not a side effect. The goal.
 - **Your attention is the product** - You're not the customer. Advertisers are.
 - **No endpoint** - Good games end. Social media never does. There's always more scroll.
@@ -92,7 +92,7 @@ Different design choices lead to different outcomes. Discord isn't trying to max
 
 Not all software. But a lot of it.
 
-- **Complexity as moat** - Hard to learn = hard to leave. Captured users.
+- **[Complexity as moat](/why-is-software-hard)** - Hard to learn = hard to leave. Captured users.
 - **Features over simplicity** - More checkboxes on the marketing page. Worse actual experience.
 - **Growth at all costs** - Users are metrics. Engagement is the goal. Wellbeing is irrelevant.
 - **Advertising model** - If you're not paying, you're the product. Your attention is sold.
