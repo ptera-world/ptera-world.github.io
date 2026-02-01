@@ -130,7 +130,7 @@ export function applyFilter(filter: FilterState, graph: Graph): void {
 
   // Apply to DOM edges
   const nodeStr = (id: string) => visible.has(id) ? 1 : (filterStrength.get(id) ?? 0);
-  const edges = document.querySelectorAll<HTMLElement>(".edge[data-from]");
+  const edges = document.querySelectorAll<SVGPathElement>(".edge[data-from]");
   for (const el of edges) {
     const from = el.dataset.from!;
     const to = el.dataset.to!;

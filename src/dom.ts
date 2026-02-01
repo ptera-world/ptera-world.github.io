@@ -7,7 +7,7 @@ const viewport = document.getElementById("viewport")!;
 const world = document.getElementById("world")!;
 
 interface EdgeRef {
-  el: HTMLElement;
+  el: SVGPathElement;
   from: string;
   to: string;
   labelEl: HTMLElement | null;
@@ -35,28 +35,26 @@ export function buildWorld(graph: Graph): void {
     `<div class="landing-trail">this is a map of things i've been exploring.</div>`;
   world.appendChild(landingEl);
 
-  // Edges (behind nodes)
+  // Edges (behind nodes) — SVG lines for CSS-transitionable coordinates
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(SVG_NS, "svg");
+  svg.id = "edge-layer";
+  world.appendChild(svg);
+
   for (const edge of graph.edges) {
     const from = graph.nodes.find(n => n.id === edge.from);
     const to = graph.nodes.find(n => n.id === edge.to);
     if (!from || !to) continue;
 
-    const dx = to.x - from.x;
-    const dy = to.y - from.y;
-    const len = Math.sqrt(dx * dx + dy * dy);
-    const angle = Math.atan2(dy, dx);
+    const path = document.createElementNS(SVG_NS, "path");
+    path.classList.add("edge");
+    if (to.parent === edge.from) path.dataset.type = "containment";
+    path.dataset.from = from.id;
+    path.dataset.to = to.id;
+    path.style.setProperty("d", `path("M ${from.x} ${from.y} L ${to.x} ${to.y}")`);
+    svg.appendChild(path);
 
-    const el = document.createElement("div");
-    el.className = "edge";
-    if (to.parent === edge.from) el.dataset.type = "containment";
-    el.dataset.from = from.id;
-    el.dataset.to = to.id;
-    el.style.left = `${from.x}px`;
-    el.style.top = `${from.y}px`;
-    el.style.transform = `rotate(${angle}rad) scaleX(${len})`;
-    world.appendChild(el);
-
-    edgeRefs.push({ el, from: from.id, to: to.id, labelEl: null });
+    edgeRefs.push({ el: path, from: from.id, to: to.id, labelEl: null });
   }
 
   // Nodes
@@ -285,15 +283,6 @@ export function updatePositions(graph: Graph): void {
     const to = nodeMap.get(ref.to);
     if (!from || !to) continue;
 
-    const dx = to.x - from.x;
-    const dy = to.y - from.y;
-    const len = Math.sqrt(dx * dx + dy * dy);
-    const angle = Math.atan2(dy, dx);
-
-    const fromDx = from.x - from.baseX;
-    const fromDy = from.y - from.baseY;
-    ref.el.style.translate =
-      fromDx === 0 && fromDy === 0 ? "" : `${fromDx}px ${fromDy}px`;
-    ref.el.style.transform = `rotate(${angle}rad) scaleX(${len})`;
+    ref.el.style.setProperty("d", `path("M ${from.x} ${from.y} L ${to.x} ${to.y}")`);
   }
 }

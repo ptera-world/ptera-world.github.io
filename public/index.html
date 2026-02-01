@@ -17,11 +17,19 @@
     #viewport.dragging .node-hit { pointer-events: none; }
     #world { position: absolute; top: 0; left: 0; transform-origin: 0 0; --zoom: 1; }
 
+    /* Edge SVG container */
+    #edge-layer {
+      position: absolute; top: 0; left: 0;
+      width: 1px; height: 1px; overflow: visible;
+      pointer-events: none;
+    }
+
     /* Edges */
     .edge {
-      position: absolute; width: 1px; height: 1px; background: #555;
-      transform-origin: 0 50%; pointer-events: none;
-      opacity: 0.4; transition: opacity 200ms;
+      stroke: #555; stroke-width: 1;
+      opacity: 0.4; pointer-events: none;
+      transition: d 400ms ease-out,
+                  opacity 200ms, stroke-width 200ms, stroke 200ms;
     }
     .edge-label {
       position: absolute;
@@ -109,7 +117,7 @@
     #world[data-hovering] .node.focused { opacity: calc(0.3 + 0.7 * var(--fs, 1)); scale: calc(1 + 0.08 * var(--fs, 1)); }
     #world[data-hovering] .node[data-filtered="hidden"] { opacity: 0.08; }
     #world[data-hovering] .edge { opacity: 0.12; }
-    #world[data-hovering] .edge.focused { opacity: calc(0.2 + 0.5 * var(--es, 0.7)); height: calc(1px + 0.5px * var(--es, 0.7)); background: #aaa; }
+    #world[data-hovering] .edge.focused { opacity: calc(0.2 + 0.5 * var(--es, 0.7)); stroke-width: calc(1 + 0.5 * var(--es, 0.7)); stroke: #aaa; }
     #world[data-hovering] .edge[data-filtered="hidden"] { opacity: 0.06; }
     #world[data-hovering] .edge-label { opacity: 0; }
     #world[data-hovering][data-tier="mid"] .edge-label.focused,
