@@ -22,26 +22,14 @@ buildFilterUI(document.getElementById("filter-bar")!, filter, () => {
     runLayout(graph, vis);
     updatePositions(graph);
 
-    // Fit camera to visible non-ecosystem nodes
-    const vp = document.getElementById("viewport")!;
+    // Center camera on visible non-ecosystem nodes (keep current zoom)
     const visible = graph.nodes.filter(
       (n) => vis.has(n.id) && n.tier !== "ecosystem",
     );
     if (visible.length > 0) {
-      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-      for (const n of visible) {
-        minX = Math.min(minX, n.x);
-        maxX = Math.max(maxX, n.x);
-        minY = Math.min(minY, n.y);
-        maxY = Math.max(maxY, n.y);
-      }
-      const cx = (minX + maxX) / 2;
-      const cy = (minY + maxY) / 2;
-      const pad = 200;
-      const zoomX = vp.clientWidth / (maxX - minX + pad);
-      const zoomY = vp.clientHeight / (maxY - minY + pad);
-      const zoom = Math.min(Math.max(Math.min(zoomX, zoomY), 1.5), 3.5);
-      animateTo(camera, cx, cy, zoom);
+      let sumX = 0, sumY = 0;
+      for (const n of visible) { sumX += n.x; sumY += n.y; }
+      animateTo(camera, sumX / visible.length, sumY / visible.length, camera.zoom);
     }
   } else {
     resetLayout(graph);
