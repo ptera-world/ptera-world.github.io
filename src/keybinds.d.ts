@@ -2,6 +2,7 @@ declare module "keybinds" {
   export interface Command {
     id: string;
     label: string;
+    description?: string;
     category?: string;
     keys?: string[];
     mouse?: string[];
@@ -13,6 +14,7 @@ declare module "keybinds" {
 
   export type Schema = Record<string, {
     label: string;
+    description?: string;
     category?: string;
     keys?: string[];
     mouse?: string[];
@@ -42,6 +44,7 @@ declare module "keybinds" {
     commands: Command[];
     context: Record<string, unknown>;
     open: boolean;
+    placeholder: string;
     matcher: ((query: string, text: string) => { score: number; positions?: number[] } | null) | undefined;
   }
 

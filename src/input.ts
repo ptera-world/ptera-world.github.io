@@ -4,7 +4,6 @@ import { updateTransform, setFocus, getHitNode, animateTo } from "./dom";
 import { showCard, hideCard, isCardOpen, setCardNavigate } from "./card";
 import { isPanelOpen, closePanel, openPanel } from "./panel";
 
-import { initSearch, openSearch, closeSearch, isSearchOpen } from "./search";
 import { keybinds, defineSchema, fromBindings, registerComponents, fuzzyMatcher } from "keybinds";
 import type { Command } from "keybinds";
 
@@ -74,6 +73,7 @@ export function setupInput(
   let downX = 0;
   let downY = 0;
   let focusedNode: Node | null = null;
+  let paletteEl: import("keybinds").CommandPalette;
 
   // --- Navigation helpers ---
 
@@ -223,12 +223,11 @@ export function setupInput(
 
   const handlers: Record<string, (ctx: Record<string, unknown>, event?: Event) => unknown> = {
     close: () => {
-      if (isSearchOpen()) { closeSearch(); return; }
       if (isPanelOpen()) { closePanel(); return; }
       if (isCardOpen()) { hideCard(); return; }
       if (focusedNode) { clearFocus(); return; }
     },
-    search: () => openSearch(),
+    search: () => { paletteEl.open = true; },
     "nav-right": () => arrowNav([1, 0]),
     "nav-left": () => arrowNav([-1, 0]),
     "nav-up": () => arrowNav([0, -1]),
@@ -262,6 +261,7 @@ export function setupInput(
     return {
       id: `go-to-${node.id}`,
       label: node.label,
+      description: node.description.split("\n")[0],
       category,
       execute: () => navigateTo(node),
     };
@@ -269,7 +269,6 @@ export function setupInput(
 
   keybinds(commands, () => ({
     hasFocus: !!focusedNode,
-    searchOpen: isSearchOpen(),
     panelOpen: isPanelOpen(),
     cardOpen: isCardOpen(),
   }));
@@ -320,8 +319,6 @@ export function setupInput(
 
   // --- Search init ---
 
-  initSearch(graph.nodes, (node) => navigateTo(node));
-
   const allCommands = [...commands, ...nodeCommands];
 
   // --- Web components (palette + cheatsheet) ---
@@ -335,7 +332,9 @@ export function setupInput(
   }
 
   const palette = document.createElement("command-palette") as import("keybinds").CommandPalette;
+  paletteEl = palette;
   palette.setAttribute("auto-trigger", "");
+  palette.setAttribute("placeholder", "Search nodes, essays, commands\u2026");
   palette.commands = allCommands;
   palette.context = {};
   palette.matcher = ((query: string, text: string) => {
