@@ -120,7 +120,12 @@ export function setupInput(
   }
 
   function arrowNav(dir: [number, number]): void {
-    if (!focusedNode) return;
+    if (!focusedNode) {
+      // Pick the nearest visible node to the camera center
+      const nearest = nearestToCamera(graph, camera);
+      if (nearest) navigateTo(nearest);
+      return;
+    }
     const next = bestNeighbor(focusedNode, dir, graph, camera);
     if (next) navigateTo(next);
   }
@@ -589,6 +594,26 @@ function bestNeighbor(from: Node, dir: [number, number], graph: Graph, camera: C
   }
 
   return bestSpatial;
+}
+
+function nearestToCamera(graph: Graph, camera: Camera): Node | null {
+  const tier = currentTier(camera);
+  let best: Node | null = null;
+  let bestDist = Infinity;
+  for (const node of graph.nodes) {
+    if (tier === "far" && node.tier !== "ecosystem") continue;
+    if (tier !== "far" && node.tier === "ecosystem") continue;
+    const el = nodeEls.get(node.id);
+    if (el?.dataset.filtered === "hidden") continue;
+    const dx = node.x - camera.x;
+    const dy = node.y - camera.y;
+    const dist = dx * dx + dy * dy;
+    if (dist < bestDist) {
+      bestDist = dist;
+      best = node;
+    }
+  }
+  return best;
 }
 
 function touchDist(e: TouchEvent): number {
