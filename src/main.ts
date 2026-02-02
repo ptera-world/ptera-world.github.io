@@ -60,6 +60,7 @@ createMinimap(camera, graph, (x, y, animate) => {
   }
 });
 updateTransform(camera);
+window.addEventListener("resize", () => updateTransform(camera));
 const input = setupInput(document.getElementById("viewport")!, camera, graph);
 initPanel(camera, graph);
 

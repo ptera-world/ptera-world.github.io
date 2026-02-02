@@ -48,9 +48,6 @@ export function createMinimap(
 
   viewportEl.appendChild(canvas);
 
-  // Redraw on resize so viewport rect stays accurate
-  window.addEventListener("resize", () => updateMinimap(camera));
-
   // Click + drag to pan camera
   let dragging = false;
   let grabOffsetX = 0;
