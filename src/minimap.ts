@@ -15,6 +15,7 @@ const HEIGHT = Math.round(WIDTH * (WORLD_H / WORLD_W));
 let canvas: HTMLCanvasElement;
 let ctx: CanvasRenderingContext2D;
 let graphRef: Graph;
+let viewportEl: HTMLElement;
 
 function worldToMinimap(wx: number, wy: number): [number, number] {
   return [
@@ -36,6 +37,7 @@ export function createMinimap(
   panTo: (x: number, y: number, animate: boolean) => void,
 ): void {
   graphRef = graph;
+  viewportEl = document.getElementById("viewport")!;
 
   canvas = document.createElement("canvas");
   canvas.id = "minimap";
@@ -44,7 +46,10 @@ export function createMinimap(
   canvas.setAttribute("aria-hidden", "true");
   ctx = canvas.getContext("2d")!;
 
-  document.getElementById("viewport")!.appendChild(canvas);
+  viewportEl.appendChild(canvas);
+
+  // Redraw on resize so viewport rect stays accurate
+  window.addEventListener("resize", () => updateMinimap(camera));
 
   // Click + drag to pan camera
   let dragging = false;
@@ -102,9 +107,9 @@ export function updateMinimap(camera: Camera): void {
   }
   ctx.globalAlpha = 1;
 
-  // Draw viewport rectangle
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
+  // Draw viewport rectangle (use viewport element, not window, to account for panel)
+  const vw = viewportEl.clientWidth;
+  const vh = viewportEl.clientHeight;
   const viewLeft = camera.x - vw / (2 * camera.zoom);
   const viewTop = camera.y - vh / (2 * camera.zoom);
   const viewRight = camera.x + vw / (2 * camera.zoom);
