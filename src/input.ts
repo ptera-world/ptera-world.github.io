@@ -1,7 +1,7 @@
 import type { Camera } from "./camera";
 import { currentTier } from "./camera";
 import type { Graph, Node } from "./graph";
-import { updateTransform, setFocus, getHitNode, animateTo, nodeEls } from "./dom";
+import { updateTransform, setFocus, getHitNode, animateTo, nodeEls, landingEl } from "./dom";
 import { showCard, hideCard, isCardOpen, setCardNavigate } from "./card";
 import { isPanelOpen, closePanel, openPanel } from "./panel";
 
@@ -202,6 +202,13 @@ export function setupInput(
     } else {
       clearFocus();
     }
+  });
+
+  // Landing click: navigate to pteraworld node
+  landingEl.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const pteraworld = graph.nodes.find((n) => n.id === "pteraworld");
+    if (pteraworld) navigateTo(pteraworld);
   });
 
   // Double-click: zoom to fit ecosystem

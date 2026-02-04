@@ -6,7 +6,7 @@ export interface Node {
   label: string;
   description: string;
   url?: string;
-  tier: "ecosystem" | "project" | "detail";
+  tier: "ecosystem" | "project" | "detail" | "meta";
   /** Parent ecosystem id, if any. */
   parent?: string;
   /** Current position (mutated by layout). */
@@ -231,6 +231,19 @@ export function createGraph(): Graph {
   ]);
 
   const defs: Omit<Node, "baseX" | "baseY">[] = [
+    // Meta (landing)
+    {
+      id: "pteraworld",
+      label: "ptera",
+      description: "i think about how software and people shape each other.",
+      tier: "meta",
+      x: 0,
+      y: -120,
+      radius: 0,
+      color: "#fff",
+      tags: ["meta"],
+    },
+
     // Ecosystems
     {
       id: "rhi",

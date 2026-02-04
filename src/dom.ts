@@ -17,7 +17,7 @@ interface EdgeRef {
 export const nodeEls = new Map<string, HTMLElement>();
 const hitNodes = new Map<HTMLElement, Node>();
 const edgeRefs: EdgeRef[] = [];
-let landingEl: HTMLElement;
+export let landingEl: HTMLElement;
 
 let filterRef: FilterState | null = null;
 const surfacedNodes = new Set<string>();
@@ -66,6 +66,9 @@ export function buildWorld(graph: Graph): void {
 
   // Nodes
   for (const node of graph.nodes) {
+    // Meta nodes (e.g. pteraworld) use the landing element, not a rendered dot
+    if (node.tier === "meta") continue;
+
     const el = document.createElement("div");
     el.className = `node ${node.tier}`;
     el.dataset.id = node.id;
