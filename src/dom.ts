@@ -5,7 +5,7 @@ import type { FilterState } from "./filter";
 import { updateMinimap } from "./minimap";
 
 const viewport = document.getElementById("viewport")!;
-const world = document.getElementById("world")!;
+export const worldEl = document.getElementById("world")!;
 
 interface EdgeRef {
   el: SVGPathElement;
@@ -45,13 +45,13 @@ export function buildWorld(graph: Graph): void {
     `<div class="landing-body">i think about how software and people<br>shape each other.</div>` +
     `<div class="landing-trail">this is a map of things i've been exploring.</div>` +
     `<div class="landing-hint">scroll to zoom · click to explore · <kbd>/</kbd> to search</div>`;
-  world.appendChild(landingEl);
+  worldEl.appendChild(landingEl);
 
   // Edges (behind nodes) — SVG lines for CSS-transitionable coordinates
   const SVG_NS = "http://www.w3.org/2000/svg";
   svgLayer = document.createElementNS(SVG_NS, "svg");
   svgLayer.id = "edge-layer";
-  world.appendChild(svgLayer);
+  worldEl.appendChild(svgLayer);
 
   for (const edge of graph.edges) {
     const from = graph.nodes.find(n => n.id === edge.from);
@@ -127,7 +127,7 @@ export function buildWorld(graph: Graph): void {
     }
 
     el.appendChild(text);
-    world.appendChild(el);
+    worldEl.appendChild(el);
     nodeEls.set(node.id, el);
   }
 }
@@ -135,9 +135,9 @@ export function buildWorld(graph: Graph): void {
 export function updateTransform(camera: Camera): void {
   const tx = viewport.clientWidth / 2 - camera.x * camera.zoom;
   const ty = viewport.clientHeight / 2 - camera.y * camera.zoom;
-  world.style.transform = `translate(${tx}px, ${ty}px) scale(${camera.zoom})`;
-  world.style.setProperty("--zoom", `${camera.zoom}`);
-  world.dataset.tier = currentTier(camera);
+  worldEl.style.transform = `translate(${tx}px, ${ty}px) scale(${camera.zoom})`;
+  worldEl.style.setProperty("--zoom", `${camera.zoom}`);
+  worldEl.dataset.tier = currentTier(camera);
   const landingOpacity = Math.max(0, Math.min(1, (3.0 - camera.zoom) / 1.5));
   landingEl.style.opacity = `${landingOpacity}`;
   updateMinimap(camera);
@@ -178,7 +178,7 @@ export function setFocus(graph: Graph, hovered: Node | null, announceNav = false
   surfacedNodes.clear();
 
   if (!hovered) {
-    delete world.dataset.hovering;
+    delete worldEl.dataset.hovering;
     for (const el of nodeEls.values()) {
       el.classList.remove("focused");
       el.style.removeProperty("--fs");
@@ -191,7 +191,7 @@ export function setFocus(graph: Graph, hovered: Node | null, announceNav = false
     return;
   }
 
-  world.dataset.hovering = "";
+  worldEl.dataset.hovering = "";
 
   if (announceNav) {
     announce(`Focused on ${hovered.label}`);
@@ -428,7 +428,7 @@ export function fadeInRegions(
     const el = createRegionElement(region);
     el.style.opacity = "0";
     el.style.transition = `opacity ${duration}ms ease-in`;
-    world.appendChild(el);
+    worldEl.appendChild(el);
     regionEls.set(region.id, el);
     regionPositions.set(region.id, { x: region.x, y: region.y });
 

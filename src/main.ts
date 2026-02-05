@@ -1,6 +1,6 @@
 import { createCamera } from "./camera";
 import { createGraph } from "./graph";
-import { buildWorld, updateTransform, setFilterRef, updatePositions, animateTo } from "./dom";
+import { buildWorld, updateTransform, setFilterRef, updatePositions, animateTo, worldEl } from "./dom";
 import { setupInput } from "./input";
 import { initPanel } from "./panel";
 import { hideCard } from "./card";
@@ -11,6 +11,9 @@ import { initGroupingState, buildGroupingUI, restoreGroupingFromUrl } from "./gr
 
 const camera = createCamera();
 const graph = createGraph();
+
+// Disable transitions during initial setup
+worldEl.dataset.noTransition = "";
 
 buildWorld(graph);
 
@@ -70,14 +73,19 @@ window.addEventListener("resize", () => updateTransform(camera));
 const input = setupInput(document.getElementById("viewport")!, camera, graph);
 initPanel(camera, graph);
 
-// Handle ?focus= query param
+// Handle ?focus= query param (snap without animation on page load)
 const focusId = new URLSearchParams(location.search).get("focus");
 if (focusId) {
   const node = graph.nodes.find((n) => n.id === focusId);
   if (node) {
-    input.navigateTo(node, false);
+    input.navigateTo(node, false, false);
   }
 }
+
+// Re-enable transitions after initial setup
+requestAnimationFrame(() => {
+  delete worldEl.dataset.noTransition;
+});
 
 // Restore filters on popstate (back/forward)
 function syncFilterPills(): void {

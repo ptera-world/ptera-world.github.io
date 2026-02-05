@@ -55,6 +55,8 @@
       transform: translate(-50%, -50%);
       transition: opacity 200ms, translate 400ms ease-out, scale 200ms ease-out, --color 400ms ease-out;
     }
+    #world[data-no-transition] .node,
+    #world[data-no-transition] .edge { transition: none; }
     .node.region { z-index: 0; opacity: var(--eco-filter-opacity, 1); }
     .node.project { z-index: 1; }
 

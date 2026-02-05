@@ -9,7 +9,7 @@ import { keybinds, defineSchema, fromBindings, registerComponents, fuzzyMatcher 
 import type { Command } from "keybinds";
 
 export interface InputHandle {
-  navigateTo(node: Node, push?: boolean): void;
+  navigateTo(node: Node, push?: boolean, animate?: boolean): void;
   commands: Command[];
 }
 
@@ -96,7 +96,7 @@ export function setupInput(
     return qs ? `?${qs}` : location.pathname;
   }
 
-  function navigateTo(node: Node, push = true): void {
+  function navigateTo(node: Node, push = true, animate = true): void {
     const wasThisNode = focusedNode === node;
     focusedNode = node;
     setFocus(graph, node, true);
@@ -105,7 +105,15 @@ export function setupInput(
     } else {
       showCard(node, graph);
     }
-    animateTo(camera, node.x, node.y, Math.max(camera.zoom, 1.5));
+    const targetZoom = Math.max(camera.zoom, 1.5);
+    if (animate) {
+      animateTo(camera, node.x, node.y, targetZoom);
+    } else {
+      camera.x = node.x;
+      camera.y = node.y;
+      camera.zoom = targetZoom;
+      updateTransform(camera);
+    }
     if (push) {
       history.pushState({ focus: node.id }, "", preserveParams(node.id));
     }
