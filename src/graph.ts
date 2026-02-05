@@ -56,7 +56,7 @@ export function createGraph(): Graph {
     {
       id: "project/normalize",
       label: "normalize",
-      description: "Understands the shape of code across languages",
+      description: "understands the shape of code across languages",
       url: "https://docs.rhi.zone/normalize",
       tier: "project",
       parent: "ecosystem/rhi",
@@ -68,7 +68,7 @@ export function createGraph(): Graph {
     {
       id: "project/gels",
       label: "gels",
-      description: "Detects the shape of languages",
+      description: "detects the shape of languages",
       url: "https://docs.rhi.zone/gels",
       tier: "project",
       parent: "ecosystem/rhi",
@@ -80,7 +80,7 @@ export function createGraph(): Graph {
     {
       id: "project/unshape",
       label: "unshape",
-      description: "Describing media into existence",
+      description: "describing media into existence",
       url: "https://docs.rhi.zone/unshape",
       tier: "project",
       parent: "ecosystem/rhi",
@@ -92,7 +92,7 @@ export function createGraph(): Graph {
     {
       id: "project/wick",
       label: "wick",
-      description: "Minimal expression language",
+      description: "minimal expression language",
       url: "https://docs.rhi.zone/wick",
       tier: "project",
       parent: "ecosystem/rhi",
@@ -104,7 +104,7 @@ export function createGraph(): Graph {
     {
       id: "project/moonlet",
       label: "moonlet",
-      description: "A small Lua engine that grows with plugins",
+      description: "a small Lua engine that grows with plugins",
       url: "https://docs.rhi.zone/moonlet",
       tier: "project",
       parent: "ecosystem/rhi",
@@ -116,7 +116,7 @@ export function createGraph(): Graph {
     {
       id: "project/paraphase",
       label: "paraphase",
-      description: "Turns data from one shape into another",
+      description: "turns data from one shape into another",
       url: "https://docs.rhi.zone/paraphase",
       tier: "project",
       parent: "ecosystem/rhi",
@@ -128,7 +128,7 @@ export function createGraph(): Graph {
     {
       id: "project/dusklight",
       label: "dusklight",
-      description: "One interface that connects to anything",
+      description: "one interface that connects to anything",
       url: "https://docs.rhi.zone/dusklight",
       tier: "project",
       parent: "ecosystem/rhi",
@@ -140,7 +140,7 @@ export function createGraph(): Graph {
     {
       id: "project/server-less",
       label: "server-less",
-      description: "Write it once, speak every protocol",
+      description: "write it once, speak every protocol",
       url: "https://docs.rhi.zone/server-less",
       tier: "project",
       parent: "ecosystem/rhi",
@@ -152,7 +152,7 @@ export function createGraph(): Graph {
     {
       id: "project/concord",
       label: "concord",
-      description: "Generates the glue between languages",
+      description: "generates the glue between languages",
       url: "https://docs.rhi.zone/concord",
       tier: "project",
       parent: "ecosystem/rhi",
@@ -164,7 +164,7 @@ export function createGraph(): Graph {
     {
       id: "project/rescribe",
       label: "rescribe",
-      description: "Converts documents without losing anything",
+      description: "converts documents without losing anything",
       url: "https://docs.rhi.zone/rescribe",
       tier: "project",
       parent: "ecosystem/rhi",
@@ -176,7 +176,7 @@ export function createGraph(): Graph {
     {
       id: "project/playmate",
       label: "playmate",
-      description: "Building blocks for making games",
+      description: "building blocks for making games",
       url: "https://docs.rhi.zone/playmate",
       tier: "project",
       parent: "ecosystem/rhi",
@@ -188,7 +188,7 @@ export function createGraph(): Graph {
     {
       id: "project/interconnect",
       label: "interconnect",
-      description: "How game worlds stay connected",
+      description: "how game worlds stay connected",
       url: "https://docs.rhi.zone/interconnect",
       tier: "project",
       parent: "ecosystem/rhi",
@@ -200,7 +200,7 @@ export function createGraph(): Graph {
     {
       id: "project/reincarnate",
       label: "reincarnate",
-      description: "Bringing old software back to life",
+      description: "bringing old software back to life",
       url: "https://docs.rhi.zone/reincarnate",
       tier: "project",
       parent: "ecosystem/rhi",
@@ -212,7 +212,7 @@ export function createGraph(): Graph {
     {
       id: "project/myenv",
       label: "myenv",
-      description: "Keeps all the pieces running together",
+      description: "keeps all the pieces running together",
       url: "https://docs.rhi.zone/myenv",
       tier: "project",
       parent: "ecosystem/rhi",
@@ -224,7 +224,7 @@ export function createGraph(): Graph {
     {
       id: "project/portals",
       label: "portals",
-      description: "Common ground between different tools",
+      description: "common ground between different tools",
       url: "https://docs.rhi.zone/portals",
       tier: "project",
       parent: "ecosystem/rhi",
@@ -265,7 +265,7 @@ export function createGraph(): Graph {
     {
       id: "ecosystem/rhi",
       label: "rhi",
-      description: "Glue layer for computers",
+      description: "glue layer for computers",
       url: "https://docs.rhi.zone",
       tier: "region",
       x: -370,
@@ -277,7 +277,7 @@ export function createGraph(): Graph {
     {
       id: "ecosystem/exo",
       label: "exo",
-      description: "Places to exist",
+      description: "places to exist",
       url: "https://docs.exo.place",
       tier: "region",
       x: 370,
@@ -294,7 +294,7 @@ export function createGraph(): Graph {
     {
       id: "project/hologram",
       label: "hologram",
-      description: "A Discord bot where you describe things into existence",
+      description: "a Discord bot where you describe things into existence",
       url: "https://docs.exo.place/hologram",
       tier: "project",
       parent: "ecosystem/exo",
@@ -308,7 +308,7 @@ export function createGraph(): Graph {
     {
       id: "project/aspect",
       label: "aspect",
-      description: "Exploring who you are through cards",
+      description: "exploring who you are through cards",
       url: "https://docs.exo.place/aspect",
       tier: "project",
       parent: "ecosystem/exo",
@@ -324,7 +324,7 @@ export function createGraph(): Graph {
     {
       id: "project/claude-code-hub",
       label: "claude-code-hub",
-      description: "Coordinates multiple Claude Code agents",
+      description: "coordinates multiple Claude Code agents",
       url: "https://github.com/pterror/claude-code-hub",
       tier: "project",
       x: -80,
@@ -337,7 +337,7 @@ export function createGraph(): Graph {
     {
       id: "project/keybinds",
       label: "keybinds",
-      description: "Declarative keybindings for the web",
+      description: "declarative keybindings for the web",
       url: "https://pterror.github.io/keybinds",
       tier: "project",
       x: 80,
@@ -363,7 +363,7 @@ export function createGraph(): Graph {
     {
       id: "project/pad",
       label: "pad",
-      description: "Catches and organizes data from the terminal",
+      description: "catches and organizes data from the terminal",
       url: "https://pterror.github.io/pad",
       tier: "project",
       x: 170,
@@ -376,7 +376,7 @@ export function createGraph(): Graph {
     {
       id: "project/lua",
       label: "lua",
-      description: "A playground for Lua experiments",
+      description: "a playground for Lua experiments",
       url: "https://github.com/pterror/lua",
       tier: "project",
       x: 50,
@@ -391,7 +391,7 @@ export function createGraph(): Graph {
     {
       id: "prose/whats-actually-wrong",
       label: "what's actually wrong?",
-      description: "Before solutions. Before tools. What's actually wrong?",
+      description: "before solutions. before tools. what's actually wrong?",
       tier: "project",
       x: 50,
       y: 30,
@@ -402,7 +402,7 @@ export function createGraph(): Graph {
     {
       id: "prose/why-is-software-hard",
       label: "why is software hard?",
-      description: "You're not bad at computers.\nSoftware is actually hard to use.",
+      description: "you're not bad at computers.\nsoftware is actually hard to use.",
       tier: "project",
       x: -80,
       y: 140,
@@ -413,7 +413,7 @@ export function createGraph(): Graph {
     {
       id: "prose/what-do-we-keep-losing",
       label: "what do we keep losing?",
-      description: "Technology isn't preserved by existence.\nIt's preserved by continuous practice.",
+      description: "technology isn't preserved by existence.\nit's preserved by continuous practice.",
       tier: "project",
       x: 180,
       y: 140,

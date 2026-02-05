@@ -62,7 +62,7 @@ const ecosystemGrouping: Grouping = {
     {
       id: "ecosystem/rhi",
       label: "rhi",
-      description: "Glue layer for computers",
+      description: "glue layer for computers",
       x: -370,
       y: 0,
       radius: 200,
@@ -71,7 +71,7 @@ const ecosystemGrouping: Grouping = {
     {
       id: "ecosystem/exo",
       label: "exo",
-      description: "Places to exist",
+      description: "places to exist",
       x: 370,
       y: 0,
       radius: 140,
@@ -92,7 +92,7 @@ const domainGrouping: Grouping = {
     {
       id: "domain/infrastructure",
       label: "infrastructure",
-      description: "Tools that connect other tools",
+      description: "tools that connect other tools",
       x: -300,
       y: -100,
       radius: 180,
@@ -101,7 +101,7 @@ const domainGrouping: Grouping = {
     {
       id: "domain/creative",
       label: "creative",
-      description: "Making things that didn't exist",
+      description: "making things that didn't exist",
       x: 300,
       y: -100,
       radius: 150,
@@ -110,7 +110,7 @@ const domainGrouping: Grouping = {
     {
       id: "domain/games",
       label: "games",
-      description: "Worlds to play in",
+      description: "worlds to play in",
       x: 0,
       y: 200,
       radius: 140,
@@ -119,7 +119,7 @@ const domainGrouping: Grouping = {
     {
       id: "domain/ai",
       label: "ai",
-      description: "Working with language models",
+      description: "working with language models",
       x: -150,
       y: -280,
       radius: 100,
@@ -128,7 +128,7 @@ const domainGrouping: Grouping = {
     {
       id: "domain/social",
       label: "social",
-      description: "How people connect",
+      description: "how people connect",
       x: 150,
       y: -280,
       radius: 100,
@@ -181,10 +181,10 @@ const domainGrouping: Grouping = {
     "project/pad": { x: -350, y: 100, regionId: "domain/infrastructure", color: "oklch(0.75 0.12 200)" },
     "project/lua": { x: -400, y: -50, regionId: "domain/infrastructure", color: "oklch(0.75 0.12 200)" },
 
-    // Essays - place in center area
+    // Essays - place in center area (tighter triangle)
     "prose/whats-actually-wrong": { x: 0, y: 80 },
-    "prose/why-is-software-hard": { x: -120, y: 130 },
-    "prose/what-do-we-keep-losing": { x: 120, y: 130 },
+    "prose/why-is-software-hard": { x: -80, y: 120 },
+    "prose/what-do-we-keep-losing": { x: 80, y: 120 },
 
     // Landing
     "meta/pteraworld": { x: 0, y: -380 },
@@ -202,34 +202,34 @@ const techGrouping: Grouping = {
     {
       id: "technology/rust",
       label: "rust",
-      description: "Systems programming",
-      x: -250,
+      description: "systems programming",
+      x: -300,
       y: 0,
-      radius: 200,
+      radius: 230,
       color: "oklch(0.7 0.12 30)",
     },
     {
       id: "technology/lua",
       label: "lua",
-      description: "Scripting and glue",
-      x: 250,
+      description: "scripting and glue",
+      x: 300,
       y: -150,
-      radius: 120,
+      radius: 140,
       color: "oklch(0.7 0.12 250)",
     },
     {
       id: "technology/typescript",
       label: "typescript",
-      description: "Web and applications",
-      x: 250,
+      description: "web and applications",
+      x: 300,
       y: 150,
-      radius: 120,
+      radius: 140,
       color: "oklch(0.7 0.12 210)",
     },
   ],
   positions: {
-    // Rust cluster - orange/rust
-    ...ringPositions(-250, 0, 160, [
+    // Rust cluster - orange/rust (shifted left)
+    ...ringPositions(-300, 0, 180, [
       "project/normalize",
       "project/gels",
       "project/unshape",
@@ -246,16 +246,16 @@ const techGrouping: Grouping = {
       "project/ooxml",
     ], "technology/rust", "oklch(0.75 0.12 30)"),
 
-    // Lua cluster - blue
-    ...ringPositions(250, -150, 80, [
+    // Lua cluster - blue (shifted right)
+    ...ringPositions(300, -150, 100, [
       "project/moonlet",
       "project/zone",
       "project/pad",
       "project/lua",
     ], "technology/lua", "oklch(0.75 0.12 250)"),
 
-    // TypeScript cluster - cyan
-    ...ringPositions(250, 150, 80, [
+    // TypeScript cluster - cyan (shifted right)
+    ...ringPositions(300, 150, 100, [
       "project/dusklight",
       "project/hologram",
       "project/aspect",
@@ -263,10 +263,10 @@ const techGrouping: Grouping = {
       "project/claude-code-hub",
     ], "technology/typescript", "oklch(0.75 0.12 210)"),
 
-    // Essays - place in center area
-    "prose/whats-actually-wrong": { x: 0, y: 50 },
-    "prose/why-is-software-hard": { x: -80, y: 100 },
-    "prose/what-do-we-keep-losing": { x: 80, y: 100 },
+    // Essays - lowered and spread out vertically
+    "prose/whats-actually-wrong": { x: 0, y: 100 },
+    "prose/why-is-software-hard": { x: -70, y: 170 },
+    "prose/what-do-we-keep-losing": { x: 70, y: 170 },
 
     // Landing
     "meta/pteraworld": { x: 0, y: -330 },
@@ -282,18 +282,18 @@ const statusGrouping: Grouping = {
   label: "Status",
   regions: [
     {
-      id: "status/production",
-      label: "production",
-      description: "Stable and complete",
+      id: "status/mature",
+      label: "mature",
+      description: "stable and actively maintained",
       x: -300,
       y: -150,
-      radius: 100,
+      radius: 130,
       color: "oklch(0.7 0.15 140)",
     },
     {
       id: "status/fleshed-out",
       label: "fleshed out",
-      description: "Solid foundation, expanding",
+      description: "solid foundation, expanding",
       x: 0,
       y: -100,
       radius: 180,
@@ -302,7 +302,7 @@ const statusGrouping: Grouping = {
     {
       id: "status/early",
       label: "early",
-      description: "Work in progress",
+      description: "work in progress",
       x: 300,
       y: -100,
       radius: 140,
@@ -311,7 +311,7 @@ const statusGrouping: Grouping = {
     {
       id: "status/planned",
       label: "planned",
-      description: "Not yet started",
+      description: "not yet started",
       x: 0,
       y: 200,
       radius: 120,
@@ -319,11 +319,11 @@ const statusGrouping: Grouping = {
     },
   ],
   positions: {
-    // Production cluster - green
-    ...ringPositions(-300, -150, 60, [
+    // Mature cluster - green
+    ...ringPositions(-300, -150, 80, [
       "project/unshape",
       "project/wick",
-    ], "status/production", "oklch(0.75 0.15 145)"),
+    ], "status/mature", "oklch(0.75 0.15 145)"),
 
     // Fleshed out cluster - blue
     ...ringPositions(0, -100, 140, [
@@ -363,8 +363,8 @@ const statusGrouping: Grouping = {
     "prose/why-is-software-hard": { x: -420, y: 130 },
     "prose/what-do-we-keep-losing": { x: -280, y: 130 },
 
-    // Landing
-    "meta/pteraworld": { x: 0, y: -350 },
+    // Landing - moved up to avoid overlap
+    "meta/pteraworld": { x: 0, y: -400 },
   },
 };
 
