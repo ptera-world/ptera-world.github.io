@@ -46,6 +46,7 @@ export function buildWorld(graph: Graph): void {
     `<div class="landing-trail">this is a map of things i've been exploring.</div>` +
     `<div class="landing-hint">scroll to zoom · click to explore · <kbd>/</kbd> to search</div>`;
   worldEl.appendChild(landingEl);
+  nodeEls.set("meta/pteraworld", landingEl);
 
   // Edges (behind nodes) — SVG lines for CSS-transitionable coordinates
   const SVG_NS = "http://www.w3.org/2000/svg";

@@ -101,11 +101,10 @@ const domainGrouping: Grouping = {
       color: "oklch(0.7 0.12 200)",
     },
     {
-      // bbox: x[150, 450], y[-130, 170]
       id: "domain/creative",
       label: "creative",
       description: "making things that didn't exist",
-      x: 300,
+      x: 260,
       y: 20,
       radius: 150,
       color: "oklch(0.7 0.12 50)",
@@ -159,8 +158,8 @@ const domainGrouping: Grouping = {
       "project/motif",
     ], "domain/infrastructure", "oklch(0.75 0.12 200)"),
 
-    // Creative cluster (ring r=110) - center (300, 20)
-    ...ringPositions(300, 20, 110, [
+    // Creative cluster (ring r=110) - center (260, 20)
+    ...ringPositions(260, 20, 110, [
       "project/unshape",
       "project/wick",
       "project/dusklight",
@@ -186,8 +185,8 @@ const domainGrouping: Grouping = {
       "project/aspect",
     ], "domain/social", "oklch(0.75 0.12 320)"),
 
-    // Essays - ring at bottom-right
-    ...ringPositions(420, 200, 90, [
+    // Essays - ring at right
+    ...ringPositions(420, 180, 90, [
       "prose/whats-actually-wrong",
       "prose/how-do-i-do-things",
       "prose/what-can-i-change",
@@ -197,8 +196,8 @@ const domainGrouping: Grouping = {
       "prose/what-are-labels-anyway",
     ], ""),
 
-    // Landing - top center
-    "meta/pteraworld": { x: 0, y: -300 },
+    // Landing - vertically centered
+    "meta/pteraworld": { x: 0, y: 0 },
   },
 };
 
@@ -276,7 +275,7 @@ const techGrouping: Grouping = {
     ], "technology/typescript", "oklch(0.75 0.12 210)"),
 
     // Essays - ring at center-bottom
-    ...ringPositions(0, 130, 90, [
+    ...ringPositions(20, 130, 90, [
       "prose/whats-actually-wrong",
       "prose/how-do-i-do-things",
       "prose/what-can-i-change",
@@ -287,7 +286,7 @@ const techGrouping: Grouping = {
     ], ""),
 
     // Landing
-    "meta/pteraworld": { x: 0, y: -330 },
+    "meta/pteraworld": { x: 0, y: -170 },
   },
 };
 
@@ -300,51 +299,67 @@ const statusGrouping: Grouping = {
   label: "Status",
   regions: [
     {
-      id: "status/mature",
-      label: "mature",
-      description: "stable and actively maintained",
-      x: -380,
-      y: -100,
-      radius: 130,
-      color: "oklch(0.7 0.15 140)",
-    },
-    {
-      id: "status/fleshed-out",
-      label: "fleshed out",
-      description: "solid foundation, expanding",
-      x: 100,
+      // Clockwise rectangle: planned (top-right) → early (bottom-right) → fleshed out (bottom-left) → mature (top-left)
+      id: "status/planned",
+      label: "planned",
+      description: "not yet started",
+      x: 300,
       y: -150,
-      radius: 180,
-      color: "oklch(0.7 0.12 200)",
+      radius: 130,
+      color: "oklch(0.7 0.08 0)",
     },
     {
       id: "status/early",
       label: "early",
       description: "work in progress",
-      x: 350,
+      x: 300,
       y: 150,
       radius: 150,
       color: "oklch(0.7 0.10 60)",
     },
     {
-      id: "status/planned",
-      label: "planned",
-      description: "not yet started",
-      x: -150,
-      y: 200,
+      id: "status/fleshed-out",
+      label: "fleshed out",
+      description: "solid foundation, expanding",
+      x: -300,
+      y: 150,
+      radius: 180,
+      color: "oklch(0.7 0.12 200)",
+    },
+    {
+      id: "status/mature",
+      label: "mature",
+      description: "stable and actively maintained",
+      x: -300,
+      y: -150,
       radius: 130,
-      color: "oklch(0.7 0.08 0)",
+      color: "oklch(0.7 0.15 140)",
     },
   ],
   positions: {
-    // Mature cluster - green (top-left)
-    ...ringPositions(-380, -100, 80, [
-      "project/unshape",
-      "project/wick",
-    ], "status/mature", "oklch(0.75 0.15 145)"),
+    // Planned cluster (top-right)
+    ...ringPositions(300, -150, 90, [
+      "project/gels",
+      "project/interconnect",
+      "project/reincarnate",
+      "project/dusklight",
+      "project/motif",
+    ], "status/planned", "oklch(0.65 0.03 0)"),
 
-    // Fleshed out cluster - blue (top-right)
-    ...ringPositions(100, -150, 140, [
+    // Early cluster (bottom-right)
+    ...ringPositions(300, 150, 110, [
+      "project/playmate",
+      "project/concord",
+      "project/zone",
+      "project/aspect",
+      "project/claude-code-hub",
+      "project/ooxml",
+      "project/pad",
+      "project/lua",
+    ], "status/early", "oklch(0.75 0.12 70)"),
+
+    // Fleshed out cluster (bottom-left)
+    ...ringPositions(-300, 150, 140, [
       "project/normalize",
       "project/moonlet",
       "project/paraphase",
@@ -356,29 +371,14 @@ const statusGrouping: Grouping = {
       "project/keybinds",
     ], "status/fleshed-out", "oklch(0.75 0.12 220)"),
 
-    // Early cluster - orange (bottom-right)
-    ...ringPositions(350, 150, 110, [
-      "project/playmate",
-      "project/concord",
-      "project/zone",
-      "project/aspect",
-      "project/claude-code-hub",
-      "project/ooxml",
-      "project/pad",
-      "project/lua",
-    ], "status/early", "oklch(0.75 0.12 70)"),
-
-    // Planned cluster - gray (bottom-left)
-    ...ringPositions(-150, 200, 90, [
-      "project/gels",
-      "project/interconnect",
-      "project/reincarnate",
-      "project/dusklight",
-      "project/motif",
-    ], "status/planned", "oklch(0.65 0.03 0)"),
+    // Mature cluster (top-left)
+    ...ringPositions(-300, -150, 80, [
+      "project/unshape",
+      "project/wick",
+    ], "status/mature", "oklch(0.75 0.15 145)"),
 
     // Essays - ring at center
-    ...ringPositions(-50, 30, 90, [
+    ...ringPositions(0, 0, 90, [
       "prose/whats-actually-wrong",
       "prose/how-do-i-do-things",
       "prose/what-can-i-change",
@@ -389,7 +389,7 @@ const statusGrouping: Grouping = {
     ], ""),
 
     // Landing - top center
-    "meta/pteraworld": { x: 0, y: -400 },
+    "meta/pteraworld": { x: 0, y: -170 },
   },
 };
 

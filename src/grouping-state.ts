@@ -48,7 +48,7 @@ function computePositionsForGrouping(grouping: Grouping): NodePositionWithRegion
   const positions: NodePositionWithRegion[] = [];
 
   for (const node of graphRef.nodes) {
-    if (node.tier === "region" || node.tier === "meta") continue;
+    if (node.tier === "region") continue;
 
     const override = grouping.positions[node.id];
     const original = originalData.get(node.id);
