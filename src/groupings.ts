@@ -185,7 +185,7 @@ const domainGrouping: Grouping = {
       "project/aspect",
     ], "domain/social", "oklch(0.75 0.12 320)"),
 
-    // Essays - ring at right
+    // Essays - ring at right, deceit centered
     ...ringPositions(420, 180, 90, [
       "prose/whats-actually-wrong",
       "prose/how-do-i-do-things",
@@ -195,6 +195,7 @@ const domainGrouping: Grouping = {
       "prose/why-is-software-hard",
       "prose/what-are-labels-anyway",
     ], ""),
+    "prose/the-great-deceit": { x: 420, y: 180 },
 
     // Landing - vertically centered
     "meta/pteraworld": { x: 0, y: 0 },
@@ -274,7 +275,7 @@ const techGrouping: Grouping = {
       "project/claude-code-hub",
     ], "technology/typescript", "oklch(0.75 0.12 210)"),
 
-    // Essays - ring at center-bottom
+    // Essays - ring at center-bottom, deceit centered
     ...ringPositions(20, 130, 90, [
       "prose/whats-actually-wrong",
       "prose/how-do-i-do-things",
@@ -284,6 +285,7 @@ const techGrouping: Grouping = {
       "prose/why-is-software-hard",
       "prose/what-are-labels-anyway",
     ], ""),
+    "prose/the-great-deceit": { x: 20, y: 130 },
 
     // Landing
     "meta/pteraworld": { x: 0, y: -170 },
@@ -377,7 +379,7 @@ const statusGrouping: Grouping = {
       "project/wick",
     ], "status/mature", "oklch(0.75 0.15 145)"),
 
-    // Essays - ring at center
+    // Essays - ring at center, deceit centered
     ...ringPositions(0, 0, 90, [
       "prose/whats-actually-wrong",
       "prose/how-do-i-do-things",
@@ -387,6 +389,7 @@ const statusGrouping: Grouping = {
       "prose/why-is-software-hard",
       "prose/what-are-labels-anyway",
     ], ""),
+    "prose/the-great-deceit": { x: 0, y: 0 },
 
     // Landing - top center
     "meta/pteraworld": { x: 0, y: -170 },

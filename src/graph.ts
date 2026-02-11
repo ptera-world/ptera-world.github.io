@@ -327,6 +327,19 @@ export function createGraph(): Graph {
     },
   ]);
 
+  // Centered in the essay ring
+  const deceitNode: Omit<Node, "baseX" | "baseY"> = {
+    id: "prose/the-great-deceit",
+    label: "the great deceit",
+    description: "every word here was written by an AI.\nis that a bad thing?",
+    tier: "project",
+    x: 80,
+    y: 40,
+    radius: 24,
+    color: "oklch(0.78 0.09 45)",
+    tags: ["essay", "ai", "social"],
+  };
+
   const defs: Omit<Node, "baseX" | "baseY">[] = [
     // Meta (landing)
     {
@@ -469,6 +482,7 @@ export function createGraph(): Graph {
 
     // Essays - ring layout
     ...essayNodes,
+    deceitNode,
   ];
 
   const nodes: Node[] = defs.map((n) => ({ ...n, baseX: n.x, baseY: n.y }));
