@@ -4,7 +4,7 @@ This is a real question. Not rhetorical. Not a setup for advice.
 
 There are ideas sitting in your head - things you want to make, learn, try. They've been there a while. You haven't started. Or you started and stopped. And at some point the question stops being frustration and becomes genuine: how do people actually do things?
 
-## It's not obvious
+## Why isn't it obvious?
 
 Doing things feels like it should be simple. Want thing, do thing. But it's not.
 
@@ -12,7 +12,7 @@ There's the gap between idea and execution. The uncertainty of whether it'll be 
 
 This isn't weakness. It's just... how it is, a lot of the time.
 
-## What seems to help
+## What seems to help?
 
 Not a system. Not productivity advice. Just patterns that seem to make it easier:
 
@@ -26,7 +26,7 @@ Not a system. Not productivity advice. Just patterns that seem to make it easier
 
 **Noticing the permission gap.** Sometimes the thing in the way is waiting - for the right moment, the right conditions, someone to say it's okay. That permission might not be coming. It might already be yours.
 
-## When you're just lost
+## What if you're just lost?
 
 Sometimes the problem isn't motivation. It's that you genuinely don't know what to do. Learning an instrument. Learning a language. Drawing. 3D modeling. Animation. The skill is big and the path is invisible.
 
@@ -36,7 +36,7 @@ Sometimes the problem isn't motivation. It's that you genuinely don't know what 
 - **Expect the plateau.** You'll be bad for longer than you want. The progress curve isn't smooth - it's flat, then jump, then flat. That's normal. The flatness isn't failure.
 - **The path appears by walking.** You don't need to see the whole route before starting. Take one step. The next step becomes visible from there.
 
-## Things you can actually try
+## What can you actually try?
 
 - **Set a timer for 15 minutes.** Do the thing until it goes off. That's it. You're not committing to finish - just to spend 15 minutes. Anyone can do 15 minutes.
 - **Make the worst version on purpose.** Write the bad draft. Draw the ugly sketch. Build the broken prototype. Lower the bar to the floor so you can step over it.
@@ -45,7 +45,7 @@ Sometimes the problem isn't motivation. It's that you genuinely don't know what 
 - **Remove the escape routes.** Phone in another room. Close the other tabs. Make the thing you want to do the easiest option available.
 - **Shrink the scope until it's embarrassing.** Not a novel - a paragraph. Not an app - a button that does one thing. Not a song - four bars. Embarrassingly small is finishable.
 
-## The only guaranteed failure
+## What's the only guaranteed failure?
 
 Not trying.
 

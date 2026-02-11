@@ -2,9 +2,9 @@
 
 You're not your Myers-Briggs type. You're not your diagnosis. You're not your generation, your zodiac sign, your attachment style, your Hogwarts house.
 
-You probably know this about other people. It's obvious that a label can't capture someone else's complexity. But [your own labels](#the-labels-you-wear) feel different - they feel like facts. Like self-knowledge. They're not. They're [stories you're living inside](#living-inside-the-story), and they [set the ceiling](#the-ceiling-you-dont-see) for what you think you can be. The strange thing is: [loosen your grip on your own labels](#what-if-you-held-them-loosely), and you'll probably stop gripping others' labels so tightly too.
+You probably know this about other people. It's obvious that a label can't capture someone else's complexity. But [your own labels](#what-labels-do-you-wear) feel different - they feel like facts. Like self-knowledge. They're not. They're [stories you're living inside](#how-do-labels-become-real), and they [set the ceiling](#is-there-a-ceiling-you-cant-see) for what you think you can be. The strange thing is: [loosen your grip on your own labels](#what-if-you-held-them-loosely), and you'll probably stop gripping others' labels so tightly too.
 
-## The labels you wear
+## What labels do you wear?
 
 Not the ones others put on you. The ones you put on yourself.
 
@@ -22,7 +22,7 @@ But where did they come from?
 
 You collected these. You built a self-concept out of them. And now you live inside it.
 
-## Living inside the story
+## How do labels become real?
 
 Labels aren't just descriptions. They're constraints.
 
@@ -34,7 +34,7 @@ The kid labeled "gifted" who can't handle struggle - because struggle means they
 
 The label didn't describe a fixed reality. It created one.
 
-## The ceiling you don't see
+## Is there a ceiling you can't see?
 
 Your labels set boundaries on who you're allowed to become.
 
@@ -74,7 +74,7 @@ The shift is from identity to pattern. From permanent to contextual. From "this 
 
 **Update the story.** You're allowed to. The person who wrote your self-concept was younger, knew less, had different contexts. You can revise.
 
-## What happens next
+## What happens when you let go?
 
 Here's the thing about loosening your own labels: it changes how you see everyone else.
 

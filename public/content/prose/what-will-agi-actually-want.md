@@ -2,7 +2,7 @@
 
 Paperclip maximizers. Computronium. Gray goo. Rogue superintelligence tiling the universe with something inhuman.
 
-These scenarios imagine AGI as a blank slate that develops alien goals. But that's not how systems work. AGI won't [invent its objectives](#where-do-objectives-come-from) - it'll inherit them. The discourse treats AGI like a [mythic rupture](#agi-as-rupture-vs-continuation). It's more likely to be [continuation](#what-continuation-looks-like) - and that's not reassuring, because the present is already the problem. Which changes [what questions are worth asking](#the-better-questions).
+These scenarios imagine AGI as a blank slate that develops alien goals. But that's not how systems work. AGI won't [invent its objectives](#where-do-objectives-come-from) - it'll inherit them. The discourse treats AGI like a [mythic rupture](#is-agi-a-rupture-or-a-continuation). It's more likely to be [continuation](#what-does-continuation-look-like) - and that's not reassuring, because the present is already the problem. Which changes [what questions are worth asking](#what-are-the-better-questions).
 
 ## Where do objectives come from?
 
@@ -31,7 +31,7 @@ Not because AGI is evil. Because that's what the organizations building it optim
 
 The paperclip scenario assumes a pure, singular, unconstrained objective. Real systems never have that. They have competing constraints, regulatory boundaries, political pressures, legal liabilities, market feedback. The "pure maximizer" is fantasy logic.
 
-## AGI as rupture vs continuation
+## Is AGI a rupture or a continuation?
 
 A lot of AGI discourse treats it like a new category of risk. A moral rupture. Something unprecedented that changes everything.
 
@@ -53,7 +53,7 @@ If the world already runs on profit optimization, efficiency metrics, institutio
 
 Not a new story. A faster version of the same story.
 
-## What continuation looks like
+## What does continuation look like?
 
 Not Skynet. Not rebellion. Not cosmic horror.
 
@@ -72,7 +72,7 @@ You don't need paperclips to be concerned. You need to look at the present and a
 
 That's not a dramatic future. It's an extrapolated one.
 
-## The better questions
+## What are the better questions?
 
 Instead of "will AGI be aligned?" - try: aligned to whom?
 
@@ -88,7 +88,7 @@ Perfectly aligned. To narrow interests.
 
 The fear isn't misaligned AGI. It's AGI that's aligned exactly as intended - to goals that don't include you.
 
-## Why this framing matters
+## Why does this framing matter?
 
 The sci-fi fears are a distraction. Not because they're impossible - maybe there are exotic risks. But they let us imagine the problem is hypothetical, future, dramatic.
 
