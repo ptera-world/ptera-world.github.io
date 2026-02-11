@@ -156,6 +156,7 @@ const domainGrouping: Grouping = {
       "project/ooxml",
       "project/pad",
       "project/lua",
+      "project/motif",
     ], "domain/infrastructure", "oklch(0.75 0.12 200)"),
 
     // Creative cluster (ring r=110) - center (300, 20)
@@ -185,11 +186,16 @@ const domainGrouping: Grouping = {
       "project/aspect",
     ], "domain/social", "oklch(0.75 0.12 320)"),
 
-    // Essays - bottom-right corner, bigger triangle shifted up-left
-    // bbox: roughly x[320, 500], y[120, 240]
-    "prose/whats-actually-wrong": { x: 410, y: 140 },
-    "prose/why-is-software-hard": { x: 340, y: 220 },
-    "prose/what-do-we-keep-losing": { x: 480, y: 220 },
+    // Essays - ring at bottom-right
+    ...ringPositions(420, 200, 90, [
+      "prose/whats-actually-wrong",
+      "prose/how-do-i-do-things",
+      "prose/what-can-i-change",
+      "prose/what-do-we-keep-losing",
+      "prose/what-will-agi-actually-want",
+      "prose/why-is-software-hard",
+      "prose/what-are-labels-anyway",
+    ], ""),
 
     // Landing - top center
     "meta/pteraworld": { x: 0, y: -300 },
@@ -249,6 +255,7 @@ const techGrouping: Grouping = {
       "project/myenv",
       "project/portals",
       "project/ooxml",
+      "project/motif",
     ], "technology/rust", "oklch(0.75 0.12 30)"),
 
     // Lua cluster - blue (shifted right)
@@ -268,10 +275,16 @@ const techGrouping: Grouping = {
       "project/claude-code-hub",
     ], "technology/typescript", "oklch(0.75 0.12 210)"),
 
-    // Essays - lowered and spread out vertically
-    "prose/whats-actually-wrong": { x: 0, y: 100 },
-    "prose/why-is-software-hard": { x: -70, y: 170 },
-    "prose/what-do-we-keep-losing": { x: 70, y: 170 },
+    // Essays - ring at center-bottom
+    ...ringPositions(0, 130, 90, [
+      "prose/whats-actually-wrong",
+      "prose/how-do-i-do-things",
+      "prose/what-can-i-change",
+      "prose/what-do-we-keep-losing",
+      "prose/what-will-agi-actually-want",
+      "prose/why-is-software-hard",
+      "prose/what-are-labels-anyway",
+    ], ""),
 
     // Landing
     "meta/pteraworld": { x: 0, y: -330 },
@@ -361,12 +374,19 @@ const statusGrouping: Grouping = {
       "project/interconnect",
       "project/reincarnate",
       "project/dusklight",
+      "project/motif",
     ], "status/planned", "oklch(0.65 0.03 0)"),
 
-    // Essays - center area
-    "prose/whats-actually-wrong": { x: -150, y: 20 },
-    "prose/why-is-software-hard": { x: -200, y: 70 },
-    "prose/what-do-we-keep-losing": { x: -100, y: 70 },
+    // Essays - ring at center
+    ...ringPositions(-50, 30, 90, [
+      "prose/whats-actually-wrong",
+      "prose/how-do-i-do-things",
+      "prose/what-can-i-change",
+      "prose/what-do-we-keep-losing",
+      "prose/what-will-agi-actually-want",
+      "prose/why-is-software-hard",
+      "prose/what-are-labels-anyway",
+    ], ""),
 
     // Landing - top center
     "meta/pteraworld": { x: 0, y: -400 },
