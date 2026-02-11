@@ -331,7 +331,7 @@ export function createGraph(): Graph {
   const deceitNode: Omit<Node, "baseX" | "baseY"> = {
     id: "prose/the-great-deceit",
     label: "the great deceit",
-    description: "every word here was written by an AI.\nis that a bad thing?",
+    description: "every word here was written by an AI.\nwhat does that change?",
     tier: "project",
     x: 80,
     y: 40,
