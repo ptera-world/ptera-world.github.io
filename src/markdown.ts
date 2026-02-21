@@ -1,5 +1,13 @@
 /** Minimal markdown → HTML parser. No dependencies. */
 
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, "")
+    .trim()
+    .replace(/[\s_]+/g, "-");
+}
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")
@@ -58,7 +66,9 @@ export function parseMarkdown(src: string): string {
     const headingMatch = line.match(/^(#{1,6})\s+(.+)$/);
     if (headingMatch) {
       const level = headingMatch[1]!.length;
-      out.push(`<h${level}>${inlineMarkup(headingMatch[2]!)}</h${level}>`);
+      const headingText = headingMatch[2]!;
+      const slug = slugify(headingText);
+      out.push(`<h${level} id="${slug}"><a href="#${slug}">${inlineMarkup(headingText)}</a></h${level}>`);
       i++;
       continue;
     }
