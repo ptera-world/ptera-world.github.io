@@ -3,7 +3,7 @@ label: "keybinds"
 description: "declarative keybindings for the web"
 url: https://pterror.github.io/keybinds
 status: fleshed-out
-tags: [javascript, ui]
+tags: [javascript, ui, creative, typescript]
 ---
 
 keyboard shortcuts for the web, defined as data instead of imperative listeners.

@@ -1,3 +1,8 @@
+---
+label: "rust"
+description: "systems programming"
+color: "oklch(0.7 0.12 30)"
+---
 systems programming with guarantees.
 
 ## what it is

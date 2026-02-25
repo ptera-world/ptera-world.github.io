@@ -4,7 +4,7 @@ description: "building blocks for making games"
 url: https://docs.rhi.zone/playmate
 parent: ecosystem/rhi
 status: early
-tags: [creative, games]
+tags: [creative, games, rust]
 ---
 
 game design primitives. reusable building blocks for state machines, character controllers, cameras, and procedural generation. works with Godot, Bevy, Unity, Love2D, or custom engines.

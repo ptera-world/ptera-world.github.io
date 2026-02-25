@@ -17,6 +17,7 @@ result
 # Generated (regenerated on build)
 src/generated-edges.ts
 src/generated-graph.ts
+src/generated-groupings.ts
 public/headings.json
 
 # Editor

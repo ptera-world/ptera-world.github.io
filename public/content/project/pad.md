@@ -3,7 +3,7 @@ label: "pad"
 description: "catches and organizes data from the terminal"
 url: https://pterror.github.io/pad
 status: early
-tags: [lua, cli]
+tags: [lua, cli, infrastructure]
 ---
 
 pipe anything in, get structure out. saves to a local sqlite graph.

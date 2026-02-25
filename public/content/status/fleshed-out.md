@@ -1,3 +1,8 @@
+---
+label: "fleshed out"
+description: "solid foundation, expanding"
+color: "oklch(0.7 0.12 200)"
+---
 solid foundation, expanding.
 
 ## what it is

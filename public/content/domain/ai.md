@@ -1,3 +1,8 @@
+---
+label: "ai"
+description: "working with language models"
+color: "oklch(0.7 0.12 100)"
+---
 working with language models.
 
 ## what it is

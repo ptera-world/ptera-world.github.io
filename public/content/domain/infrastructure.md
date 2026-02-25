@@ -1,3 +1,8 @@
+---
+label: "infrastructure"
+description: "tools that connect other tools"
+color: "oklch(0.7 0.12 200)"
+---
 tools that connect other tools.
 
 ## what it is

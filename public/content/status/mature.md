@@ -1,3 +1,8 @@
+---
+label: "mature"
+description: "stable and actively maintained"
+color: "oklch(0.7 0.15 140)"
+---
 stable and actively maintained.
 
 ## what it is

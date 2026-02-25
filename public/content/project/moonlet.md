@@ -4,7 +4,7 @@ description: "a small Lua engine that grows with plugins"
 url: https://docs.rhi.zone/moonlet
 parent: ecosystem/rhi
 status: fleshed-out
-tags: [rust, lua]
+tags: [rust, lua, infrastructure]
 ---
 
 Lua runtime with a plugin system for agentic AI execution. multi-provider LLM client, SQLite-backed memory, dynamic C ABI plugin loading, and capability-based security.

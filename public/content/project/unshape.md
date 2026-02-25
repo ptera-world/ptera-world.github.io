@@ -4,7 +4,7 @@ description: "describing media into existence"
 url: https://docs.rhi.zone/unshape
 parent: ecosystem/rhi
 status: production
-tags: [creative]
+tags: [creative, rust]
 ---
 
 constructive media generation in Rust. 3D meshes, audio synthesis, textures, 2D vectors, rigging, physics, procedural generation, and node graphs. Bevy-compatible with no hard dependency.

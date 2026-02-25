@@ -1,3 +1,8 @@
+---
+label: "lua"
+description: "scripting and glue"
+color: "oklch(0.7 0.12 250)"
+---
 scripting and glue.
 
 ## what it is

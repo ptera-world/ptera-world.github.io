@@ -1,3 +1,8 @@
+---
+label: "social"
+description: "how people connect"
+color: "oklch(0.7 0.12 320)"
+---
 how people connect.
 
 ## what it is

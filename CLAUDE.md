@@ -28,7 +28,8 @@ Single-page app with no framework. All source is in `src/` (~1,200 lines). Conte
 
 - `graph.ts` - node/edge data model (interfaces + `createGraph()`). Imports auto-generated nodes and edges from `generated-graph.ts`
 - `frontmatter.ts` - zero-dep YAML frontmatter parser for build-time use
-- `gen-graph.ts` - build-time script that reads `public/content/**/*.md` frontmatter + `## Related projects` links, computes layout (positions, colors), and writes `src/generated-graph.ts`
+- `gen-graph.ts` - build-time script that reads `public/content/**/*.md` frontmatter + `## Related projects` links, computes layout (positions, colors), generates groupings, and writes `src/generated-graph.ts` + `src/generated-groupings.ts`
+- `groupings.ts` - grouping interfaces + imports generated grouping data. Groupings (ecosystem, domain, tech, status) are derived from content: `domain/`, `technology/`, `status/` markdown files define regions, node tags/status determine membership
 - `camera.ts` - camera state (x, y, zoom) and tier system. Screen-to-world coordinate conversion
 - `dom.ts` - DOM construction, CSS transform animations, focus/hover state
 - `input.ts` - mouse/touch/wheel event handling, drag panning, zoom, WASD smooth panning, arrow key spatial navigation, Enter key confirm, keybinds schema + command palette + cheatsheet + context menu

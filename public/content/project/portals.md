@@ -4,7 +4,7 @@ description: "common ground between different tools"
 url: https://docs.rhi.zone/portals
 parent: ecosystem/rhi
 status: fleshed-out
-tags: [infrastructure]
+tags: [infrastructure, rust]
 ---
 
 standard library of interfaces inspired by WASI. capability-based, async-first traits for I/O, networking, cryptography, filesystem, HTTP, SQL, and more. works on native, WASM, and embedded.

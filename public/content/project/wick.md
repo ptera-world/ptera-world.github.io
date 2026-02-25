@@ -4,7 +4,7 @@ description: "minimal expression language"
 url: https://docs.rhi.zone/wick
 parent: ecosystem/rhi
 status: production
-tags: [rust, lua]
+tags: [rust, lua, creative]
 ---
 
 minimal expression language that compiles to multiple backends. parse once, emit to WGSL, Cranelift, Lua, GLSL, OpenCL, CUDA, HIP, C, Rust, or TokenStream.

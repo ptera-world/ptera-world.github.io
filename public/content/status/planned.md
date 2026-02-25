@@ -1,3 +1,8 @@
+---
+label: "planned"
+description: "not yet started"
+color: "oklch(0.7 0.08 0)"
+---
 not yet started.
 
 ## what it is

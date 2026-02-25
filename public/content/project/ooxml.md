@@ -3,7 +3,7 @@ label: "ooxml"
 description: "Office Open XML library for Rust"
 url: https://pterror.github.io/ooxml
 status: early
-tags: [rust, data]
+tags: [rust, data, infrastructure]
 ---
 
 Office Open XML library for Rust. every XML element maps to a Rust struct, unknown elements are preserved for roundtrip fidelity, and ECMA-376 is the source of truth.

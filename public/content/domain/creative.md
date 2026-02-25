@@ -1,3 +1,8 @@
+---
+label: "creative"
+description: "making things that didn't exist"
+color: "oklch(0.7 0.12 50)"
+---
 making things that didn't exist.
 
 ## what it is

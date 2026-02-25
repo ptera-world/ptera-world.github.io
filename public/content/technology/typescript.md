@@ -1,3 +1,8 @@
+---
+label: "typescript"
+description: "web and applications"
+color: "oklch(0.7 0.12 210)"
+---
 web and applications.
 
 ## what it is

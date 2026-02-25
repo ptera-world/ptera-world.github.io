@@ -1,3 +1,8 @@
+---
+label: "games"
+description: "worlds to play in"
+color: "oklch(0.7 0.12 280)"
+---
 worlds to play in.
 
 ## what it is

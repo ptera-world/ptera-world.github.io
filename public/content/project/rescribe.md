@@ -4,7 +4,7 @@ description: "converts documents without losing anything"
 url: https://docs.rhi.zone/rescribe
 parent: ecosystem/rhi
 status: fleshed-out
-tags: [rust, data]
+tags: [rust, data, infrastructure]
 ---
 
 universal document converter with a lossless intermediate representation. 50+ formats, open node kinds, fidelity tracking, and roundtrip-friendly design.

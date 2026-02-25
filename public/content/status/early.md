@@ -1,3 +1,8 @@
+---
+label: "early"
+description: "work in progress"
+color: "oklch(0.7 0.10 60)"
+---
 work in progress.
 
 ## what it is

@@ -10,6 +10,7 @@ import { parseFrontmatter, stripFrontmatter, inferTier, inferTags } from "./fron
 
 const contentDir = join(import.meta.dir, "../public/content");
 const outFile = join(import.meta.dir, "generated-graph.ts");
+const groupingsOutFile = join(import.meta.dir, "generated-groupings.ts");
 
 // ---------------------------------------------------------------------------
 // 1. Walk content directory
@@ -101,6 +102,31 @@ for (const { id, path, category } of files) {
     y: 0,
   });
   nodeIds.add(id);
+}
+
+// Also collect content-only pages (domain/technology/status) for grouping regions
+interface GroupingRegionDef {
+  id: string;
+  label: string;
+  description: string;
+  color: string;
+  category: string;
+}
+
+const groupingRegions: GroupingRegionDef[] = [];
+
+for (const { id, path, category } of files) {
+  if (!CONTENT_ONLY_DIRS.has(category)) continue;
+  const text = await readFile(path, "utf-8");
+  const fm = parseFrontmatter(text);
+  if (!fm) continue;
+  groupingRegions.push({
+    id,
+    label: fm.label,
+    description: fm.description,
+    color: fm.color ?? "",
+    category,
+  });
 }
 
 function radiusFromStatus(status?: string): number {
@@ -290,7 +316,196 @@ for (const { id, path } of files) {
 edges.sort((a, b) => a.from.localeCompare(b.from) || a.to.localeCompare(b.to));
 
 // ---------------------------------------------------------------------------
-// 5. Write output
+// 5. Generate groupings
+// ---------------------------------------------------------------------------
+
+interface GroupingOutput {
+  id: string;
+  label: string;
+  regions: { id: string; label: string; description: string; x: number; y: number; radius: number; color: string }[];
+  positions: Record<string, { x: number; y: number; regionId?: string; color?: string }>;
+}
+
+/** Place ids evenly on a circle, returning position map. */
+function ringPositions(
+  cx: number, cy: number, r: number,
+  ids: string[], regionId: string, color?: string,
+): Record<string, { x: number; y: number; regionId?: string; color?: string }> {
+  const positions: Record<string, { x: number; y: number; regionId?: string; color?: string }> = {};
+  ids.forEach((id, i) => {
+    const angle = -Math.PI / 2 + (2 * Math.PI * i) / ids.length;
+    positions[id] = {
+      x: Math.round(cx + r * Math.cos(angle)),
+      y: Math.round(cy + r * Math.sin(angle)),
+      ...(regionId && { regionId }),
+      ...(color && { color }),
+    };
+  });
+  return positions;
+}
+
+/** Compute essay/meta floating positions for a grouping. */
+function essayAndMetaPositions(
+  essayCx: number, essayCy: number,
+  metaX: number, metaY: number,
+): Record<string, { x: number; y: number }> {
+  const result: Record<string, { x: number; y: number }> = {};
+  const essayIds = essays.map((e) => e.id);
+  const centerEssayId = "prose/the-great-deceit";
+
+  const ringIds = essayIds.filter((id) => id !== centerEssayId);
+  if (ringIds.length > 0) {
+    Object.assign(result, ringPositions(essayCx, essayCy, 90, ringIds, ""));
+  }
+  if (essayIds.includes(centerEssayId)) {
+    result[centerEssayId] = { x: essayCx, y: essayCy };
+  }
+
+  for (const m of metaNodes) {
+    result[m.id] = { x: metaX, y: metaY };
+  }
+  return result;
+}
+
+const generatedGroupings: GroupingOutput[] = [];
+
+// --- Ecosystem grouping (default): uses graph positions ---
+{
+  const ecoRegions = regions.map((r) => ({
+    id: r.id, label: r.label, description: r.description,
+    x: r.x, y: r.y, radius: r.radius, color: r.color,
+  }));
+  generatedGroupings.push({
+    id: "ecosystem",
+    label: "Ecosystems",
+    regions: ecoRegions,
+    positions: {}, // default positions from graph
+  });
+}
+
+// --- Tag-based groupings (domain, tech) ---
+function buildTagGrouping(
+  groupingId: string, groupingLabel: string,
+  category: string, brighterLightness: string,
+  essayCx: number, essayCy: number,
+  metaX: number, metaY: number,
+): GroupingOutput {
+  const catRegions = groupingRegions
+    .filter((r) => r.category === category)
+    .sort((a, b) => a.id.localeCompare(b.id));
+
+  // Build regions with algorithmic positions
+  const regionCount = catRegions.length;
+  const maxChildCount = Math.max(
+    ...catRegions.map((r) => {
+      const tag = r.id.split("/")[1]!;
+      return projectNodes.filter((n) => n.tags.includes(tag)).length;
+    }),
+    1,
+  );
+  const ringR = Math.max(200, 100 + maxChildCount * 10);
+
+  const builtRegions: GroupingOutput["regions"] = [];
+  const allPositions: Record<string, { x: number; y: number; regionId?: string; color?: string }> = {};
+
+  catRegions.forEach((reg, i) => {
+    const tag = reg.id.split("/")[1]!;
+    const children = projectNodes.filter((n) => n.tags.includes(tag));
+    const childCount = children.length;
+
+    // Position region on a ring
+    const angle = -Math.PI / 2 + (2 * Math.PI * i) / regionCount;
+    const rx = Math.round(ringR * Math.cos(angle));
+    const ry = Math.round(ringR * Math.sin(angle));
+    const radius = Math.max(100, 60 + childCount * 12);
+
+    // Derive lighter color for children
+    const colorMatch = reg.color.match(/oklch\([\d.]+ ([\d.]+) ([\d.]+)\)/);
+    const chroma = colorMatch ? colorMatch[1] : "0.12";
+    const hue = colorMatch ? colorMatch[2] : "0";
+    const childColor = `oklch(${brighterLightness} ${chroma} ${hue})`;
+
+    builtRegions.push({
+      id: reg.id, label: reg.label, description: reg.description,
+      x: rx, y: ry, radius, color: reg.color,
+    });
+
+    // Position children in a ring
+    const childIds = children.map((c) => c.id).sort();
+    const childRingR = Math.max(60, radius * 0.7 + childCount * 3);
+    Object.assign(allPositions, ringPositions(rx, ry, childRingR, childIds, reg.id, childColor));
+  });
+
+  // Add essays and meta
+  Object.assign(allPositions, essayAndMetaPositions(essayCx, essayCy, metaX, metaY));
+
+  return { id: groupingId, label: groupingLabel, regions: builtRegions, positions: allPositions };
+}
+
+generatedGroupings.push(
+  buildTagGrouping("domain", "Domains", "domain", "0.75", 420, 180, 0, 0),
+);
+
+generatedGroupings.push(
+  buildTagGrouping("tech", "Technologies", "technology", "0.75", 20, 130, 0, -170),
+);
+
+// --- Status grouping ---
+{
+  const statusRegionDefs = groupingRegions
+    .filter((r) => r.category === "status")
+    .sort((a, b) => a.id.localeCompare(b.id));
+
+  const statusOrder = ["planned", "early", "fleshed-out", "mature", "production"];
+
+  // Sort by lifecycle order
+  statusRegionDefs.sort((a, b) => {
+    const aSlug = a.id.split("/")[1]!;
+    const bSlug = b.id.split("/")[1]!;
+    return statusOrder.indexOf(aSlug) - statusOrder.indexOf(bSlug);
+  });
+
+  const regionCount = statusRegionDefs.length;
+  const builtRegions: GroupingOutput["regions"] = [];
+  const allPositions: Record<string, { x: number; y: number; regionId?: string; color?: string }> = {};
+
+  statusRegionDefs.forEach((reg, i) => {
+    const statusSlug = reg.id.split("/")[1]!;
+    // Match nodes by status field; "mature" maps to "production" status
+    const matchStatuses = statusSlug === "mature" ? ["production"] : [statusSlug];
+    const children = projectNodes.filter((n) => n.status && matchStatuses.includes(n.status));
+    const childCount = children.length;
+
+    // Position: clockwise rectangle layout
+    const angle = -Math.PI / 2 + (2 * Math.PI * i) / regionCount;
+    const rx = Math.round(280 * Math.cos(angle));
+    const ry = Math.round(150 * Math.sin(angle));
+    const radius = Math.max(100, 60 + childCount * 10);
+
+    const colorMatch = reg.color.match(/oklch\(([\d.]+) ([\d.]+) ([\d.]+)\)/);
+    const lightness = colorMatch ? (Number(colorMatch[1]) + 0.05).toFixed(2) : "0.75";
+    const chroma = colorMatch ? colorMatch[2] : "0.12";
+    const hue = colorMatch ? colorMatch[3] : "0";
+    const childColor = `oklch(${lightness} ${chroma} ${hue})`;
+
+    builtRegions.push({
+      id: reg.id, label: reg.label, description: reg.description,
+      x: rx, y: ry, radius, color: reg.color,
+    });
+
+    const childIds = children.map((c) => c.id).sort();
+    const childRingR = Math.max(60, radius * 0.7 + childCount * 3);
+    Object.assign(allPositions, ringPositions(rx, ry, childRingR, childIds, reg.id, childColor));
+  });
+
+  // Essays at center, meta at top
+  Object.assign(allPositions, essayAndMetaPositions(0, 0, 0, -170));
+
+  generatedGroupings.push({ id: "status", label: "Status", regions: builtRegions, positions: allPositions });
+}
+
+// ---------------------------------------------------------------------------
+// 6. Write output
 // ---------------------------------------------------------------------------
 
 // Sort nodes by id for stable output
@@ -339,3 +554,47 @@ ${edgeLines}
 
 await writeFile(outFile, content);
 console.log(`wrote ${nodes.length} nodes and ${edges.length} edges to ${outFile}`);
+
+// Write groupings
+function quoteGrouping(s: string): string {
+  if (s.includes('"') || s.includes("\n") || s.includes("\\")) {
+    return JSON.stringify(s);
+  }
+  return `"${s}"`;
+}
+
+const groupingLines = generatedGroupings.map((g) => {
+  const regionLines = g.regions.map((r) =>
+    `    { id: "${r.id}", label: ${quoteGrouping(r.label)}, description: ${quoteGrouping(r.description)}, x: ${r.x}, y: ${r.y}, radius: ${r.radius}, color: ${quoteGrouping(r.color)} },`
+  ).join("\n");
+
+  const posEntries = Object.entries(g.positions).sort(([a], [b]) => a.localeCompare(b));
+  const posLines = posEntries.map(([id, pos]) => {
+    const fields = [`x: ${pos.x}`, `y: ${pos.y}`];
+    if (pos.regionId) fields.push(`regionId: "${pos.regionId}"`);
+    if (pos.color) fields.push(`color: ${quoteGrouping(pos.color)}`);
+    return `    "${id}": { ${fields.join(", ")} },`;
+  }).join("\n");
+
+  return `  {
+    id: "${g.id}",
+    label: "${g.label}",
+    regions: [
+${regionLines}
+    ],
+    positions: {
+${posLines}
+    },
+  },`;
+}).join("\n");
+
+const groupingsContent = `// Auto-generated by gen-graph.ts - do not edit
+import type { Grouping } from "./groupings";
+
+export const generatedGroupings: Grouping[] = [
+${groupingLines}
+];
+`;
+
+await writeFile(groupingsOutFile, groupingsContent);
+console.log(`wrote ${generatedGroupings.length} groupings to ${groupingsOutFile}`);
