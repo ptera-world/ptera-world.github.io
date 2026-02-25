@@ -62,8 +62,29 @@ function buildCard(node: Node, graph: Graph): DocumentFragment {
   frag.appendChild(header);
 
   // Description - show first paragraph from content, fall back to short desc
-  const desc = el("p", "card-desc", node.description);
+  const desc = el("p", "card-desc");
+  if (node.description) {
+    const parts = node.description.split("\n");
+    for (let i = 0; i < parts.length; i++) {
+      if (i > 0) desc.appendChild(document.createElement("br"));
+      desc.appendChild(document.createTextNode(parts[i]!));
+    }
+  }
   frag.appendChild(desc);
+
+  // Intercept cross-node links in card description (same as panel)
+  desc.addEventListener("click", (e) => {
+    if (e.ctrlKey || e.metaKey) return;
+    const anchor = (e.target as HTMLElement).closest?.("a");
+    if (!anchor) return;
+    const href = anchor.getAttribute("href");
+    if (!href) return;
+    if (/^\/[a-z][\w-]*(\/[a-z][\w-]*)*$/.test(href)) {
+      e.preventDefault();
+      e.stopPropagation();
+      openPanel(href.slice(1));
+    }
+  });
 
   const cached = contentCache.get(node.id);
   if (cached) {
