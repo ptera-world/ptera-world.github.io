@@ -3,6 +3,7 @@ import { currentTier } from "./camera";
 import type { Graph, Node } from "./graph";
 import type { FilterState } from "./filter";
 import { updateMinimap } from "./minimap";
+import { siteConfig } from "./site-config";
 
 const viewport = document.getElementById("viewport")!;
 export const worldEl = document.getElementById("world")!;
@@ -40,13 +41,14 @@ export function buildWorld(graph: Graph): void {
   // Landing intro
   landingEl = document.createElement("div");
   landingEl.className = "landing";
+  const metaNode = graph.nodes.find((n) => n.id === siteConfig.metaNodeId);
   landingEl.innerHTML =
-    `<div class="landing-name">ptera</div>` +
-    `<div class="landing-body">i think about how software and people<br>shape each other.</div>` +
+    `<div class="landing-name">${metaNode?.label ?? siteConfig.name}</div>` +
+    `<div class="landing-body">${metaNode?.description ?? ""}</div>` +
     `<div class="landing-trail">this is a map of things i've been exploring.</div>` +
     `<div class="landing-hint">scroll to zoom · click to explore · <kbd>/</kbd> to search</div>`;
   worldEl.appendChild(landingEl);
-  nodeEls.set("meta/pteraworld", landingEl);
+  nodeEls.set(siteConfig.metaNodeId, landingEl);
 
   // Edges (behind nodes) — SVG lines for CSS-transitionable coordinates
   const SVG_NS = "http://www.w3.org/2000/svg";

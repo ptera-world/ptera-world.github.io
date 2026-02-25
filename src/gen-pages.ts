@@ -2,6 +2,7 @@ import { readdir, mkdir, readFile, stat } from "node:fs/promises";
 import { join } from "path";
 import { parseMarkdown } from "./markdown";
 import { parseFrontmatter, stripFrontmatter } from "./frontmatter";
+import { siteConfig } from "./site-config";
 
 function pageHtml(
   id: string,
@@ -14,12 +15,12 @@ function pageHtml(
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${title} — ptera</title>
+  <title>${title} — ${siteConfig.name}</title>
   <meta property="og:title" content="${title}">
   <meta property="og:description" content="${description}">
-  <meta property="og:url" content="https://ptera.world/${id}">
+  <meta property="og:url" content="https://${siteConfig.domain}/${id}">
   <meta property="og:type" content="article">
-  <meta property="og:site_name" content="ptera.world">
+  <meta property="og:site_name" content="${siteConfig.domain}">
   <meta name="description" content="${description}">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }

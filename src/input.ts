@@ -4,6 +4,7 @@ import type { Graph, Node } from "./graph";
 import { updateTransform, setFocus, getHitNode, animateTo, nodeEls, landingEl } from "./dom";
 import { showCard, hideCard, isCardOpen, setCardNavigate } from "./card";
 import { isPanelOpen, closePanel, openPanel } from "./panel";
+import { siteConfig } from "./site-config";
 
 import { keybinds, defineSchema, fromBindings, registerComponents, fuzzyMatcher } from "keybinds";
 import type { Command } from "keybinds";
@@ -215,8 +216,8 @@ export function setupInput(
   // Landing click: navigate to pteraworld node
   landingEl.addEventListener("click", (e) => {
     e.stopPropagation();
-    const pteraworld = graph.nodes.find((n) => n.id === "pteraworld");
-    if (pteraworld) navigateTo(pteraworld);
+    const metaNode = graph.nodes.find((n) => n.id === siteConfig.metaNodeId);
+    if (metaNode) navigateTo(metaNode);
   });
 
   // Double-click: zoom to fit region
