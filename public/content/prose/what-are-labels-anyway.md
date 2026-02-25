@@ -30,7 +30,7 @@ You collected these. You built a self-concept out of them. And now you live insi
 
 ## How do labels become real?
 
-Labels aren't just descriptions. They're constraints.
+Labels aren't just descriptions. They're [constraints](/prose/why-are-we-compressing-things).
 
 Once you believe you're "not creative," you [stop trying](/prose/how-do-i-do-things) creative things. Why would you? You already know the outcome. The label becomes a filter - you notice evidence that confirms it, dismiss evidence that contradicts it.
 
@@ -86,7 +86,7 @@ Here's the thing about loosening your own labels: it changes how you see everyon
 
 If you're not your labels, neither are they. If your "awkward" was a story you could rewrite, maybe their "difficult" is too. If your ceiling was imaginary, maybe theirs is too.
 
-You stop flattening people. Not because you decided to be more open-minded - but because you felt, from inside, how much the flattening costs.
+You stop flattening people. Not because you decided to be more open-minded - but because you felt, from inside, how much the [flattening](/prose/why-are-we-compressing-things) costs.
 
 The insight transfers. Start with yourself.
 
@@ -94,4 +94,7 @@ The insight transfers. Start with yourself.
 
 - [what's actually wrong?](/prose/whats-actually-wrong) - the broader question of what we're missing
 - [how do I do things?](/prose/how-do-i-do-things) - starting without the identity weight
+- [who am I?](/prose/who-am-i) - the deeper question labels try to answer
+- [why are you lonely?](/prose/why-are-you-lonely) - when roles keep people from seeing you
+- [why are we compressing things?](/prose/why-are-we-compressing-things) - labels as compression
 - [aspect](/project/aspect) - identity exploration without fixed categories

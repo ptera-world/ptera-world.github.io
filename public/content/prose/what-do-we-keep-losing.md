@@ -90,4 +90,5 @@ And the things that last are the ones that don't need permission to keep existin
 - [reincarnate](/project/reincarnate) - lifting legacy software before it disappears
 - [rescribe](/project/rescribe) - lossless document conversion across formats
 - [interconnect](/project/interconnect) - federation for persistent shared worlds
+- [how much could I possibly do?](/prose/how-much-could-i-possibly-do) - one person building against the tide
 - [playmate](/project/playmate) - game design that respects collaboration

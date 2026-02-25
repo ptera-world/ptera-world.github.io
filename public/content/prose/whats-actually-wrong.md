@@ -16,7 +16,7 @@ They want to create. They have ideas. They [don't start](/prose/how-do-i-do-thin
 
 - **Fear of failure** - What if it's bad? What if I'm bad?
 - **Fear of judgment** - What will people think?
-- **Perfectionism** - Can't start until it's perfect in my head. It's never perfect in my head.
+- **[Perfectionism](/prose/why-is-perfectionism-a-trap)** - Can't start until it's perfect in my head. It's never perfect in my head.
 - **The gap** - The distance between the idea and the execution feels insurmountable.
 - **Decision paralysis** - Too many options. Which tool? Which approach? Which thing to make first?
 - **Previous attempts felt bad** - Tried before. It sucked. Why would this time be different?
@@ -34,10 +34,10 @@ Software has power. It's been used to create these problems. Could it be used to
 
 Not clinically. Just... the ambient background sadness that seems everywhere.
 
-- **Loneliness** - Surrounded by people, connected to no one.
-- **Lack of meaning** - What's the point? Of work, of effort, of anything?
+- **[Loneliness](/prose/why-are-you-lonely)** - Surrounded by people, connected to no one.
+- **Lack of meaning** - [What's the point?](/prose/whats-the-purpose-of-life) Of work, of effort, of anything?
 - **Comparison** - Everyone else seems to have it figured out. They don't, but it looks like they do.
-- **Feeling stuck** - Same patterns, same problems, no way out visible.
+- **Feeling stuck** - Same patterns, same problems, [no way out visible](/prose/why-is-change-so-hard).
 - **Feeling unseen** - Nobody really knows you. Or the you they know isn't the real you.
 - **Wrong environment** - The place, the job, the relationship, the life - it doesn't fit. But changing is terrifying.
 - **Chronic stress** - Always something. Never a break. The baseline is anxiety.
@@ -140,6 +140,9 @@ And collaboration is nearly impossible in most software. Debug someone's setup? 
 - [what do we keep losing?](/prose/what-do-we-keep-losing) - why good solutions vanish even after they're proven
 - [how do I do things?](/prose/how-do-i-do-things) - practical advice for starting and following through
 - [what are labels anyway?](/prose/what-are-labels-anyway) - the ceilings we put on ourselves
+- [why are you lonely?](/prose/why-are-you-lonely) - surrounded by people, connected to no one
+- [why is change so hard?](/prose/why-is-change-so-hard) - the gap between knowing and doing
+- [how much could I possibly do?](/prose/how-much-could-i-possibly-do) - defeatism dressed as realism
 - [playmate](/project/playmate) - game design primitives that respect players
 - [dusklight](/project/dusklight) - UI that surfaces what's possible instead of hiding it
 - [interconnect](/project/interconnect) - federation for persistent shared worlds

@@ -98,7 +98,7 @@ The fear isn't misaligned AGI. It's AGI that's aligned exactly as intended - to 
 
 The sci-fi fears are a distraction. Not because they're impossible - maybe there are exotic risks. But they let us imagine the problem is hypothetical, future, dramatic.
 
-It's not. The problem is current systems, and AGI is just those systems with better tools.
+It's not. The problem is current systems, and AGI is just those systems with better tools. The question isn't whether [it's just interpolation](/prose/is-it-just-interpolation) — it's who controls the interpolation and toward what end.
 
 The interesting question isn't whether AGI will be aligned. It's what it'll be aligned *to*. And why we'd expect that to include us.
 
@@ -109,3 +109,5 @@ That's not a technology problem. It's a governance problem. It exists right now,
 - [what's actually wrong?](/prose/whats-actually-wrong) - the systems we already have
 - [what do we keep losing?](/prose/what-do-we-keep-losing) - how institutions shape what survives
 - [what can I change?](/prose/what-can-i-change) - finding leverage in systems
+- [is it just interpolation?](/prose/is-it-just-interpolation) - what "just" hides about AI
+- [why are we compressing things?](/prose/why-are-we-compressing-things) - when metrics replace what they measure

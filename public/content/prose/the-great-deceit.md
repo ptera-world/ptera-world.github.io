@@ -26,7 +26,7 @@ Reading has always worked a certain way. You see words, you imagine a person beh
 
 Now that assumption can be wrong. The voice you imagined might be a language model. The person who "experienced" the things described might not be a person at all. The ideas in these essays came from a human having long conversations with one AI — about [how people get stuck](/prose/how-do-i-do-things), about [what systems optimize for](/prose/what-will-agi-actually-want), about [the labels we live inside](/prose/what-are-labels-anyway) — and then feeding those chatlogs to a different AI to distill into something coherent.
 
-Is that ["AI-written"](/prose/what-are-labels-anyway)? Is it "human-written"? The label flattens all of that into a single word. Maybe it should. Maybe the tool doing the writing matters, regardless of who directed it. Maybe it doesn't.
+Is that ["AI-written"](/prose/what-are-labels-anyway)? Is it "human-written"? The label [flattens](/prose/why-are-we-compressing-things) all of that into a single word. Maybe it should. Maybe the tool doing the writing matters, regardless of who directed it. Maybe it doesn't.
 
 ## What's the discomfort about?
 
@@ -53,5 +53,7 @@ The ideas in the other essays came from real conversations and real thinking. Th
 ## See also
 
 - [what are labels anyway?](/prose/what-are-labels-anyway) — how categories flatten reality
+- [is it just interpolation?](/prose/is-it-just-interpolation) — the technical dismissal and what it misses
+- [but.](/prose/but) — holding both halves at once
 - [what will AGI actually want?](/prose/what-will-agi-actually-want) — AI as continuation, not rupture
 - [how do I do things?](/prose/how-do-i-do-things) — starting things, with or without help

@@ -28,7 +28,7 @@ Not a system. Not productivity advice. Just patterns that seem to make it easier
 
 **Accepting that first attempts are bad.** Not as a motivational slogan - actually expecting it. The first version will be rough. That's not failure; that's how it works. The goal isn't a good first attempt. The goal is a first attempt at all.
 
-**Letting go of perfect.** Perfectionism looks like high standards. It's actually fear dressed up as quality control. "I can't put this out until it's good enough" becomes "I can't put this out." The standard becomes the wall. But nothing is perfect. Everything that exists is flawed. The choice isn't between perfect and imperfect - it's between imperfect and imaginary.
+**Letting go of perfect.** [Perfectionism](/prose/why-is-perfectionism-a-trap) looks like high standards. It's actually fear dressed up as quality control. "I can't put this out until it's good enough" becomes "I can't put this out." The standard becomes the wall. But nothing is perfect. Everything that exists is flawed. The choice isn't between perfect and imperfect - it's between imperfect and imaginary.
 
 **Noticing the permission gap.** Sometimes the thing in the way is waiting - for the right moment, the right conditions, someone to say it's okay. That permission might not be coming. It might already be yours.
 
@@ -65,4 +65,8 @@ There's no guarantee that trying works. But not trying has a guaranteed outcome.
 
 - [what's actually wrong?](/prose/whats-actually-wrong) - why it's hard to start things
 - [what are labels anyway?](/prose/what-are-labels-anyway) - the ceilings we put on ourselves
+- [who am I?](/prose/who-am-i) - self-knowledge through analysis, expression, and discovery
+- [why is perfectionism a trap?](/prose/why-is-perfectionism-a-trap) - when standards become walls
+- [why is change so hard?](/prose/why-is-change-so-hard) - the gap between knowing and doing
+- [how much could I possibly do?](/prose/how-much-could-i-possibly-do) - the defeatism that stops you before you start
 - [what can I change?](/prose/what-can-i-change) - when you want to change something bigger
