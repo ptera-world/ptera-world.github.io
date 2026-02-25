@@ -6,7 +6,7 @@ export interface Node {
   label: string;
   description: string;
   url?: string;
-  tier: "region" | "project" | "detail" | "meta";
+  tier: "region" | "artifact" | "detail" | "meta";
   /** Parent region id, if any. */
   parent?: string;
   /** Current position (mutated by layout). */

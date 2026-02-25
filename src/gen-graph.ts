@@ -47,7 +47,7 @@ interface ParsedNode {
   label: string;
   description: string;
   url?: string;
-  tier: "region" | "project" | "detail" | "meta";
+  tier: "region" | "artifact" | "detail" | "meta";
   parent?: string;
   status?: "production" | "fleshed-out" | "early" | "planned";
   tags: string[];
@@ -155,7 +155,7 @@ function ringLayout(cx: number, cy: number, r: number, items: ParsedNode[]): voi
 // Separate nodes by type
 const regions = nodes.filter((n) => n.tier === "region");
 const metaNodes = nodes.filter((n) => n.tier === "meta");
-const projectNodes = nodes.filter((n) => n.tier === "project");
+const projectNodes = nodes.filter((n) => n.tier === "artifact");
 
 // --- Region layout: ring around origin ---
 const regionHues: Map<string, number> = new Map();

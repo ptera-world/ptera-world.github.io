@@ -215,7 +215,7 @@ export function setFocus(graph: Graph, hovered: Node | null, announceNav = false
   }
 
   // Build tag set for hovered node (exclude structural tags)
-  const structural = new Set(["project", "region"]);
+  const structural = new Set(["code", "region"]);
   const hoveredNode = graph.nodes.find((n) => n.id === hovered.id)!;
   const hoveredTags = new Set(hoveredNode.tags.filter((t) => !structural.has(t)));
 
@@ -366,7 +366,11 @@ function createRegionElement(region: RegionDef): HTMLElement {
   if (region.description) {
     const desc = document.createElement("div");
     desc.className = "node-desc";
-    desc.textContent = region.description;
+    const parts = region.description.split("\n");
+    for (let i = 0; i < parts.length; i++) {
+      if (i > 0) desc.appendChild(document.createElement("br"));
+      desc.appendChild(document.createTextNode(parts[i]!));
+    }
     text.appendChild(desc);
   }
 

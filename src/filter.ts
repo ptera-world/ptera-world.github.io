@@ -71,7 +71,7 @@ export function applyFilter(filter: FilterState, graph: Graph): void {
   const filtering = filter.active.size > 0;
 
   // Compute filter strength for non-visible project nodes
-  const structural = new Set(["project", "region"]);
+  const structural = new Set(["code", "region"]);
   const filterStrength = new Map<string, number>();
 
   if (filtering) {
