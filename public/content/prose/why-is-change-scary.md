@@ -31,7 +31,7 @@ Every fear of change is protecting something specific. Not "the status quo" in t
 
 The fear isn't formless. It has a specific shape. And naming the shape — saying out loud "I'm afraid that if I change, I'll find out I'm not good enough" — takes away some of its power. Not all. Some.
 
-## The grief nobody mentions
+## What's the grief nobody mentions?
 
 Change means loss. Even good change.
 
@@ -51,7 +51,7 @@ If you've felt this — the sudden certainty that you should stop, right at the 
 
 Most people turn back at this point. And then feel relief. And then, a week later, feel the same stuck feeling they were trying to escape. Because the relief wasn't real — it was just the alarm turning off.
 
-## The other side
+## What's on the other side?
 
 Nobody can tell you what's on the other side of a specific change. It might be better. It might be worse. It might be different in ways you can't predict.
 

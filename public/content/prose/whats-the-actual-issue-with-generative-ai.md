@@ -18,7 +18,7 @@ Generative AI breaks that chain. You type a prompt. The model makes thousands of
 
 The prompter has intent — "I want something like this." But the gap between that intent and the output is filled entirely by the model. The specific *how* — the part that, in every other medium, is where the art lives — isn't the prompter's.
 
-## Why this matters
+## Why does this matter?
 
 It's not that the output is bad. It's often good. Sometimes beautiful. Sometimes indistinguishable from things made with deep intent. That's the problem.
 
@@ -26,7 +26,7 @@ When the output *looks like* someone meant every detail — but the prompter did
 
 This isn't the same as mass production. A factory-made chair was designed by someone. The choices were made once, then reproduced. Generative AI makes new choices every time — and they're not the prompter's.
 
-## The spectrum nobody talks about
+## What's the spectrum nobody talks about?
 
 It's [not that simple](/prose/its-not-that-simple), of course. A person who generates a hundred images and carefully selects one — is the selection intent? A person who iterates on a prompt for hours, refining toward a vision — is that vision intent? A person who takes AI output and modifies it, combines it, builds on it — at what point does their intent enter the work?
 
@@ -44,7 +44,7 @@ The labels split it into two things. It's one spectrum. And the distance between
 
 [But](/prose/but) even in the most careful process, the specific *how* — the micro-decisions that make this output *this* and not *that* — those are the model's. Not the prompter's.
 
-## This is not a new problem
+## Is this a new problem?
 
 A director doesn't act. A conductor doesn't play. An architect doesn't lay bricks. The intent lives in one person, the execution in another — and we've always accepted that the result carries the director's vision. "The computer did it" has been leveled at Photoshop, digital painting, Houdini, procedural generation. Every time a tool automated part of the craft, the same objection appeared. And every time, the answer was: the human's intent flows through the tool. The craft changed. The intent didn't.
 
@@ -54,7 +54,7 @@ Generative AI removes the floor. One sentence in, a finished thing out. And then
 
 The spectrum didn't just get wider. It extended all the way to the ground. And that's the thing no previous tool did.
 
-## Where the intent actually lives
+## Where does the intent actually live?
 
 [But](/prose/but) this framing — "the prompter has no control" — isn't quite right either. The prompter controls the *input*. What you put in, what you leave out, how you structure it — that determines which region of the [function](/prose/who-is-generative-ai) the output comes from. You don't control the micro-choices. But you shape the space they're made in.
 
@@ -62,7 +62,7 @@ The more carefully you shape the input, the more your intent shows through in th
 
 That's a new kind of intent. Not hand-on-the-brush intent. Not even conductor-leading-the-orchestra intent. Something closer to: you built the room, and the room shaped what happened in it.
 
-## What this doesn't mean
+## What doesn't this mean?
 
 This isn't "AI bad." This isn't "AI art isn't real art." Those are [labels](/prose/what-are-labels-anyway) that end conversations.
 

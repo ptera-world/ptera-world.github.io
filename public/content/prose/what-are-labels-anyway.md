@@ -54,7 +54,7 @@ People change. Constantly. You're not who you were five years ago. But your labe
 
 The ceiling isn't real. It's a story. But you keep your head down anyway.
 
-## Why self-labels stick
+## Why do self-labels stick?
 
 It's easier to see how labels flatten other people. You know your friend is more than "the shy one." You know your coworker is more than their job title.
 

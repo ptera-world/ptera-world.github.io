@@ -2,6 +2,7 @@
 label: "rhi"
 description: "glue layer for computers"
 url: https://docs.rhi.zone
+color: "oklch(0.7 0.12 155)"
 ---
 
 a glue layer for computers - finding common abstractions across fragmented domains.

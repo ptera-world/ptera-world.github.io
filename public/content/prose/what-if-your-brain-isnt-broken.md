@@ -10,9 +10,9 @@ You can't focus. You pick up your phone without deciding to. You start things an
 
 Something is wrong with you. Everyone says so. You probably have a label for it — or suspect you should.
 
-But what if the problem isn't your brain? [What if the problem is where you are?](#the-environment-question)
+But what if the problem isn't your brain? [What if the problem is where you are?](#is-the-environment-the-problem)
 
-## The environment question
+## Is the environment the problem?
 
 A fish doesn't know it's in water. You don't notice the attention environment you're swimming in because it's everywhere and it's been everywhere for so long that it feels like reality.
 
@@ -22,7 +22,7 @@ This is designed. Not accidentally. Not as a side effect. The infinite scroll di
 
 You're swimming in an environment [engineered to exploit](/prose/whats-actually-wrong) the exact mechanisms your brain uses to decide what matters. And then someone tells you your brain is the problem.
 
-## Dopamine isn't the villain
+## Is dopamine the villain?
 
 The popular version is: "dopamine is addictive, screens give you dopamine, therefore screens are addictive." This is wrong in a way that matters.
 
@@ -32,7 +32,7 @@ The problem isn't that your brain responds to dopamine. That's how brains work. 
 
 Each cycle gives you the anticipation hit and almost nothing else. The reward never arrives, so the seeking never stops. It's not that you're addicted to your phone. It's that your phone is running an exploit against a feature of your brain that you can't turn off.
 
-## The escape hatch
+## What's the escape hatch?
 
 Some people accidentally escape. Not because they're smarter or more disciplined. Because they stumbled into an environment where the reward loops align with deep work instead of fighting it.
 
@@ -44,7 +44,7 @@ A painter, a writer in flow, a cook improvising, a mechanic diagnosing a problem
 
 These aren't different brains. They're different environments. Environments where the reward structure supports sustained attention instead of fracturing it.
 
-## The reframe
+## What's the reframe?
 
 "I can't focus" might not be a description of your brain. It might be a description of your environment.
 
@@ -54,17 +54,17 @@ This doesn't mean attention disorders aren't real. They are. But the question "i
 
 The reframe isn't "you don't have a problem." It's: before you diagnose your brain, diagnose your environment. How much of what feels like dysfunction is actually a normal response to an environment engineered against sustained attention?
 
-## What aligned reward loops feel like
+## What do aligned reward loops feel like?
 
 When the rewards align, "focus" stops being an effort. It becomes the default. You don't need willpower to keep paying attention. You need willpower to *stop*.
 
-This is what people call "flow." But flow isn't a special state. It's what attention feels like when nothing is [competing for it artificially](/prose/why-is-nothing-special-anymore#the-convergence). When each cycle of effort produces a real result. When anticipation leads to something. When the environment rewards depth instead of breadth.
+This is what people call "flow." But flow isn't a special state. It's what attention feels like when nothing is [competing for it artificially](/prose/why-is-nothing-special-anymore#whats-the-convergence). When each cycle of effort produces a real result. When anticipation leads to something. When the environment rewards depth instead of breadth.
 
 The attention economy is the opposite of flow. It rewards breadth — scan, skip, scroll, next. It fractures attention into micro-moments because micro-moments are individually monetizable. Each fragment of your attention is worth a fraction of a cent to an advertiser, and the platforms are [optimizing for the number of fragments](/prose/whats-actually-wrong), not their quality.
 
 Flow isn't the exception. The attention economy is. Humans focused for thousands of years before infinite scroll existed. The ability to sustain attention isn't a rare gift. It's the baseline — the thing that happens when the environment isn't actively working against it.
 
-## The uncomfortable implication
+## What's the uncomfortable implication?
 
 If the problem is the environment, the solution is changing the environment. Not fixing your brain. Not building better habits. Not developing discipline to resist the thing designed by teams of engineers to be irresistible.
 
@@ -72,7 +72,7 @@ That's uncomfortable because changing your environment is hard. It means putting
 
 Real rest restores attention. The attention economy spends it. The feeling of exhaustion after an hour of scrolling isn't tiredness — it's depletion. Your attention was spent in micro-transactions, each one too small to notice, adding up to an hour of seek-without-find that left you with less than you started with.
 
-## What you actually need
+## What do you actually need?
 
 Not more discipline. Not a productivity system. Not [a notes app](/prose/why-is-everything-a-document).
 

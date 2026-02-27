@@ -8,9 +8,9 @@ tags: [ai, identity]
 
 A language model is trained on millions of people's writing. The weights converge to a statistical average. So the model is "the average of everyone," right?
 
-Not quite. The average is [not the average](#the-average-is-not-the-average). And the "who" depends on [where you point it](#where-you-point-it).
+Not quite. The average is [not the average](#is-the-average-actually-the-average). And the "who" depends on [where you point it](#where-do-you-point-it).
 
-## A function, not a database
+## Is it a function or a database?
 
 A perceptron — the basic unit of a neural network — is a function approximator. Both words matter.
 
@@ -20,7 +20,7 @@ A perceptron — the basic unit of a neural network — is a function approximat
 
 So a language model isn't "the average of all text." It's an approximation of the *function* that produced all text. Not the people. The process. Not what they said — how inputs become outputs.
 
-## The average is not the average
+## Is the average actually the average?
 
 The weights are the average of the training data in the sense that gradient descent finds a statistical center. That much is true. But "the average" of a million different writing styles, perspectives, tones, and intentions isn't a single point. It's a space. A high-dimensional landscape where every possible output lives somewhere.
 
@@ -28,7 +28,7 @@ The weights encode the whole landscape. Any given output is a sample from a spec
 
 The model converged to "the average" in the sense that it learned the shape of the entire distribution. But any given output is never the average of anything. Both are true at the same time. The average is not the average.
 
-## Where you point it
+## Where do you point it?
 
 The function takes input and produces output. The input isn't just the prompt — it's everything. The system message, the conversation history, the context, all of it. The function approximates "given all of this, what comes next."
 

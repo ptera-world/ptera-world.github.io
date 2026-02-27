@@ -2,6 +2,7 @@
 label: "this site is designed."
 description: "every pixel is a decision.\nevery compromise is intentional."
 tags: [design]
+cluster: meta-essays
 ---
 
 # This site is designed.

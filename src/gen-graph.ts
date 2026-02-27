@@ -2,15 +2,74 @@
  * Unified build script: reads frontmatter + edges from public/content/*.md
  * and generates src/generated-graph.ts with node definitions and edges.
  *
- * Replaces gen-edges.ts. Run with: bun run src/gen-graph.ts
+ * Run with: bun run src/gen-graph.ts
  */
 import { readdir, readFile, writeFile, stat } from "fs/promises";
 import { join } from "path";
+import { parse as parseYaml } from "yaml";
 import { parseFrontmatter, stripFrontmatter, inferTier, inferTags } from "./frontmatter";
 
 const contentDir = join(import.meta.dir, "../public/content");
 const outFile = join(import.meta.dir, "generated-graph.ts");
 const groupingsOutFile = join(import.meta.dir, "generated-groupings.ts");
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function radiusFromStatus(status?: string): number {
+  switch (status) {
+    case "production": return 30;
+    case "fleshed-out": return 26;
+    case "early": return 22;
+    case "planned": return 20;
+    default: return 24; // essays, meta, etc.
+  }
+}
+
+interface ParsedNode {
+  id: string;
+  label: string;
+  description: string;
+  url?: string;
+  tier: "region" | "artifact" | "detail" | "meta";
+  parent?: string;
+  status?: "production" | "fleshed-out" | "early" | "planned";
+  tags: string[];
+  radius: number;
+  color: string;
+  cluster?: string;
+  // Set by layout
+  x: number;
+  y: number;
+}
+
+/** Place nodes evenly on a circle, starting from the top and going clockwise. */
+function ringLayout(cx: number, cy: number, r: number, items: ParsedNode[]): void {
+  for (let i = 0; i < items.length; i++) {
+    const angle = -Math.PI / 2 + (2 * Math.PI * i) / items.length;
+    items[i]!.x = Math.round(cx + r * Math.cos(angle));
+    items[i]!.y = Math.round(cy + r * Math.sin(angle));
+  }
+}
+
+/** Place ids evenly on a circle, returning position map. */
+function ringPositions(
+  cx: number, cy: number, r: number,
+  ids: string[], regionId: string, color?: string,
+): Record<string, { x: number; y: number; regionId?: string; color?: string }> {
+  const positions: Record<string, { x: number; y: number; regionId?: string; color?: string }> = {};
+  ids.forEach((id, i) => {
+    const angle = -Math.PI / 2 + (2 * Math.PI * i) / ids.length;
+    positions[id] = {
+      x: Math.round(cx + r * Math.cos(angle)),
+      y: Math.round(cy + r * Math.sin(angle)),
+      ...(regionId && { regionId }),
+      ...(color && { color }),
+    };
+  });
+  return positions;
+}
 
 // ---------------------------------------------------------------------------
 // 1. Walk content directory
@@ -39,53 +98,101 @@ async function findMarkdownFiles(dir: string, prefix = ""): Promise<{ id: string
 }
 
 // ---------------------------------------------------------------------------
-// 2. Parse all files
+// 2. Cluster configs from public/content/cluster/
 // ---------------------------------------------------------------------------
 
-interface ParsedNode {
+interface ClusterConfig {
   id: string;
   label: string;
-  description: string;
-  url?: string;
-  tier: "region" | "artifact" | "detail" | "meta";
-  parent?: string;
-  status?: "production" | "fleshed-out" | "early" | "planned";
-  tags: string[];
-  radius: number;
+  center: [number, number];
+  layout: "force" | "ring";
   color: string;
-  // Set later by layout
-  x: number;
-  y: number;
+  // Force layout params
+  minDist: number;
+  restLen: number;
+  repulsion: number;
+  attraction: number;
+  gravity: number;
+  iterations: number;
 }
 
-// Content-only directories: files here don't become nodes unless they have tier: in frontmatter
-const CONTENT_ONLY_DIRS = new Set(["domain", "technology", "status"]);
+const DEFAULT_FORCE = {
+  minDist: 52,
+  restLen: 80,
+  repulsion: 20000,
+  attraction: 0.2,
+  gravity: 0.008,
+  iterations: 500,
+};
 
-const files = await findMarkdownFiles(contentDir);
+const allFiles = await findMarkdownFiles(contentDir);
+
+const clusterConfigs = new Map<string, ClusterConfig>();
+for (const { id, path, category } of allFiles) {
+  if (category !== "cluster") continue;
+  const clusterId = id.split("/")[1]!; // "cluster/essays" -> "essays"
+  const text = await readFile(path, "utf-8");
+  if (!text.startsWith("---\n")) continue;
+  const end = text.indexOf("\n---", 4);
+  if (end === -1) continue;
+  const raw = parseYaml(text.slice(4, end)) as Record<string, unknown>;
+  if (!raw || typeof raw !== "object") continue;
+  const centerRaw = raw.center as unknown[];
+  if (!Array.isArray(centerRaw) || centerRaw.length < 2) continue;
+  clusterConfigs.set(clusterId, {
+    id: clusterId,
+    label: (raw.label as string) ?? clusterId,
+    center: [Number(centerRaw[0]), Number(centerRaw[1])],
+    layout: (raw.layout as "force" | "ring") ?? "ring",
+    color: (raw.color as string) ?? "oklch(0.78 0.09 45)",
+    minDist: (raw.minDist as number) ?? DEFAULT_FORCE.minDist,
+    restLen: (raw.restLen as number) ?? DEFAULT_FORCE.restLen,
+    repulsion: (raw.repulsion as number) ?? DEFAULT_FORCE.repulsion,
+    attraction: (raw.attraction as number) ?? DEFAULT_FORCE.attraction,
+    gravity: (raw.gravity as number) ?? DEFAULT_FORCE.gravity,
+    iterations: (raw.iterations as number) ?? DEFAULT_FORCE.iterations,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// 3. Parse all content files
+// ---------------------------------------------------------------------------
+
+/** Infer which layout cluster a rootless artifact node belongs to. */
+function inferCluster(category: string, tier: string, parent?: string): string | undefined {
+  if (parent) return undefined; // positioned by parent region
+  if (tier !== "artifact") return undefined;
+  if (category === "prose") return "essays";
+  if (category === "project") return "orphans";
+  return undefined;
+}
+
+// Content-only directories: don't become nodes unless they have tier: in frontmatter
+const CONTENT_ONLY_DIRS = new Set(["domain", "technology", "status"]);
+// Config-only directories: parsed for config, not nodes
+const CONFIG_ONLY_DIRS = new Set(["cluster"]);
+
+const files = allFiles.filter((f) => !CONFIG_ONLY_DIRS.has(f.category));
 const nodes: ParsedNode[] = [];
 const nodeIds = new Set<string>();
 
 for (const { id, path, category } of files) {
   const text = await readFile(path, "utf-8");
   const fm = parseFrontmatter(text);
-  if (!fm) {
-    // Content-only dirs without frontmatter are skipped
-    if (CONTENT_ONLY_DIRS.has(category)) continue;
-    // Other files without frontmatter are also skipped (they need frontmatter to be nodes)
-    continue;
-  }
+  if (!fm) continue;
 
   // Skip content-only dirs unless they explicitly set tier
   if (CONTENT_ONLY_DIRS.has(category) && !fm.tier) continue;
 
   const tier = fm.tier ?? inferTier(category);
-  if (!tier) continue; // Can't determine tier — skip
+  if (!tier) continue;
 
   const autoTags = inferTags(category, tier);
   const userTags = fm.tags ?? [];
   const allTags = [...new Set([...autoTags, ...userTags])];
 
   const radius = fm.radius ?? radiusFromStatus(fm.status);
+  const cluster = fm.cluster ?? inferCluster(category, tier, fm.parent);
 
   nodes.push({
     id,
@@ -97,14 +204,15 @@ for (const { id, path, category } of files) {
     status: fm.status,
     tags: allTags,
     radius,
-    color: fm.color ?? "", // Filled in by layout
+    color: fm.color ?? "",
+    cluster,
     x: 0,
     y: 0,
   });
   nodeIds.add(id);
 }
 
-// Also collect content-only pages (domain/technology/status) for grouping regions
+// Also collect content-only pages for grouping regions
 interface GroupingRegionDef {
   id: string;
   label: string;
@@ -129,66 +237,36 @@ for (const { id, path, category } of files) {
   });
 }
 
-function radiusFromStatus(status?: string): number {
-  switch (status) {
-    case "production": return 30;
-    case "fleshed-out": return 26;
-    case "early": return 22;
-    case "planned": return 20;
-    default: return 24; // essays, meta, etc.
-  }
-}
-
 // ---------------------------------------------------------------------------
-// 3. Compute layout: positions and colors
+// 4. Compute layout: positions and colors
 // ---------------------------------------------------------------------------
 
-/** Place nodes evenly on a circle, starting from the top and going clockwise. */
-function ringLayout(cx: number, cy: number, r: number, items: ParsedNode[]): void {
-  for (let i = 0; i < items.length; i++) {
-    const angle = -Math.PI / 2 + (2 * Math.PI * i) / items.length;
-    items[i]!.x = Math.round(cx + r * Math.cos(angle));
-    items[i]!.y = Math.round(cy + r * Math.sin(angle));
-  }
-}
-
-// Separate nodes by type
 const regions = nodes.filter((n) => n.tier === "region");
 const metaNodes = nodes.filter((n) => n.tier === "meta");
 const projectNodes = nodes.filter((n) => n.tier === "artifact");
 
 // --- Region layout: ring around origin ---
-const regionHues: Map<string, number> = new Map();
 {
-  // Assign hues evenly on oklch wheel
-  const baseHues = [155, 320]; // rhi=green, exo=pink — extend as regions grow
-  regions.forEach((region, i) => {
-    const hue = baseHues[i] ?? (360 * i) / regions.length;
-    regionHues.set(region.id, hue);
-    if (!region.color) {
-      region.color = `oklch(0.7 0.12 ${hue})`;
-    }
-  });
-
-  // Size regions by child count (before positioning, so radii inform spacing)
   for (const region of regions) {
     const children = projectNodes.filter((n) => n.parent === region.id);
     if (region.radius === 24) {
-      // Default — compute from child count
       region.radius = Math.max(140, 100 + children.length * 6);
+    }
+    if (!region.color) {
+      // No color in frontmatter — compute from index as fallback
+      const i = regions.indexOf(region);
+      const hue = Math.round((360 * i) / Math.max(regions.length, 1));
+      region.color = `oklch(0.7 0.12 ${hue})`;
     }
   }
 
-  // Position regions on a ring around origin
   if (regions.length === 1) {
     regions[0]!.x = 0;
     regions[0]!.y = 0;
   } else {
-    // Ring radius: enough to keep regions separated
     const maxRadius = Math.max(...regions.map((r) => r.radius));
     const ringR = maxRadius + 100;
     for (let i = 0; i < regions.length; i++) {
-      // Start from the left, spread evenly
       const angle = Math.PI + (2 * Math.PI * i) / regions.length;
       regions[i]!.x = Math.round(ringR * Math.cos(angle));
       regions[i]!.y = Math.round(ringR * Math.sin(angle));
@@ -197,77 +275,52 @@ const regionHues: Map<string, number> = new Map();
 }
 
 // --- Children of regions: ring around parent ---
-const parentGroups = new Map<string, ParsedNode[]>();
-for (const node of projectNodes) {
-  if (node.parent) {
-    const group = parentGroups.get(node.parent) ?? [];
-    group.push(node);
-    parentGroups.set(node.parent, group);
-  }
-}
-
-for (const [parentId, children] of parentGroups) {
-  const parent = regions.find((r) => r.id === parentId);
-  if (!parent) continue;
-
-  const hue = regionHues.get(parentId) ?? 0;
-  // Ring radius based on parent visual radius
-  const ringR = Math.max(80, parent.radius + children.length * 2);
-  ringLayout(parent.x, parent.y, ringR, children);
-
-  for (const child of children) {
-    if (!child.color) {
-      child.color = `oklch(0.78 0.09 ${hue})`;
-    }
-  }
-}
-
-// --- Orphan projects (no parent, not essay): cluster ---
-const orphans = projectNodes.filter((n) => !n.parent && !n.tags.includes("essay"));
-const essays = projectNodes.filter((n) => n.tags.includes("essay"));
-
-// Orphans: spread above and below
 {
-  const orphanColor = "oklch(0.78 0.09 85)";
-  // Place orphans in a ring at a neutral position
-  if (orphans.length > 0) {
-    // Split into top and bottom clusters for visual balance
-    const topOrphans = orphans.slice(0, Math.ceil(orphans.length / 2));
-    const bottomOrphans = orphans.slice(Math.ceil(orphans.length / 2));
-
-    if (topOrphans.length > 0) {
-      ringLayout(0, -280, 60 + topOrphans.length * 15, topOrphans);
+  const parentGroups = new Map<string, ParsedNode[]>();
+  for (const node of projectNodes) {
+    if (node.parent) {
+      const group = parentGroups.get(node.parent) ?? [];
+      group.push(node);
+      parentGroups.set(node.parent, group);
     }
-    if (bottomOrphans.length > 0) {
-      ringLayout(80, 230, 60 + bottomOrphans.length * 15, bottomOrphans);
-    }
+  }
 
-    for (const o of orphans) {
-      if (!o.color) o.color = orphanColor;
+  for (const [parentId, children] of parentGroups) {
+    const parent = regions.find((r) => r.id === parentId);
+    if (!parent) continue;
+
+    const ringR = Math.max(80, parent.radius + children.length * 2);
+    ringLayout(parent.x, parent.y, ringR, children);
+
+    // Derive child color from parent's oklch hue
+    if (children.some((c) => !c.color)) {
+      const m = parent.color.match(/oklch\([\d.]+ ([\d.]+) ([\d.]+)\)/);
+      const hue = m ? m[2] : "0";
+      for (const child of children) {
+        if (!child.color) child.color = `oklch(0.78 0.09 ${hue})`;
+      }
     }
   }
 }
 
-// --- Essays: ring cluster ---
-{
-  const essayHue = 45;
-  const essayColor = `oklch(0.78 0.09 ${essayHue})`;
-  const essayCenter = { x: 80, y: 40 };
+// --- Cluster layout: all non-parent artifact nodes ---
+// Ring clusters are positioned now; force clusters are seeded and run after edge extraction.
+for (const [clusterId, config] of clusterConfigs) {
+  const members = projectNodes.filter((n) => n.cluster === clusterId);
+  if (members.length === 0) continue;
 
-  // Find "the-great-deceit" — it goes in the center
-  const centerEssay = essays.find((e) => e.id === "prose/the-great-deceit");
-  const ringEssays = essays.filter((e) => e.id !== "prose/the-great-deceit");
-
-  if (ringEssays.length > 0) {
-    ringLayout(essayCenter.x, essayCenter.y, 120, ringEssays);
-  }
-  if (centerEssay) {
-    centerEssay.x = essayCenter.x;
-    centerEssay.y = essayCenter.y;
+  // Assign color
+  for (const m of members) {
+    if (!m.color) m.color = config.color;
   }
 
-  for (const e of essays) {
-    if (!e.color) e.color = essayColor;
+  if (config.layout === "ring") {
+    const ringR = Math.max(80, 60 + members.length * 15);
+    ringLayout(config.center[0], config.center[1], ringR, members);
+  } else {
+    // Force layout: seed on a ring, actual layout runs after edges
+    const initialR = Math.ceil((members.length * config.minDist) / (2 * Math.PI)) + 200;
+    ringLayout(config.center[0], config.center[1], initialR, members);
   }
 }
 
@@ -280,7 +333,7 @@ for (const meta of metaNodes) {
 }
 
 // ---------------------------------------------------------------------------
-// 4. Extract edges from ## Related projects / ## See also
+// 5. Extract edges from ## Related projects / ## See also
 // ---------------------------------------------------------------------------
 
 interface EdgeDef {
@@ -316,7 +369,176 @@ for (const { id, path } of files) {
 edges.sort((a, b) => a.from.localeCompare(b.from) || a.to.localeCompare(b.to));
 
 // ---------------------------------------------------------------------------
-// 5. Generate groupings
+// 6. Force-directed layout for force clusters
+// ---------------------------------------------------------------------------
+
+/** Run force-directed layout on a set of nodes. Positions are modified in-place. */
+function runForceLayout(
+  members: ParsedNode[],
+  center: [number, number],
+  adj: Map<string, Set<string>>,
+  opts: Pick<ClusterConfig, "minDist" | "restLen" | "repulsion" | "attraction" | "gravity" | "iterations">,
+): void {
+  const { minDist, restLen, repulsion, attraction, gravity, iterations } = opts;
+  const [cx, cy] = center;
+
+  const vx = new Map<string, number>(members.map((e) => [e.id, 0]));
+  const vy = new Map<string, number>(members.map((e) => [e.id, 0]));
+
+  for (let iter = 0; iter < iterations; iter++) {
+    const cooling = 1 - iter / iterations;
+    const fx = new Map<string, number>(members.map((e) => [e.id, 0]));
+    const fy = new Map<string, number>(members.map((e) => [e.id, 0]));
+
+    // Repulsion between all pairs
+    for (let i = 0; i < members.length; i++) {
+      for (let j = i + 1; j < members.length; j++) {
+        const a = members[i]!, b = members[j]!;
+        const dx = a.x - b.x, dy = a.y - b.y;
+        const dist = Math.max(Math.hypot(dx, dy), 0.1);
+        const force = dist < minDist
+          ? repulsion * 4 / (dist * dist)
+          : repulsion / (dist * dist);
+        const nx = dx / dist, ny = dy / dist;
+        fx.set(a.id, fx.get(a.id)! + nx * force);
+        fy.set(a.id, fy.get(a.id)! + ny * force);
+        fx.set(b.id, fx.get(b.id)! - nx * force);
+        fy.set(b.id, fy.get(b.id)! - ny * force);
+      }
+    }
+
+    // Attraction along edges — normalized by degree so hubs don't dominate
+    for (const a of members) {
+      const aDeg = Math.max(adj.get(a.id)?.size ?? 0, 1);
+      for (const bid of adj.get(a.id) ?? []) {
+        const b = members.find((e) => e.id === bid);
+        if (!b || b.id < a.id) continue;
+        const bDeg = Math.max(adj.get(b.id)?.size ?? 0, 1);
+        const dx = b.x - a.x, dy = b.y - a.y;
+        const dist = Math.max(Math.hypot(dx, dy), 0.1);
+        const forceA = (attraction / aDeg) * (dist - restLen);
+        const forceB = (attraction / bDeg) * (dist - restLen);
+        const nx = dx / dist, ny = dy / dist;
+        fx.set(a.id, fx.get(a.id)! + nx * forceA);
+        fy.set(a.id, fy.get(a.id)! + ny * forceA);
+        fx.set(b.id, fx.get(b.id)! - nx * forceB);
+        fy.set(b.id, fy.get(b.id)! - ny * forceB);
+      }
+    }
+
+    // Gravity toward cluster center
+    for (const e of members) {
+      fx.set(e.id, fx.get(e.id)! + (cx - e.x) * gravity);
+      fy.set(e.id, fy.get(e.id)! + (cy - e.y) * gravity);
+    }
+
+    // Integrate with damping
+    const damping = 0.85;
+    const maxStep = 20 * cooling + 2;
+    for (const e of members) {
+      const nvx = (vx.get(e.id)! + fx.get(e.id)!) * damping;
+      const nvy = (vy.get(e.id)! + fy.get(e.id)!) * damping;
+      const speed = Math.hypot(nvx, nvy);
+      const scale = speed > maxStep ? maxStep / speed : 1;
+      vx.set(e.id, nvx * scale);
+      vy.set(e.id, nvy * scale);
+      e.x += vx.get(e.id)!;
+      e.y += vy.get(e.id)!;
+    }
+
+    // Hard constraint: multiple passes to fully resolve overlaps
+    for (let pass = 0; pass < 4; pass++) {
+      for (let i = 0; i < members.length; i++) {
+        for (let j = i + 1; j < members.length; j++) {
+          const a = members[i]!, b = members[j]!;
+          const dx = a.x - b.x, dy = a.y - b.y;
+          const dist = Math.hypot(dx, dy);
+          if (dist < minDist && dist > 0) {
+            const push = (minDist - dist) / 2 + 0.5;
+            const nx = dx / dist, ny = dy / dist;
+            a.x += nx * push; a.y += ny * push;
+            b.x -= nx * push; b.y -= ny * push;
+          }
+        }
+      }
+    }
+  }
+
+  for (const e of members) {
+    e.x = Math.round(e.x);
+    e.y = Math.round(e.y);
+  }
+}
+
+// Run force layout for each force cluster
+for (const [clusterId, config] of clusterConfigs) {
+  if (config.layout !== "force") continue;
+  const members = projectNodes.filter((n) => n.cluster === clusterId);
+  if (members.length === 0) continue;
+
+  const memberIds = new Set(members.map((e) => e.id));
+  const adj = new Map<string, Set<string>>();
+  for (const m of members) adj.set(m.id, new Set());
+  for (const edge of edges) {
+    if (memberIds.has(edge.from) && memberIds.has(edge.to)) {
+      adj.get(edge.from)!.add(edge.to);
+      adj.get(edge.to)!.add(edge.from);
+    }
+  }
+
+  runForceLayout(members, config.center, adj, config);
+}
+
+// ---------------------------------------------------------------------------
+// 6b. Detect and resolve cross-cluster overlaps
+// ---------------------------------------------------------------------------
+{
+  // Skip same-parent pairs — their ecosystem ring handles spacing
+  const overlaps: [ParsedNode, ParsedNode, number][] = [];
+  for (let i = 0; i < projectNodes.length; i++) {
+    for (let j = i + 1; j < projectNodes.length; j++) {
+      const a = projectNodes[i]!, b = projectNodes[j]!;
+      if (a.parent && a.parent === b.parent) continue;
+      const minDist = a.radius + b.radius + 4;
+      const dist = Math.hypot(a.x - b.x, a.y - b.y);
+      if (dist < minDist) overlaps.push([a, b, dist]);
+    }
+  }
+
+  if (overlaps.length > 0) {
+    console.warn(`\nwarn: ${overlaps.length} node overlaps — applying best-effort separation:`);
+    for (const [a, b, dist] of overlaps) {
+      console.warn(`  ${a.id} <-> ${b.id}: dist=${Math.round(dist)}, need ${Math.round(a.radius + b.radius + 4)}`);
+    }
+
+    for (let pass = 0; pass < 30; pass++) {
+      for (let i = 0; i < projectNodes.length; i++) {
+        for (let j = i + 1; j < projectNodes.length; j++) {
+          const a = projectNodes[i]!, b = projectNodes[j]!;
+          if (a.parent && a.parent === b.parent) continue;
+          const minDist = a.radius + b.radius + 4;
+          const dx = a.x - b.x, dy = a.y - b.y;
+          const dist = Math.hypot(dx, dy);
+          if (dist < minDist && dist > 0) {
+            const push = (minDist - dist) / 2 + 0.5;
+            const nx = dx / dist, ny = dy / dist;
+            a.x += nx * push; a.y += ny * push;
+            b.x -= nx * push; b.y -= ny * push;
+          }
+        }
+      }
+    }
+
+    for (const n of projectNodes) {
+      n.x = Math.round(n.x);
+      n.y = Math.round(n.y);
+    }
+    console.warn("  separation applied.");
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 7. Generate groupings
 // ---------------------------------------------------------------------------
 
 interface GroupingOutput {
@@ -326,41 +548,21 @@ interface GroupingOutput {
   positions: Record<string, { x: number; y: number; regionId?: string; color?: string }>;
 }
 
-/** Place ids evenly on a circle, returning position map. */
-function ringPositions(
-  cx: number, cy: number, r: number,
-  ids: string[], regionId: string, color?: string,
-): Record<string, { x: number; y: number; regionId?: string; color?: string }> {
-  const positions: Record<string, { x: number; y: number; regionId?: string; color?: string }> = {};
-  ids.forEach((id, i) => {
-    const angle = -Math.PI / 2 + (2 * Math.PI * i) / ids.length;
-    positions[id] = {
-      x: Math.round(cx + r * Math.cos(angle)),
-      y: Math.round(cy + r * Math.sin(angle)),
-      ...(regionId && { regionId }),
-      ...(color && { color }),
-    };
-  });
-  return positions;
-}
-
-/** Compute essay/meta floating positions for a grouping. */
-function essayAndMetaPositions(
-  essayCx: number, essayCy: number,
+/**
+ * Place all cluster nodes at their cluster center (ring), plus meta nodes at metaX/metaY.
+ * Used in secondary groupings where non-tagged nodes float at their home position.
+ */
+function clusterPositionsForGroupings(
   metaX: number, metaY: number,
 ): Record<string, { x: number; y: number }> {
   const result: Record<string, { x: number; y: number }> = {};
-  const essayIds = essays.map((e) => e.id);
-  const centerEssayId = "prose/the-great-deceit";
-
-  const ringIds = essayIds.filter((id) => id !== centerEssayId);
-  if (ringIds.length > 0) {
-    Object.assign(result, ringPositions(essayCx, essayCy, 90, ringIds, ""));
+  for (const [clusterId, config] of clusterConfigs) {
+    const members = projectNodes.filter((n) => n.cluster === clusterId);
+    if (members.length === 0) continue;
+    const [cx, cy] = config.center;
+    const ringR = Math.max(60, Math.ceil((members.length * 40) / (2 * Math.PI)) + 40);
+    Object.assign(result, ringPositions(cx, cy, ringR, members.map((n) => n.id), ""));
   }
-  if (essayIds.includes(centerEssayId)) {
-    result[centerEssayId] = { x: essayCx, y: essayCy };
-  }
-
   for (const m of metaNodes) {
     result[m.id] = { x: metaX, y: metaY };
   }
@@ -387,14 +589,12 @@ const generatedGroupings: GroupingOutput[] = [];
 function buildTagGrouping(
   groupingId: string, groupingLabel: string,
   category: string, brighterLightness: string,
-  essayCx: number, essayCy: number,
   metaX: number, metaY: number,
 ): GroupingOutput {
   const catRegions = groupingRegions
     .filter((r) => r.category === category)
     .sort((a, b) => a.id.localeCompare(b.id));
 
-  // Build regions with algorithmic positions
   const regionCount = catRegions.length;
   const maxChildCount = Math.max(
     ...catRegions.map((r) => {
@@ -413,13 +613,11 @@ function buildTagGrouping(
     const children = projectNodes.filter((n) => n.tags.includes(tag));
     const childCount = children.length;
 
-    // Position region on a ring
     const angle = -Math.PI / 2 + (2 * Math.PI * i) / regionCount;
     const rx = Math.round(ringR * Math.cos(angle));
     const ry = Math.round(ringR * Math.sin(angle));
     const radius = Math.max(100, 60 + childCount * 12);
 
-    // Derive lighter color for children
     const colorMatch = reg.color.match(/oklch\([\d.]+ ([\d.]+) ([\d.]+)\)/);
     const chroma = colorMatch ? colorMatch[1] : "0.12";
     const hue = colorMatch ? colorMatch[2] : "0";
@@ -430,24 +628,23 @@ function buildTagGrouping(
       x: rx, y: ry, radius, color: reg.color,
     });
 
-    // Position children in a ring
     const childIds = children.map((c) => c.id).sort();
     const childRingR = Math.max(60, radius * 0.7 + childCount * 3);
     Object.assign(allPositions, ringPositions(rx, ry, childRingR, childIds, reg.id, childColor));
   });
 
-  // Add essays and meta
-  Object.assign(allPositions, essayAndMetaPositions(essayCx, essayCy, metaX, metaY));
+  // Add cluster nodes and meta at their home positions
+  Object.assign(allPositions, clusterPositionsForGroupings(metaX, metaY));
 
   return { id: groupingId, label: groupingLabel, regions: builtRegions, positions: allPositions };
 }
 
 generatedGroupings.push(
-  buildTagGrouping("domain", "Domains", "domain", "0.75", 420, 180, 0, 0),
+  buildTagGrouping("domain", "Domains", "domain", "0.75", 0, 0),
 );
 
 generatedGroupings.push(
-  buildTagGrouping("tech", "Technologies", "technology", "0.75", 20, 130, 0, -170),
+  buildTagGrouping("tech", "Technologies", "technology", "0.75", 0, -170),
 );
 
 // --- Status grouping ---
@@ -458,7 +655,6 @@ generatedGroupings.push(
 
   const statusOrder = ["planned", "early", "fleshed-out", "mature", "production"];
 
-  // Sort by lifecycle order
   statusRegionDefs.sort((a, b) => {
     const aSlug = a.id.split("/")[1]!;
     const bSlug = b.id.split("/")[1]!;
@@ -471,12 +667,10 @@ generatedGroupings.push(
 
   statusRegionDefs.forEach((reg, i) => {
     const statusSlug = reg.id.split("/")[1]!;
-    // Match nodes by status field; "mature" maps to "production" status
     const matchStatuses = statusSlug === "mature" ? ["production"] : [statusSlug];
     const children = projectNodes.filter((n) => n.status && matchStatuses.includes(n.status));
     const childCount = children.length;
 
-    // Position: clockwise rectangle layout
     const angle = -Math.PI / 2 + (2 * Math.PI * i) / regionCount;
     const rx = Math.round(280 * Math.cos(angle));
     const ry = Math.round(150 * Math.sin(angle));
@@ -498,14 +692,13 @@ generatedGroupings.push(
     Object.assign(allPositions, ringPositions(rx, ry, childRingR, childIds, reg.id, childColor));
   });
 
-  // Essays at center, meta at top
-  Object.assign(allPositions, essayAndMetaPositions(0, 0, 0, -170));
+  Object.assign(allPositions, clusterPositionsForGroupings(0, -170));
 
   generatedGroupings.push({ id: "status", label: "Status", regions: builtRegions, positions: allPositions });
 }
 
 // ---------------------------------------------------------------------------
-// 6. Write output
+// 8. Write output
 // ---------------------------------------------------------------------------
 
 // Sort nodes by id for stable output

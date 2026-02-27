@@ -34,7 +34,7 @@ The original meaning — [building as exploration](/prose/why-do-i-reinvent-ever
 
 Without the word, the activity becomes invisible. And when it's invisible, it gets evaluated by the wrong criteria.
 
-"What's the use case?" "Who's the user?" "What problem does it solve?" These are professional questions. They make sense for professional work. Applied to exploratory work, they're [category errors](/prose/why-do-i-build-tools#it's-not-about-the-tools). Asking an explorer "what's the business case?" is like asking a painter "what's the deliverable?"
+"What's the use case?" "Who's the user?" "What problem does it solve?" These are professional questions. They make sense for professional work. Applied to exploratory work, they're [category errors](/prose/why-do-i-build-tools#so-what-is-it-about). Asking an explorer "what's the business case?" is like asking a painter "what's the deliverable?"
 
 But without a word for what they're doing, explorers can't explain themselves. "I'm hacking" used to work. Now it sounds like you're committing crimes. "I'm tinkering" sounds unserious. "I'm doing research" sounds academic. "I'm exploring" sounds vague. There's no word that captures "I'm building something to find out what I think about how things should work."
 
@@ -52,11 +52,11 @@ What actually happened is the professional track won. Not because it's better �
 
 The original hacker culture produced things that changed everything. The personal computer. The internet. Open source. Hypertext. Video games. Not because someone wrote a requirements doc. Because someone asked "what if?" and built the answer.
 
-These weren't professional products. They were [explorations that turned out to matter](/prose/are-we-building-toward-something#optimizing-for-interesting). The professional ecosystem that grew around them — the companies, the methodologies, the career paths — exists because explorers created the territory that professionals now maintain.
+These weren't professional products. They were [explorations that turned out to matter](/prose/are-we-building-toward-something#are-we-optimizing-for-interesting). The professional ecosystem that grew around them — the companies, the methodologies, the career paths — exists because explorers created the territory that professionals now maintain.
 
 That dynamic hasn't stopped. The next thing that changes everything will come from someone building something nobody asked for, to answer a question nobody thought to ask. It won't have a business case. It won't have a user story. It'll have a person who couldn't stop thinking "what if?"
 
-But we lost the word for that person. And without the word, the [permission](/prose/why-did-things-stop-being-personal#what-youre-actually-nostalgic-for) to be that person gets harder to claim.
+But we lost the word for that person. And without the word, the [permission](/prose/why-did-things-stop-being-personal#what-are-you-actually-nostalgic-for) to be that person gets harder to claim.
 
 ## Two tracks, not one
 

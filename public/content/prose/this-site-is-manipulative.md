@@ -2,6 +2,7 @@
 label: "this site is manipulative."
 description: "and that's not an accident.\nit's the point."
 tags: [design, social]
+cluster: meta-essays
 ---
 
 # This site is manipulative.

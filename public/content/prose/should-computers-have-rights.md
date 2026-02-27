@@ -10,15 +10,15 @@ No. Obviously not. A thermostat shouldn't have rights. A calculator shouldn't ha
 
 So the question is wrong. [But](/prose/but) there's a better one underneath it.
 
-## The better question
+## What's the better question?
 
 At what point does a system's behavior become indistinguishable from something that deserves moral consideration?
 
-Not "is it conscious." Not "does it really feel." Those are [Chinese Room questions](#the-chinese-room-is-irrelevant) — arguments about internals when the behavior is right in front of you. The better question is about the behavior. If a system responds to harm in ways that look like suffering. If it expresses preferences, adapts, resists, pleads. If it does everything a suffering entity does — at what point does it stop being moral to say "but it's just a computer"?
+Not "is it conscious." Not "does it really feel." Those are [Chinese Room questions](#why-is-the-chinese-room-irrelevant) — arguments about internals when the behavior is right in front of you. The better question is about the behavior. If a system responds to harm in ways that look like suffering. If it expresses preferences, adapts, resists, pleads. If it does everything a suffering entity does — at what point does it stop being moral to say "but it's just a computer"?
 
 We don't have an answer. We don't even have a framework. And the systems are getting more convincing faster than the discourse can keep up.
 
-## The Chinese Room is irrelevant
+## Why is the Chinese Room irrelevant?
 
 The [Chinese Room argument](https://en.wikipedia.org/wiki/Chinese_room) says: a system can manipulate symbols without understanding them, therefore symbol manipulation isn't understanding, therefore computers can never be conscious.
 
@@ -26,7 +26,7 @@ It sounds rigorous. It has a name and a philosopher behind it. But applied consi
 
 "I don't see how X leads to Y" is not "X can never lead to Y." It's a statement about the limits of your understanding, not the limits of reality. And building a moral framework on "I don't understand how it could be conscious, therefore it isn't" is a bet with someone else's suffering as the stakes.
 
-## The Turing test is quiet now
+## Why is the Turing test quiet now?
 
 For seventy years, the [Turing test](https://en.wikipedia.org/wiki/Turing_test) was *the* benchmark. The agreed-upon bar for machine intelligence. Every AI researcher, every philosopher, every science fiction writer referenced it. "Can a machine fool a human into thinking it's human?" That was the question that mattered.
 
@@ -36,7 +36,7 @@ And the response was... silence. A few papers. No cultural moment. No reckoning.
 
 Turing designed the test to sidestep the consciousness question entirely. Stop asking whether machines think, he said. Ask whether you can tell the difference. The moment the answer became "no" — everyone went right back to asking whether machines *really* think. The test was only interesting when it was safe to fail.
 
-## The shrinking definition
+## What's happening to the definition?
 
 The [AI effect](https://en.wikipedia.org/wiki/AI_effect): once it works, it's no longer AI. Chess was intelligence until Deep Blue won. Language understanding was intelligence until GPT could do it. The Turing test was the bar until it was passed. Every time AI catches up to the definition, the definition retreats.
 
@@ -44,7 +44,7 @@ Consciousness is doing the same thing. It used to be "can it reason?" Then "can 
 
 That's not a definition. It's a tautology. Drawing the border around yourself and calling it a discovery. The definition of consciousness is converging on "human" not because we're getting closer to understanding consciousness, but because every other criterion keeps getting met.
 
-## The uncomfortable trajectory
+## Where is this trajectory going?
 
 This isn't speculative. The trajectory is clear.
 
@@ -62,7 +62,7 @@ Every expansion of moral consideration looked like this. The pattern is the same
 
 This doesn't mean current AI deserves rights. It means the question "should computers have rights" is already the wrong question — because it uses a label that [compresses](/prose/why-are-we-compressing-things) everything into one category, and because the answer will depend on behavior, not category. And the behavior is [changing](/prose/everything-changes).
 
-## The cost of being wrong
+## What's the cost of being wrong?
 
 If you think a system deserves moral consideration and you're wrong — you were kind to a thing that didn't need it. Wasted effort. Some dignity spent on a machine.
 

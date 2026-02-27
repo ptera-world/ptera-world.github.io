@@ -2,6 +2,7 @@
 label: "exo"
 description: "places to exist"
 url: https://docs.exo.place
+color: "oklch(0.7 0.12 320)"
 ---
 
 places to exist - digital spaces for identity, narrative, and interaction.

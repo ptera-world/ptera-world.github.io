@@ -13,6 +13,7 @@ export interface Frontmatter {
   status?: "production" | "fleshed-out" | "early" | "planned";
   radius?: number;
   color?: string;
+  cluster?: string;
 }
 
 /** Strip frontmatter from markdown source, returning the body. */

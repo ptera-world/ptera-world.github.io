@@ -10,7 +10,7 @@ Not nothing. There are still things that surprise you. But they're harder to fin
 
 [What happened?](#what-happened)
 
-## What used to be different
+## What used to be different?
 
 The Twilight Zone made humans the punchline. Rendezvous with Rama presented aliens that didn't care humans existed. Old Doctor Who made the human the companion, not the hero. Avatar was a bet on an unproven world. Megamind subverted its own genre. Toy Story was a studio's first feature and it trusted the audience to care about toys.
 
@@ -18,7 +18,7 @@ These weren't niche. They were mainstream. And they all assumed the audience cou
 
 That space still exists. But it's smaller. And the things that fill the biggest spaces — the MCU, the franchise sequels, the focus-tested blockbusters — don't trust the audience at all.
 
-## What happened
+## What happened?
 
 Budgets went up. Distribution went global. The cost of alienating anyone went up with them. A $200 million film can't afford to be weird. A AAA game can't afford to confuse. An algorithm can't afford to show you something you might not click on.
 
@@ -26,7 +26,7 @@ So everything converged on what works. And "what works" means "what the most peo
 
 The MCU isn't bad. That's what makes it hard to criticize. It's competent. It hits every beat. It's just the same beat, every time. The formula works, so everything becomes the formula. Sequels, franchises, proven IP, tested to remove every edge. Not because the creators lack [intent](/prose/what-is-art) — but because the economics select against intent that doesn't serve the metric.
 
-## Trust
+## Where did the trust go?
 
 The difference between something special and something frictionless is trust.
 
@@ -38,7 +38,7 @@ Music: an algorithm that shows you what you already like versus a friend who say
 
 The forms didn't get worse. The trust disappeared. Because trusting the audience means some of them leave. And leaving is the one thing the metric can't tolerate.
 
-## The convergence
+## What's the convergence?
 
 It's not just film. Not just games. Not just music. It's everything.
 
@@ -46,7 +46,7 @@ YouTube thumbnails converged on the same face. Game design converged on the same
 
 Each one, individually, is rational. Each creator optimizing for reach. Each platform optimizing for retention. Each decision making sense in isolation. And the aggregate is a culture where everything is competent and nothing is special. Not because anyone chose blandness. Because the system selected for it.
 
-## What's left
+## What's left?
 
 The special things still exist. They're just not where the most people are looking. They're in indie games that trust the player. In albums that don't chase playlists. In films that don't explain themselves. In [essays on weird websites](/prose/this-site-is-manipulative) that don't optimize for engagement.
 

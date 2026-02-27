@@ -6,11 +6,11 @@ tags: [identity, design]
 
 # Why is perfectionism a trap?
 
-You're not lazy. You're not even procrastinating, exactly. You have the idea. You know roughly what to do. You just... can't start. Or you started and can't finish. Or you finished but can't share it. Because it's [not good enough yet](#its-never-good-enough-yet).
+You're not lazy. You're not even procrastinating, exactly. You have the idea. You know roughly what to do. You just... can't start. Or you started and can't finish. Or you finished but can't share it. Because it's [not good enough yet](#is-it-ever-good-enough).
 
-Perfectionism looks like caring about quality. It's actually [fear in disguise](#what-is-it-really). It has a [mechanism](#how-the-trap-works) that's almost invisible from inside. And the way out isn't [lowering your standards](#is-the-answer-lower-standards) — it's understanding what the standards are actually protecting.
+Perfectionism looks like caring about quality. It's actually [fear in disguise](#what-is-it-really). It has a [mechanism](#how-does-the-trap-work) that's almost invisible from inside. And the way out isn't [lowering your standards](#is-the-answer-lower-standards) — it's understanding what the standards are actually protecting.
 
-## It's never good enough yet
+## Is it ever good enough?
 
 The draft isn't ready. The code needs refactoring. The design needs one more pass. The essay needs a better opening. The project needs more features before anyone can see it.
 
@@ -31,7 +31,7 @@ Perfectionism is a defense mechanism. It keeps you safe from all of these by ens
 
 And it works. You never get judged. You never fail publicly. You never get exposed. You also never make anything.
 
-## How the trap works
+## How does the trap work?
 
 The trap has a specific structure:
 
@@ -45,7 +45,7 @@ The trap has a specific structure:
 
 The mechanism is self-reinforcing. Perfectionism creates the failure it's trying to prevent.
 
-## The comparison engine
+## What's the comparison engine?
 
 Perfectionism doesn't operate in a vacuum. It has fuel: other people's finished work.
 
@@ -57,7 +57,7 @@ Nobody shows the bad drafts. Nobody posts the version that almost made them quit
 
 It wasn't. You just can't see their struggle from where you're standing.
 
-## The identity layer
+## What's the identity layer?
 
 Perfectionism gets really sticky when it bonds to identity.
 

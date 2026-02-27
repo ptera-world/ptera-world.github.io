@@ -12,19 +12,19 @@ That's the honest answer. Not the aspirational one. Not "I'm passionate about de
 
 I've shipped parsers, format converters, code analysis tools, language runtimes. They're good. They work. And finishing them feels like... nothing. Like crossing an item off a list that nobody wrote.
 
-## It's not about the tools
+## So what is it about?
 
-The tools all do the same thing. They take something opaque and [make its structure visible](#the-legibility-obsession). Code, binaries, documents, file formats. Every project is the same impulse applied to a different domain. Even the non-tools — a [game that simulates human experience](/project/existence), a [bot that roleplays with persistent characters](/project/hologram) — are structurally the same. Systems that make the invisible legible.
+The tools all do the same thing. They take something opaque and [make its structure visible](#why-the-obsession-with-legibility). Code, binaries, documents, file formats. Every project is the same impulse applied to a different domain. Even the non-tools — a [game that simulates human experience](/project/existence), a [bot that roleplays with persistent characters](/project/hologram) — are structurally the same. Systems that make the invisible legible.
 
 That's not a mission statement. It's a reflex. When I don't know what to do, I make things legible. It's what I default to when I don't have something I care about more.
 
-## The legibility obsession
+## Why the obsession with legibility?
 
 Making things legible is useful. Genuinely. But it's a means, not an end. You make code legible so you can *do something with it*. You make formats legible so you can *transform them*. The legibility serves a purpose — but I don't have the purpose. I have the means.
 
 So I keep building means. More tools, more parsers, more frameworks. A workshop full of instruments and nothing to play.
 
-## What actually feels good
+## What actually feels good?
 
 Three things survived the "does this matter" filter: [SillyTavern](https://github.com/SillyTavern/SillyTavern). [existence](/project/existence). [hologram](/project/hologram).
 
@@ -32,7 +32,7 @@ They share something. They're all generative — perspectives emerge from intera
 
 The tools don't do that. You act on code, it doesn't act on you. The relationship is one-directional. That's why finishing a tool feels empty — nothing changed except the tool exists now.
 
-## Architect mode vs inhabit mode
+## What's the difference between architect mode and inhabit mode?
 
 There are two completely different ways of relating to what you've made:
 
@@ -48,9 +48,9 @@ Yes. And the reason is **emergence**.
 
 You design the rules, but you don't design what emerges from them. You know exactly how chess works and you still experience a real game. You can know a simulation's systems inside out and still not predict what happens when introversion + dental pain + sleep deprivation + grocery shopping interact in a specific moment.
 
-The surprise isn't in the rules. It's in the combinatorics. Complex systems produce behavior their architects can't predict. That's not a bug in the design — it's [the whole point](#the-whole-point).
+The surprise isn't in the rules. It's in the combinatorics. Complex systems produce behavior their architects can't predict. That's not a bug in the design — it's [the whole point](#whats-the-whole-point).
 
-## The whole point
+## What's the whole point?
 
 Maybe the obsession with legibility and the hunger for reciprocity aren't opposites. You make systems legible enough to build. You build systems complex enough to surprise you. The legibility is what lets you construct the thing. The emergence is what lets you inhabit it.
 

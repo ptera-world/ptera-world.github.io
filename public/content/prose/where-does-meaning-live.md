@@ -8,9 +8,9 @@ tags: [technology, identity]
 
 You build a system. It handles data — transforms it, routes it, stores it, retrieves it. It works beautifully. And then someone asks: "but what does it *mean*?"
 
-Nothing. The system doesn't know what anything means. That's not a flaw. [That's the whole point.](#why-the-engine-doesnt-know)
+Nothing. The system doesn't know what anything means. That's not a flaw. [That's the whole point.](#why-doesnt-the-engine-know)
 
-## Why the engine doesn't know
+## Why doesn't the engine know?
 
 A good abstraction doesn't know what it's abstracting. A pipeline that converts documents doesn't know what a "document" is in your domain. A query engine doesn't know what a "function" means to your team. A simulation framework doesn't know what "sadness" feels like. An expression evaluator doesn't know what domain it's evaluating.
 
@@ -18,9 +18,9 @@ They handle *structure*. Shape, pattern, flow. The meaning comes from somewhere 
 
 This feels wrong. Shouldn't the system understand what it's doing? Shouldn't a code analyzer know what code *is for*? Shouldn't a game engine know what emotions it's modeling?
 
-No. Because the moment it does, it stops being an abstraction and starts being [a shortcut](#shortcuts-pretending-to-be-concepts).
+No. Because the moment it does, it stops being an abstraction and starts being [a shortcut](#what-are-shortcuts-pretending-to-be-concepts).
 
-## Shortcuts pretending to be concepts
+## What are shortcuts pretending to be concepts?
 
 An abstraction that encodes specifics is just a shortcut pretending to be a concept.
 
@@ -28,7 +28,7 @@ A "sadness module" in a simulation engine isn't an abstraction of emotion — it
 
 A "function analyzer" that knows functions are callable blocks of code works great — until someone feeds it a language where functions are something else. Or a codebase where the meaningful unit isn't the function but the module. Or the trait. Or the expression. The specifics it encoded became the walls it can't see past.
 
-This happens everywhere. Note apps that know a "note" is a text document — [until you need it to be something else](/prose/why-do-i-reinvent-everything#popularity-is-a-ratchet). Spreadsheets that know a "cell" contains a value — until the relationship between cells matters more than the values. Calendars that know a "day" has 24 hours — until you're modeling something that doesn't respect that boundary.
+This happens everywhere. Note apps that know a "note" is a text document — [until you need it to be something else](/prose/why-do-i-reinvent-everything#how-does-popularity-become-a-ratchet). Spreadsheets that know a "cell" contains a value — until the relationship between cells matters more than the values. Calendars that know a "day" has 24 hours — until you're modeling something that doesn't respect that boundary.
 
 The specifics calcify. They become invisible. And then you can't imagine the thing working differently, because the assumption is load-bearing and nobody remembers it's an assumption.
 
@@ -40,9 +40,9 @@ The system provides structure. The user provides meaning. The structure is reusa
 
 This is how language works too. Words don't contain meaning. "Bank" doesn't know if it's a riverbank or a financial institution. The meaning arrives from context — from the sentence around it, the conversation around that, the culture around that. The word is a structural slot. Meaning flows through it.
 
-Tools work the same way. A hammer doesn't know it's building a house. A knife doesn't know it's preparing dinner. The tool provides capability. The [intent comes from the hand that holds it](/prose/am-i-just-pretending#taste-is-the-bottleneck).
+Tools work the same way. A hammer doesn't know it's building a house. A knife doesn't know it's preparing dinner. The tool provides capability. The [intent comes from the hand that holds it](/prose/am-i-just-pretending#what-if-the-bottleneck-isnt-the-hand).
 
-## The temptation to encode
+## What's the temptation to encode?
 
 It's always tempting to bake meaning in. "We know this is going to be used for X, so let's optimize for X." And it works. In the short term, specialization always outperforms generality. The thing that knows what it's doing is faster, simpler, more intuitive than the thing that doesn't.
 
@@ -52,15 +52,15 @@ This is the [reinvention cycle](/prose/why-do-i-reinvent-everything). Someone bu
 
 The way out isn't "never specialize." It's to separate the layers: a core that handles structure, and a surface that adds meaning. The core doesn't know what anything means. The surface does. And when the meaning changes — when you need the pipeline to handle a new format, or the simulation to model a new emotion, or the tool to serve a new domain — you change the surface. The core stays.
 
-## Emergence again
+## Emergence again?
 
-This connects to something deeper. If the system doesn't contain meaning, and the user provides it, then meaning is [emergent](/prose/why-do-i-build-tools#the-whole-point). It arises from the interaction between structure and intent. It's not designed. It's discovered.
+This connects to something deeper. If the system doesn't contain meaning, and the user provides it, then meaning is [emergent](/prose/why-do-i-build-tools#whats-the-whole-point). It arises from the interaction between structure and intent. It's not designed. It's discovered.
 
 That's uncomfortable for builders. You want to know what you're making. You want the system to *be about something*. But the most powerful systems aren't about anything. The internet isn't about anything. Mathematics isn't about anything. Language isn't about anything. They're substrates. Meaning flows through them, and the meaning is always richer and stranger than anything the builder could have encoded.
 
 A game where emotions are hardcoded has exactly the emotions the designer put in. A game where emotions [emerge from interacting systems](/prose/why-do-i-build-tools#but-can-you-inhabit-what-you-built) has emotions the designer never predicted. The second one is alive. The first one is a menu.
 
-## The principle
+## So what goes in the engine?
 
 Don't put the meaning in the engine. Put the structure in the engine and let meaning arrive.
 

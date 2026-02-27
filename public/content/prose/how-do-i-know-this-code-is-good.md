@@ -10,7 +10,7 @@ You didn't type every line. Maybe you didn't type most of them. An AI wrote the 
 
 Here's the thing: you've always been trusting things you don't fully understand. You just didn't notice.
 
-## Nobody reads every line
+## Does anyone read every line?
 
 The fantasy of the programmer who reads and understands every line of their codebase is exactly that — a fantasy. It stops being possible around 10,000 lines. By 100,000 it's absurd. The Linux kernel is 30 million lines. Nobody understands all of it. Not even the person who started it.
 
@@ -18,9 +18,9 @@ What programmers actually do is build layers of trust. You trust the compiler �
 
 AI-generated code doesn't change this. It adds a question — "do I trust the author?" — but that question already existed for every library you import, every snippet you copy, every coworker's changes you approve.
 
-## What actually catches bugs
+## What actually catches bugs?
 
-Here's what catches bugs, in rough order of [how much you should rely on them](#the-stack):
+Here's what catches bugs, in rough order of [how much you should rely on them](#whats-the-stack):
 
 **The type system** catches the most. In a strict language, if the code compiles, an enormous category of bugs is already eliminated — memory corruption, null references, data races, type mismatches. This isn't trust. It's proof. The compiler doesn't care who wrote the code.
 
@@ -32,9 +32,9 @@ Here's what catches bugs, in rough order of [how much you should rely on them](#
 
 **Structure** catches architectural problems. Is the code modular? Are the abstractions [at the right level](/prose/the-right-tool-for-the-job)? Do the boundaries between components make sense? You don't need to read every line to see structure. You need to read the interfaces — the shapes of the components and how they connect. The shape of the code is visible without reading the body.
 
-**Review by use** catches everything else. You use the tool. It works or it doesn't. It handles your edge cases or it doesn't. Over time, trust accumulates not from reading but from [running](#trust-accumulates).
+**Review by use** catches everything else. You use the tool. It works or it doesn't. It handles your edge cases or it doesn't. Over time, trust accumulates not from reading but from [running](#how-does-trust-accumulate).
 
-## The stack
+## What's the stack?
 
 Here's the real difference between "vibe coded garbage" and "AI-assisted software that works":
 
@@ -46,7 +46,7 @@ Every step is a filter. Code passes through the compiler, through the test suite
 
 This is exactly the same gauntlet that human-written code passes through. The only difference is who typed it.
 
-## Trust accumulates
+## How does trust accumulate?
 
 You don't trust code because you read it. You trust code because it [survived](#what-actually-catches-bugs).
 
@@ -54,9 +54,9 @@ The first time you run your tool on real data and it produces correct output, th
 
 After a thousand test cases, after months of use, after dozens of bug fixes, you know the code is good the same way you know your car works. Not because you inspected every bolt. Because you drove it to work every day and it got you there.
 
-## What's actually different
+## What's actually different?
 
-One thing is genuinely different about AI-generated code: the [speed](/prose/am-i-just-pretending#speed-is-suspicious) makes it tempting to skip the filters. When you can produce code in minutes instead of hours, the pressure to test, review, and think drops. "It compiles, ship it."
+One thing is genuinely different about AI-generated code: the [speed](/prose/am-i-just-pretending#why-does-going-fast-look-wrong) makes it tempting to skip the filters. When you can produce code in minutes instead of hours, the pressure to test, review, and think drops. "It compiles, ship it."
 
 That's the supposed risk, anyway. In practice? Tests are even more daunting *without* AI. The same speed that produces the implementation also produces the test suite. The whole verification stack gets cheaper together. You're not choosing between "fast implementation, no tests" and "slow implementation, careful tests." You're getting both fast.
 
@@ -64,11 +64,11 @@ The real risk isn't skipping tests. It's skipping *thought*. Not "does it pass?"
 
 The defense is the same defense it's always been: make the filters automatic. Pre-commit hooks that enforce formatting and style. CI pipelines that run the full test suite. Fuzz harnesses that probe the boundaries. Type systems that reject invalid states. The human failing has always been "I'll skip the checks just this once." AI-assisted development just makes "just this once" happen more often.
 
-## The question you're actually asking
+## What's the question you're actually asking?
 
 "How do I know this code is good?" is really asking "how do I know *I'm* good?" Because the code's quality is verifiable. Compile it. Test it. Lint it. Run it. Those have answers.
 
-The harder question is whether steering an AI is a [real skill](/prose/am-i-just-pretending#taste-is-the-bottleneck), whether the architecture you designed is actually good or just happens to compile, whether your taste is refined or you're [fooling yourself](/prose/why-is-perfectionism-a-trap).
+The harder question is whether steering an AI is a [real skill](/prose/am-i-just-pretending#what-if-the-bottleneck-isnt-the-hand), whether the architecture you designed is actually good or just happens to compile, whether your taste is refined or you're [fooling yourself](/prose/why-is-perfectionism-a-trap).
 
 For that, there's only one test: does the thing work when it meets reality? Not in a test suite. In someone's hands. On real data. On a real problem.
 

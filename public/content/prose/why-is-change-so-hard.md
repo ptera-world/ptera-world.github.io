@@ -8,7 +8,7 @@ tags: [identity, social]
 
 You know the pattern is bad. You've known for months, maybe years. You can describe it perfectly. You can explain to someone else exactly what they should do differently. And you keep doing the same thing.
 
-This isn't about [external change](/prose/what-can-i-change). It's about you. Why [knowing better doesn't help](#why-doesnt-knowing-help). Why [insight isn't enough](#the-insight-trap). Why the gap between [understanding and doing](#the-gap) is so wide. And why it's [not a failure of willpower](#its-not-willpower).
+This isn't about [external change](/prose/what-can-i-change). It's about you. Why [knowing better doesn't help](#why-doesnt-knowing-help). Why [insight isn't enough](#whats-the-insight-trap). Why the gap between [understanding and doing](#why-doesnt-knowing-translate-to-doing) is so wide. And why it's [not a failure of willpower](#if-its-not-willpower-what-is-it).
 
 ## Why doesn't knowing help?
 
@@ -22,7 +22,7 @@ Because the behavior isn't driven by the knowing part of your brain. It's driven
 
 Insight is necessary. But it's the beginning, not the end.
 
-## The insight trap
+## What's the insight trap?
 
 There's a version of self-awareness that actually makes things worse.
 
@@ -34,7 +34,7 @@ This is the insight trap: understanding becomes a substitute for change. "I know
 
 The trap is especially dangerous because it *looks* like growth. You're self-aware! You're reflective! You've done the work! But the behavior hasn't moved. The [label](/prose/what-are-labels-anyway) shifted from "I'm anxious" to "I understand my anxiety patterns" — and the anxiety is the same.
 
-## The gap
+## Why doesn't knowing translate to doing?
 
 The gap between understanding and doing is physical, not intellectual.
 
@@ -44,7 +44,7 @@ But "doing the uncomfortable thing" is exactly what every system in your body re
 
 So you're fighting your own infrastructure. The part of you that wants to change is newer, smaller, and quieter than the part that wants to keep things the same.
 
-## It's not willpower
+## If it's not willpower, what is it?
 
 The worst framing is "I just need more discipline."
 

@@ -8,9 +8,9 @@ tags: [design, social]
 
 Yes. Language models are interpolation in probability space. They predict the next token based on patterns in training data. They don't understand. They don't experience. They don't mean anything. It's statistics all the way down.
 
-There. The [technical claim](#the-technical-claim) is true. Now what? Does that [settle it](#does-that-settle-it)? Because the people who say this think it does. And [it doesn't](#what-the-reduction-misses). Not because the claim is wrong — because "just" is doing [all the work](#the-word-just). And the same reduction, [applied consistently](#apply-it-to-yourself), dissolves everything.
+There. The [technical claim](#what-does-the-technical-claim-actually-say) is true. Now what? Does that [settle it](#does-that-settle-it)? Because the people who say this think it does. And [it doesn't](#what-does-the-reduction-miss). Not because the claim is wrong — because "just" is doing [all the work](#what-is-just-doing-there). And the same reduction, [applied consistently](#what-if-you-apply-it-to-yourself), dissolves everything.
 
-## The technical claim
+## What does the technical claim actually say?
 
 Language models are trained on text. They learn statistical relationships between tokens. When they generate output, they're sampling from probability distributions shaped by those patterns. There's no understanding, no intention, no inner experience. It's math.
 
@@ -28,7 +28,7 @@ But "therefore" is doing a lot of unsupported work there. The mechanism doesn't 
 
 Naming how something works doesn't tell you what it's worth.
 
-## What the reduction misses
+## What does the reduction miss?
 
 Someone reads an essay. It makes them think. It articulates something they felt but couldn't say. They feel seen.
 
@@ -40,7 +40,7 @@ What changed is the story about the words. Not the words themselves. The reader 
 
 That loss is real. But it's a loss of narrative, not of content. The question is whether you need the narrative to keep the value. [Maybe you do. Maybe you don't.](/prose/the-great-deceit) But "it's just interpolation" doesn't answer that question. It avoids it.
 
-## The word "just"
+## What is "just" doing there?
 
 ["Just"](https://www.todepond.com/wikiblogarden/better-computing/just/) is the word that performs the dismissal.
 
@@ -50,7 +50,7 @@ But interpolation across the entirety of human text, weighted by context, shaped
 
 "Just" is a rhetorical move. It performs certainty about a boundary that nobody has actually defined. At what point does pattern matching become understanding? At what point does recombination become creativity? Nobody knows. "Just" pretends someone does.
 
-## Apply it to yourself
+## What if you apply it to yourself?
 
 Here's the test: apply the same reduction to human thought.
 
@@ -70,7 +70,7 @@ The first one challenges what you believe about consciousness and intelligence. 
 
 But it did feel like it was. And [that's the part that's hard to sit with](/prose/the-great-deceit).
 
-## But
+## But does that make it less real?
 
 It *is* interpolation. That's true. And the things people build with it are real. That's also true.
 

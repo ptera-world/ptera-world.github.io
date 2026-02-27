@@ -8,11 +8,11 @@ tags: [design, technology]
 
 Open a note app. You get a blank page. Open a word processor. Blank page. Open a presentation tool. Blank slide — which is just a page turned sideways. Open an email. A page with fields. Open a spreadsheet. A grid — which is just a page pretending to be structured.
 
-Everything is a document. Everything is a [flat surface with content arranged in reading order](#the-paper-metaphor). And nobody questions this because paper was a document and screens replaced paper and the metaphor carried over unexamined for forty years.
+Everything is a document. Everything is a [flat surface with content arranged in reading order](#whats-the-paper-metaphor). And nobody questions this because paper was a document and screens replaced paper and the metaphor carried over unexamined for forty years.
 
-But information isn't a document. Information is [objects with relationships](#what-information-actually-is). And the gap between "a page" and "objects with relationships" is where most software difficulty lives.
+But information isn't a document. Information is [objects with relationships](#what-is-information-actually). And the gap between "a page" and "objects with relationships" is where most software difficulty lives.
 
-## The paper metaphor
+## What's the paper metaphor?
 
 Paper is flat. Paper is linear. Paper has a beginning and an end. Paper is one thing — you can't have half a thought on one page and the other half dynamically linked to a page across the room.
 
@@ -20,9 +20,9 @@ These aren't features of information. They're features of *paper*. Constraints i
 
 A digital note doesn't need to be a page. It could be a node in a graph. A thought connected to other thoughts, with the connections visible and navigable. A digital spreadsheet doesn't need to be a grid. It could be a set of relationships — this depends on that, which flows into this, which constrains that. A digital presentation doesn't need to be a sequence of slides. It could be a [space you navigate](#what-if-it-wasnt-a-page).
 
-But "a page" is what people expect because "a page" is what they've always gotten. The metaphor [calcified](/prose/why-do-i-reinvent-everything#popularity-is-a-ratchet). And now even software that could break free of it doesn't, because "it looks like a document" is the fastest way to feel familiar.
+But "a page" is what people expect because "a page" is what they've always gotten. The metaphor [calcified](/prose/why-do-i-reinvent-everything#how-does-popularity-become-a-ratchet). And now even software that could break free of it doesn't, because "it looks like a document" is the fastest way to feel familiar.
 
-## What information actually is
+## What is information actually?
 
 Think about any complex thing you know well. A project you're working on. A subject you've studied. A community you're part of. A recipe you've adapted over years.
 
@@ -34,7 +34,7 @@ Information is *objects* — discrete things with properties — and *relationsh
 
 Documents flatten all of this into reading order. First this, then this, then this. The relationships become invisible — implied by proximity or explicitly written out as cross-references that you have to maintain by hand. "See section 3.2" is a relationship pretending to be text.
 
-## The bridge problem
+## What's the bridge problem?
 
 Here's where it gets concrete. You have information in one place and you need it in another.
 
@@ -56,11 +56,11 @@ Some tools try this. Mind maps. Graph-based note apps. Spatial canvases. They're
 
 The metaphor runs deep. Even the alternatives are documents pretending to be something else.
 
-## Why it stays
+## Why does it stay?
 
-The document metaphor stays because it's [legible](/prose/why-do-i-build-tools#the-legibility-obsession). Everyone understands a page. Everyone can write on a page. A page requires no training. The metaphor is so deeply embedded that alternatives feel alien — not because they're worse, but because they're unfamiliar.
+The document metaphor stays because it's [legible](/prose/why-do-i-build-tools#why-the-obsession-with-legibility). Everyone understands a page. Everyone can write on a page. A page requires no training. The metaphor is so deeply embedded that alternatives feel alien — not because they're worse, but because they're unfamiliar.
 
-And familiarity is a [powerful ratchet](/prose/why-do-i-reinvent-everything#popularity-is-a-ratchet). Every new tool that launches with a document metaphor reinforces it. Every user who learns "information goes on pages" carries that expectation to the next tool. The metaphor self-perpetuates.
+And familiarity is a [powerful ratchet](/prose/why-do-i-reinvent-everything#how-does-popularity-become-a-ratchet). Every new tool that launches with a document metaphor reinforces it. Every user who learns "information goes on pages" carries that expectation to the next tool. The metaphor self-perpetuates.
 
 Breaking it requires asking a question that sounds absurd: "what if we didn't use pages?" It sounds absurd because *of course* we use pages. How else would you organize information?
 

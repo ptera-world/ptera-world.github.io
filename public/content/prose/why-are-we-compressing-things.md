@@ -8,9 +8,9 @@ tags: [social, design, identity]
 
 Everything gets compressed. People into [labels](/prose/what-are-labels-anyway). Ideas into slogans. Experiences into metrics. Relationships into status. Software into features. Life into a [score](/prose/whats-actually-wrong).
 
-Sometimes this is necessary. Sometimes it's [lazy](#when-its-lazy). Sometimes it's [harmful](#when-its-harmful). And the worst part is: you usually [can't tell which](#can-you-tell) until it's too late.
+Sometimes this is necessary. Sometimes it's [lazy](#when-is-it-lazy). Sometimes it's [harmful](#when-is-it-harmful). And the worst part is: you usually [can't tell which](#can-you-tell) until it's too late.
 
-## Because we have to
+## Do we have to?
 
 This isn't optional. Human brains process a finite amount of information. To navigate the world, you have to reduce, categorize, simplify. You can't treat every person as infinitely complex in every interaction. You can't hold every dimension of a problem in mind simultaneously. You can't make decisions without collapsing options.
 
@@ -32,7 +32,7 @@ Every compression discards information. That's what compression means. The quest
 
 **Software into features.** This app has 200 features. That app has 150. Therefore this one is better. [Obviously not.](/prose/why-is-software-hard) But the compression — counting features — made it comparable. Comparable is manageable. Manageable is how decisions get made. And [quality disappears](/prose/why-is-software-hard) because it doesn't compress well.
 
-## When it's lazy
+## When is it lazy?
 
 Sometimes compression is just the path of least resistance.
 
@@ -40,7 +40,7 @@ Sometimes compression is just the path of least resistance.
 
 Lazy compression feels like wisdom. It has the shape of a conclusion — definitive, settled, done. But it's actually a refusal to look more closely. The compression happens not because the detail is unavailable but because engaging with it is effort.
 
-## When it's harmful
+## When is it harmful?
 
 Lazy compression becomes harmful when it affects other people.
 

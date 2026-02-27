@@ -10,19 +10,19 @@ Not paintings. Not music. Not writing. Those are mediums. Art lives in all of th
 
 Art is intent.
 
-That's it. You meant it. You chose this over that, not because function demanded it, but because you [wanted it this way](#intent-not-talent). The choosing is the art. Everything else — skill, medium, audience, history, credentials — is [labeling](/prose/what-are-labels-anyway) after the fact.
+That's it. You meant it. You chose this over that, not because function demanded it, but because you [wanted it this way](#is-it-about-intent-not-talent). The choosing is the art. Everything else — skill, medium, audience, history, credentials — is [labeling](/prose/what-are-labels-anyway) after the fact.
 
-## Intent, not talent
+## Is it about intent, not talent?
 
 A pile of things on the floor is mess. A pile of things on the floor that you *meant* — that's art. Nothing changed except the intent. The pile is identical. The difference is entirely inside the person who put it there.
 
-Code that works is engineering. Code that works *this way* because you chose it — intent. A meal that feeds you is cooking. A meal you made because you wanted it to taste like *this* — intent. Even if it didn't turn out right. The intent existed before the outcome. The outcome is irrelevant to whether it was art. A spreadsheet that tracks numbers is accounting. A spreadsheet you [organized this way](#you-already-do-this) because it felt right — intent.
+Code that works is engineering. Code that works *this way* because you chose it — intent. A meal that feeds you is cooking. A meal you made because you wanted it to taste like *this* — intent. Even if it didn't turn out right. The intent existed before the outcome. The outcome is irrelevant to whether it was art. A spreadsheet that tracks numbers is accounting. A spreadsheet you [organized this way](#dont-you-already-do-this) because it felt right — intent.
 
 Sketching something you see is art. Tracing it — maybe not. The output can look similar. But sketching has interpretation — you choose what to emphasize, what to leave out, how to render what you see. Tracing removes that choice. You follow a line that already exists. Same medium, same subject, different intent.
 
 Art isn't a talent. Talent is a [label](/prose/what-are-labels-anyway) that turns something everyone does into something only some people "have." You don't need permission. You don't need skill. You don't need an audience. You need to mean it.
 
-## "But this isn't art"
+## But what if this isn't art?
 
 You've said this. About your work. About your hobby. About the thing you care about more than you'd admit. You looked at it and compared it to the things you've been told count as art — the gallery paintings, the published novels, the performed music — and concluded yours doesn't qualify.
 
@@ -30,7 +30,7 @@ You were comparing the wrong part. You compared the *thing*. But the art was nev
 
 That's why "but this isn't art" is so convincing. You look at the output and it looks ordinary. It looks like code, like food, like a garden, like a [well-organized desk](/prose/how-do-i-do-things). It doesn't look like art. But looking at the output is like reading an essay and [judging it by who wrote it](/prose/the-great-deceit). You're looking at the residue and missing the process.
 
-## You already do this
+## Don't you already do this?
 
 You arrange things. Not because they need to be arranged — because you want them a certain way. You pick words carefully. You choose colors. You place objects. You organize your space, your schedule, your sentences.
 

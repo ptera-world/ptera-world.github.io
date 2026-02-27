@@ -30,7 +30,7 @@ Each of these might be true about that specific attempt. None of them are true a
 
 The learned part is important. This isn't who you are. It's what you were taught — by experience, by failure, by systems that didn't leave room for you to succeed. Learned things can be unlearned. But not by thinking about it. By [doing something different](/prose/how-do-i-do-things) and seeing a different result.
 
-## The math of "just one person"
+## What can "just one person" actually do?
 
 "I'm just one person, what could I possibly do?"
 
@@ -44,7 +44,7 @@ This isn't "you should be Linus Torvalds." It's that the narrative of "one perso
 
 And with modern tools, "one person" goes further than ever. Not as an argument for any specific tool — just the observation that the gap between "idea" and "thing that exists" has never been smaller. The barriers that used to require teams, funding, institutions — many of them are gone. Not all. But many.
 
-## The real function of "I can't"
+## What is "I can't" really doing?
 
 "I can't" isn't usually an assessment. It's a shield.
 
@@ -57,7 +57,7 @@ Fear is fine. Fear is normal. [But](/prose/but) fear wearing the mask of pragmat
 
 The moment you reframe "I can't" as "I'm scared to try" — everything shifts. "I can't" is a wall. "I'm scared to try" is a feeling. Walls are permanent. Feelings pass.
 
-## "But it would take years"
+## But what if it would take years?
 
 Yes. Some things take years.
 

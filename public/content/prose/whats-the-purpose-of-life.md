@@ -8,7 +8,7 @@ tags: [identity, social]
 
 To be yourself.
 
-Some people will find that obvious. Others will find it idiotic. Some will find it both. That's fine. But before you dismiss it — [what does it actually mean](#what-does-it-actually-mean)? Because it's not as simple as it sounds. Being yourself requires [knowing yourself](#you-have-to-know-yourself), which requires [trying things](#you-have-to-try), which requires [failing](#you-have-to-fail), which requires [safety](#you-have-to-be-safe). And nearly everything is [working against you](#everything-is-working-against-you).
+Some people will find that obvious. Others will find it idiotic. Some will find it both. That's fine. But before you dismiss it — [what does it actually mean](#what-does-it-actually-mean)? Because it's not as simple as it sounds. Being yourself requires [knowing yourself](#do-you-have-to-know-yourself), which requires [trying things](#do-you-have-to-try), which requires [failing](#do-you-have-to-fail), which requires [safety](#do-you-have-to-be-safe). And nearly everything is [working against you](#is-everything-working-against-you).
 
 ## What does it actually mean?
 
@@ -20,7 +20,7 @@ Most people are living some version of what they were told to want. The career, 
 
 "Being yourself" means checking. Continuously. Not once — as a practice.
 
-## You have to know yourself
+## Do you have to know yourself?
 
 You can't be something you haven't met.
 
@@ -34,7 +34,7 @@ Knowing yourself is three things:
 
 These feed each other. You discover something, express it, analyze what that revealed, which opens new discovery.
 
-## You have to try
+## Do you have to try?
 
 Discovery requires action. Not big action. Not "find yourself" by traveling the world. Just — [trying things](/prose/how-do-i-do-things). Small things. Things that might not work. Things that feel pointless. Things you'd never "decide" to do but might stumble into if the friction were low enough.
 
@@ -42,7 +42,7 @@ The problem is everything conspires to stop you from trying. [Perfectionism](/pr
 
 Being yourself requires the willingness to try things that the current version of yourself would never do. Because the current version is incomplete. It's always incomplete. That's not a problem — that's the process.
 
-## You have to fail
+## Do you have to fail?
 
 Not as a motivational slogan. As mechanics.
 
@@ -52,7 +52,7 @@ Failure isn't the opposite of being yourself. It's the mechanism by which you le
 
 The fear of failure — the [perfectionism](/prose/why-is-perfectionism-a-trap), the avoidance, the "I'll start when I'm ready" — isn't protecting you from wasting time. It's preventing you from gathering the information you need.
 
-## You have to be safe
+## Do you have to be safe?
 
 Here's where it gets hard.
 
@@ -64,7 +64,7 @@ Some people can't be themselves at work. Some can't be themselves at home. Some 
 
 The purpose of life might be to be yourself. That doesn't mean it's always possible. And the gap between "this is what I should be doing" and "this is what's safe to do" — that gap is where a lot of the [sadness](/prose/whats-actually-wrong) lives.
 
-## Everything is working against you
+## Is everything working against you?
 
 Not as conspiracy. Just as default settings.
 

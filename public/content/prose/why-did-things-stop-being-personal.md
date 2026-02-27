@@ -8,19 +8,19 @@ tags: [social, technology]
 
 There was a period — roughly 1995 to 2008 — when the internet was full of places that belonged to someone. Not "belonged" in the legal sense. Belonged in the sense that you could feel a person behind them. A GeoCities page with a visitor counter and a MIDI that autoplayed. A LiveJournal with custom CSS that broke in Firefox. A forum with inside jokes in the sidebar. A blog with a blogroll that was also a map of someone's world.
 
-These were ugly. Broken. [Unsophisticated.](#the-sophistication-trap) Completely, unmistakably *someone's*.
+These were ugly. Broken. [Unsophisticated.](#what-is-the-sophistication-trap) Completely, unmistakably *someone's*.
 
 Where did they go?
 
-## The sophistication trap
+## What is the sophistication trap?
 
 The personal web didn't die because it was bad. It died because "good" got redefined.
 
 Good used to mean: it exists, it's yours, it says something. Then "good" started meaning: it loads fast, it looks professional, it has a consistent design system, it works on mobile. Those are real improvements. But they're improvements in the direction of *platforms*, not pages. The bar for "acceptable" rose until the only things that cleared it were things built by teams, not people.
 
-A hand-coded HTML page with a tiled background and a guestbook doesn't clear that bar. Neither does a Tumblr theme you customized for six hours. Neither does a WordPress blog with seventeen plugins that barely work together. But those things had something that a Notion page and a Substack and a Linktree don't: [fingerprints](/prose/am-i-just-pretending#the-craft-question).
+A hand-coded HTML page with a tiled background and a guestbook doesn't clear that bar. Neither does a Tumblr theme you customized for six hours. Neither does a WordPress blog with seventeen plugins that barely work together. But those things had something that a Notion page and a Substack and a Linktree don't: [fingerprints](/prose/am-i-just-pretending#is-directing-a-craft).
 
-## What platforms replaced
+## What did platforms replace?
 
 Platforms didn't kill the personal web on purpose. They just made it unnecessary.
 
@@ -28,9 +28,9 @@ Why maintain a blog when you can post on Medium? Why build a portfolio when you 
 
 The answer to every one of these is: because the platform's version isn't *yours*. But "yours" stopped mattering once reach did. A blog nobody reads versus a tweet that gets engagement — the economics are obvious. The personal web couldn't compete with distribution.
 
-So people moved. Not because they wanted to. Because the audience was already there, and making something personal for an audience of nobody felt pointless. The tragedy wasn't that the platforms were bad. It was that they were [good enough](/prose/why-is-nothing-special-anymore#the-convergence) — good enough that the thing they couldn't do (be personal) stopped seeming important.
+So people moved. Not because they wanted to. Because the audience was already there, and making something personal for an audience of nobody felt pointless. The tragedy wasn't that the platforms were bad. It was that they were [good enough](/prose/why-is-nothing-special-anymore#whats-the-convergence) — good enough that the thing they couldn't do (be personal) stopped seeming important.
 
-## The Tumblr paradox
+## What is the Tumblr paradox?
 
 Tumblr is the strangest survival story on the internet. It failed as a business — repeatedly. It was sold for a fraction of what it was bought for. It has no functional recommendation algorithm. Its search barely works. It has never been profitable in any meaningful sense.
 
@@ -42,7 +42,7 @@ The failure preserved it. The thing that makes a platform successful — optimiz
 
 That's the paradox: the conditions that make a personal space possible are the same conditions that make a business impossible. Personalization requires inefficiency. Quirks require tolerance for low engagement. Community requires friction that discourages growth. Everything that makes a space feel like *someone's* is everything a growth metric would eliminate.
 
-## What you're actually nostalgic for
+## What are you actually nostalgic for?
 
 When people miss GeoCities, they're not missing the under-construction GIFs. They're missing the *permission*.
 
@@ -52,7 +52,7 @@ That permission hasn't been revoked. You can still make a weird website. The too
 
 That shift — from "of course I have a website" to "why would I have a website" — is the real loss. Not the technology. The assumption.
 
-## Nostalgia for something you never had
+## Are you nostalgic for something you never had?
 
 Here's the uncomfortable part. Some of the grief isn't real. Or rather, it's real grief for something that didn't exist the way you remember it.
 
@@ -62,17 +62,17 @@ The platforms solved real problems. They connected people. They gave audiences t
 
 So the nostalgia is partly for an experience you had — making something yours — and partly for an experience you're projecting backward — a time when making something personal was enough. It wasn't enough then either. You just didn't know what "enough" would feel like once reach became possible.
 
-## What's actually missing
+## So what's actually missing?
 
 Strip away the nostalgia and what's left is simpler than it seems.
 
-You want to make something that's yours. Not in the sense of ownership. In the sense of [fingerprints](/prose/am-i-just-pretending#the-craft-question). Something where your decisions are visible. Where the [choices you made](/prose/what-is-art) are the thing, not the platform's template with your words in the slots.
+You want to make something that's yours. Not in the sense of ownership. In the sense of [fingerprints](/prose/am-i-just-pretending#is-directing-a-craft). Something where your decisions are visible. Where the [choices you made](/prose/what-is-art) are the thing, not the platform's template with your words in the slots.
 
 Platforms can't offer this. Not because they won't, but because they can't. Personalization at scale is a contradiction. The more personal each page is, the harder it is to maintain, moderate, monetize, and optimize. Platforms need uniformity to function. Your personal expression is a bug in their system.
 
 The personal web didn't die because people stopped wanting personal spaces. It died because the economics of the internet selected against them. [The same convergence](/prose/why-is-nothing-special-anymore) that made films formulaic and music algorithmic made websites interchangeable.
 
-## Making it personal anyway
+## How do you make it personal anyway?
 
 You can still make personal things. [This site](/prose/this-is-not-a-personal-website) is personal. Not because it's hand-coded HTML with a tiled background. Because decisions are visible. Because it doesn't [optimize for engagement](/prose/this-site-is-manipulative). Because it exists for its own reasons, not for reach.
 

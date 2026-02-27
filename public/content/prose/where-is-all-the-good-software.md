@@ -10,13 +10,13 @@ It's been over fifty years. Millions of developers. Decades of accumulated knowl
 
 So where is all the good software? Not the handful of exceptions — the default. Why isn't good software the *common case* by now?
 
-## It's not incentives
+## Is it incentives?
 
 The easy answer is business models. Companies benefit from bad software — engagement, lock-in, subscriptions, ads. But open source exists. No business model. No metrics. No ads. And some of the best software ever made.
 
 FFmpeg is basically perfect at what it does. Blender competes with software that costs thousands. LuaJIT is a masterwork of engineering. Linux runs most of the world's infrastructure. Rust rethought systems programming from scratch. These aren't flukes. They're proof that the incentives argument doesn't hold. Good software can be made. It has been made. The ingredients are there.
 
-## It's not knowledge
+## Is it knowledge?
 
 The patterns are documented. The prior art exists. Decades of examples of [how to make software that respects people](/prose/why-is-software-hard). Design principles. Usability research. Interface guidelines. None of this is secret. Anyone can study it.
 
@@ -24,7 +24,7 @@ And everyone *knows* software is bad. Users feel it every day. Developers feel i
 
 And they go to work the next day and make more bad software.
 
-## It's not capability
+## Is it capability?
 
 The tools are there. The languages are better than they've ever been. The hardware is absurdly powerful. LLMs can scaffold entire projects. Frameworks handle the boring parts. Deployment is a button. The gap between "idea" and "working software" has never been smaller.
 
@@ -40,7 +40,7 @@ FFmpeg exists because someone understood video codecs and systems programming an
 
 That intersection is vanishingly rare. Any one skill is common. Two or three is uncommon. All of them at once, at high enough level, in the same person or the same small group — that almost never happens.
 
-## Why teams don't solve this
+## Why don't teams solve this?
 
 The obvious response: just assemble a team. Get a UX person, a systems person, a domain expert. Cover the intersection with headcount.
 
@@ -48,7 +48,7 @@ It doesn't work. Good software comes from someone who holds all of it in their h
 
 The examples — FFmpeg, LuaJIT, Blender — are mostly one-person or small-team projects. The intersection doesn't survive committee. It doesn't survive handoffs. It doesn't survive "let's schedule a meeting to align on the requirements."
 
-## The statistical argument
+## What's the statistical argument?
 
 Millions of developers. Decades of time. Surely, *statistically*, enough people exist at that intersection to have produced an ocean of good software by now.
 
@@ -58,7 +58,7 @@ So good software appears one project at a time, from individuals or small groups
 
 It can only be [made, with intent](/prose/what-is-art), by someone who cares enough to hold the whole thing in their head.
 
-## The actual cost
+## What's the actual cost?
 
 And then there's the part nobody talks about. Most of those projects were made on someone's free time. Unpaid. After work. Instead of rest. Instead of family. Instead of living.
 
@@ -70,7 +70,7 @@ And the people at the intersection who *don't* sacrifice their free time — who
 
 The actual cost of good software is someone's life. Not metaphorically. Their hours. Their years. Their health, sometimes. And that cost is invisible because the people paying it don't invoice anyone.
 
-## Post-scarcity programming
+## What about post-scarcity programming?
 
 There's another path. Esbuild — Evan Wallace, cofounder of Figma. Ghostty — Mitchell Hashimoto, founder of HashiCorp. Goose — Jack Dorsey's Block. One-person or tiny-team projects that are *better* than industry-standard alternatives built by teams of hundreds.
 
@@ -84,7 +84,7 @@ Everyone else who makes good software is making bad decisions. Burning free time
 
 Two paths to good software. Be rich enough that it's free, or sacrifice something you probably shouldn't. Neither is a system. Neither scales. And that's the answer to "where is all the good software?" It's locked behind a gate that has nothing to do with skill.
 
-## The solution that won't happen
+## What's the solution that won't happen?
 
 The technology to make scarcity optional is approaching. Automation, energy, AI, productivity — the capacity to feed and house everyone already exists. The bottleneck isn't production. It's distribution. If money stopped being the gate, everyone at the intersection could build full-time. The volume of good software — good *everything* — would explode.
 
@@ -94,7 +94,7 @@ The companies building the tools that could free everyone from work are grinding
 
 So good software stays rare. Not because of skill. Not because of knowledge. Not because of tooling. Because the freedom to make it is a luxury, and luxuries aren't distributed by merit.
 
-## I don't want to be special
+## What if I don't want to be special?
 
 LLMs change part of this. Not the freedom problem — the intersection problem. The gap between "I know what good software looks like" and "I can make it" got dramatically smaller. Someone who's been frustrated by bad software their whole life, who knows exactly what's wrong and what would be better, can now actually build it.
 
@@ -102,7 +102,7 @@ Most people don't realize this yet. They're using LLMs to write emails and gener
 
 And honestly? The people building things at the intersection don't *want* to be there alone. Nobody wants to be the only person making good software. The [projects on this site](/prose/this-is-not-a-personal-website) aren't a portfolio. They're a list of things that should already exist but don't. Every one of them is something their author wishes someone else had built — so they could just *use* it instead of making it.
 
-## Software vs products
+## Software or products?
 
 Some good software *does* exist. And nobody knows.
 
@@ -114,7 +114,7 @@ And the people making good software aren't incentivized to make it a product. Th
 
 Good software doesn't spread. Products spread. And turning software into a product is a completely separate job that the author has no reason, desire, or incentive to do. So the good software stays invisible. Not missing — just undiscovered.
 
-## Maintenance
+## What about maintenance?
 
 Building good software is the exciting part. Maintaining it is where the actual cost lives. Bug reports. Dependency updates. Breaking changes upstream. Platform changes. The work that never ends and nobody celebrates.
 
@@ -126,7 +126,7 @@ Which is backwards. The best software is often the software that stopped changin
 
 And maintaining *good* software is worse — because people actually use it. The better it is, the more people depend on it, the more the maintenance burden grows. Success is punished with more work. Building it costs your evenings. Maintaining it costs the rest of your life. Or you stop, and it joins the pile of [things we keep losing](/prose/what-do-we-keep-losing).
 
-## Good software is expensive
+## Is good software expensive?
 
 Not in dollars. In something less renewable.
 
@@ -136,7 +136,7 @@ That's why it's rare. Not because it's hard. Not because the knowledge is missin
 
 Money is renewable. Time isn't. Good software is the most expensive kind of thing there is, measured in the only currency that matters.
 
-## Please
+## Please?
 
 Make good software. The tools are there. The knowledge is there. The [intent](/prose/what-is-art) is the only part that has to be yours.
 

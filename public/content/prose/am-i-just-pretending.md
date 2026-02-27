@@ -12,23 +12,23 @@ The thing exists. It's good. Code, writing, art, music — whatever it is, it ho
 
 Did you?
 
-## The anxiety has layers
+## Why does using a tool feel like cheating?
 
-Layer one: **"I didn't make this."** But you did design it. You chose what to keep and what to throw away. You rejected seventeen wrong approaches before the right one landed. The output reflects your [taste](#taste-is-the-bottleneck) even if your hands didn't shape it directly.
+Layer one: **"I didn't make this."** But you did design it. You chose what to keep and what to throw away. You rejected seventeen wrong approaches before the right one landed. The output reflects your [taste](#what-if-the-bottleneck-isnt-the-hand) even if your hands didn't shape it directly.
 
-Layer two: **"How do I know it's good?"** You didn't examine every detail. But nobody examines every detail of anything complex. You relied on checks — tests, structure, the fact that it holds together under use. Those are the same [guarantees everyone else uses](/prose/how-do-i-know-this-code-is-good). You just got there [faster](#speed-is-suspicious).
+Layer two: **"How do I know it's good?"** You didn't examine every detail. But nobody examines every detail of anything complex. You relied on checks — tests, structure, the fact that it holds together under use. Those are the same [guarantees everyone else uses](/prose/how-do-i-know-this-code-is-good). You just got there [faster](#why-does-going-fast-look-wrong).
 
 Layer three: **"How do I tell anyone?"** This is the real one. "I used AI to make this" has a specific social meaning right now, and it's not flattering. The work becomes invisible behind the method. People hear the tool and stop seeing the intent.
 
-## Speed is suspicious
+## Why does going fast look wrong?
 
 If someone told you they produced a year's worth of work in ten weeks, you'd assume it was bad. That's the heuristic. Volume at speed means low quality. It's usually correct.
 
-But the heuristic assumes a single bottleneck: one person doing the work with their hands. When the bottleneck moves — when the constraint becomes [taste and direction](#taste-is-the-bottleneck) rather than manual throughput — the volume ceiling changes. The heuristic breaks. And there's no socially legible way to explain that it broke.
+But the heuristic assumes a single bottleneck: one person doing the work with their hands. When the bottleneck moves — when the constraint becomes [taste and direction](#what-if-the-bottleneck-isnt-the-hand) rather than manual throughput — the volume ceiling changes. The heuristic breaks. And there's no socially legible way to explain that it broke.
 
 So you either undersell the work ("oh it's just some side projects") or oversell the method ("AI is transforming everything!") and both are wrong. The truth — "I used a tool to execute at 10x speed while I focused on decisions and direction" — sounds either arrogant or delusional depending on the audience.
 
-## Taste is the bottleneck
+## What if the bottleneck isn't the hand?
 
 The output isn't good because a machine made it. The output is good because you [rejected the bad versions](/prose/what-can-i-change). Every session is a negotiation. The tool proposes, you evaluate, you redirect. The skill isn't production. It's knowing what you want.
 
@@ -36,7 +36,7 @@ That's always been the skill. In any medium. Writing has never been about typing
 
 But "knowing what to build" doesn't look like work. It looks like sitting there while something else does the job. It looks like cheating. It looks like pretending.
 
-## Two kinds of using
+## What are the two kinds of using?
 
 There's a distinction that gets lost in the discourse. Two people can use the same tool and be doing completely different things.
 
@@ -48,7 +48,7 @@ The first person is using a tool. The second person is using a service. Both are
 
 The crisis comes when you *care* about the output — when your [taste](/prose/what-is-art) is in it, when the decisions are yours, when you'd be embarrassed if it were bad — and you still can't claim you "made" it. That's the gap this essay lives in.
 
-## The craft question
+## Is directing a craft?
 
 Is directing a craft? Is it [art](/prose/what-is-art)?
 

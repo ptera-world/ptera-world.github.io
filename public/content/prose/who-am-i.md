@@ -10,9 +10,9 @@ You've probably tried to answer this. Personality tests. Journaling. Therapy. In
 
 But did it stick? Or did it feel right for a while and then stop fitting?
 
-That's because "who am I" isn't a question with an answer. It's [not that kind of question](#its-not-that-kind-of-question). The self isn't something you find — it's something that [keeps emerging](#the-self-keeps-emerging). And the way it emerges isn't through thinking. It's through [three things](#three-things) that feed each other.
+That's because "who am I" isn't a question with an answer. It's [not that kind of question](#why-isnt-it-that-kind-of-question). The self isn't something you find — it's something that [keeps emerging](#how-does-the-self-keep-emerging). And the way it emerges isn't through thinking. It's through [three things](#what-actually-builds-a-self) that feed each other.
 
-## It's not that kind of question
+## Why isn't it that kind of question?
 
 "What's your name?" has an answer. "Where do you live?" has an answer. "Who am I?" feels like it should have one too. A real, stable, findable answer that you just haven't located yet.
 
@@ -22,7 +22,7 @@ And the answer changes. Who you were five years ago isn't who you are now. Who y
 
 All of them. None of them. The question assumes a fixed thing to find. There isn't one.
 
-## The self keeps emerging
+## How does the self keep emerging?
 
 You didn't decide to like the things you like. You encountered them and something resonated. You didn't decide your values — they formed through experience, conflict, mistake, and occasional clarity. You didn't plan your personality — it emerged from genetics, environment, choices, and things that happened to you.
 
@@ -30,7 +30,7 @@ The self isn't architecture. It's weather. It has patterns, tendencies, recurrin
 
 Which means "who am I" isn't answered by looking inward. Not only, anyway. Looking inward gives you your [existing labels](/prose/what-are-labels-anyway) — the stories you already tell about yourself. To find what's actually there, including the parts you haven't met yet, you need more than introspection.
 
-## Three things
+## What actually builds a self?
 
 ### Analysis
 
@@ -64,7 +64,7 @@ The self has latent dimensions. Parts of you that are real but inactive because 
 
 Not "find yourself" through a grand journey. More like: lower the friction between you and new experiences until you stumble into something that resonates. [Sketch-level](/prose/how-do-i-do-things) exposure. Try things that don't matter. Try things you'd never "decide" to try. The discovery happens in the things you weren't looking for.
 
-## They feed each other
+## How do they feed each other?
 
 Analysis without expression is navel-gazing. You observe patterns but never test them.
 
