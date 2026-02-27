@@ -9,6 +9,8 @@ export interface Node {
   tier: "region" | "artifact" | "detail" | "meta";
   /** Parent region id, if any. */
   parent?: string;
+  /** Layout cluster id, if any (for rootless artifact nodes). */
+  cluster?: string;
   /** Current position (mutated by layout). */
   x: number;
   y: number;
@@ -20,8 +22,6 @@ export interface Node {
   color: string;
   status?: "production" | "fleshed-out" | "early" | "planned";
   tags: string[];
-  /** Layout cluster this node belongs to (e.g. "essays", "orphans", "meta-essays"). */
-  cluster?: string;
 }
 
 /** Edge connecting two nodes. */

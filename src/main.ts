@@ -12,6 +12,10 @@ import { initGroupingState, buildGroupingUI, restoreGroupingFromUrl } from "./gr
 const camera = createCamera();
 const graph = createGraph();
 
+// Center camera on the meta node (landing) if present
+const metaNode = graph.nodes.find((n) => n.tier === "meta");
+if (metaNode) { camera.x = metaNode.x; camera.y = metaNode.y; }
+
 // Disable transitions during initial setup
 worldEl.dataset.noTransition = "";
 

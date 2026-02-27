@@ -8,6 +8,7 @@ import { readdir, readFile, writeFile, stat } from "fs/promises";
 import { join } from "path";
 import { parse as parseYaml } from "yaml";
 import { parseFrontmatter, stripFrontmatter, inferTier, inferTags } from "./frontmatter";
+import { type Point, convexHull, expandHull, filterOutliers, hullSeparation } from "./hull";
 
 const contentDir = join(import.meta.dir, "../public/content");
 const outFile = join(import.meta.dir, "generated-graph.ts");
@@ -104,26 +105,139 @@ async function findMarkdownFiles(dir: string, prefix = ""): Promise<{ id: string
 interface ClusterConfig {
   id: string;
   label: string;
-  center: [number, number];
-  layout: "force" | "ring";
+  layout: "ring" | "force";
   color: string;
-  // Force layout params
-  minDist: number;
-  restLen: number;
-  repulsion: number;
-  attraction: number;
-  gravity: number;
-  iterations: number;
+  // Optional: place cluster near this node id (e.g. "meta/pteraworld")
+  near?: string;
+  // Optional explicit ring radius (overrides formula)
+  ringRadius?: number;
+  // Optional extra padding around cluster when computing clearance from other groups
+  padding?: number;
 }
 
-const DEFAULT_FORCE = {
-  minDist: 52,
-  restLen: 80,
-  repulsion: 20000,
-  attraction: 0.2,
-  gravity: 0.008,
-  iterations: 500,
-};
+interface ForceParams {
+  minDist: number; restLen: number; repulsion: number;
+  attraction: number; gravity: number; iterations: number;
+}
+
+/** Derive initial force params from cluster geometry. Returns params + seedR for ring seeding. */
+function initialForceParams(members: ParsedNode[]): ForceParams & { seedR: number } {
+  const n = members.length;
+  const maxR = Math.max(...members.map((m) => m.radius));
+  const minDist = maxR * 2 + 8;
+  const restLen = minDist * 1.5;
+  const repulsion = restLen ** 2 * 8;
+  // seedR: ring radius that fits all nodes at minDist spacing
+  const seedR = Math.ceil((n * minDist) / (2 * Math.PI)) + 50;
+  // gravity calibrated so repulsion and gravity balance at seedR — cluster stays near center
+  const gravity = repulsion / (restLen ** 2 * seedR); // = 8 / seedR
+  return { minDist, restLen, repulsion, attraction: 0.15, gravity, iterations: 400 + n * 10, seedR };
+}
+
+interface LayoutQuality {
+  overlaps: number;
+  spreadRadius: number;
+  edgeRatio: number | null;    // mean connected dist / mean unconnected dist; null if no edges
+  clusterScore: number | null; // mean shared-neighbor dist / mean non-shared dist; null if no triangles
+}
+
+function measureLayoutQuality(
+  members: ParsedNode[],
+  adj: Map<string, Set<string>>,
+  center: [number, number],
+): LayoutQuality {
+  const [cx, cy] = center;
+
+  let overlaps = 0;
+  for (let i = 0; i < members.length; i++) {
+    for (let j = i + 1; j < members.length; j++) {
+      const a = members[i]!, b = members[j]!;
+      if (Math.hypot(a.x - b.x, a.y - b.y) < a.radius + b.radius) overlaps++;
+    }
+  }
+
+  const spreadRadius = Math.max(...members.map((n) => Math.hypot(n.x - cx, n.y - cy) + n.radius));
+
+  let connDist = 0, connPairs = 0, unconnDist = 0, unconnPairs = 0;
+  for (let i = 0; i < members.length; i++) {
+    for (let j = i + 1; j < members.length; j++) {
+      const a = members[i]!, b = members[j]!;
+      const dist = Math.hypot(a.x - b.x, a.y - b.y);
+      if (adj.get(a.id)?.has(b.id)) { connDist += dist; connPairs++; }
+      else { unconnDist += dist; unconnPairs++; }
+    }
+  }
+  const edgeRatio = connPairs > 0 && unconnPairs > 0
+    ? (connDist / connPairs) / (unconnDist / unconnPairs) : null;
+
+  let sharedDist = 0, sharedPairs = 0, isolDist = 0, isolPairs = 0;
+  for (let i = 0; i < members.length; i++) {
+    for (let j = i + 1; j < members.length; j++) {
+      const a = members[i]!, b = members[j]!;
+      if (adj.get(a.id)?.has(b.id)) continue; // skip direct edges
+      const aN = adj.get(a.id) ?? new Set<string>();
+      const bN = adj.get(b.id) ?? new Set<string>();
+      const hasShared = [...aN].some((id) => bN.has(id));
+      const dist = Math.hypot(a.x - b.x, a.y - b.y);
+      if (hasShared) { sharedDist += dist; sharedPairs++; }
+      else { isolDist += dist; isolPairs++; }
+    }
+  }
+  const clusterScore = sharedPairs > 0 && isolPairs > 0
+    ? (sharedDist / sharedPairs) / (isolDist / isolPairs) : null;
+
+  return { overlaps, spreadRadius, edgeRatio, clusterScore };
+}
+
+function qualityScore(q: LayoutQuality): number {
+  return q.overlaps * 1000
+    + (q.edgeRatio != null ? Math.max(0, q.edgeRatio - 0.75) * 100 : 0)
+    + (q.clusterScore != null ? Math.max(0, q.clusterScore - 0.85) * 50 : 0);
+}
+
+/** Run force layout with an adaptive feedback loop — no manual parameter tuning needed. */
+function runForceLayoutAdaptive(
+  members: ParsedNode[],
+  center: [number, number],
+  adj: Map<string, Set<string>>,
+  clusterId: string,
+): void {
+  if (members.length === 0) return;
+
+  const seed = members.map((m) => ({ x: m.x, y: m.y }));
+  let params = initialForceParams(members);
+  let best: { positions: { x: number; y: number }[]; quality: LayoutQuality } | null = null;
+
+  for (let attempt = 0; attempt < 6; attempt++) {
+    members.forEach((m, i) => { m.x = seed[i]!.x; m.y = seed[i]!.y; });
+    runForceLayout(members, center, adj, params);
+    const q = measureLayoutQuality(members, adj, center);
+
+    if (!best || qualityScore(q) < qualityScore(best.quality)) {
+      best = { positions: members.map((m) => ({ x: m.x, y: m.y })), quality: q };
+    }
+
+    const edgeOk = q.edgeRatio == null || q.edgeRatio < 0.75;
+    const clusterOk = q.clusterScore == null || q.clusterScore < 0.85;
+    if (q.overlaps === 0 && edgeOk && clusterOk) break;
+
+    // Adjust toward the worst failure
+    if (q.overlaps > 0) {
+      params = { ...params, repulsion: params.repulsion * 1.6, minDist: params.minDist * 1.1 };
+    } else {
+      params = { ...params, attraction: params.attraction * 1.5, repulsion: params.repulsion * 0.85 };
+    }
+    params = { ...params, iterations: Math.min(params.iterations + 150, 1800) };
+  }
+
+  if (best) {
+    members.forEach((m, i) => { m.x = best!.positions[i]!.x; m.y = best!.positions[i]!.y; });
+    const q = best.quality;
+    const edgePart = q.edgeRatio != null
+      ? `  edge=${q.edgeRatio.toFixed(2)} cluster=${q.clusterScore?.toFixed(2) ?? "n/a"}` : "";
+    console.log(`  ${clusterId}(${members.length}): overlaps=${q.overlaps} spread=${Math.round(q.spreadRadius)}${edgePart}`);
+  }
+}
 
 const allFiles = await findMarkdownFiles(contentDir);
 
@@ -137,20 +251,14 @@ for (const { id, path, category } of allFiles) {
   if (end === -1) continue;
   const raw = parseYaml(text.slice(4, end)) as Record<string, unknown>;
   if (!raw || typeof raw !== "object") continue;
-  const centerRaw = raw.center as unknown[];
-  if (!Array.isArray(centerRaw) || centerRaw.length < 2) continue;
   clusterConfigs.set(clusterId, {
     id: clusterId,
     label: (raw.label as string) ?? clusterId,
-    center: [Number(centerRaw[0]), Number(centerRaw[1])],
-    layout: (raw.layout as "force" | "ring") ?? "ring",
+    layout: (raw.layout as "ring" | "force") ?? "ring",
     color: (raw.color as string) ?? "oklch(0.78 0.09 45)",
-    minDist: (raw.minDist as number) ?? DEFAULT_FORCE.minDist,
-    restLen: (raw.restLen as number) ?? DEFAULT_FORCE.restLen,
-    repulsion: (raw.repulsion as number) ?? DEFAULT_FORCE.repulsion,
-    attraction: (raw.attraction as number) ?? DEFAULT_FORCE.attraction,
-    gravity: (raw.gravity as number) ?? DEFAULT_FORCE.gravity,
-    iterations: (raw.iterations as number) ?? DEFAULT_FORCE.iterations,
+    near: raw.near != null ? String(raw.near) : undefined,
+    ringRadius: raw.ringRadius != null ? Number(raw.ringRadius) : undefined,
+    padding: raw.padding != null ? Number(raw.padding) : undefined,
   });
 }
 
@@ -247,25 +355,59 @@ const projectNodes = nodes.filter((n) => n.tier === "artifact");
 
 // --- Region layout: ring around origin ---
 {
+  // Step 1: Pre-compute final region radii from child ring geometry, BEFORE positioning.
+  // This is critical: regions must be placed using their true final radii so that
+  // the placement ring radius accounts for actual extents, not an initial estimate.
   for (const region of regions) {
     const children = projectNodes.filter((n) => n.parent === region.id);
-    if (region.radius === 24) {
-      region.radius = Math.max(140, 100 + children.length * 6);
-    }
     if (!region.color) {
-      // No color in frontmatter — compute from index as fallback
       const i = regions.indexOf(region);
       const hue = Math.round((360 * i) / Math.max(regions.length, 1));
       region.color = `oklch(0.7 0.12 ${hue})`;
     }
+    if (children.length === 0) {
+      region.radius = Math.max(140, region.radius);
+      continue;
+    }
+    const maxChildR = Math.max(...children.map((c) => c.radius), 20);
+    const ringR = Math.max(100, Math.ceil(children.length * (maxChildR + 8) / Math.PI));
+    region.radius = Math.max(140, ringR + maxChildR + 20);
   }
 
+  // Step 2: Compute outer radius of anchored clusters (those with near:).
+  // Anchored clusters are placed at/near the meta node (origin), so regions must
+  // be placed far enough that their circles don't overlap anchored cluster extents.
+  const anchoredOuterR = [...clusterConfigs.values()]
+    .filter((c) => c.near)
+    .reduce((maxR, c) => {
+      const clusterMembers = projectNodes.filter((n) => n.cluster === c.id);
+      const maxMemberR = clusterMembers.length > 0
+        ? Math.max(...clusterMembers.map((m) => m.radius), 20) : 20;
+      const padding = c.padding ?? 40;
+      const outerR = (c.ringRadius ?? Math.max(80, 60 + clusterMembers.length * 15)) + maxMemberR + padding;
+      return Math.max(maxR, outerR);
+    }, 0);
+
+  // Step 3: Position regions, ensuring clearance from anchored clusters at origin.
   if (regions.length === 1) {
-    regions[0]!.x = 0;
-    regions[0]!.y = 0;
+    const region = regions[0]!;
+    if (anchoredOuterR > 0) {
+      // Place single region to the left (angle=π), far enough to clear anchored clusters
+      const clearance = anchoredOuterR + region.radius + 80;
+      region.x = -clearance;
+      region.y = 0;
+    } else {
+      region.x = 0;
+      region.y = 0;
+    }
   } else {
     const maxRadius = Math.max(...regions.map((r) => r.radius));
-    const ringR = maxRadius + 100;
+    const baseRingR = maxRadius + 100;
+    // Ensure region ring clears anchored clusters: every region must be at least
+    // (anchoredOuterR + region.radius + margin) from origin
+    const ringR = anchoredOuterR > 0
+      ? Math.max(baseRingR, anchoredOuterR + maxRadius + 80)
+      : baseRingR;
     for (let i = 0; i < regions.length; i++) {
       const angle = Math.PI + (2 * Math.PI * i) / regions.length;
       regions[i]!.x = Math.round(ringR * Math.cos(angle));
@@ -292,6 +434,7 @@ const projectNodes = nodes.filter((n) => n.tier === "artifact");
     const maxChildR = Math.max(...children.map((c) => c.radius), 20);
     const ringR = Math.max(100, Math.ceil(children.length * (maxChildR + 8) / Math.PI));
     ringLayout(parent.x, parent.y, ringR, children);
+    // Radius already pre-computed correctly in step 1 above — no post-hoc correction.
 
     // Derive child color from parent's oklch hue
     if (children.some((c) => !c.color)) {
@@ -304,33 +447,105 @@ const projectNodes = nodes.filter((n) => n.tier === "artifact");
   }
 }
 
-// --- Cluster layout: all non-parent artifact nodes ---
-// Ring clusters are positioned now; force clusters are seeded and run after edge extraction.
+/**
+ * Compute a placement center for a cluster.
+ * If `near` is set, returns that node's position.
+ * Otherwise sweeps 72 angles at a safe placement radius and picks the angle that
+ * maximizes clearance from regions and already-placed cluster hulls.
+ *
+ * `placedHulls` — expanded convex hulls of already-placed clusters (node centers +
+ * node radius + padding). Used instead of centroid-to-centroid distance so the
+ * actual cluster extents drive the clearance scoring.
+ */
+function computeClusterCenter(
+  config: ClusterConfig,
+  members: ParsedNode[],
+  allNodes: ParsedNode[],
+  placedHulls: Point[][],
+): [number, number] {
+  if (config.near) {
+    const anchor = allNodes.find((n) => n.id === config.near);
+    if (anchor) return [anchor.x, anchor.y];
+    console.warn(`  warn: cluster "${config.id}" near: "${config.near}" not found, auto-placing`);
+  }
+
+  // Estimate cluster spread (outer radius) for clearance scoring
+  const spreadEstimate = config.layout === "ring"
+    ? (config.ringRadius ?? Math.max(80, 60 + members.length * 15))
+    : initialForceParams(members).seedR;
+
+  const placementR = Math.max(...regions.map((r) => r.radius), 100)
+    + spreadEstimate + 150;
+
+  // Try 72 angles; score by hull-based clearance from regions and placed clusters.
+  // The candidate cluster is approximated as a circle at (cx, cy) with radius spreadEstimate.
+  let bestAngle = 0, bestScore = -Infinity;
+  for (let i = 0; i < 72; i++) {
+    const angle = (2 * Math.PI * i) / 72;
+    const cx = placementR * Math.cos(angle);
+    const cy = placementR * Math.sin(angle);
+
+    // Clearance from regions: distance from candidate center to region boundary
+    const minRegionDist = Math.min(
+      ...regions.map((r) => Math.hypot(cx - r.x, cy - r.y) - r.radius - spreadEstimate),
+    );
+
+    // Hull-based clearance from already-placed clusters:
+    // sep = hullSeparation([candidatePoint], placedHull) - spreadEstimate
+    const minHullDist = placedHulls.length > 0
+      ? Math.min(...placedHulls.map((h) => hullSeparation([{ x: cx, y: cy }], h) - spreadEstimate))
+      : Infinity;
+
+    const score = Math.min(minRegionDist, minHullDist);
+    if (score > bestScore) { bestScore = score; bestAngle = angle; }
+  }
+
+  return [
+    Math.round(placementR * Math.cos(bestAngle)),
+    Math.round(placementR * Math.sin(bestAngle)),
+  ];
+}
+
+// --- Meta nodes: origin (must come before cluster layout so near: lookups work) ---
+for (const meta of metaNodes) {
+  meta.x = 0;
+  meta.y = 0;
+  meta.radius = 0;
+  if (!meta.color) meta.color = "#fff";
+}
+
+// --- Cluster layout: ring clusters positioned now; force clusters seeded for later ---
+// After placing each cluster, compute its convex hull (with outlier filtering + expansion)
+// and store it for subsequent clusters to score clearance against.
+const clusterCenters = new Map<string, [number, number]>();
+const placedHulls: Point[][] = [];
+
 for (const [clusterId, config] of clusterConfigs) {
   const members = projectNodes.filter((n) => n.cluster === clusterId);
   if (members.length === 0) continue;
 
-  // Assign color
   for (const m of members) {
     if (!m.color) m.color = config.color;
   }
 
-  if (config.layout === "ring") {
-    const ringR = Math.max(80, 60 + members.length * 15);
-    ringLayout(config.center[0], config.center[1], ringR, members);
-  } else {
-    // Force layout: seed on a ring, actual layout runs after edges
-    const initialR = Math.ceil((members.length * config.minDist) / (2 * Math.PI)) + 200;
-    ringLayout(config.center[0], config.center[1], initialR, members);
-  }
-}
+  const center = computeClusterCenter(config, members, [...regions, ...metaNodes, ...projectNodes], placedHulls);
+  clusterCenters.set(clusterId, center);
 
-// --- Meta nodes: fixed position ---
-for (const meta of metaNodes) {
-  meta.x = 0;
-  meta.y = -170;
-  meta.radius = 0;
-  if (!meta.color) meta.color = "#fff";
+  if (config.layout === "ring") {
+    const ringR = config.ringRadius ?? Math.max(80, 60 + members.length * 15);
+    ringLayout(center[0], center[1], ringR, members);
+  } else {
+    const { seedR } = initialForceParams(members);
+    ringLayout(center[0], center[1], seedR, members);
+  }
+
+  // Compute hull of placed members for subsequent placement scoring.
+  // Outliers discounted (k=1.5) so a few stray force-layout nodes don't over-inflate bounds.
+  const maxMemberR = Math.max(...members.map((m) => m.radius), 20);
+  const padding = config.padding ?? 40;
+  const corePts = filterOutliers(members.map((m) => ({ x: m.x, y: m.y })));
+  const hull = expandHull(convexHull(corePts), maxMemberR + padding);
+  placedHulls.push(hull);
 }
 
 // ---------------------------------------------------------------------------
@@ -378,7 +593,7 @@ function runForceLayout(
   members: ParsedNode[],
   center: [number, number],
   adj: Map<string, Set<string>>,
-  opts: Pick<ClusterConfig, "minDist" | "restLen" | "repulsion" | "attraction" | "gravity" | "iterations">,
+  opts: ForceParams,
 ): void {
   const { minDist, restLen, repulsion, attraction, gravity, iterations } = opts;
   const [cx, cy] = center;
@@ -471,13 +686,14 @@ function runForceLayout(
   }
 }
 
-// Run force layout for each force cluster
+// Run adaptive force layout for force clusters (after edges are extracted)
+console.log("Force layout:");
 for (const [clusterId, config] of clusterConfigs) {
   if (config.layout !== "force") continue;
   const members = projectNodes.filter((n) => n.cluster === clusterId);
   if (members.length === 0) continue;
 
-  const memberIds = new Set(members.map((e) => e.id));
+  const memberIds = new Set(members.map((m) => m.id));
   const adj = new Map<string, Set<string>>();
   for (const m of members) adj.set(m.id, new Set());
   for (const edge of edges) {
@@ -487,7 +703,7 @@ for (const [clusterId, config] of clusterConfigs) {
     }
   }
 
-  runForceLayout(members, config.center, adj, config);
+  runForceLayoutAdaptive(members, clusterCenters.get(clusterId)!, adj, clusterId);
 }
 
 // ---------------------------------------------------------------------------
@@ -544,12 +760,17 @@ for (const [clusterId, config] of clusterConfigs) {
     console.warn("  separation applied.");
   }
 
-  // Push parentless nodes out of region circles (e.g. essays that drifted inside rhi)
+  // Push parentless nodes out of region circles (e.g. essays that drifted inside rhi).
+  // Skip nodes in anchored clusters (near:) — they're intentionally placed relative to a fixed node.
+  const anchoredClusters = new Set(
+    [...clusterConfigs.values()].filter((c) => c.near).map((c) => c.id),
+  );
   let regionPushCount = 0;
   for (let pass = 0; pass < 20; pass++) {
     for (const region of regions) {
       for (const n of projectNodes) {
         if (n.parent) continue; // ecosystem children are fixed
+        if (n.cluster && anchoredClusters.has(n.cluster)) continue; // anchored clusters: don't disturb
         const dist = Math.hypot(n.x - region.x, n.y - region.y);
         if (dist < region.radius + n.radius + 8) {
           const push = region.radius + n.radius + 8 - dist + 0.5;
@@ -564,6 +785,30 @@ for (const [clusterId, config] of clusterConfigs) {
   }
   if (regionPushCount > 0) {
     console.warn(`  pushed ${regionPushCount} region-vs-artifact overlaps.`);
+  }
+}
+
+// Final quality report for force clusters (after all post-processing)
+{
+  let anyForce = false;
+  for (const [clusterId, config] of clusterConfigs) {
+    if (config.layout !== "force") continue;
+    const members = projectNodes.filter((n) => n.cluster === clusterId);
+    if (members.length === 0) continue;
+    if (!anyForce) { console.log("Force layout (final, post-separation):"); anyForce = true; }
+    const memberIds = new Set(members.map((m) => m.id));
+    const adj = new Map<string, Set<string>>();
+    for (const m of members) adj.set(m.id, new Set());
+    for (const edge of edges) {
+      if (memberIds.has(edge.from) && memberIds.has(edge.to)) {
+        adj.get(edge.from)!.add(edge.to);
+        adj.get(edge.to)!.add(edge.from);
+      }
+    }
+    const q = measureLayoutQuality(members, adj, clusterCenters.get(clusterId)!);
+    const edgePart = q.edgeRatio != null
+      ? `  edge=${q.edgeRatio.toFixed(2)} cluster=${q.clusterScore?.toFixed(2) ?? "n/a"}` : "";
+    console.log(`  ${clusterId}(${members.length}): overlaps=${q.overlaps} spread=${Math.round(q.spreadRadius)}${edgePart}`);
   }
 }
 
@@ -582,9 +827,7 @@ interface GroupingOutput {
  * Return positions for all cluster nodes (using their actual graph positions) plus meta nodes.
  * Used in secondary groupings so essays/orphans appear at their home positions in every view.
  */
-function clusterPositionsForGroupings(
-  metaX: number, metaY: number,
-): Record<string, { x: number; y: number }> {
+function clusterPositionsForGroupings(): Record<string, { x: number; y: number }> {
   const result: Record<string, { x: number; y: number }> = {};
   for (const n of projectNodes) {
     if (n.cluster && !n.parent) {
@@ -592,7 +835,7 @@ function clusterPositionsForGroupings(
     }
   }
   for (const m of metaNodes) {
-    result[m.id] = { x: metaX, y: metaY };
+    result[m.id] = { x: m.x, y: m.y };
   }
   return result;
 }
@@ -627,7 +870,6 @@ const generatedGroupings: GroupingOutput[] = [];
 function buildTagGrouping(
   groupingId: string, groupingLabel: string,
   category: string, brighterLightness: string,
-  metaX: number, metaY: number,
 ): GroupingOutput {
   const catRegions = groupingRegions
     .filter((r) => r.category === category)
@@ -672,17 +914,17 @@ function buildTagGrouping(
   });
 
   // Add cluster nodes and meta at their home positions
-  Object.assign(allPositions, clusterPositionsForGroupings(metaX, metaY));
+  Object.assign(allPositions, clusterPositionsForGroupings());
 
   return { id: groupingId, label: groupingLabel, regions: builtRegions, positions: allPositions };
 }
 
 generatedGroupings.push(
-  buildTagGrouping("domain", "Domains", "domain", "0.75", 0, 0),
+  buildTagGrouping("domain", "Domains", "domain", "0.75"),
 );
 
 generatedGroupings.push(
-  buildTagGrouping("tech", "Technologies", "technology", "0.75", 0, -170),
+  buildTagGrouping("tech", "Technologies", "technology", "0.75"),
 );
 
 // --- Status grouping ---
@@ -730,7 +972,7 @@ generatedGroupings.push(
     Object.assign(allPositions, ringPositions(rx, ry, childRingR, childIds, reg.id, childColor));
   });
 
-  Object.assign(allPositions, clusterPositionsForGroupings(0, -170));
+  Object.assign(allPositions, clusterPositionsForGroupings());
 
   generatedGroupings.push({ id: "status", label: "Status", regions: builtRegions, positions: allPositions });
 }
@@ -758,13 +1000,13 @@ const nodeLines = nodes.map((n) => {
   if (n.url) fields.push(`url: "${n.url}"`);
   fields.push(`tier: "${n.tier}"`);
   if (n.parent) fields.push(`parent: "${n.parent}"`);
+  if (n.cluster) fields.push(`cluster: "${n.cluster}"`);
   fields.push(`x: ${n.x}`);
   fields.push(`y: ${n.y}`);
   fields.push(`radius: ${n.radius}`);
   fields.push(`color: ${quote(n.color)}`);
   if (n.status) fields.push(`status: "${n.status}"`);
   fields.push(`tags: [${n.tags.map((t) => `"${t}"`).join(", ")}]`);
-  if (n.cluster) fields.push(`cluster: "${n.cluster}"`);
   return `  { ${fields.join(", ")} },`;
 }).join("\n");
 

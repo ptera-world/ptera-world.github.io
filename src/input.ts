@@ -281,7 +281,10 @@ export function setupInput(
       camera.zoom = Math.max(0.3, camera.zoom / 1.25);
       updateTransform(camera);
     },
-    "reset-view": () => animateTo(camera, 0, 0, 1.5),
+    "reset-view": () => {
+      const meta = graph.nodes.find((n) => n.tier === "meta");
+      animateTo(camera, meta?.x ?? 0, meta?.y ?? 0, 1.5);
+    },
     confirm: () => {
       if (!focusedNode) return;
       if (isPanelOpen()) return; // no-op when panel already open

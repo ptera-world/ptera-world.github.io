@@ -63,3 +63,58 @@ Single-page app with no framework. All source is in `src/` (~1,200 lines). Conte
 - Content files use YAML frontmatter as single source of truth for node metadata
 - Directories in `public/content/` determine tier inference: `ecosystem/` → region, `project/` → project, `prose/` → project, `meta/` → meta
 - `domain/`, `technology/`, `status/` directories contain content-only pages (not graph nodes) unless frontmatter explicitly sets `tier:`
+
+## Build tool principles — no hardcoding
+
+**Never hardcode content-specific values in build tools (`src/gen-*.ts`, `src/inspect-*.ts`).** This means: no node IDs, no cluster name strings, no magic thresholds derived from CSS layout, no assumed positions.
+
+Allowed structural queries (use freely):
+- `node.tier` — `"region" | "artifact" | "detail" | "meta"`
+- `node.parent` — containment relationship
+- `node.id.startsWith("prose/")` — structural id prefix
+- `node.tags`, `node.status`, `node.x`, `node.y`, `node.radius` — all from generated data
+
+Not allowed in scripts:
+- CSS element dimensions (the landing panel's pixel extents aren't available at build time)
+- Proximity thresholds that encode assumed layout geometry (e.g. `META_ESSAY_DIST = 160`)
+- Explicit cluster name strings like `n.cluster === "meta-essays"`
+- Any constant that would break silently if content is added or moved
+
+If a layout needs a non-default ring radius, add a `ringRadius:` field to the cluster's YAML frontmatter in `public/content/cluster/` and read it in `gen-graph.ts`. Do not hardcode it in the layout script or the inspector.
+
+## Layout / cluster system
+
+- Cluster configs: `public/content/cluster/*.md` — each defines declarative **constraints**, not coordinates or physics params
+- `inferCluster()` in `gen-graph.ts` assigns cluster based on directory: `prose/` → `essays`, `project/` (no parent) → `orphans`
+- Region radius must contain its ring of children: after computing child ring radius, `region.radius` must satisfy `region.radius ≥ ringR + maxChildR + margin`
+- Force layout: use for clusters with meaningful edge relationships; ring layout for small/positionally-fixed clusters
+
+## Layout constraints — the content author API
+
+**Content authors declare constraints, not coordinates or parameters.** The layout algorithm is responsible for finding positions that satisfy them. Users should never need to tune numbers.
+
+Constraint types (declared in cluster YAML frontmatter):
+- `near: <node-id>` — cluster should be placed near this node (e.g. `near: meta/pteraworld`)
+- `below: <node-id>`, `above: <node-id>`, `left-of: <node-id>`, `right-of: <node-id>` — relative positioning
+- `visible-at: <zoom>` — all nodes in cluster should fit within a standard 1920×1080 viewport at this zoom level centered on the world origin
+- Overlap is a universal constraint — nothing should overlap, ever (enforced by the algorithm, not declared per-cluster)
+
+**Absolute coordinates (`center:`) are a code smell.** They break when other clusters move, they don't express intent, and they require manual re-tuning. Replace with relative constraints wherever possible.
+
+**Dynamic layout is not a crutch.** Runtime adaptation to viewport size is legitimate for things genuinely unknowable at build time (phone portrait, ultrawide, etc.). But layout *intent* — clustering, proximity, relative positioning — is fixed at build time. At runtime the build-time solution is scaled/adjusted within tight bounds; it is never re-solved from scratch. Build-time layout is the ground truth.
+
+## Force layout — parameter philosophy
+
+Force layout parameters are **never user-facing**. They are derived from the cluster geometry and tuned automatically via a run-and-measure feedback loop at build time:
+
+1. Derive initial params from node geometry (minDist from radii, restLen, repulsion, gravity)
+2. Run simulation
+3. Measure output quality across four axes:
+   - **Overlap**: no two nodes intersecting
+   - **Spread**: cluster bounding radius within expected range for node count
+   - **Edge satisfaction**: connected pairs meaningfully closer than unconnected pairs
+   - **Clustering**: nodes sharing graph neighbors should form visible spatial subgroups
+4. If thresholds not met, adjust params in the direction that fixes the worst failure and re-run
+5. Apply the best-scoring result across all attempts
+
+The four metrics each have directional fixes: overlaps → more repulsion; poor edge satisfaction → more attraction; poor clustering → more attraction relative to repulsion; no cohesion → stronger gravity.
