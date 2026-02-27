@@ -58,6 +58,7 @@ That's what special means. Not popular. Not polished. Not frictionless. Just: so
 
 ## See also
 
+- [why did things stop being personal?](/prose/why-did-things-stop-being-personal) - the personal web and what platforms replaced
 - [what is art?](/prose/what-is-art) - intent as what makes something matter
 - [why are we compressing things?](/prose/why-are-we-compressing-things) - culture compressed into content
 - [what's actually wrong?](/prose/whats-actually-wrong) - systems that optimize against you
