@@ -289,7 +289,8 @@ const projectNodes = nodes.filter((n) => n.tier === "artifact");
     const parent = regions.find((r) => r.id === parentId);
     if (!parent) continue;
 
-    const ringR = Math.max(80, parent.radius + children.length * 2);
+    const maxChildR = Math.max(...children.map((c) => c.radius), 20);
+    const ringR = Math.max(55, Math.ceil(children.length * (maxChildR + 8) / Math.PI));
     ringLayout(parent.x, parent.y, ringR, children);
 
     // Derive child color from parent's oklch hue
@@ -520,10 +521,17 @@ for (const [clusterId, config] of clusterConfigs) {
           const dx = a.x - b.x, dy = a.y - b.y;
           const dist = Math.hypot(dx, dy);
           if (dist < minDist && dist > 0) {
-            const push = (minDist - dist) / 2 + 0.5;
+            const push = (minDist - dist) + 0.5;
             const nx = dx / dist, ny = dy / dist;
-            a.x += nx * push; a.y += ny * push;
-            b.x -= nx * push; b.y -= ny * push;
+            // Ecosystem children are fixed — only move the free (parentless) node
+            if (a.parent && !b.parent) {
+              b.x -= nx * push; b.y -= ny * push;
+            } else if (b.parent && !a.parent) {
+              a.x += nx * push; a.y += ny * push;
+            } else {
+              a.x += nx * push / 2; a.y += ny * push / 2;
+              b.x -= nx * push / 2; b.y -= ny * push / 2;
+            }
           }
         }
       }
@@ -549,19 +557,17 @@ interface GroupingOutput {
 }
 
 /**
- * Place all cluster nodes at their cluster center (ring), plus meta nodes at metaX/metaY.
- * Used in secondary groupings where non-tagged nodes float at their home position.
+ * Return positions for all cluster nodes (using their actual graph positions) plus meta nodes.
+ * Used in secondary groupings so essays/orphans appear at their home positions in every view.
  */
 function clusterPositionsForGroupings(
   metaX: number, metaY: number,
 ): Record<string, { x: number; y: number }> {
   const result: Record<string, { x: number; y: number }> = {};
-  for (const [clusterId, config] of clusterConfigs) {
-    const members = projectNodes.filter((n) => n.cluster === clusterId);
-    if (members.length === 0) continue;
-    const [cx, cy] = config.center;
-    const ringR = Math.max(60, Math.ceil((members.length * 40) / (2 * Math.PI)) + 40);
-    Object.assign(result, ringPositions(cx, cy, ringR, members.map((n) => n.id), ""));
+  for (const n of projectNodes) {
+    if (n.cluster && !n.parent) {
+      result[n.id] = { x: n.x, y: n.y };
+    }
   }
   for (const m of metaNodes) {
     result[m.id] = { x: metaX, y: metaY };

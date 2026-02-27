@@ -142,7 +142,7 @@ export function updateTransform(camera: Camera): void {
   worldEl.style.setProperty("--zoom", `${camera.zoom}`);
   worldEl.dataset.tier = currentTier(camera);
   const landingOpacity = Math.max(0, Math.min(1, (3.0 - camera.zoom) / 1.5));
-  landingEl.style.opacity = `${landingOpacity}`;
+  landingEl.style.setProperty("--landing-zoom", `${landingOpacity}`);
   updateMinimap(camera);
 }
 

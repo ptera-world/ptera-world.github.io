@@ -104,6 +104,7 @@
       transform: translate(-50%, -50%);
       transform-origin: center center;
       text-align: center; white-space: nowrap; cursor: pointer;
+      opacity: var(--landing-zoom, 1);
       transition: opacity 200ms;
       z-index: 2;
     }
@@ -115,8 +116,8 @@
       background: #222; border: 1px solid #333; border-radius: 3px;
       padding: 0 4px; font-size: 10px; font-family: inherit; color: #555;
     }
-    #world[data-hovering] .landing { opacity: 0.15; }
-    #world[data-filtering] .landing { opacity: 0.08 !important; }
+    #world[data-hovering] .landing { opacity: calc(var(--landing-zoom, 1) * 0.15); }
+    #world[data-filtering] .landing { opacity: calc(var(--landing-zoom, 1) * 0.08) !important; }
 
     /* Tier-based visibility */
     .node.project .node-label,
