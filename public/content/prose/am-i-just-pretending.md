@@ -64,6 +64,6 @@ No. But you can't prove it. And that's the uncomfortable part.
 
 The work is real. The judgment is real. The taste is real. The output is real. But the legibility — the thing that lets other people see that it's real — is missing. There's no callused hands, no late nights, no war stories about the grind. There's just... a lot of output and a co-author tag.
 
-Maybe that's fine. Maybe the question isn't "am I pretending" but "does it matter who believes me." The thing works regardless. It exists regardless. The [purpose](/prose/whats-the-purpose-of-life) — or lack of it — is yours to figure out regardless.
+Maybe that's fine. Maybe the question isn't "am I pretending" but "does it matter who believes me." The thing exists regardless. It says what you meant it to say, or it doesn't. It holds up under scrutiny, or it doesn't. The [purpose](/prose/whats-the-purpose-of-life) — or lack of it — is yours to figure out regardless.
 
 The pretending question is a distraction from the real one. Not "is this legitimate" but "[what is it for](/prose/whats-the-purpose-of-life)."
