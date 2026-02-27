@@ -46,7 +46,7 @@ I'm stuck in architect mode. Not because I can't inhabit — but because the thi
 
 Yes. And the reason is **emergence**.
 
-You design the rules, but you don't design what emerges from them. You know exactly how chess works and you still experience a real game. You know existence's systems inside out, but you don't know what happens when introversion + dental pain + sleep deprivation + grocery shopping interact in a specific moment.
+You design the rules, but you don't design what emerges from them. You know exactly how chess works and you still experience a real game. You can know a simulation's systems inside out and still not predict what happens when introversion + dental pain + sleep deprivation + grocery shopping interact in a specific moment.
 
 The surprise isn't in the rules. It's in the combinatorics. Complex systems produce behavior their architects can't predict. That's not a bug in the design — it's [the whole point](#the-whole-point).
 
