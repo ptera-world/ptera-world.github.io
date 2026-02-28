@@ -32,6 +32,14 @@ There's no glory in making two things work together that should have worked toge
 
 So ambitious people build engines. They build products. They build the thing with the name and the logo and the launch day. Glue doesn't get launch days. Glue gets inherited by the next developer who wonders why there's a 500-line file called `utils.py` that everything depends on.
 
+## The proof is in the stack
+
+The most successful piece of software ever written isn't an application. It's a kernel. Linux sits between hardware and everything built on top of it — connecting processes to memory, devices to interfaces, userspace to the machine. It runs phones, servers, supercomputers, the cloud, basically everything. Not because it's glamorous. Because it connects everything else.
+
+The most popular programming language isn't the fastest or the most elegant. It's Python — slow by itself, not great at any single thing. But it glues everything together: C libraries to data pipelines, ML frameworks to scripts, fast components to human intent. It won by being the best connective layer, not the best execution layer.
+
+The two most ubiquitous pieces of software on earth are both glue. That's not a coincidence. It's evidence.
+
 ## The intelligence is in the glue
 
 Here's the thing nobody talks about: in any system with more than one component, the glue is where the intelligence lives.
