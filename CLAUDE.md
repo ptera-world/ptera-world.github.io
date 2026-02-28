@@ -64,6 +64,25 @@ Single-page app with no framework. All source is in `src/` (~1,200 lines). Conte
 - Directories in `public/content/` determine tier inference: `ecosystem/` → region, `project/` → project, `prose/` → project, `meta/` → meta
 - `domain/`, `technology/`, `status/` directories contain content-only pages (not graph nodes) unless frontmatter explicitly sets `tier:`
 
+## Essay voice — prose/* files
+
+**Peer voice, not authoritative.** The essays speak alongside the reader, not above them.
+
+Keep:
+- Second person ("you") — intentional, load-bearing
+- Rhetorical question headers — intentional manipulation, they force thinking
+- All cross-links, structure, "See also" sections
+- Essay length — peer doesn't mean brief
+
+Rules:
+- **No pretension.** Don't position the writer above the reader. No "here's the thing nobody talks about," no "here's what you don't realize"
+- **No mic-drops.** No standalone punchy sentences used for impact ("Glue.", "And yet.", "Both are true.")
+- **No fanfare.** Don't announce that something important is coming. Just say it
+- **Make connections, not conclusions.** Put two things next to each other and let the reader close the gap. Don't draw THE conclusion for them
+- **Still working it out.** The voice should feel like it's discovering, not like it has arrived. Share what we've found, what we've noticed, what keeps showing up
+- **No negative language.** Describe the situation, point at what could be different. Negative language on a public page has no positive expected value — someone in a fine headspace gets outrage, someone already not OK gets despair. The restraint is calculated compassion
+- **Project descriptions are the reference voice.** Lowercase, direct, no rhetorical performance, no effort to impress. Says the thing and stops. The essays can be longer and more structured, but the sentence-level voice should match that register
+
 ## Build tool principles — no hardcoding
 
 **Never hardcode content-specific values in build tools (`src/gen-*.ts`, `src/inspect-*.ts`).** This means: no node IDs, no cluster name strings, no magic thresholds derived from CSS layout, no assumed positions.
