@@ -24,7 +24,7 @@ export const siteConfig = {
     unfiltered: {
       name: "unfiltered",
       metaNodeId: "meta/unfiltered",
-      contentDirs: ["ecosystem", "meta", "unfiltered", "domain", "technology", "status"],
+      contentDirs: ["meta", "unfiltered"],
     },
   } satisfies Record<string, CollectionConfig>,
 } as const;
