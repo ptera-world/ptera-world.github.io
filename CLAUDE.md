@@ -129,6 +129,7 @@ The site supports multiple collections sharing the same spatial graph and JS bun
 - The `<html data-collection="...">` attribute drives runtime behavior and CSS theming
 - `getActiveCollection()` reads the attribute at runtime; build scripts get `"default"`
 - All collections' nodes live on the same graph — the graph is structure, not voice
+- **Cross-collection linking is one-way:** unfiltered essays may link to prose (main site) essays. Prose essays must NOT link to unfiltered content. The main site reader shouldn't be pulled into the unfiltered voice without choosing to go there
 
 ## Layout constraints — the content author API
 

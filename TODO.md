@@ -1,5 +1,10 @@
 # TODO
 
+## Unfiltered content — potential essays
+- [x] **housing** — folded into the-gate as "shelter" section
+- [x] **extremism** → written as the-loop: the mechanism by which belief systems feed on their own resistance. no specific religions named
+- [ ] **voice: questions vs statements** — main site uses rhetorical question headers (forces thinking, aids retention). unfiltered uses statements (forces recognition). headers should stay as statements. but body text could lean harder into unanswerable inline questions — not as technique, as honesty. places where the essay hits a wall and admits it. audit existing essays for opportunities
+
 - [ ] Add favicon / icon
 - [ ] Fix layout (broken by content-agnostic refactor)
 - [ ] `visible-at` constraint should not assume 1920×1080 — support multiple common viewport sizes or a range
