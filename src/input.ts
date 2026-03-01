@@ -102,7 +102,7 @@ export function setupInput(
     focusedNode = node;
     setFocus(graph, node, true);
     if (isPanelOpen() || (isCardOpen() && wasThisNode)) {
-      openPanel(node.id, node.label);
+      openPanel(node.id, node.label, false);
     } else {
       showCard(node, graph);
     }

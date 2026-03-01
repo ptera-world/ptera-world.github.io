@@ -83,7 +83,7 @@ if (focusId) {
   const node = graph.nodes.find((n) => n.id === focusId);
   if (node) {
     input.navigateTo(node, false, false);
-    openPanel(node.id, node.label);
+    openPanel(node.id, node.label, false);
   }
 }
 

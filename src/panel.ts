@@ -191,7 +191,7 @@ export function initPanel(camera: Camera, graph: Graph): void {
   });
 }
 
-export function openPanel(nodeId: string, nodeLabel?: string): void {
+export function openPanel(nodeId: string, nodeLabel?: string, push = true): void {
   hideCard();
   currentNodeId = nodeId;
   panel.hidden = false;
@@ -205,6 +205,12 @@ export function openPanel(nodeId: string, nodeLabel?: string): void {
   if (node) {
     setFocus(graphRef, node);
     animateTo(cam, node.x, node.y, Math.max(cam.zoom, 1.5));
+  }
+  if (push) {
+    const params = new URLSearchParams(location.search);
+    params.set("focus", nodeId);
+    const qs = params.toString();
+    history.pushState({ focus: nodeId }, "", qs ? `?${qs}` : location.pathname);
   }
 
   const cached = contentCache.get(nodeId);
