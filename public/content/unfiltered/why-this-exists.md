@@ -1,7 +1,7 @@
 ---
 label: "why this exists."
 description: "the neutral voice needed a second door."
-tags: [design]
+tags: [design, introspective]
 ---
 
 # Why this exists.

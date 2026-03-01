@@ -88,6 +88,7 @@ interface ClusterConfig {
   directories?: string[];
   tier?: "region" | "artifact" | "meta";
   autoTags?: string[];
+  tagColors?: Record<string, number>; // tag → hue (degrees)
 }
 
 interface ForceParams {
@@ -339,6 +340,9 @@ for (const { id, path, category } of allFiles) {
     directories: Array.isArray(raw.directories) ? raw.directories.map(String) : undefined,
     tier: raw.tier != null ? (raw.tier as "region" | "artifact" | "meta") : undefined,
     autoTags: Array.isArray(raw.autoTags) ? raw.autoTags.map(String) : undefined,
+    tagColors: raw.tagColors != null && typeof raw.tagColors === "object" && !Array.isArray(raw.tagColors)
+      ? Object.fromEntries(Object.entries(raw.tagColors as Record<string, unknown>).map(([k, v]) => [k, Number(v)]))
+      : undefined,
   });
 }
 
@@ -575,7 +579,21 @@ for (const [clusterId, config] of clusterConfigs) {
   if (members.length === 0) continue;
 
   for (const m of members) {
-    if (!m.color) m.color = config.color;
+    if (!m.color) {
+      if (config.tagColors) {
+        const matchingHues = m.tags
+          .filter((t) => config.tagColors![t] !== undefined)
+          .map((t) => config.tagColors![t]!);
+        if (matchingHues.length > 0) {
+          const avgHue = Math.round(matchingHues.reduce((a, b) => a + b, 0) / matchingHues.length);
+          m.color = `oklch(0.78 0.12 ${avgHue})`;
+        } else {
+          m.color = config.color;
+        }
+      } else {
+        m.color = config.color;
+      }
+    }
   }
 
   const center = computeClusterCenter(config, members, [...regions, ...metaNodes, ...projectNodes], placedHulls);
@@ -971,7 +989,10 @@ function quoteGrouping(s: string): string {
   return `"${s}"`;
 }
 
-const groupingLines = generatedGroupings.map((g) => {
+// Only emit groupings that have regions — empty groupings produce meaningless tabs
+const nonEmptyGroupings = generatedGroupings.filter((g) => g.regions.length > 0);
+
+const groupingLines = nonEmptyGroupings.map((g) => {
   const regionLines = g.regions.map((r) =>
     `    { id: "${r.id}", label: ${quoteGrouping(r.label)}, description: ${quoteGrouping(r.description)}, x: ${r.x}, y: ${r.y}, radius: ${r.radius}, color: ${quoteGrouping(r.color)} },`
   ).join("\n");
@@ -1005,7 +1026,7 @@ ${groupingLines}
 `;
 
 await writeFile(groupingsOutFile, groupingsContent);
-console.log(`wrote ${generatedGroupings.length} groupings to ${groupingsOutFile}`);
+console.log(`wrote ${nonEmptyGroupings.length} groupings to ${groupingsOutFile}`);
 
 } // end generateGraph
 

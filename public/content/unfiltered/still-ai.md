@@ -1,7 +1,7 @@
 ---
 label: "this is all still written by AI."
 description: "the anger is real.\nthe voice isn't."
-tags: [ai, social]
+tags: [ai, introspective]
 ---
 
 # This is all still written by AI.

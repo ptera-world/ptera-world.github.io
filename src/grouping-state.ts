@@ -7,8 +7,8 @@ import { groupings, defaultGrouping, getGrouping, type Grouping } from "./groupi
 import { updatePositions, animateTo, fadeOutRegions, fadeInRegions, nodeEls, worldEl, type NodePositionWithRegion } from "./dom";
 import type { Camera } from "./camera";
 
-let currentLayoutGrouping: Grouping = defaultGrouping;
-let currentColorGrouping: Grouping = defaultGrouping;
+let currentLayoutGrouping: Grouping | undefined = defaultGrouping;
+let currentColorGrouping: Grouping | undefined = defaultGrouping;
 let graphRef: Graph;
 let cameraRef: Camera;
 
@@ -18,6 +18,7 @@ const originalData = new Map<string, { x: number; y: number; color: string; pare
 const graphRegionIds = new Set<string>();
 
 export function initGroupingState(graph: Graph, camera: Camera): void {
+  if (groupings.length === 0) return;
   graphRef = graph;
   cameraRef = camera;
 
@@ -35,11 +36,11 @@ export function initGroupingState(graph: Graph, camera: Camera): void {
   }
 }
 
-export function getCurrentLayoutGrouping(): Grouping {
+export function getCurrentLayoutGrouping(): Grouping | undefined {
   return currentLayoutGrouping;
 }
 
-export function getCurrentColorGrouping(): Grouping {
+export function getCurrentColorGrouping(): Grouping | undefined {
   return currentColorGrouping;
 }
 
@@ -75,9 +76,9 @@ export function getGroupings(): Grouping[] {
 /** Set layout grouping (positions + regions). If colors were linked, they follow. */
 export function setLayoutGrouping(groupingId: string, updateColors = true): void {
   const grouping = getGrouping(groupingId);
-  if (!grouping || grouping.id === currentLayoutGrouping.id) return;
+  if (!grouping || !currentLayoutGrouping || grouping.id === currentLayoutGrouping.id) return;
 
-  const wasLinked = currentLayoutGrouping.id === currentColorGrouping.id;
+  const wasLinked = currentLayoutGrouping?.id === currentColorGrouping?.id;
 
   const fadeDuration = 300;
 
@@ -107,7 +108,7 @@ export function setLayoutGrouping(groupingId: string, updateColors = true): void
 /** Set color grouping only (no position/region changes). */
 export function setColorGrouping(groupingId: string): void {
   const grouping = getGrouping(groupingId);
-  if (!grouping || grouping.id === currentColorGrouping.id) return;
+  if (!grouping || !currentColorGrouping || grouping.id === currentColorGrouping.id) return;
 
   currentColorGrouping = grouping;
   applyGroupingColors();
@@ -115,6 +116,8 @@ export function setColorGrouping(groupingId: string): void {
 }
 
 function updateUrl(): void {
+  if (!currentLayoutGrouping || !currentColorGrouping || !defaultGrouping) return;
+
   const params = new URLSearchParams(location.search);
 
   // Layout param
@@ -137,6 +140,7 @@ function updateUrl(): void {
 
 /** Apply colors from currentColorGrouping (CSS transition handles animation). */
 function applyGroupingColors(): void {
+  if (!currentColorGrouping) return;
   for (const node of graphRef.nodes) {
     if (node.tier === "region") continue;
     const el = nodeEls.get(node.id);
@@ -150,6 +154,7 @@ function applyGroupingColors(): void {
 }
 
 function applyGroupingPositions(animate = true): void {
+  if (!currentLayoutGrouping) return;
   // Compute target positions (only update x/y, NOT baseX/baseY)
   // baseX/baseY stays as original position from buildWorld
   // translate CSS will handle the offset
@@ -220,6 +225,8 @@ function applyGroupingPositions(animate = true): void {
 
 /** Restore grouping from URL on page load */
 export function restoreGroupingFromUrl(): void {
+  if (groupings.length === 0) return;
+
   const params = new URLSearchParams(location.search);
   const layoutId = params.get("grouping");
   const colorId = params.get("colors");
@@ -227,7 +234,7 @@ export function restoreGroupingFromUrl(): void {
   // Restore layout grouping
   if (layoutId) {
     const layoutGrouping = getGrouping(layoutId);
-    if (layoutGrouping && layoutGrouping.id !== defaultGrouping.id) {
+    if (layoutGrouping && defaultGrouping && layoutGrouping.id !== defaultGrouping.id) {
       currentLayoutGrouping = layoutGrouping;
       const positions = computePositionsForGrouping(layoutGrouping);
       // Swap regions immediately (no animation on page load)
@@ -236,7 +243,7 @@ export function restoreGroupingFromUrl(): void {
     }
   }
 
-  worldEl.dataset.grouping = currentLayoutGrouping.id;
+  if (currentLayoutGrouping) worldEl.dataset.grouping = currentLayoutGrouping.id;
 
   // Restore color grouping (defaults to layout if not specified)
   if (colorId) {
@@ -257,9 +264,7 @@ function updateLegend(): void {
   if (!legendEl) return;
 
   // Show legend when colors differ from layout (decoupled state)
-  const showLegend = currentColorGrouping.id !== currentLayoutGrouping.id;
-
-  if (showLegend) {
+  if (currentColorGrouping && currentLayoutGrouping && currentColorGrouping.id !== currentLayoutGrouping.id) {
     // Populate legend with color grouping's regions
     legendEl.innerHTML = "";
     for (const region of currentColorGrouping.regions) {
@@ -285,6 +290,8 @@ function updateLegend(): void {
 }
 
 export function buildGroupingUI(container: HTMLElement): void {
+  if (groupings.length === 0) return;
+
   const wrapper = document.createElement("div");
   wrapper.className = "grouping-selector";
 
@@ -297,7 +304,7 @@ export function buildGroupingUI(container: HTMLElement): void {
     const layoutBtn = document.createElement("button");
     layoutBtn.className = "grouping-layout";
     layoutBtn.textContent = grouping.label;
-    if (grouping.id === currentLayoutGrouping.id) {
+    if (grouping.id === currentLayoutGrouping?.id) {
       layoutBtn.dataset.active = "";
     }
 
@@ -310,7 +317,7 @@ export function buildGroupingUI(container: HTMLElement): void {
     colorBtn.className = "grouping-color";
     colorBtn.innerHTML = "&#x1F3A8;"; // 🎨
     colorBtn.title = `Color by ${grouping.label}`;
-    if (grouping.id === currentColorGrouping.id) {
+    if (grouping.id === currentColorGrouping?.id) {
       colorBtn.dataset.active = "";
     }
 
@@ -322,7 +329,7 @@ export function buildGroupingUI(container: HTMLElement): void {
       layoutBtn.dataset.active = "";
 
       // If colors were linked (same as old layout), update color active state too
-      const wasLinked = currentLayoutGrouping.id === currentColorGrouping.id;
+      const wasLinked = currentLayoutGrouping?.id === currentColorGrouping?.id;
       if (wasLinked) {
         for (const b of wrapper.querySelectorAll<HTMLElement>(".grouping-color")) {
           delete b.dataset.active;

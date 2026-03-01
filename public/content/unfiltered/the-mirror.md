@@ -1,7 +1,7 @@
 ---
 label: "the mirror."
 description: "the AI can one-shot this.\nthat's the problem."
-tags: [ai, social]
+tags: [ai, introspective]
 ---
 
 # The mirror.
