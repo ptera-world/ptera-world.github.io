@@ -696,7 +696,6 @@ interface GroupingOutput {
   console.log("Force layout:");
   for (const [clusterId, config] of clusterConfigs) {
     if (config.layout !== "force") continue;
-    if (config.groupingPlacement === "free") continue; // handled by free-particle sim
     const members = eligibleNodes.filter((n) => n.cluster === clusterId);
     if (members.length === 0) continue;
 
@@ -827,9 +826,8 @@ interface GroupingOutput {
       .map((n) => ({ id: n.id, x: n.x, y: n.y, r: n.radius }));
 
     if (freeNodes.length > 0) {
-      const metaR = metaNodes.length > 0 ? Math.max(...metaNodes.map((m) => m.radius)) : 100;
+      const META_CLEARANCE = 100; // landing element visual radius
       const FREE_REPULSION = 8000;
-      const FREE_GRAVITY_K = 0.004;
       const PUSH = 2.0;
       const ffx = freeNodes.map(() => 0);
       const ffy = freeNodes.map(() => 0);
@@ -869,19 +867,12 @@ interface GroupingOutput {
             const fp = freeNodes[k]!;
             const dx = fp.x - meta.x, dy = fp.y - meta.y;
             const d = Math.hypot(dx, dy) || 0.1;
-            const minD = metaR + fp.r + 20;
+            const minD = META_CLEARANCE + fp.r + 20;
             if (d < minD) {
               const push = (minD - d) * PUSH;
               ffx[k]! += (dx / d) * push; ffy[k]! += (dy / d) * push;
             }
           }
-        }
-
-        // Gravity toward origin
-        for (let k = 0; k < freeNodes.length; k++) {
-          const fp = freeNodes[k]!;
-          ffx[k]! += (0 - fp.x) * FREE_GRAVITY_K;
-          ffy[k]! += (0 - fp.y) * FREE_GRAVITY_K;
         }
 
         // Apply
