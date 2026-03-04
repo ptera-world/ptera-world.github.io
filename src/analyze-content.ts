@@ -155,10 +155,9 @@ switch (cmd ?? "degree") {
     } else if (clusterName === "orphans") {
       clusterNodes = generatedNodes.filter((n) => n.tier === "artifact" && !n.parent && !n.tags.includes("essay"));
     } else {
-      // Try as region id or label
-      const region = generatedNodes.find((n) => n.tier === "region" && (n.id === clusterName || n.label === clusterName || n.id.endsWith("/" + clusterName)));
-      if (!region) { console.error(`Unknown cluster: ${clusterName}`); process.exit(1); }
-      clusterNodes = [region, ...generatedNodes.filter((n) => n.parent === region.id)];
+      // Try as cluster id: collect all artifacts with matching cluster value
+      clusterNodes = generatedNodes.filter((n) => n.tier === "artifact" && n.cluster === clusterName);
+      if (clusterNodes.length === 0) { console.error(`Unknown cluster: ${clusterName}`); process.exit(1); }
     }
 
     if (clusterNodes.length === 0) { console.log("No nodes in cluster."); break; }

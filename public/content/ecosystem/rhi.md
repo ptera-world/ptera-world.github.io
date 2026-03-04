@@ -1,7 +1,6 @@
 ---
 label: "rhi"
 description: "glue layer for computers"
-tier: region
 url: https://docs.rhi.zone
 color: "oklch(0.7 0.12 155)"
 ---

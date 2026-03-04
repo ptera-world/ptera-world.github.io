@@ -34,7 +34,7 @@ interface ParsedNode {
   label: string;
   description: string;
   url?: string;
-  tier: "region" | "artifact" | "detail" | "meta";
+  tier: "artifact" | "detail" | "meta";
   parent?: string;
   status?: "production" | "fleshed-out" | "early" | "planned";
   tags: string[];
@@ -86,7 +86,7 @@ interface ClusterConfig {
   ringRadius?: number;
   padding?: number;
   directories?: string[];
-  tier?: "region" | "artifact" | "meta";
+  tier?: "artifact" | "meta";
   autoTags?: string[];
   tagColors?: Record<string, number>; // tag → hue (degrees)
   groupingMatch: boolean; // false = exclude from tag grouping rings
@@ -340,7 +340,7 @@ for (const { id, path, category } of allFiles) {
     ringRadius: raw.ringRadius != null ? Number(raw.ringRadius) : undefined,
     padding: raw.padding != null ? Number(raw.padding) : undefined,
     directories: Array.isArray(raw.directories) ? raw.directories.map(String) : undefined,
-    tier: raw.tier != null ? (raw.tier as "region" | "artifact" | "meta") : undefined,
+    tier: raw.tier != null ? (raw.tier as "artifact" | "meta") : undefined,
     autoTags: Array.isArray(raw.autoTags) ? raw.autoTags.map(String) : undefined,
     tagColors: raw.tagColors != null && typeof raw.tagColors === "object" && !Array.isArray(raw.tagColors)
       ? Object.fromEntries(Object.entries(raw.tagColors as Record<string, unknown>).map(([k, v]) => [k, Number(v)]))
@@ -483,9 +483,14 @@ interface GroupingOutput {
 }
 
 {
-  const eligibleNodes = nodes.filter((n) => n.tier !== "region" && n.tier !== "meta");
-  const regions = nodes.filter((n) => n.tier === "region");
+  const eligibleNodes = nodes.filter((n) => n.tier !== "meta");
   const metaNodes = nodes.filter((n) => n.tier === "meta");
+
+  // Ecosystem regions from content — same source as buildTagGrouping uses.
+  interface LayoutRegion { id: string; label: string; description: string; color: string; x: number; y: number; radius: number; }
+  const regions: LayoutRegion[] = groupingRegions
+    .filter((r) => r.category === "ecosystem")
+    .map((r) => ({ id: r.id, label: r.label, description: r.description, color: r.color, x: 0, y: 0, radius: 0 }));
 
   // Free-placement nodes are handled by a free-particle sim, not cluster layout.
   const freePlacementIds = new Set<string>(
@@ -494,9 +499,13 @@ interface GroupingOutput {
       .map((n) => n.id),
   );
 
-  // Auto-tag each node from its status field so buildTagGrouping can match status regions by tag.
+  // Auto-tag nodes: status → status tag, parent → ecosystem leaf tag for buildTagGrouping matching.
   for (const n of eligibleNodes) {
     if (n.status && !n.tags.includes(n.status)) n.tags.push(n.status);
+    if (n.parent) {
+      const leaf = n.parent.split("/").pop()!;
+      if (!n.tags.includes(leaf)) n.tags.push(leaf);
+    }
   }
 
   // --- Region layout: ring around origin ---
@@ -584,7 +593,7 @@ interface GroupingOutput {
   function computeClusterCenter(
     config: ClusterConfig,
     members: ParsedNode[],
-    allNodes: ParsedNode[],
+    allNodes: { id: string; x: number; y: number }[],
     placedHulls: Point[][],
   ): [number, number] {
     if (config.near) {
@@ -902,23 +911,6 @@ interface GroupingOutput {
 
 const generatedGroupings: GroupingOutput[] = [];
 
-// Ecosystem grouping: layout positions + parent containment, data-driven from node.parent / node.tier.
-{
-  const eligibleNodes = nodes.filter((n) => n.tier !== "region" && n.tier !== "meta");
-  const regions = nodes.filter((n) => n.tier === "region");
-  const ecoRegions = regions.map((r) => ({
-    id: r.id, label: r.label, description: r.description,
-    x: r.x, y: r.y, radius: r.radius, color: r.color,
-  }));
-  const positions: GroupingOutput["positions"] = {};
-  for (const n of eligibleNodes) {
-    positions[n.id] = { x: n.x, y: n.y, ...(n.parent ? { regionId: n.parent } : {}) };
-  }
-  if (ecoRegions.length > 0) {
-    generatedGroupings.push({ id: "ecosystem", label: "Ecosystems", regions: ecoRegions, positions });
-  }
-}
-
 function buildTagGrouping(
   groupingId: string, groupingLabel: string,
   category: string, brighterLightness: string,
@@ -929,7 +921,7 @@ function buildTagGrouping(
   const N = catRegions.length;
 
   // All non-structural nodes (tier is irrelevant to grouping logic).
-  const eligibleNodes = nodes.filter((n) => n.tier !== "region" && n.tier !== "meta");
+  const eligibleNodes = nodes.filter((n) => n.tier !== "meta");
 
   // Nodes excluded from ring matching (groupingMatch: false or groupingPlacement: free).
   const noGroupingMatchIds = new Set<string>(
@@ -1244,6 +1236,7 @@ function buildTagGrouping(
   return { id: groupingId, label: groupingLabel, regions: builtRegions, positions: allPositions };
 }
 
+generatedGroupings.push(buildTagGrouping("ecosystem", "Ecosystems", "ecosystem", "0.75"));
 generatedGroupings.push(buildTagGrouping("domain", "Domains", "domain", "0.75"));
 generatedGroupings.push(buildTagGrouping("tech", "Technologies", "technology", "0.75"));
 generatedGroupings.push(buildTagGrouping("status", "Status", "status", "0.75"));

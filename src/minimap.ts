@@ -109,11 +109,9 @@ export function updateMinimap(camera: Camera): void {
   // Draw nodes as colored dots
   for (const node of graphRef.nodes) {
     const [mx, my] = worldToMinimap(node.x, node.y);
-    const r = node.tier === "region"
-      ? Math.max(2, (node.radius / WORLD_W) * WIDTH * 0.3)
-      : Math.max(1.5, (node.radius / WORLD_W) * WIDTH);
+    const r = Math.max(1.5, (node.radius / WORLD_W) * WIDTH);
     ctx.fillStyle = node.color;
-    ctx.globalAlpha = node.tier === "region" ? 0.3 : 0.8;
+    ctx.globalAlpha = 0.8;
     ctx.beginPath();
     ctx.arc(mx, my, r, 0, Math.PI * 2);
     ctx.fill();

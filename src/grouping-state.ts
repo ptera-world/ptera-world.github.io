@@ -52,7 +52,7 @@ export function resetToCurrentGrouping(graph: Graph): void {
 /** Compute node positions with regionId(s) for a given grouping. */
 function computePositionsForGrouping(grouping: Grouping): NodePositionWithRegion[] {
   return graphRef.nodes
-    .filter((n) => n.tier !== "region" && n.tier !== "meta")
+    .filter((n) => n.tier !== "meta")
     .flatMap((n) => {
       const pos = grouping.positions[n.id];
       if (!pos) return [];
@@ -135,7 +135,6 @@ function updateUrl(): void {
 function applyGroupingColors(): void {
   if (!currentColorGrouping) return;
   for (const node of graphRef.nodes) {
-    if (node.tier === "region") continue;
     const el = nodeEls.get(node.id);
     if (!el) continue;
 
@@ -153,7 +152,6 @@ function applyGroupingPositions(animate = true): void {
   const targets = new Map<string, { x: number; y: number }>();
 
   for (const node of graphRef.nodes) {
-    if (node.tier === "region") continue;
     const pos = currentLayoutGrouping.positions[node.id];
     if (pos) targets.set(node.id, { x: pos.x, y: pos.y });
   }

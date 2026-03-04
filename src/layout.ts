@@ -1,17 +1,17 @@
 import type { Graph } from "./graph";
 
 /**
- * Run a synchronous force-directed simulation on visible non-region nodes.
- * Mutates node.x / node.y in place. Ecosystem nodes stay pinned.
+ * Run a synchronous force-directed simulation on visible non-meta nodes.
+ * Mutates node.x / node.y in place.
  */
 export function runLayout(graph: Graph, visibleIds: Set<string>): void {
   const nodes = graph.nodes.filter(
-    (n) => visibleIds.has(n.id) && n.tier !== "region",
+    (n) => visibleIds.has(n.id) && n.tier !== "meta",
   );
   if (nodes.length === 0) return;
 
   // Fade layout effect to zero as visible count approaches half of all nodes
-  const totalNonEco = graph.nodes.filter((n) => n.tier !== "region").length;
+  const totalNonEco = graph.nodes.filter((n) => n.tier !== "meta").length;
   const THRESHOLD = 0.45;
   const ratio = nodes.length / totalNonEco;
   const weight = Math.max(0, (THRESHOLD - ratio) / THRESHOLD);
@@ -67,8 +67,6 @@ export function runLayout(graph: Graph, visibleIds: Set<string>): void {
       const a = nodeMap.get(edge.from);
       const b = nodeMap.get(edge.to);
       if (!a || !b) continue;
-      if (a.tier === "region" && b.tier === "region") continue;
-
       const dx = b.x - a.x;
       const dy = b.y - a.y;
       const d = Math.sqrt(dx * dx + dy * dy) || 1;
@@ -76,14 +74,10 @@ export function runLayout(graph: Graph, visibleIds: Set<string>): void {
       const fx = (dx / d) * f;
       const fy = (dy / d) * f;
 
-      if (a.tier !== "region") {
-        vx.set(a.id, vx.get(a.id)! + fx);
-        vy.set(a.id, vy.get(a.id)! + fy);
-      }
-      if (b.tier !== "region") {
-        vx.set(b.id, vx.get(b.id)! - fx);
-        vy.set(b.id, vy.get(b.id)! - fy);
-      }
+      vx.set(a.id, vx.get(a.id)! + fx);
+      vy.set(a.id, vy.get(a.id)! + fy);
+      vx.set(b.id, vx.get(b.id)! - fx);
+      vy.set(b.id, vy.get(b.id)! - fy);
     }
 
     // Gentle anchor toward pre-simulation positions (= current grouping positions)

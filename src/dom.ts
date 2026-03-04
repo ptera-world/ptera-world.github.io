@@ -90,27 +90,14 @@ export function buildWorld(graph: Graph): void {
     el.style.top = `${node.y}px`;
     el.style.setProperty("--color", node.color);
 
-    if (node.tier === "region") {
-      el.style.setProperty("--r", `${node.radius * 0.15}px`);
-      el.style.setProperty("--glow-r", `${node.radius}px`);
-      const core = document.createElement("div");
-      core.className = "node-core node-hit";
-      core.setAttribute("role", "button");
-      core.tabIndex = -1;
-      core.setAttribute("aria-label", node.label);
-      el.appendChild(core);
-      hitNodes.set(core, node);
-      regionEls.set(node.id, el);
-    } else {
-      el.style.setProperty("--r", `${node.radius}px`);
-      const dot = document.createElement("div");
-      dot.className = "node-dot node-hit";
-      dot.setAttribute("role", "button");
-      dot.tabIndex = -1;
-      dot.setAttribute("aria-label", node.label);
-      el.appendChild(dot);
-      hitNodes.set(dot, node);
-    }
+    el.style.setProperty("--r", `${node.radius}px`);
+    const dot = document.createElement("div");
+    dot.className = "node-dot node-hit";
+    dot.setAttribute("role", "button");
+    dot.tabIndex = -1;
+    dot.setAttribute("aria-label", node.label);
+    el.appendChild(dot);
+    hitNodes.set(dot, node);
 
     const text = document.createElement("div");
     text.className = "node-text";

@@ -6,7 +6,7 @@ export interface Node {
   label: string;
   description: string;
   url?: string;
-  tier: "region" | "artifact" | "detail" | "meta";
+  tier: "artifact" | "detail" | "meta";
   /** Parent region id, if any. */
   parent?: string;
   /** Layout cluster id, if any (for rootless artifact nodes). */

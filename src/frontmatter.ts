@@ -6,7 +6,7 @@ import { parse as parseYaml } from "yaml";
 export interface Frontmatter {
   label: string;
   description: string;
-  tier?: "region" | "artifact" | "meta";
+  tier?: "artifact" | "meta";
   parent?: string;
   tags?: string[];
   url?: string;
@@ -41,9 +41,8 @@ export function parseFrontmatter(src: string): Frontmatter | null {
   return result as Frontmatter;
 }
 
-/** Infer auto-tags from tier. Only adds structural tags (region, meta). */
+/** Infer auto-tags from tier. Only adds structural tags (meta). */
 export function inferStructuralTags(tier: string): string[] {
-  if (tier === "region") return ["region"];
   if (tier === "meta") return ["meta"];
   return [];
 }

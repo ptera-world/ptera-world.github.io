@@ -180,7 +180,7 @@ export function showCard(node: Node, graph: Graph): void {
   currentCardNode = node;
   card.replaceChildren(buildCard(node, graph));
   card.setAttribute("aria-label", node.label);
-  const coreR = node.tier === "region" ? node.radius * 0.15 : node.radius;
+  const coreR = node.radius;
   const vertical = window.matchMedia("(max-width: 640px)").matches;
   if (vertical) {
     card.style.left = `${node.x}px`;

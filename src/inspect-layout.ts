@@ -71,15 +71,6 @@ function drawCircle(wx: number, wy: number, wr: number, ch: string) {
 // Origin
 { const [cx, cy] = toC(0, 0); bgSet(cx, cy, "+"); }
 
-// Ecosystem region circles and labels
-for (const n of generatedNodes.filter((n) => n.tier === "region")) {
-  drawCircle(n.x, n.y, n.radius, "░");
-  const nChildren = generatedNodes.filter((c) => c.parent === n.id).length;
-  const lbl = `${n.label}(${nChildren})`;
-  const [cx, cy] = toC(n.x, n.y);
-  bgStr(cx - Math.floor(lbl.length / 2), cy, lbl, true);
-}
-
 // Meta nodes: mark position
 for (const n of generatedNodes.filter((n) => n.tier === "meta")) {
   const [cx, cy] = toC(n.x, n.y);
@@ -123,13 +114,6 @@ for (const [clusterId, members] of clusterMap) {
   aabbs.push({ ...bb, label: clusterId });
   drawRect(bb.minX, bb.minY, bb.maxX, bb.maxY, "·");
 }
-for (const region of generatedNodes.filter((n) => n.tier === "region")) {
-  const children = generatedNodes.filter((c) => c.parent === region.id && c.tier === "artifact");
-  if (children.length === 0) continue;
-  const bb = groupAABB(children as typeof artifacts);
-  aabbs.push({ ...bb, label: region.label });
-  drawRect(bb.minX, bb.minY, bb.maxX, bb.maxY, "·");
-}
 
 // Build hulls for clusters (used for collision reporting below; display uses bounding circles)
 type NodeHull = { hull: ReturnType<typeof convexHull>; members: typeof artifacts; maxR: number };
@@ -164,7 +148,7 @@ for (let cy = 0; cy < H; cy++) {
   console.log("│" + row + "│");
 }
 console.log("└" + "─".repeat(W) + "┘");
-console.log("Legend: ░=eco-region  ╌=cluster boundary  [L]=meta  ·=prose  O=orphan  UPPER=eco-child\n");
+console.log("Legend: ╌=cluster boundary  [L]=meta  ·=prose  O=orphan  UPPER=eco-child\n");
 
 // ── Collision report ──────────────────────────────────────────────────────────
 
@@ -177,8 +161,6 @@ for (let i = 0; i < generatedNodes.length; i++) {
     if (a.tier === "meta" || b.tier === "meta") continue;
     if (a.radius === 0 || b.radius === 0) continue;
     if (a.parent && b.parent && a.parent === b.parent) continue; // siblings: ring handles spacing
-    if (a.tier === "region" && b.parent === a.id) continue; // region vs own child
-    if (b.tier === "region" && a.parent === b.id) continue;
     const dist = Math.hypot(a.x - b.x, a.y - b.y);
     const gap = dist - a.radius - b.radius;
     if (gap < 0) dotOverlaps.push({ a, b, overlap: -gap });
@@ -206,14 +188,6 @@ const groupHulls: GroupHull[] = [];
 
 for (const [clusterId, { hull }] of clusterHulls) {
   groupHulls.push({ id: `cluster:${clusterId}`, label: clusterId, hull });
-}
-for (const region of generatedNodes.filter((n) => n.tier === "region")) {
-  const children = generatedNodes.filter((n) => n.parent === region.id);
-  if (children.length === 0) continue;
-  const maxR = Math.max(...children.map((n) => n.radius), 1);
-  const pts = filterOutliers(children.map((n) => ({ x: n.x, y: n.y })));
-  const hull = expandHull(convexHull(pts), maxR);
-  groupHulls.push({ id: `region:${region.id}`, label: region.label, hull });
 }
 
 const groupOverlaps: Array<{ a: string; b: string; overlap: number }> = [];
@@ -249,13 +223,7 @@ if (groupGaps.length > 0) {
 
 // ── Summaries ─────────────────────────────────────────────────────────────────
 
-console.log("Eco-regions:");
-for (const r of generatedNodes.filter((n) => n.tier === "region")) {
-  const ch = generatedNodes.filter((n) => n.parent === r.id);
-  console.log(`  ${r.label.padEnd(8)} center=(${r.x},${r.y})  r=${r.radius}  children=${ch.length}`);
-}
-
-console.log("\nClusters:");
+console.log("Clusters:");
 for (const [clusterId, members] of clusterMap) {
   const b = boundingCircle(members.map((n) => ({ x: n.x, y: n.y })));
   const extra = members.length <= 6 ? `  nodes: ${members.map((n) => n.label).join(", ")}` : "";
