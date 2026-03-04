@@ -8,6 +8,7 @@ tagColors:
   curation: 180
   intent: 200
   social: 15
+  introspective: 170
 directories:
   - intent
 tier: artifact
