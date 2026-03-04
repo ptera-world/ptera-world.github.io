@@ -90,7 +90,7 @@ export function buildWorld(graph: Graph): void {
     el.style.top = `${node.y}px`;
     el.style.setProperty("--color", node.color);
 
-    el.style.setProperty("--r", `${node.radius}px`);
+    el.style.setProperty("--r", `${node.iconRadius ?? node.radius}px`);
     const dot = document.createElement("div");
     dot.className = "node-dot node-hit";
     dot.setAttribute("role", "button");

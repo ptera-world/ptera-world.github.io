@@ -16,8 +16,10 @@ export interface Node {
   /** DOM layout anchor — tracks the active grouping's rest position. Updated after grouping transitions. */
   baseX: number;
   baseY: number;
-  /** Visual radius at native zoom. */
+  /** Collision/card radius at native zoom. */
   radius: number;
+  /** Visual dot radius — defaults to radius if not set. */
+  iconRadius?: number;
   color: string;
   status?: "production" | "fleshed-out" | "early" | "planned";
   tags: string[];

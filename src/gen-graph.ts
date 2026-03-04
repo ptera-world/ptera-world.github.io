@@ -35,6 +35,7 @@ interface ParsedNode {
   description: string;
   url?: string;
   parent?: string;
+  iconRadius?: number;
   status?: "production" | "fleshed-out" | "early" | "planned";
   tags: string[];
   radius: number;
@@ -89,6 +90,7 @@ interface ClusterConfig {
   tagColors?: Record<string, number>; // tag → hue (degrees)
   groupingMatch: boolean; // false = exclude from tag grouping rings
   groupingPlacement?: "free"; // 'free' = free particle in alt grouping sims (not fixed obstacle)
+  iconRadius?: number; // visual dot radius (defaults to node radius)
 }
 
 interface ForceParams {
@@ -344,6 +346,7 @@ for (const { id, path, category } of allFiles) {
       : undefined,
     groupingMatch: raw.groupingMatch === false ? false : true,
     groupingPlacement: raw.groupingPlacement === "free" ? "free" : undefined,
+    iconRadius: raw.iconRadius != null ? Number(raw.iconRadius) : undefined,
   });
 }
 
@@ -396,6 +399,7 @@ for (const { id, path, category } of files) {
     status: fm.status,
     tags: allTags,
     radius,
+    iconRadius: clusterForDir?.iconRadius,
     color: fm.color ?? "",
     cluster,
     x: 0,
@@ -1072,7 +1076,7 @@ function buildTagGrouping(
         const rl = regionLayouts[i]!, u = unmatchedNodes[k]!;
         const dx = u.x - rl.x, dy = u.y - rl.y;
         const d = Math.hypot(dx, dy) || 0.1;
-        const minD = rl.radius + u.r + 15;
+        const minD = rl.radius + u.r + 80;
         if (d < minD) {
           const push = (minD - d) / 2 * PUSH;
           ufx[k]! += (dx / d) * push; ufy[k]! += (dy / d) * push;
@@ -1258,6 +1262,7 @@ const nodeLines = nodes.map((n) => {
   fields.push(`x: ${n.x}`);
   fields.push(`y: ${n.y}`);
   fields.push(`radius: ${n.radius}`);
+  if (n.iconRadius != null) fields.push(`iconRadius: ${n.iconRadius}`);
   fields.push(`color: ${quote(n.color)}`);
   if (n.status) fields.push(`status: "${n.status}"`);
   fields.push(`tags: [${n.tags.map((t) => `"${t}"`).join(", ")}]`);

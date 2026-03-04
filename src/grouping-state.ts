@@ -226,14 +226,16 @@ export function restoreGroupingFromUrl(): void {
     const layoutGrouping = getGrouping(layoutId);
     if (layoutGrouping && groupings[0] && layoutGrouping.id !== groupings[0].id) {
       currentLayoutGrouping = layoutGrouping;
-      const positions = computePositionsForGrouping(layoutGrouping);
-      // Swap regions immediately (no animation on page load)
-      fadeOutRegions(0);
-      fadeInRegions(layoutGrouping.regions, positions, 0);
     }
   }
 
   if (currentLayoutGrouping) worldEl.dataset.grouping = currentLayoutGrouping.id;
+
+  // Always fade in regions for the active grouping on load (no animation)
+  if (currentLayoutGrouping) {
+    const positions = computePositionsForGrouping(currentLayoutGrouping);
+    fadeInRegions(currentLayoutGrouping.regions, positions, 0);
+  }
 
   // Restore color grouping (defaults to layout if not specified)
   if (colorId) {
