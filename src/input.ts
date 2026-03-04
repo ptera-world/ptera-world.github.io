@@ -4,7 +4,6 @@ import type { Graph, Node } from "./graph";
 import { updateTransform, setFocus, getHitNode, animateTo, nodeEls, landingEl } from "./dom";
 import { showCard, hideCard, isCardOpen, setCardNavigate } from "./card";
 import { isPanelOpen, closePanel, openPanel } from "./panel";
-import { siteConfig, getActiveCollection } from "./site-config";
 
 import { keybinds, defineSchema, fromBindings, registerComponents, fuzzyMatcher } from "keybinds";
 import type { Command } from "keybinds";
@@ -213,11 +212,11 @@ export function setupInput(
     }
   });
 
-  // Landing click: navigate to pteraworld node
+  // Landing click: show card for the meta node
   landingEl.addEventListener("click", (e) => {
     e.stopPropagation();
-    const metaNode = graph.nodes.find((n) => n.id === siteConfig.collections[getActiveCollection()].metaNodeId);
-    if (metaNode) navigateTo(metaNode);
+    const metaNode = graph.nodes.find((n) => n.tier === "meta");
+    if (metaNode) showCard(metaNode, graph);
   });
 
   // Double-click: zoom to fit region

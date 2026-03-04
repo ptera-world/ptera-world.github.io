@@ -175,7 +175,6 @@ function buildCard(node: Node, graph: Graph): DocumentFragment {
 }
 
 export function showCard(node: Node, graph: Graph): void {
-  if (node.tier === "meta") return; // landing element handles its own click
   const card = document.getElementById("card");
   if (!card) return;
   currentCardNode = node;
