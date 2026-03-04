@@ -96,10 +96,10 @@ switch (cmd ?? "degree") {
       .map((n) => ({ n, d: degree(n.id) }))
       .sort((a, b) => b.d - a.d);
 
-    const filterTier = args[0]; // optional: "artifact", "region", "meta"
-    const rows = filterTier ? sorted.filter((r) => r.n.tier === filterTier) : sorted;
+    const filterTag = args[0]; // optional tag filter e.g. "meta", "essay"
+    const rows = filterTag ? sorted.filter((r) => r.n.tags.includes(filterTag)) : sorted;
 
-    console.log(`\nDegree (connections) — ${filterTier ?? "all tiers"}\n`);
+    console.log(`\nDegree (connections) — ${filterTag ? `tag:${filterTag}` : "all nodes"}\n`);
     for (const { n, d } of rows) {
       if (d === 0) continue;
       console.log(`  ${String(d).padStart(3)}  ${n.id.padEnd(55)} "${n.label}"`);
@@ -131,7 +131,7 @@ switch (cmd ?? "degree") {
       .map((e) => {
         const neighbors = [...(adj.get(e.id) ?? [])];
         const interEssay = neighbors.filter((id) => essayIds.has(id));
-        const projects = neighbors.filter((id) => !essayIds.has(id) && generatedNodes.find((n) => n.id === id)?.tier === "artifact");
+        const projects = neighbors.filter((id) => !essayIds.has(id) && !generatedNodes.find((n) => n.id === id)?.tags.includes("meta"));
         return { e, total: neighbors.length, interEssay: interEssay.length, projects: projects.length };
       })
       .sort((a, b) => b.total - a.total);
@@ -153,10 +153,10 @@ switch (cmd ?? "degree") {
     if (clusterName === "essays") {
       clusterNodes = generatedNodes.filter((n) => n.tags.includes("essay"));
     } else if (clusterName === "orphans") {
-      clusterNodes = generatedNodes.filter((n) => n.tier === "artifact" && !n.parent && !n.tags.includes("essay"));
+      clusterNodes = generatedNodes.filter((n) => !n.tags.includes("meta") && !n.parent && !n.tags.includes("essay"));
     } else {
-      // Try as cluster id: collect all artifacts with matching cluster value
-      clusterNodes = generatedNodes.filter((n) => n.tier === "artifact" && n.cluster === clusterName);
+      // Try as cluster id: collect all nodes with matching cluster value
+      clusterNodes = generatedNodes.filter((n) => n.cluster === clusterName);
       if (clusterNodes.length === 0) { console.error(`Unknown cluster: ${clusterName}`); process.exit(1); }
     }
 
@@ -280,7 +280,7 @@ switch (cmd ?? "degree") {
     console.log(`\nNeighbors of ${fmt(node.id)} (${neighbors.length})\n`);
     for (const nid of neighbors) {
       const n = generatedNodes.find((n) => n.id === nid)!;
-      console.log(`  [${n.tier.padEnd(8)}]  ${nid.padEnd(55)} "${n.label}"`);
+      console.log(`  ${nid.padEnd(55)} "${n.label}"`);
     }
     break;
   }
@@ -407,7 +407,7 @@ switch (cmd ?? "degree") {
 Usage: bun run src/analyze-content.ts <command>
 
 Commands:
-  degree [tier]          Node degree sorted by connections (optional tier filter)
+  degree [tag]           Node degree sorted by connections (optional tag filter e.g. "meta", "essay")
   central                Betweenness centrality — nodes that bridge clusters
   essays                 Essay connectivity breakdown (total / inter-essay / project links)
   cluster [name]         Zoomed ASCII view of a cluster with edges + collision info

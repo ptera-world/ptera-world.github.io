@@ -52,7 +52,7 @@ export function resetToCurrentGrouping(graph: Graph): void {
 /** Compute node positions with regionId(s) for a given grouping. */
 function computePositionsForGrouping(grouping: Grouping): NodePositionWithRegion[] {
   return graphRef.nodes
-    .filter((n) => n.tier !== "meta")
+    .filter((n) => !n.tags.includes("meta"))
     .flatMap((n) => {
       const pos = grouping.positions[n.id];
       if (!pos) return [];

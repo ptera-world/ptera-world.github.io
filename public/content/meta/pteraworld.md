@@ -1,7 +1,7 @@
 ---
 label: "ptera"
 description: "i think about how software and people shape each other."
-tier: meta
+tags: [meta]
 collections: [default]
 ---
 

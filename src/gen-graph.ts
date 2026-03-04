@@ -8,7 +8,7 @@
 import { readFile, writeFile } from "fs/promises";
 import { join } from "path";
 import { parse as parseYaml } from "yaml";
-import { parseFrontmatter, stripFrontmatter, inferStructuralTags } from "./frontmatter";
+import { parseFrontmatter, stripFrontmatter } from "./frontmatter";
 import { type Point, convexHull, expandHull, filterOutliers, hullSeparation } from "./hull";
 import { findMarkdownFiles, CONTENT_DIR } from "./content";
 
@@ -34,7 +34,6 @@ interface ParsedNode {
   label: string;
   description: string;
   url?: string;
-  tier: "artifact" | "detail" | "meta";
   parent?: string;
   status?: "production" | "fleshed-out" | "early" | "planned";
   tags: string[];
@@ -86,7 +85,6 @@ interface ClusterConfig {
   ringRadius?: number;
   padding?: number;
   directories?: string[];
-  tier?: "artifact" | "meta";
   autoTags?: string[];
   tagColors?: Record<string, number>; // tag → hue (degrees)
   groupingMatch: boolean; // false = exclude from tag grouping rings
@@ -340,7 +338,6 @@ for (const { id, path, category } of allFiles) {
     ringRadius: raw.ringRadius != null ? Number(raw.ringRadius) : undefined,
     padding: raw.padding != null ? Number(raw.padding) : undefined,
     directories: Array.isArray(raw.directories) ? raw.directories.map(String) : undefined,
-    tier: raw.tier != null ? (raw.tier as "artifact" | "meta") : undefined,
     autoTags: Array.isArray(raw.autoTags) ? raw.autoTags.map(String) : undefined,
     tagColors: raw.tagColors != null && typeof raw.tagColors === "object" && !Array.isArray(raw.tagColors)
       ? Object.fromEntries(Object.entries(raw.tagColors as Record<string, unknown>).map(([k, v]) => [k, Number(v)]))
@@ -377,17 +374,14 @@ for (const { id, path, category } of files) {
   if (collectionId && fm.collections && !fm.collections.includes(collectionId)) continue;
 
   const clusterForDir = dirToCluster.get(category);
-  const tier = fm.tier ?? clusterForDir?.tier ?? null;
-  if (!tier) continue;
+  const isMeta = fm.tags?.includes("meta") ?? false;
+  if (!clusterForDir && !isMeta) continue;
 
   const cluster = fm.cluster ?? (
-    !fm.parent && tier === "artifact" && clusterForDir ? clusterForDir.id : undefined
+    clusterForDir && !fm.parent ? clusterForDir.id : undefined
   );
 
-  const autoTags = [
-    ...inferStructuralTags(tier),
-    ...(clusterForDir?.autoTags ?? []),
-  ];
+  const autoTags = [...(clusterForDir?.autoTags ?? [])];
   const userTags = fm.tags ?? [];
   const allTags = [...new Set([...autoTags, ...userTags])];
 
@@ -398,7 +392,6 @@ for (const { id, path, category } of files) {
     label: fm.label,
     description: fm.description,
     url: fm.url,
-    tier,
     parent: fm.parent,
     status: fm.status,
     tags: allTags,
@@ -483,8 +476,8 @@ interface GroupingOutput {
 }
 
 {
-  const eligibleNodes = nodes.filter((n) => n.tier !== "meta");
-  const metaNodes = nodes.filter((n) => n.tier === "meta");
+  const eligibleNodes = nodes.filter((n) => !n.tags.includes("meta"));
+  const metaNodes = nodes.filter((n) => n.tags.includes("meta"));
 
   // Ecosystem regions from content — same source as buildTagGrouping uses.
   interface LayoutRegion { id: string; label: string; description: string; color: string; x: number; y: number; radius: number; }
@@ -920,8 +913,7 @@ function buildTagGrouping(
     .sort((a, b) => a.id.localeCompare(b.id));
   const N = catRegions.length;
 
-  // All non-structural nodes (tier is irrelevant to grouping logic).
-  const eligibleNodes = nodes.filter((n) => n.tier !== "meta");
+  const eligibleNodes = nodes.filter((n) => !n.tags.includes("meta"));
 
   // Nodes excluded from ring matching (groupingMatch: false or groupingPlacement: free).
   const noGroupingMatchIds = new Set<string>(
@@ -1261,7 +1253,6 @@ const nodeLines = nodes.map((n) => {
     `description: ${quote(n.description)}`,
   ];
   if (n.url) fields.push(`url: "${n.url}"`);
-  fields.push(`tier: "${n.tier}"`);
   if (n.parent) fields.push(`parent: "${n.parent}"`);
   if (n.cluster) fields.push(`cluster: "${n.cluster}"`);
   fields.push(`x: ${n.x}`);

@@ -1,7 +1,7 @@
 ---
 label: "unfiltered"
 description: "the version without the restraint."
-tier: meta
+tags: [meta]
 collections: [unfiltered]
 ---
 

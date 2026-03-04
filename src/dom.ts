@@ -80,10 +80,10 @@ export function buildWorld(graph: Graph): void {
   // Nodes
   for (const node of graph.nodes) {
     // Meta nodes (e.g. pteraworld) use the landing element, not a rendered dot
-    if (node.tier === "meta") continue;
+    if (node.tags.includes("meta")) continue;
 
     const el = document.createElement("div");
-    el.className = `node ${node.tier}`;
+    el.className = "node";
     el.dataset.id = node.id;
     if (node.tags.includes("essay")) el.dataset.kind = "essay";
     el.style.left = `${node.x}px`;
@@ -476,7 +476,7 @@ export function fadeInRegions(
  */
 export function snapNodePositions(graph: Graph): void {
   for (const node of graph.nodes) {
-    if (node.tier === "meta") continue;
+    if (node.tags.includes("meta")) continue;
     const el = nodeEls.get(node.id);
     if (!el) continue;
     node.baseX = node.x;

@@ -72,13 +72,13 @@ function drawCircle(wx: number, wy: number, wr: number, ch: string) {
 { const [cx, cy] = toC(0, 0); bgSet(cx, cy, "+"); }
 
 // Meta nodes: mark position
-for (const n of generatedNodes.filter((n) => n.tier === "meta")) {
+for (const n of generatedNodes.filter((n) => n.tags.includes("meta"))) {
   const [cx, cy] = toC(n.x, n.y);
   bgStr(cx - 1, cy, "[L]", true);
 }
 
 // Cluster bounding circles — grouped by cluster id from generated data (no hardcoded names)
-const artifacts = generatedNodes.filter((n) => n.tier === "artifact");
+const artifacts = generatedNodes.filter((n) => !n.tags.includes("meta"));
 
 // Group artifacts by cluster id dynamically
 const clusterMap = new Map<string, typeof artifacts>();
@@ -158,7 +158,7 @@ const dotOverlaps: Array<{ a: typeof generatedNodes[0]; b: typeof generatedNodes
 for (let i = 0; i < generatedNodes.length; i++) {
   for (let j = i + 1; j < generatedNodes.length; j++) {
     const a = generatedNodes[i]!, b = generatedNodes[j]!;
-    if (a.tier === "meta" || b.tier === "meta") continue;
+    if (a.tags.includes("meta") || b.tags.includes("meta")) continue;
     if (a.radius === 0 || b.radius === 0) continue;
     if (a.parent && b.parent && a.parent === b.parent) continue; // siblings: ring handles spacing
     const dist = Math.hypot(a.x - b.x, a.y - b.y);
@@ -236,7 +236,7 @@ for (const { label, minX, minY, maxX, maxY } of aabbs) {
   console.log(`  ${label.padEnd(14)} (${Math.round(minX)}, ${Math.round(minY)}) → (${Math.round(maxX)}, ${Math.round(maxY)})  ${Math.round(w)}×${Math.round(h)}`);
 }
 
-const metaNodes = generatedNodes.filter((n) => n.tier === "meta");
+const metaNodes = generatedNodes.filter((n) => n.tags.includes("meta"));
 if (metaNodes.length > 0) {
   console.log(`\nMeta nodes: ${metaNodes.map((n) => `${n.id}@(${n.x},${n.y})`).join("  ")}`);
 }

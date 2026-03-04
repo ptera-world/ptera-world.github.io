@@ -13,7 +13,6 @@ tagColors:
   introspective: 170
 directories:
   - prose
-tier: artifact
 autoTags:
   - essay
 ---

@@ -215,7 +215,7 @@ export function setupInput(
   // Landing click: show card for the meta node
   landingEl.addEventListener("click", (e) => {
     e.stopPropagation();
-    const metaNode = graph.nodes.find((n) => n.tier === "meta");
+    const metaNode = graph.nodes.find((n) => n.tags.includes("meta"));
     if (metaNode) showCard(metaNode, graph);
   });
 
@@ -279,7 +279,7 @@ export function setupInput(
       updateTransform(camera);
     },
     "reset-view": () => {
-      const meta = graph.nodes.find((n) => n.tier === "meta");
+      const meta = graph.nodes.find((n) => n.tags.includes("meta"));
       animateTo(camera, meta?.x ?? 0, meta?.y ?? 0, 1.5);
     },
     confirm: () => {

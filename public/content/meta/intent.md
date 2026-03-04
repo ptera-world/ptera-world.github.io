@@ -1,7 +1,7 @@
 ---
 label: "intent"
 description: "on intent, curation, and what output used to mean."
-tier: meta
+tags: [meta]
 collections: [intent]
 ---
 
