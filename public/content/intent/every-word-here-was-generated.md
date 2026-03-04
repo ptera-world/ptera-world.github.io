@@ -1,7 +1,7 @@
 ---
 label: "every word here was generated"
 description: "this collection about whether anyone means it\nwas written by the thing it's describing."
-tags: [ai, intent, meta]
+tags: [ai, intent, introspective]
 ---
 
 # Every word here was generated
