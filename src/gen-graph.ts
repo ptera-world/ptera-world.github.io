@@ -919,17 +919,10 @@ function buildTagGrouping(
 
   const eligibleNodes = nodes.filter((n) => !n.tags.includes("meta"));
 
-  // Nodes excluded from ring matching (groupingMatch: false or groupingPlacement: free).
+  // Nodes explicitly excluded from ring matching (groupingMatch: false).
   const noGroupingMatchIds = new Set<string>(
     eligibleNodes
       .filter((n) => n.cluster && clusterConfigs.get(n.cluster)?.groupingMatch === false)
-      .map((n) => n.id),
-  );
-
-  // Subset of excluded nodes that are free particles (not fixed obstacles).
-  const freePlacementIds = new Set<string>(
-    eligibleNodes
-      .filter((n) => n.cluster && clusterConfigs.get(n.cluster)?.groupingPlacement === "free")
       .map((n) => n.id),
   );
 
@@ -1016,12 +1009,10 @@ function buildTagGrouping(
     mnodes.push({ id, x: cx, y: cy, r: node.radius, regs, blendedColor });
   }
 
-  // Unmatched nodes: groupingMatch: false — not assigned to any ring.
-  // Two subtypes: obstacle (no groupingPlacement) and free (groupingPlacement: free).
-  // Both are moveable in the sim, seeded near origin. No cross-grouping position inheritance.
+  // Unmatched nodes: all nodes not placed in any ring (explicitly excluded or simply unmatched).
   interface UnmatchedNode { id: string; x: number; y: number; r: number; }
   const unmatchedNodes: UnmatchedNode[] = eligibleNodes
-    .filter((n) => noGroupingMatchIds.has(n.id))
+    .filter((n) => !singleMatchOf.has(n.id) && !multiMatchIds.has(n.id))
     .map((n, i, arr) => {
       const angle = (2 * Math.PI * i) / Math.max(arr.length, 1);
       return { id: n.id, x: Math.cos(angle) * 50, y: Math.sin(angle) * 50, r: n.radius };
