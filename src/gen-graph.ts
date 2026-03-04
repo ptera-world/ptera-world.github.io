@@ -487,6 +487,13 @@ function buildEcosystemGrouping(): GroupingOutput {
   const regions = nodes.filter((n) => n.tier === "region");
   const metaNodes = nodes.filter((n) => n.tier === "meta");
 
+  // Free-placement nodes are handled by a free-particle sim, not cluster layout.
+  const freePlacementIds = new Set<string>(
+    eligibleNodes
+      .filter((n) => n.cluster && clusterConfigs.get(n.cluster)?.groupingPlacement === "free")
+      .map((n) => n.id),
+  );
+
   // Auto-tag each node from its status field so buildTagGrouping can match status regions by tag.
   for (const n of eligibleNodes) {
     if (n.status && !n.tags.includes(n.status)) n.tags.push(n.status);
@@ -654,6 +661,13 @@ function buildEcosystemGrouping(): GroupingOutput {
     const center = computeClusterCenter(config, members, [...regions, ...metaNodes, ...eligibleNodes], placedHulls);
     clusterCenters.set(clusterId, center);
 
+    if (config.groupingPlacement === "free") {
+      // Seed at cluster center ring so free-particle sim has valid initial positions.
+      const { seedR } = initialForceParams(members);
+      ringLayout(center[0], center[1], seedR, members);
+      continue; // Free-particle sim handles final placement; skip hull tracking.
+    }
+
     if (config.layout === "ring") {
       const ringR = config.ringRadius ?? Math.max(80, 60 + members.length * 15);
       ringLayout(center[0], center[1], ringR, members);
@@ -676,6 +690,7 @@ function buildEcosystemGrouping(): GroupingOutput {
   console.log("Force layout:");
   for (const [clusterId, config] of clusterConfigs) {
     if (config.layout !== "force") continue;
+    if (config.groupingPlacement === "free") continue; // handled by free-particle sim
     const members = eligibleNodes.filter((n) => n.cluster === clusterId);
     if (members.length === 0) continue;
 
@@ -700,6 +715,7 @@ function buildEcosystemGrouping(): GroupingOutput {
     for (let i = 0; i < eligibleNodes.length; i++) {
       for (let j = i + 1; j < eligibleNodes.length; j++) {
         const a = eligibleNodes[i]!, b = eligibleNodes[j]!;
+        if (freePlacementIds.has(a.id) || freePlacementIds.has(b.id)) continue;
         if (a.parent && a.parent === b.parent) continue;
         const minDist = a.radius + b.radius + 4;
         const dist = Math.hypot(a.x - b.x, a.y - b.y);
@@ -717,6 +733,7 @@ function buildEcosystemGrouping(): GroupingOutput {
         for (let i = 0; i < eligibleNodes.length; i++) {
           for (let j = i + 1; j < eligibleNodes.length; j++) {
             const a = eligibleNodes[i]!, b = eligibleNodes[j]!;
+            if (freePlacementIds.has(a.id) || freePlacementIds.has(b.id)) continue;
             if (a.parent && a.parent === b.parent) continue;
             const minDist = a.radius + b.radius + 4;
             const dx = a.x - b.x, dy = a.y - b.y;
@@ -752,6 +769,7 @@ function buildEcosystemGrouping(): GroupingOutput {
       for (const region of regions) {
         for (const n of eligibleNodes) {
           if (n.parent) continue;
+          if (freePlacementIds.has(n.id)) continue;
           if (n.cluster && anchoredClusters.has(n.cluster)) continue;
           const dist = Math.hypot(n.x - region.x, n.y - region.y);
           if (dist < region.radius + n.radius + 8) {
@@ -775,6 +793,7 @@ function buildEcosystemGrouping(): GroupingOutput {
     let anyForce = false;
     for (const [clusterId, config] of clusterConfigs) {
       if (config.layout !== "force") continue;
+      if (config.groupingPlacement === "free") continue;
       const members = eligibleNodes.filter((n) => n.cluster === clusterId);
       if (members.length === 0) continue;
       if (!anyForce) { console.log("Force layout (final, post-separation):"); anyForce = true; }
@@ -791,6 +810,87 @@ function buildEcosystemGrouping(): GroupingOutput {
       const edgePart = q.edgeRatio != null
         ? `  edge=${q.edgeRatio.toFixed(2)} cluster=${q.clusterScore?.toFixed(2) ?? "n/a"}` : "";
       console.log(`  ${clusterId}(${members.length}): overlaps=${q.overlaps} spread=${Math.round(q.spreadRadius)}${edgePart}`);
+    }
+  }
+
+  // Free-particle sim for groupingPlacement: free nodes.
+  // Same model as buildTagGrouping: soft 1/d² free-free repulsion, region-free contact, meta-free contact, gravity.
+  {
+    const freeNodes = eligibleNodes
+      .filter((n) => freePlacementIds.has(n.id))
+      .map((n) => ({ id: n.id, x: n.x, y: n.y, r: n.radius }));
+
+    if (freeNodes.length > 0) {
+      const metaR = metaNodes.length > 0 ? Math.max(...metaNodes.map((m) => m.radius)) : 100;
+      const FREE_REPULSION = 8000;
+      const FREE_GRAVITY_K = 0.004;
+      const PUSH = 2.0;
+      const ffx = freeNodes.map(() => 0);
+      const ffy = freeNodes.map(() => 0);
+
+      for (let step = 0; step < 400; step++) {
+        for (let k = 0; k < freeNodes.length; k++) { ffx[k] = 0; ffy[k] = 0; }
+
+        // Free–free soft repulsion
+        for (let i = 0; i < freeNodes.length; i++) {
+          for (let j = i + 1; j < freeNodes.length; j++) {
+            const a = freeNodes[i]!, b = freeNodes[j]!;
+            const dx = a.x - b.x, dy = a.y - b.y;
+            const d = Math.hypot(dx, dy) || 0.1;
+            const force = FREE_REPULSION / (d * d);
+            ffx[i]! += (dx / d) * force; ffy[i]! += (dy / d) * force;
+            ffx[j]! -= (dx / d) * force; ffy[j]! -= (dy / d) * force;
+          }
+        }
+
+        // Region–free contact repulsion (free nodes pushed outside regions)
+        for (const region of regions) {
+          for (let k = 0; k < freeNodes.length; k++) {
+            const fp = freeNodes[k]!;
+            const dx = fp.x - region.x, dy = fp.y - region.y;
+            const d = Math.hypot(dx, dy) || 0.1;
+            const minD = region.radius + fp.r + 15;
+            if (d < minD) {
+              const push = (minD - d) * PUSH;
+              ffx[k]! += (dx / d) * push; ffy[k]! += (dy / d) * push;
+            }
+          }
+        }
+
+        // Meta–free contact repulsion
+        for (const meta of metaNodes) {
+          for (let k = 0; k < freeNodes.length; k++) {
+            const fp = freeNodes[k]!;
+            const dx = fp.x - meta.x, dy = fp.y - meta.y;
+            const d = Math.hypot(dx, dy) || 0.1;
+            const minD = metaR + fp.r + 20;
+            if (d < minD) {
+              const push = (minD - d) * PUSH;
+              ffx[k]! += (dx / d) * push; ffy[k]! += (dy / d) * push;
+            }
+          }
+        }
+
+        // Gravity toward origin
+        for (let k = 0; k < freeNodes.length; k++) {
+          const fp = freeNodes[k]!;
+          ffx[k]! += (0 - fp.x) * FREE_GRAVITY_K;
+          ffy[k]! += (0 - fp.y) * FREE_GRAVITY_K;
+        }
+
+        // Apply
+        for (let k = 0; k < freeNodes.length; k++) {
+          freeNodes[k]!.x += ffx[k]!;
+          freeNodes[k]!.y += ffy[k]!;
+        }
+      }
+
+      // Write sim results back to eligibleNodes so the output loop picks them up.
+      const freeMap = new Map(freeNodes.map((f) => [f.id, f]));
+      for (const n of eligibleNodes) {
+        const f = freeMap.get(n.id);
+        if (f) { n.x = Math.round(f.x); n.y = Math.round(f.y); }
+      }
     }
   }
 
