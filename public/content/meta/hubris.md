@@ -3,6 +3,7 @@ label: "hubris"
 description: "on the gap between what we claim to optimize for and what we actually produce."
 tags: [meta]
 collections: [hubris]
+collisionRadius: 150
 ---
 
 a map of essays about misalignment — not the AI kind.

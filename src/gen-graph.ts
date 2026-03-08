@@ -39,6 +39,8 @@ interface ParsedNode {
   status?: "production" | "fleshed-out" | "early" | "planned";
   tags: string[];
   radius: number;
+  /** Collision radius used only at layout time (separate from render radius). */
+  collisionRadius?: number;
   color: string;
   cluster?: string;
   // Set by layout
@@ -399,6 +401,7 @@ for (const { id, path, category } of files) {
     status: fm.status,
     tags: allTags,
     radius,
+    collisionRadius: fm.collisionRadius != null ? Number(fm.collisionRadius) : undefined,
     iconRadius: clusterForDir?.iconRadius,
     color: fm.color ?? "",
     cluster,
@@ -791,6 +794,7 @@ interface GroupingOutput {
     if (regionPushCount > 0) {
       console.warn(`  pushed ${regionPushCount} region-vs-artifact overlaps.`);
     }
+
   }
 
   // Final quality report
@@ -826,7 +830,7 @@ interface GroupingOutput {
       .map((n) => ({ id: n.id, x: n.x, y: n.y, r: n.radius }));
 
     if (freeNodes.length > 0) {
-      const META_CLEARANCE = 100; // landing element visual radius
+      const META_CLEARANCE = metaNodes.reduce((max, m) => Math.max(max, m.collisionRadius ?? 100), 100);
       const FREE_REPULSION = 8000;
       const PUSH = 2.0;
       const ffx = freeNodes.map(() => 0);
