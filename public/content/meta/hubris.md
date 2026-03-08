@@ -1,6 +1,6 @@
 ---
 label: "hubris"
-description: "on the gap between what we claim to optimize for and what we actually produce."
+description: "the confidence with which we keep claiming\nto optimize for human flourishing."
 tags: [meta]
 collections: [hubris]
 collisionRadius: 150
