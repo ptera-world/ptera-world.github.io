@@ -12,6 +12,8 @@ export const siteConfig = {
   name: "ptera",
   /** Full domain for og:url and og:site_name. */
   domain: "ptera.world",
+  /** Base path for all site URLs. "/" is the default (root deployment). Override for subpath deployments, e.g. "/hubris". */
+  basePath: "/",
   /** ID of the meta/landing node (default collection). */
   metaNodeId: "meta/pteraworld",
   /** Per-collection overrides. */
@@ -45,4 +47,10 @@ export type CollectionId = keyof typeof siteConfig.collections;
 export function getActiveCollection(): CollectionId {
   if (typeof document === "undefined") return "default";
   return (document.documentElement.dataset.collection as CollectionId) ?? "default";
+}
+
+/** Prepend basePath to an absolute-path string. Falls back to "/" if basePath is missing. */
+export function siteUrl(path: string): string {
+  const base = siteConfig.basePath ?? "/";
+  return (base === "/" ? "" : base) + path;
 }

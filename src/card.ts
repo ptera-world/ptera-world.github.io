@@ -1,5 +1,6 @@
 import type { Graph, Node } from "./graph";
 import { openPanel, fetchContent, contentCache } from "./panel";
+import { siteUrl } from "./site-config";
 
 let navigateFn: ((node: Node, graph: Graph) => void) | null = null;
 let toggleFilterFn: ((tag: string) => void) | null = null;
@@ -46,7 +47,7 @@ function setSummary(descEl: HTMLElement, html: string): void {
 function refEntry(other: Node, graph: Graph): HTMLAnchorElement {
   const a = document.createElement("a");
   a.className = "card-ref";
-  a.href = `/${other.id}`;
+  a.href = siteUrl(`/${other.id}`);
   const strong = el("strong", undefined, other.label);
   a.appendChild(strong);
   a.addEventListener("click", (e) => {
@@ -161,7 +162,7 @@ function buildCard(node: Node, graph: Graph): DocumentFragment {
   // Learn more link
   const learnMore = document.createElement("a");
   learnMore.className = "card-learn-more";
-  learnMore.href = `/${node.id}`;
+  learnMore.href = siteUrl(`/${node.id}`);
   learnMore.textContent = "Learn more \u2192";
   learnMore.addEventListener("click", (e) => {
     if (e.ctrlKey || e.metaKey) return;

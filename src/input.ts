@@ -5,7 +5,7 @@ import { updateTransform, setFocus, getHitNode, animateTo, nodeEls, landingEl } 
 import { showCard, hideCard, isCardOpen, setCardNavigate } from "./card";
 import { isPanelOpen, closePanel, openPanel } from "./panel";
 
-import { siteConfig, getActiveCollection } from "./site-config";
+import { siteConfig, getActiveCollection, siteUrl } from "./site-config";
 import { keybinds, defineSchema, fromBindings, registerComponents, fuzzyMatcher } from "keybinds";
 import type { Command } from "keybinds";
 
@@ -200,7 +200,7 @@ export function setupInput(
     const node = getHitNode(e.target);
     if (node) {
       if (e.ctrlKey || e.metaKey) {
-        window.open(`/${node.id}`, "_blank");
+        window.open(siteUrl(`/${node.id}`), "_blank");
         return;
       }
       navigateTo(node);
@@ -467,7 +467,7 @@ export function setupInput(
     if (headingsLoaded) return;
     headingsLoaded = true;
     try {
-      const res = await fetch("/headings.json");
+      const res = await fetch(siteUrl("/headings.json"));
       if (!res.ok) return;
       const headings: { nodeId: string; heading: string; slug: string; body: string }[] = await res.json();
       const headingCommands: Command[] = headings.flatMap(h => {
@@ -525,7 +525,7 @@ export function setupInput(
       menu: "node",
       when: (ctx) => !!ctx.hasFocus,
       execute: () => {
-        if (focusedNode) window.open(`/${focusedNode.id}`, "_blank");
+        if (focusedNode) window.open(siteUrl(`/${focusedNode.id}`), "_blank");
       },
     },
   ];

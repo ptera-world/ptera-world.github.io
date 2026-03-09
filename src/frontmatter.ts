@@ -11,6 +11,7 @@ export interface Frontmatter {
   url?: string;
   status?: "production" | "fleshed-out" | "early" | "planned";
   radius?: number;
+  collisionRadius?: number;
   color?: string;
   cluster?: string;
   collections?: string[];

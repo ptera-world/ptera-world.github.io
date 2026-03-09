@@ -1,7 +1,7 @@
 import { mkdir, readFile } from "node:fs/promises";
 import { parseMarkdown } from "./markdown";
 import { parseFrontmatter, stripFrontmatter } from "./frontmatter";
-import { siteConfig } from "./site-config";
+import { siteConfig, siteUrl } from "./site-config";
 import { findMarkdownFiles, CONTENT_DIR } from "./content";
 
 function pageHtml(
@@ -61,8 +61,8 @@ function pageHtml(
 </head>
 <body>
   <nav>
-    <a href="/">← back to map</a>
-    <a href="/?focus=${id}">view on map</a>
+    <a href="${siteUrl("/")}">← back to map</a>
+    <a href="${siteUrl(`/?focus=${id}`)}">view on map</a>
   </nav>
   <article>
 ${body}

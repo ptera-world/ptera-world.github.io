@@ -3,6 +3,7 @@ import type { Graph, Node } from "./graph";
 import { updateTransform, setFocus, animateTo } from "./dom";
 import { hideCard } from "./card";
 import { parseMarkdown } from "./markdown";
+import { siteUrl } from "./site-config";
 
 let panel: HTMLElement;
 let panelTitle: HTMLElement;
@@ -90,7 +91,7 @@ export function fetchContent(nodeId: string): Promise<string> {
   const cached = contentCache.get(nodeId);
   if (cached !== undefined) return Promise.resolve(cached);
 
-  return fetch(`/content/${nodeId}.md`)
+  return fetch(siteUrl(`/content/${nodeId}.md`))
     .then((res) => {
       if (!res.ok) throw new Error("not found");
       return res.text();
@@ -198,7 +199,7 @@ export function openPanel(nodeId: string, nodeLabel?: string, push = true): void
   panelBody.scrollTop = 0;
 
   panelTitle.textContent = nodeLabel ?? nodeId;
-  panelOpen.href = `/${nodeId}`;
+  panelOpen.href = siteUrl(`/${nodeId}`);
 
   const node = graphRef.nodes.find(n => n.id === nodeId);
   const isEssay = node?.tags.includes("essay") ?? false;

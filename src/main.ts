@@ -8,7 +8,7 @@ import { createFilter, buildFilterUI, applyFilter, getVisibleIds, setActive, upd
 import { runLayout } from "./layout";
 import { createMinimap } from "./minimap";
 import { initGroupingState, buildGroupingUI, restoreGroupingFromUrl, getTagColor, setOnGroupingChange, resetToCurrentGrouping } from "./grouping-state";
-import { siteConfig, getActiveCollection } from "./site-config";
+import { siteConfig, getActiveCollection, siteUrl } from "./site-config";
 
 const camera = createCamera();
 const graph = createGraph();
@@ -158,5 +158,5 @@ window.addEventListener("popstate", () => {
 });
 
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("/sw.js").catch(() => {});
+  navigator.serviceWorker.register(siteUrl("/sw.js")).catch(() => {});
 }
