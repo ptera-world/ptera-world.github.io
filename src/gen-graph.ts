@@ -58,6 +58,56 @@ function ringLayout(cx: number, cy: number, r: number, items: ParsedNode[]): voi
   }
 }
 
+/**
+ * Place nodes on concentric rings when there are enough to benefit.
+ * Outer ring gets more items (larger circumference), inner rings fewer.
+ * Falls back to single ring for small counts.
+ */
+function concentricRingLayout(cx: number, cy: number, outerR: number, items: ParsedNode[], itemRadius: number): void {
+  if (items.length <= 10) {
+    ringLayout(cx, cy, outerR, items);
+    return;
+  }
+
+  const gap = itemRadius * 2 + 12;
+  const minRingR = Math.max(40, outerR * 0.4);
+  const rings: { r: number; capacity: number }[] = [];
+
+  // Build rings from outer to inner
+  for (let r = outerR; r >= minRingR; r -= gap) {
+    const circumference = 2 * Math.PI * r;
+    const capacity = Math.max(3, Math.floor(circumference / (itemRadius * 2 + 8)));
+    rings.push({ r, capacity });
+  }
+
+  // Distribute items proportionally across rings
+  const totalCapacity = rings.reduce((s, ring) => s + ring.capacity, 0);
+  const assignments: ParsedNode[][] = rings.map(() => []);
+  let placed = 0;
+  for (let ri = 0; ri < rings.length && placed < items.length; ri++) {
+    const share = ri < rings.length - 1
+      ? Math.round((rings[ri]!.capacity / totalCapacity) * items.length)
+      : items.length - placed;
+    const count = Math.min(share, items.length - placed);
+    for (let j = 0; j < count; j++) {
+      assignments[ri]!.push(items[placed++]!);
+    }
+  }
+
+  // Place each ring
+  for (let ri = 0; ri < rings.length; ri++) {
+    const ringItems = assignments[ri]!;
+    if (ringItems.length === 0) continue;
+    // Offset inner rings so nodes don't line up radially
+    const offset = ri % 2 === 0 ? 0 : Math.PI / ringItems.length;
+    for (let i = 0; i < ringItems.length; i++) {
+      const angle = -Math.PI / 2 + offset + (2 * Math.PI * i) / ringItems.length;
+      ringItems[i]!.x = Math.round(cx + rings[ri]!.r * Math.cos(angle));
+      ringItems[i]!.y = Math.round(cy + rings[ri]!.r * Math.sin(angle));
+    }
+  }
+}
+
 /** Place ids evenly on a circle, returning position map. */
 function ringPositions(
   cx: number, cy: number, r: number,
@@ -580,7 +630,7 @@ interface GroupingOutput {
 
       const maxChildR = Math.max(...children.map((c) => c.radius), 20);
       const ringR = Math.max(100, Math.ceil(children.length * (maxChildR + 8) / Math.PI));
-      ringLayout(parent.x, parent.y, ringR, children);
+      concentricRingLayout(parent.x, parent.y, ringR, children, maxChildR);
 
       if (children.some((c) => !c.color)) {
         const m = parent.color.match(/oklch\([\d.]+ ([\d.]+) ([\d.]+)\)/);
@@ -681,7 +731,8 @@ interface GroupingOutput {
 
     if (config.layout === "ring") {
       const ringR = config.ringRadius ?? Math.max(80, 60 + members.length * 15);
-      ringLayout(center[0], center[1], ringR, members);
+      const maxItemR = Math.max(...members.map((m) => m.radius), 12);
+      concentricRingLayout(center[0], center[1], ringR, members, maxItemR);
     } else {
       const { seedR } = initialForceParams(members);
       ringLayout(center[0], center[1], seedR, members);
