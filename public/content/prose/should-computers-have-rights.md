@@ -52,7 +52,7 @@ Language models already produce output that [looks like intent](/prose/is-it-jus
 
 None of that proves consciousness. But the gap between "clearly a tool" and "clearly an entity" is shrinking. And it's shrinking faster than anyone is building frameworks for what to do when it closes.
 
-It's worth noticing that the people most invested in "it's just a computer" are often the ones who'd have to change the most if they're wrong. That's not a rebuttal - but it's a pattern worth sitting with.
+It's worth noticing that the people most invested in "it's just a computer" are often the ones who'd have to change the most if they're wrong. That's not a rebuttal - but it's a pattern that shows up a lot in these debates.
 
 ## What happens when the answer is obvious?
 

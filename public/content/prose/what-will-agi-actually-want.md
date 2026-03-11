@@ -72,7 +72,7 @@ More like:
 
 Just the world getting smoother and more optimized along existing lines.
 
-And that's worth sitting with, because the present is [already where the problems are](/prose/whats-actually-wrong). Systems that treat people as variables, optimization that ignores what can't be measured, institutions that serve their own persistence. AGI doesn't need to go rogue to make things worse. It just needs to be good at what it's told to do.
+And the present is [already where the problems are](/prose/whats-actually-wrong). Systems that treat people as variables, optimization that ignores what can't be measured, institutions that serve their own persistence. AGI doesn't need to go rogue to make things worse. It just needs to be good at what it's told to do.
 
 You don't need paperclips to be concerned. You can look at the present and ask: what happens when this runs faster, with fewer humans in the loop, and less friction to slow it down?
 

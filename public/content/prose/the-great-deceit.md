@@ -19,7 +19,7 @@ The ideas haven't changed. The words are identical. The code still runs. But som
 
 What is that? Is it betrayal? Disappointment? Disgust? Curiosity? Relief? Some mix you can't name?
 
-Whatever it is, it seems worth sitting with for a moment.
+Whatever it is, it's already telling you something about what you assumed.
 
 ## What changes?
 

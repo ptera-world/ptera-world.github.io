@@ -76,7 +76,7 @@ But together:
 
 You discover something new. You express it - make something, say something, [try something](/prose/how-do-i-do-things). You analyze what that revealed - oh, I care about this more than I thought. That analysis opens new questions. Those questions lead to new discovery. The cycle continues.
 
-And the self - the answer to "who am I" - is whatever this process is producing right now. Not a destination. A direction. Always moving, never arriving, and [that's worth sitting with](/prose/whats-the-purpose-of-life).
+And the self - the answer to "who am I" - is whatever this process is producing right now. Not a destination. A direction. Always moving, never arriving, and [that's the thing, not the answer](/prose/whats-the-purpose-of-life).
 
 ## Why is this hard?
 
