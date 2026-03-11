@@ -77,8 +77,5 @@ you're making decisions in a world the algorithm curated for you. your opinions,
 ## See also
 
 - [the cope](/unfiltered/the-system-broke-you-then-sold-the-fix) - the scroll as lowest-energy relief
-- [the room](/unfiltered/safe-spaces-need-everything-to-go-right) - the safe space the algorithm undermines
 - [the loop](/unfiltered/the-belief-feeds-on-its-own-resistance) - the belief system the algorithm accelerates
 - [the grind](/unfiltered/the-system-filled-every-gap-you-had) - the depletion that makes the feed irresistible
-- [the scar](/unfiltered/the-wound-heals-the-flinch-doesnt) - the algorithm knows your vulnerabilities better than you do
-- [what's actually wrong?](/prose/whats-actually-wrong) - the main site's version, which frames it as a design problem

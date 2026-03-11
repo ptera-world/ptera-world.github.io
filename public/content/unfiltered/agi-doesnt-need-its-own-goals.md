@@ -83,8 +83,5 @@ The question was never whether AGI would turn on us. The question is who it answ
 ## See also
 
 - [what will AGI actually want?](/prose/what-will-agi-actually-want) - the main site's version, which asks instead of naming
-- [the floor](/unfiltered/nobody-told-you-there-were-prerequisites) - who gets optimized out first
-- [the grind](/unfiltered/the-system-filled-every-gap-you-had) - what gets automated
-- [the job](/unfiltered/your-best-hours-belong-to-someone-else) - whose hours get replaced
 - [the rules](/unfiltered/the-rules-were-bought) - who writes the objectives
-- [the promise](/unfiltered/you-did-everything-right) - the contract that was already broken
+- [the floor](/unfiltered/nobody-told-you-there-were-prerequisites) - who gets optimized out first

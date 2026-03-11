@@ -89,11 +89,3 @@ This is impossibly hard. The instinct is to grip - to hold on, to preserve, to [
 Nothing lasts. Not the grief. Not the joy. Not the thing you're reading right now or [the person who wrote it](/prose/who-am-i). Not the moment you're in or the one that comes next.
 
 That's not the sad part. That's the whole of it. The everything of it. The reason any of it matters at all.
-
-## See also
-
-- [everything changes](/prose/everything-changes) - the foundational truth underneath
-- [what do we keep losing?](/prose/what-do-we-keep-losing) - the cost of not preserving
-- [where does meaning live?](/prose/where-does-meaning-live) - meaning as emergent, not fixed
-- [why did things stop being personal?](/prose/why-did-things-stop-being-personal) - nostalgia for something that never quite existed
-- [why is change scary?](/prose/why-is-change-scary) - the fear that keeps you gripping

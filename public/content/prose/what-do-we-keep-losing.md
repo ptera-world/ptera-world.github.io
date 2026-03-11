@@ -86,9 +86,4 @@ And the things that last tend to be the ones that don't need permission to keep 
 
 - [what's actually wrong?](/prose/whats-actually-wrong) - the broader question of what's actually wrong
 - [why is software hard?](/prose/why-is-software-hard) - how the frozen paradigm replaced what we lost
-- [what will AGI actually want?](/prose/what-will-agi-actually-want) - how systems shape what gets optimized
-- [reincarnate](/project/reincarnate) - lifting legacy software before it disappears
-- [rescribe](/project/rescribe) - lossless document conversion across formats
-- [interconnect](/project/interconnect) - federation for persistent shared worlds
 - [how much could I possibly do?](/prose/how-much-could-i-possibly-do) - one person building against the tide
-- [playmate](/project/playmate) - game design that respects collaboration

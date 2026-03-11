@@ -77,9 +77,5 @@ Not advice. Not "just do it." Not another framework.
 ## See also
 
 - [how do I do things?](/prose/how-do-i-do-things) - starting and following through
-- [what are labels anyway?](/prose/what-are-labels-anyway) - when identity becomes a cage
-- [what's actually wrong?](/prose/whats-actually-wrong) - the systems that shape behavior
 - [why is perfectionism a trap?](/prose/why-is-perfectionism-a-trap) - the insight trap's cousin
-- [who am I?](/prose/who-am-i) - change as self-discovery
-- [why is software hard?](/prose/why-is-software-hard) - design wins over willpower
-- [existence](/project/existence) - a sim that models the cascading weight of daily life
+- [what's actually wrong?](/prose/whats-actually-wrong) - the systems that shape behavior

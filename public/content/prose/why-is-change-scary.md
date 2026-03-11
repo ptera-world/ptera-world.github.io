@@ -64,6 +64,3 @@ You can't think your way through the fear. You can only walk through it and find
 - [everything changes](/prose/everything-changes) - change as the nature of reality, not an event
 - [why is change so hard?](/prose/why-is-change-so-hard) - the mechanics of stuckness
 - [why is perfectionism a trap?](/prose/why-is-perfectionism-a-trap) - fear disguised as standards
-- [who am I?](/prose/who-am-i) - the self that keeps emerging through change
-- [how do I do things?](/prose/how-do-i-do-things) - starting despite the fear
-- [what are labels anyway?](/prose/what-are-labels-anyway) - the identity that resists change

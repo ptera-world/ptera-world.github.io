@@ -64,7 +64,4 @@ raises track inflation. housing costs absorb income gains. lifestyle expectation
 ## See also
 
 - [the job](/unfiltered/your-best-hours-belong-to-someone-else) - most of your waking life belongs to someone else
-- [the grind](/unfiltered/the-system-filled-every-gap-you-had) - the hours are full and none of them are yours
-- [the benefit](/unfiltered/the-system-monetized-the-damage) - healthcare as a lock
 - [the floor](/unfiltered/nobody-told-you-there-were-prerequisites) - every layer is downstream of this
-- [where is all the good software?](/prose/where-is-all-the-good-software) - "time is only free if you've already solved money"

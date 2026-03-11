@@ -80,6 +80,4 @@ And sometimes the "wrong" tool reveals something the "right" one would have hidd
 
 - [it's not that simple](/prose/its-not-that-simple) - nothing is one thing
 - [why are we compressing things?](/prose/why-are-we-compressing-things) - platitudes as compression
-- [is it just interpolation?](/prose/is-it-just-interpolation) - dismissal wearing the mask of technical accuracy
 - [why is software hard?](/prose/why-is-software-hard) - toolkits that lock in paradigms
-- [but.](/prose/but) - occasionally true. very occasionally.

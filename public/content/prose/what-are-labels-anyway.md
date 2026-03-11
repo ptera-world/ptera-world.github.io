@@ -92,9 +92,6 @@ That understanding transfers. It tends to start with yourself.
 
 ## See also
 
-- [what's actually wrong?](/prose/whats-actually-wrong) - the broader question of what we're missing
-- [how do I do things?](/prose/how-do-i-do-things) - starting without the identity weight
 - [who am I?](/prose/who-am-i) - the deeper question labels try to answer
 - [why are you lonely?](/prose/why-are-you-lonely) - when roles keep people from seeing you
 - [why are we compressing things?](/prose/why-are-we-compressing-things) - labels as compression
-- [aspect](/project/aspect) - identity exploration without fixed categories

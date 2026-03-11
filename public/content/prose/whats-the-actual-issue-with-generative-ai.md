@@ -77,7 +77,4 @@ That seems like the actual issue. Not the economics. Not the legality. The quest
 - [what is art?](/prose/what-is-art) - art as intent, not medium
 - [is it just interpolation?](/prose/is-it-just-interpolation) - the technical dismissal
 - [the great deceit](/prose/the-great-deceit) - authorship and what it means
-- [it's not that simple](/prose/its-not-that-simple) - the spectrum of intent
-- [what are labels anyway?](/prose/what-are-labels-anyway) - "AI art" as a label that flattens
 - [who is generative AI?](/prose/who-is-generative-ai) - the function behind the choices
-- [but.](/prose/but) - holding both halves

@@ -82,8 +82,5 @@ The cost of defeatism isn't dramatic. It's quiet. It's all the things that could
 ## See also
 
 - [how do I do things?](/prose/how-do-i-do-things) - practical approaches to starting
-- [what are labels anyway?](/prose/what-are-labels-anyway) - when "I can't" becomes identity
-- [what's actually wrong?](/prose/whats-actually-wrong) - the systems that make it hard
 - [why is perfectionism a trap?](/prose/why-is-perfectionism-a-trap) - fear disguised as standards
-- [but.](/prose/but) - "I can't. *but*"
 - [what can I change?](/prose/what-can-i-change) - finding leverage as one person

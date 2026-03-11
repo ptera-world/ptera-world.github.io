@@ -66,9 +66,6 @@ and it requires someone - a therapist, a partner, a friend - who can hold space 
 
 ## See also
 
-- [the shelf](/unfiltered/the-parts-of-yourself-you-put-away) - the scar's quieter cousin: putting things away instead of building around them
 - [the body](/unfiltered/the-damage-lands-in-your-body) - where the scar lives physically
-- [the cope](/unfiltered/the-system-broke-you-then-sold-the-fix) - what you reach for when the scar activates
+- [the shelf](/unfiltered/the-parts-of-yourself-you-put-away) - the scar's quieter cousin
 - [the benefit](/unfiltered/the-system-monetized-the-damage) - twelve sessions for a decade of damage
-- [the grind](/unfiltered/the-system-filled-every-gap-you-had) - the exhaustion that compounds the scar
-- [the floor](/unfiltered/nobody-told-you-there-were-prerequisites) - trauma concentrates where the power isn't

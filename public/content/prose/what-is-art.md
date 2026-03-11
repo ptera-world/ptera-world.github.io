@@ -63,8 +63,5 @@ Art isn't rare. Art isn't special. Art is intent, and intent is everywhere. The 
 ## See also
 
 - [what are labels anyway?](/prose/what-are-labels-anyway) - "art" as a label that excludes
-- [why are we compressing things?](/prose/why-are-we-compressing-things) - creativity compressed into talent
 - [how much could I possibly do?](/prose/how-much-could-i-possibly-do) - dismissing your own capacity
 - [the great deceit](/prose/the-great-deceit) - judging the thing instead of the process
-- [how do I do things?](/prose/how-do-i-do-things) - starting, with intent
-- [who am I?](/prose/who-am-i) - the self behind the intent

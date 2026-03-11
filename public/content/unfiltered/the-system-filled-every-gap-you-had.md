@@ -65,8 +65,5 @@ and when the grind finally breaks something - when the burnout hits, when the an
 ## See also
 
 - [the floor](/unfiltered/nobody-told-you-there-were-prerequisites) - the prerequisites nobody mentions
-- [the silence](/unfiltered/expression-has-a-cost-floor) - the version where you can't afford to speak at all
 - [the benefit](/unfiltered/the-system-monetized-the-damage) - the system monetized the damage it causes
-- [why this exists](/unfiltered/why-this-exists) - why the neutral voice couldn't say this
-- [what's actually wrong?](/prose/whats-actually-wrong) - the version that describes the systems without naming the cost
 - [what's the purpose of life?](/prose/whats-the-purpose-of-life) - "be yourself" - when?

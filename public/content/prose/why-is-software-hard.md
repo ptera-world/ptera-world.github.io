@@ -99,8 +99,4 @@ This isn't inevitable. Different incentives produce different software. The tool
 
 - [what's actually wrong?](/prose/whats-actually-wrong) - the broader context of what's actually wrong
 - [what do we keep losing?](/prose/what-do-we-keep-losing) - the pattern of abandoning paradigms that worked
-- [why are we compressing things?](/prose/why-are-we-compressing-things) - features as compression of complexity
 - [the right tool for the job](/prose/the-right-tool-for-the-job) - the platitude that ends conversations
-- [dusklight](/project/dusklight) - UI that surfaces affordances instead of hiding them
-- [keybinds](/project/keybinds) - making keyboard shortcuts discoverable
-- [normalize](/project/normalize) - CLI that exposes structure instead of hiding it

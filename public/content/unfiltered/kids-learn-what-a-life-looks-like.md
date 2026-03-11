@@ -59,6 +59,3 @@ the kids who watch someone break the template learn something different. they le
 - [the grind](/unfiltered/the-system-filled-every-gap-you-had) - the adult version of the template
 - [the pipeline](/unfiltered/school-was-never-about-learning) - the institutional version
 - [the shelf](/unfiltered/the-parts-of-yourself-you-put-away) - what the parents put away, the kids sense anyway
-- [the job](/unfiltered/your-best-hours-belong-to-someone-else) - the center everything else orbits
-- [just](/unfiltered/just) - the template defending itself
-- [what's the purpose of life?](/prose/whats-the-purpose-of-life) - the gap the template doesn't leave room for

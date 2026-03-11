@@ -71,6 +71,3 @@ and they can't easily articulate what's wrong. because nothing is wrong, technic
 - [the template](/unfiltered/kids-learn-what-a-life-looks-like) - the steps, inherited by watching
 - [the grind](/unfiltered/the-system-filled-every-gap-you-had) - what "doing everything right" actually looks like
 - [the gate](/unfiltered/every-freedom-is-a-money-problem) - the number that never gets closer
-- [the shelf](/unfiltered/the-parts-of-yourself-you-put-away) - the parts of yourself the steps didn't include
-- [the pipeline](/unfiltered/school-was-never-about-learning) - where the promise started
-- [the job](/unfiltered/your-best-hours-belong-to-someone-else) - the center the promise orbits

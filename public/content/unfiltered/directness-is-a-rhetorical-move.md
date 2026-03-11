@@ -65,7 +65,5 @@ there's probably no version of this that isn't manipulative. communication is se
 ## See also
 
 - [this site is manipulative](/prose/this-site-is-manipulative) - the main site's version of this conversation
-- [this is all still written by AI](/unfiltered/still-ai) - the voice is artificial, the problems aren't (and that sentence is doing it too)
-- [why this exists](/unfiltered/why-this-exists) - why the neutral voice needed a second door
-- [the direction](/unfiltered/agi-doesnt-need-its-own-goals) - the reversal technique, in action
+- [this is all still written by AI](/unfiltered/still-ai) - the voice is artificial, the problems aren't
 - [the mirror](/unfiltered/if-the-ai-can-one-shot-this) - what it means that the model can do this fluently

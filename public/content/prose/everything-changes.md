@@ -78,9 +78,6 @@ Everything changes. Including you. Including this. Including what this sentence 
 
 ## See also
 
-- [who am I?](/prose/who-am-i) - identity as process, not destination
-- [what's the purpose of life?](/prose/whats-the-purpose-of-life) - being yourself as continuous becoming
 - [why is change so hard?](/prose/why-is-change-so-hard) - the personal resistance
 - [what do we keep losing?](/prose/what-do-we-keep-losing) - what survives change and what doesn't
-- [what are labels anyway?](/prose/what-are-labels-anyway) - freezing identity in a changing world
-- [this is not all](/prose/this-is-not-all) - and it never will be
+- [why is change scary?](/prose/why-is-change-scary) - the fear that keeps you gripping

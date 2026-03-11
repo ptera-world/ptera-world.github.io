@@ -138,13 +138,5 @@ And collaboration is nearly impossible in most software. Debug someone's setup? 
 
 - [why is software hard?](/prose/why-is-software-hard) - accessible explainer for why software is frustrating
 - [what do we keep losing?](/prose/what-do-we-keep-losing) - why good solutions vanish even after they're proven
-- [how do I do things?](/prose/how-do-i-do-things) - practical advice for starting and following through
-- [what are labels anyway?](/prose/what-are-labels-anyway) - the ceilings we put on ourselves
 - [why are you lonely?](/prose/why-are-you-lonely) - surrounded by people, connected to no one
-- [why is change so hard?](/prose/why-is-change-so-hard) - the gap between knowing and doing
 - [how much could I possibly do?](/prose/how-much-could-i-possibly-do) - defeatism dressed as realism
-- [playmate](/project/playmate) - game design primitives that respect players
-- [dusklight](/project/dusklight) - UI that surfaces what's possible instead of hiding it
-- [interconnect](/project/interconnect) - federation for persistent shared worlds
-- [hologram](/project/hologram) - community-first entities
-- [aspect](/project/aspect) - identity exploration without performance pressure

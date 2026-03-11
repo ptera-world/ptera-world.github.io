@@ -47,10 +47,3 @@ and nothing changed.
 the people who wrote the original accounts - the real people, with real pain - wrote them and the world absorbed the writing and didn't fix the thing. the model can reproduce their observations because the observations were loud enough and numerous enough to become pattern. and the pattern persists because the system persists because the rules persist because the room persists.
 
 the mirror doesn't change what it reflects. it just shows you that the reflection has been there all along.
-
-## See also
-
-- [this is all still written by AI](/unfiltered/still-ai) - the voice is artificial, the problems aren't
-- [the silence](/unfiltered/expression-has-a-cost-floor) - the people whose pain is in the training data but who'll never read this
-- [the number](/unfiltered/35-million-people-is-just-a-statistic) - compression applied to people
-- [the rules](/unfiltered/the-rules-were-bought) - why naming the problem doesn't fix it

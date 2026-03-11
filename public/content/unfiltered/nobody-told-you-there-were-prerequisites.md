@@ -67,9 +67,3 @@ this essay says it.
 not as guilt. guilt is a performance and performances cost exactly the people who can't afford the ticket. not as an apology. apologies for systemic problems are just comfort for the person apologizing.
 
 just as the floor. the thing underneath everything here. it's there whether or not we name it.
-
-## See also
-
-- [the grind](/unfiltered/the-system-filled-every-gap-you-had) - what happens when you have the means and still have nothing
-- [the silence](/unfiltered/expression-has-a-cost-floor) - what it looks like when you can't afford to speak
-- [why this exists](/unfiltered/why-this-exists) - why the main voice needed a second door

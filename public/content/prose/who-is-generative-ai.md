@@ -54,5 +54,3 @@ Is that a "who"? If it [looks like](/prose/the-great-deceit) one, responds like 
 - [is it just interpolation?](/prose/is-it-just-interpolation) - technically yes, but
 - [the great deceit](/prose/the-great-deceit) - who wrote this?
 - [who am I?](/prose/who-am-i) - the same question, for you
-- [what are labels anyway?](/prose/what-are-labels-anyway) - "AI" as a label that flattens
-- [why are we compressing things?](/prose/why-are-we-compressing-things) - the model isn't compression

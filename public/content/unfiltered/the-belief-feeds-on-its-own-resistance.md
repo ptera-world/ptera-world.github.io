@@ -77,8 +77,5 @@ if the answer is no - if the only way to stay in good standing is to never test 
 ## See also
 
 - [the scar](/unfiltered/the-wound-heals-the-flinch-doesnt) - what the loop leaves behind
-- [the grind](/unfiltered/the-system-filled-every-gap-you-had) - the depletion the loop exploits
 - [the shelf](/unfiltered/the-parts-of-yourself-you-put-away) - the unmet needs the loop fills
-- [the rules](/unfiltered/the-rules-were-bought) - the politics of who controls the system
 - [the floor](/unfiltered/nobody-told-you-there-were-prerequisites) - the people most vulnerable to the loop
-- [what's the purpose of life?](/prose/whats-the-purpose-of-life) - the meaning question the loop answers too quickly

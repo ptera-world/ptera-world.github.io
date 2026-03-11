@@ -58,7 +58,4 @@ from inside, you're running a background process that never stops. monitoring th
 
 - [the grind](/unfiltered/the-system-filled-every-gap-you-had) - the structure that requires the shelf
 - [the benefit](/unfiltered/the-system-monetized-the-damage) - therapy as shelf management
-- [the job](/unfiltered/your-best-hours-belong-to-someone-else) - the thing that takes the hours the shelf needs
-- [just](/unfiltered/just) - "just deal with it" - you are. this is what it looks like
 - [what's the purpose of life?](/prose/whats-the-purpose-of-life) - the thing the shelf prevents
-- [what are labels anyway?](/prose/what-are-labels-anyway) - the identity that goes on the shelf

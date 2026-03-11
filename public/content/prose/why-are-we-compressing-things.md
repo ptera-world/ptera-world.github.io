@@ -77,8 +77,4 @@ The purpose of life is to [be yourself](/prose/whats-the-purpose-of-life). Compr
 
 - [it's not that simple](/prose/its-not-that-simple) - the progression from binary to multifaceted
 - [what are labels anyway?](/prose/what-are-labels-anyway) - compression applied to identity
-- [what's actually wrong?](/prose/whats-actually-wrong) - systems that compress people into metrics
 - [is it just interpolation?](/prose/is-it-just-interpolation) - compression applied to dismiss
-- [but.](/prose/but) - the word that resists flattening
-- [existence](/project/existence) - a sim that refuses to compress
-- [normalize](/project/normalize) - code intelligence that surfaces structure instead of hiding it

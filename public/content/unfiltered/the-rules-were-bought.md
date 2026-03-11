@@ -75,8 +75,5 @@ the partisan fight is real - the issues matter, the differences are genuine, the
 ## See also
 
 - [the gate](/unfiltered/every-freedom-is-a-money-problem) - every freedom has a price tag
-- [the benefit](/unfiltered/the-system-monetized-the-damage) - the system monetized the damage it causes
-- [the pipeline](/unfiltered/school-was-never-about-learning) - who decides what gets taught
 - [the silence](/unfiltered/expression-has-a-cost-floor) - the people most affected are most absent
-- [the mirror](/unfiltered/if-the-ai-can-one-shot-this) - why naming the problem doesn't fix it
 - [the floor](/unfiltered/nobody-told-you-there-were-prerequisites) - participation requires capacity requires safety requires money

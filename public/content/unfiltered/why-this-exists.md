@@ -59,13 +59,3 @@ this collection will never fully resolve a contradiction at its center: the auth
 so this space sits in the gap between the neutral analysis and the silence it can never reach. closer to the ground than the main site. not on it.
 
 that's honest. probably the most honest thing here.
-
-## See also
-
-- [the floor](/unfiltered/nobody-told-you-there-were-prerequisites) - what's underneath everything
-- [the silence](/unfiltered/expression-has-a-cost-floor) - what the gap sounds like
-- [the grind](/unfiltered/the-system-filled-every-gap-you-had) - the hours are full and none of them are yours
-- [the job](/unfiltered/your-best-hours-belong-to-someone-else) - most of your waking life belongs to someone else
-- [the mirror](/unfiltered/if-the-ai-can-one-shot-this) - the contradiction this collection can't resolve
-- [this site is designed](/prose/this-site-is-designed) - the neutral version's contract with the reader
-- [this is not all](/prose/this-is-not-all) - the gaps the main collection names but can't fill

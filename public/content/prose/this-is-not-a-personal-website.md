@@ -51,9 +51,6 @@ This is not a personal website. It's what's left after you subtract everything t
 
 ## See also
 
-- [who am I?](/prose/who-am-i) - a question this site can't answer for its author
 - [this site is manipulative](/prose/this-site-is-manipulative) - what the site *is* doing, intentionally
 - [the great deceit](/prose/the-great-deceit) - who wrote this, and what that means
 - [this is not all](/prose/this-is-not-all) - the gaps shaped like the author
-- [why are we compressing things?](/prose/why-are-we-compressing-things) - websites as compression of people
-- [what are labels anyway?](/prose/what-are-labels-anyway) - "personal website" as label

@@ -68,8 +68,5 @@ Every trade-off between fidelity and comprehension is deliberate. Every place wh
 ## See also
 
 - [this site is manipulative](/prose/this-site-is-manipulative) - one aspect of the design
-- [it's not that simple](/prose/its-not-that-simple) - composable perspectives, not binary views
-- [why are we compressing things?](/prose/why-are-we-compressing-things) - linearity as compression
 - [what is art?](/prose/what-is-art) - intent behind every choice
 - [this is not a personal website](/prose/this-is-not-a-personal-website) - the site as projection, not person
-- [this is not all](/prose/this-is-not-all) - what the design leaves out

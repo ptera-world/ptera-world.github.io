@@ -143,8 +143,5 @@ Make good software. The tools are there. The knowledge is there. The [intent](/p
 ## See also
 
 - [why is software hard?](/prose/why-is-software-hard) - the user's experience of the problem
-- [what is art?](/prose/what-is-art) - intent as what makes something good
 - [why is nothing special anymore?](/prose/why-is-nothing-special-anymore) - the convergence toward mediocre
-- [the right tool for the job](/prose/the-right-tool-for-the-job) - the platitude that stops people from looking
 - [how much could I possibly do?](/prose/how-much-could-i-possibly-do) - making things anyway
-- [what's actually wrong?](/prose/whats-actually-wrong) - systems that select against quality

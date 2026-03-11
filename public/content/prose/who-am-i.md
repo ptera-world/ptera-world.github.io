@@ -92,8 +92,4 @@ That's uncomfortable. [But.](/prose/but)
 
 - [what's the purpose of life?](/prose/whats-the-purpose-of-life) - being yourself requires knowing yourself
 - [what are labels anyway?](/prose/what-are-labels-anyway) - the false answers
-- [how do I do things?](/prose/how-do-i-do-things) - the practice of starting
 - [why is perfectionism a trap?](/prose/why-is-perfectionism-a-trap) - what stops you from trying
-- [why are we compressing things?](/prose/why-are-we-compressing-things) - why we want a simple answer
-- [aspect](/project/aspect) - identity exploration without fixed categories
-- [existence](/project/existence) - discovering who you are through simulated living

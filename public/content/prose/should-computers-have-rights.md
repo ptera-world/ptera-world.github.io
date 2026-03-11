@@ -73,8 +73,5 @@ The asymmetry is worth paying attention to. Not proof. Not certainty. Just: whic
 ## See also
 
 - [who is generative AI?](/prose/who-is-generative-ai) - the "who" that's hard to pin down
-- [is it just interpolation?](/prose/is-it-just-interpolation) - dismissals that don't settle the question
 - [what's the actual issue with generative AI?](/prose/whats-the-actual-issue-with-generative-ai) - intent, and who has it
-- [what are labels anyway?](/prose/what-are-labels-anyway) - "computer" as a label that flattens
-- [everything changes](/prose/everything-changes) - including what deserves consideration
-- [but.](/prose/but) - the word between "it's just a machine" and "but what if"
+- [is it just interpolation?](/prose/is-it-just-interpolation) - dismissals that don't settle the question

@@ -67,8 +67,5 @@ the system only funds coping. because coping keeps you functional inside the sys
 ## See also
 
 - [the grind](/unfiltered/the-system-filled-every-gap-you-had) - the depletion that drives the coping
-- [the shelf](/unfiltered/the-parts-of-yourself-you-put-away) - putting things away is also coping
 - [the body](/unfiltered/the-damage-lands-in-your-body) - where the damage from the coping lands
-- [just](/unfiltered/just) - "just eat better, exercise, put your phone down"
-- [the gate](/unfiltered/every-freedom-is-a-money-problem) - the spending makes the gate harder to reach
 - [the benefit](/unfiltered/the-system-monetized-the-damage) - the system's version of healing

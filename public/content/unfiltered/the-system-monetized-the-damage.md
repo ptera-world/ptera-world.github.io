@@ -84,5 +84,3 @@ it fits here.
 
 - [the grind](/unfiltered/the-system-filled-every-gap-you-had) - the system fills the time and calls it success
 - [the campaign](/unfiltered/survival-shouldnt-require-a-pitch) - what happens after the benefit fails
-- [the floor](/unfiltered/nobody-told-you-there-were-prerequisites) - the prerequisites nobody mentions
-- [what's actually wrong?](/prose/whats-actually-wrong) - the version that describes the systems without naming the violence

@@ -78,7 +78,4 @@ You're still reading.
 ## See also
 
 - [the great deceit](/prose/the-great-deceit) - the authorship layer of the manipulation
-- [what's actually wrong?](/prose/whats-actually-wrong) - the systems this site criticizes and replicates
-- [but.](/prose/but) - the word this whole site runs on
-- [why are we compressing things?](/prose/why-are-we-compressing-things) - curation as compression
 - [this is not all](/prose/this-is-not-all) - and it knows what it's missing

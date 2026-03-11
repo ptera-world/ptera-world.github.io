@@ -107,7 +107,5 @@ And because someone has to. The engines exist. The models exist. The interfaces 
 ## See also
 
 - [why do i build tools?](/prose/why-do-i-build-tools) - making the opaque legible
-- [where does meaning live?](/prose/where-does-meaning-live) - intelligence as emergent, not designed
 - [why is everything a document?](/prose/why-is-everything-a-document) - boundaries that shouldn't exist
 - [can you tell when it's wrong?](/prose/can-you-tell-when-its-wrong) - why the wrapper matters more than the model
-- [there used to be two kinds of programmer](/prose/there-used-to-be-two-kinds-of-programmer) - building where nobody's looking

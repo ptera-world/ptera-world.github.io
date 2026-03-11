@@ -94,9 +94,5 @@ That's enough.
 
 ## See also
 
-- [what's actually wrong?](/prose/whats-actually-wrong) - the systems working against you
-- [what are labels anyway?](/prose/what-are-labels-anyway) - the stories that constrain you
-- [how do I do things?](/prose/how-do-i-do-things) - starting the process
 - [who am I?](/prose/who-am-i) - the process of finding out
 - [why are you lonely?](/prose/why-are-you-lonely) - the safety problem
-- [existence](/project/existence) - a sim about how hard it is to be yourself for one day

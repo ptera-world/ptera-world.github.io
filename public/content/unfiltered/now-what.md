@@ -59,12 +59,3 @@ and the honest version is also: you're asking "now what?" and that question is a
 this collection can't tell you what to do with it. but it can tell you it's there. and that it matters. and that the people who built these systems never accounted for the part of you that reads all of this and still asks: now what?
 
 they probably should have.
-
-## See also
-
-- [the floor](/unfiltered/nobody-told-you-there-were-prerequisites) - the prerequisites nobody mentions
-- [the grind](/unfiltered/the-system-filled-every-gap-you-had) - the structure you're inside
-- [just](/unfiltered/just) - why this essay can't give you a plan
-- [the shelf](/unfiltered/the-parts-of-yourself-you-put-away) - what you've been carrying
-- [why this exists](/unfiltered/why-this-exists) - why the neutral voice couldn't say any of this
-- [what's the purpose of life?](/prose/whats-the-purpose-of-life) - the question underneath the question

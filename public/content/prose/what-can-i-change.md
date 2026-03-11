@@ -103,8 +103,5 @@ You don't control the outcome. You control [whether you try](/prose/how-do-i-do-
 
 ## See also
 
-- [how do I do things?](/prose/how-do-i-do-things) - starting and following through
 - [how much could I possibly do?](/prose/how-much-could-i-possibly-do) - the defeatism that says don't bother
 - [why is change so hard?](/prose/why-is-change-so-hard) - when the change is personal
-- [what's actually wrong?](/prose/whats-actually-wrong) - the broader context
-- [what will AGI actually want?](/prose/what-will-agi-actually-want) - why systems matter

@@ -91,6 +91,3 @@ and it means the possibility - not the guarantee, not even the likelihood - of b
 - [the template](/unfiltered/kids-learn-what-a-life-looks-like) - what kids absorb by watching
 - [the scar](/unfiltered/the-wound-heals-the-flinch-doesnt) - the patterns the child builds to survive
 - [the shelf](/unfiltered/the-parts-of-yourself-you-put-away) - what the parent puts away, the child senses anyway
-- [the grind](/unfiltered/the-system-filled-every-gap-you-had) - the structure that takes the parent's hours
-- [the benefit](/unfiltered/the-system-monetized-the-damage) - the limited budget for breaking the cycle
-- [the pipeline](/unfiltered/school-was-never-about-learning) - the school that doesn't teach parenting

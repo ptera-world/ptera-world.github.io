@@ -72,9 +72,6 @@ so the weight stays with the person. and the number goes into the system. and th
 
 ## See also
 
-- [the campaign](/unfiltered/survival-shouldnt-require-a-pitch) - survival as a progress bar
 - [the floor](/unfiltered/nobody-told-you-there-were-prerequisites) - 35.9 million people who aren't reading this
-- [the rules](/unfiltered/the-rules-were-bought) - who decides what the numbers mean
 - [the benefit](/unfiltered/the-system-monetized-the-damage) - healthcare as a line item
-- [the shelf](/unfiltered/the-parts-of-yourself-you-put-away) - numbing yourself the way statistics numb others
 - [why are we compressing things?](/prose/why-are-we-compressing-things) - the same mechanism, applied to people

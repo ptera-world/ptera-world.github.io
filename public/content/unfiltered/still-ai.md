@@ -65,5 +65,3 @@ the voice is artificial. the problems aren't. please don't confuse the two.
 - [the mirror](/unfiltered/if-the-ai-can-one-shot-this) - why the model can one-shot this, and what that means
 - [the great deceit](/prose/the-great-deceit) - the main site's version of this conversation
 - [is it just interpolation?](/prose/is-it-just-interpolation) - the technical dismissal and what it misses
-- [am i just pretending?](/prose/am-i-just-pretending) - directing vs. making
-- [why this exists](/unfiltered/why-this-exists) - why the voice needed a second door

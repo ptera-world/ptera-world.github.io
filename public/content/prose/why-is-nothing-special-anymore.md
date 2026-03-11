@@ -61,7 +61,3 @@ That's what special tends to mean. Not popular. Not polished. Not frictionless. 
 - [why did things stop being personal?](/prose/why-did-things-stop-being-personal) - the personal web and what platforms replaced
 - [what is art?](/prose/what-is-art) - intent as what makes something matter
 - [why are we compressing things?](/prose/why-are-we-compressing-things) - culture compressed into content
-- [what's actually wrong?](/prose/whats-actually-wrong) - systems that optimize against you
-- [how much could I possibly do?](/prose/how-much-could-i-possibly-do) - making things anyway
-- [this site is manipulative](/prose/this-site-is-manipulative) - a site that doesn't optimize for engagement (it optimizes for something else)
-- [the right tool for the job](/prose/the-right-tool-for-the-job) - the formula as the "right" answer

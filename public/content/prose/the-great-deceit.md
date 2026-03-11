@@ -50,11 +50,3 @@ No.
 This essay isn't here to argue that AI authorship is fine, or that it's bad. It's here because not mentioning it felt like the actual deceit.
 
 The ideas in the other essays came from real conversations and real thinking. The writing was done by a language model. The code was produced by the same process. The human couldn't have built any of this alone. The AI couldn't have built it without the human. What that means - whether it matters, and how - is something you're probably already working out for yourself.
-
-## See also
-
-- [what are labels anyway?](/prose/what-are-labels-anyway) - how categories flatten reality
-- [is it just interpolation?](/prose/is-it-just-interpolation) - the technical dismissal and what it misses
-- [but.](/prose/but) - holding both halves at once
-- [what will AGI actually want?](/prose/what-will-agi-actually-want) - AI as continuation, not rupture
-- [how do I do things?](/prose/how-do-i-do-things) - starting things, with or without help

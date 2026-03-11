@@ -87,5 +87,3 @@ The permission was never revoked. It just stopped being the default.
 - [why is nothing special anymore?](/prose/why-is-nothing-special-anymore) - the convergence that made everything the same
 - [what do we keep losing?](/prose/what-do-we-keep-losing) - what disappears when nobody maintains it
 - [this is not a personal website](/prose/this-is-not-a-personal-website) - except it is
-- [this site is manipulative](/prose/this-site-is-manipulative) - opting out of engagement optimization
-- [what is art?](/prose/what-is-art) - visible choices as the definition

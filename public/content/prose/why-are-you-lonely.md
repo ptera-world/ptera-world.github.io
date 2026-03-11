@@ -80,8 +80,5 @@ That doesn't make the loneliness less real. It just means the goal might not be 
 
 ## See also
 
-- [what's actually wrong?](/prose/whats-actually-wrong) - the broader context of ambient sadness
 - [what are labels anyway?](/prose/what-are-labels-anyway) - the roles that keep people from seeing you
 - [who am I?](/prose/who-am-i) - self-knowledge through analysis, expression, and discovery
-- [how do I do things?](/prose/how-do-i-do-things) - starting and following through
-- [aspect](/project/aspect) - identity exploration without performance

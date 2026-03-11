@@ -54,8 +54,5 @@ the essays about [the shelf](/unfiltered/the-parts-of-yourself-you-put-away) des
 
 ## See also
 
-- [the grind](/unfiltered/the-system-filled-every-gap-you-had) - the structure that breaks the body
-- [the benefit](/unfiltered/the-system-monetized-the-damage) - the budget for repair
 - [the shelf](/unfiltered/the-parts-of-yourself-you-put-away) - what the mind puts away, the body holds
-- [the job](/unfiltered/your-best-hours-belong-to-someone-else) - eight hours of not moving, not resting, not being yours
-- [the gate](/unfiltered/every-freedom-is-a-money-problem) - the chronic stress is chronic because the gate never opens
+- [the benefit](/unfiltered/the-system-monetized-the-damage) - the budget for repair

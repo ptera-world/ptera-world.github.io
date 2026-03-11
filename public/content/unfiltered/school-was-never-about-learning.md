@@ -92,7 +92,4 @@ and the cost is invisible because everyone paid it. you can't see the water when
 
 - [the shelf](/unfiltered/the-parts-of-yourself-you-put-away) - the structure that teaches you to put yourself away
 - [the job](/unfiltered/your-best-hours-belong-to-someone-else) - the structure school trained you for
-- [the grind](/unfiltered/the-system-filled-every-gap-you-had) - the template in its adult form
 - [the gate](/unfiltered/every-freedom-is-a-money-problem) - the credential as a toll
-- [what are labels anyway?](/prose/what-are-labels-anyway) - the sorting becomes the identity
-- [what's the purpose of life?](/prose/whats-the-purpose-of-life) - "be yourself" - after twelve years of being told who to be

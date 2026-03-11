@@ -45,5 +45,3 @@ and the interpretation that's most available - the one that's been packaged and 
 the version that's harder to reach - it doesn't require unusual intelligence, you'd just need time and space that the structure doesn't leave you - is that some of what happened wasn't about you at all. it was about which direction the system moves wealth, who the rules were written to protect, what gets scored as success and for whom.
 
 you being a cost to be minimized was never personal. you were just not in the part of the model where people are considered.
-
-## See also

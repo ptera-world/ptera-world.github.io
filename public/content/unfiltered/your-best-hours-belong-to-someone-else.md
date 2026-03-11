@@ -61,7 +61,4 @@ so you don't ask. you go to work. you do the thing. you come home. you scroll. y
 ## See also
 
 - [the grind](/unfiltered/the-system-filled-every-gap-you-had) - the hours are full and none of them are yours
-- [the benefit](/unfiltered/the-system-monetized-the-damage) - the system monetized the damage it causes
-- [the floor](/unfiltered/nobody-told-you-there-were-prerequisites) - the prerequisites nobody mentions
 - [what's the purpose of life?](/prose/whats-the-purpose-of-life) - "be yourself" - during which hours?
-- [what are labels anyway?](/prose/what-are-labels-anyway) - the job as the biggest label you carry

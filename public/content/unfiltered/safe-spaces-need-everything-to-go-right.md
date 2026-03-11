@@ -103,10 +103,5 @@ so people carry [the shelf](/unfiltered/the-parts-of-yourself-you-put-away). not
 ## See also
 
 - [the shelf](/unfiltered/the-parts-of-yourself-you-put-away) - what you'd put down if you could
-- [the inheritance](/unfiltered/the-damage-passes-down) - why family isn't always safe
 - [the scar](/unfiltered/the-wound-heals-the-flinch-doesnt) - what the absence of safety leaves behind
-- [the benefit](/unfiltered/the-system-monetized-the-damage) - the metered safe space
-- [the grind](/unfiltered/the-system-filled-every-gap-you-had) - why people can't hold each other's weight
-- [the job](/unfiltered/your-best-hours-belong-to-someone-else) - "bring your whole self to work"
-- [just](/unfiltered/just) - what unsafe sounds like in conversation
-- [why are you lonely?](/prose/why-are-you-lonely) - the main site's version: depth, not safety
+- [the inheritance](/unfiltered/the-damage-passes-down) - why family isn't always safe

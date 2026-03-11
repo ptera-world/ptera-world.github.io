@@ -107,7 +107,5 @@ That's not a technology problem. It's a governance problem. It exists right now,
 ## See also
 
 - [what's actually wrong?](/prose/whats-actually-wrong) - the systems we already have
-- [what do we keep losing?](/prose/what-do-we-keep-losing) - how institutions shape what survives
 - [what can I change?](/prose/what-can-i-change) - finding leverage in systems
 - [is it just interpolation?](/prose/is-it-just-interpolation) - what "just" hides about AI
-- [why are we compressing things?](/prose/why-are-we-compressing-things) - when metrics replace what they measure

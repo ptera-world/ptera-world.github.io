@@ -64,9 +64,5 @@ There's no guarantee that trying works. But not trying has a guaranteed outcome.
 ## See also
 
 - [what's actually wrong?](/prose/whats-actually-wrong) - why it's hard to start things
-- [what are labels anyway?](/prose/what-are-labels-anyway) - the ceilings we put on ourselves
-- [who am I?](/prose/who-am-i) - self-knowledge through analysis, expression, and discovery
 - [why is perfectionism a trap?](/prose/why-is-perfectionism-a-trap) - when standards become walls
-- [why is change so hard?](/prose/why-is-change-so-hard) - the gap between knowing and doing
 - [how much could I possibly do?](/prose/how-much-could-i-possibly-do) - the defeatism that stops you before you start
-- [what can I change?](/prose/what-can-i-change) - when you want to change something bigger

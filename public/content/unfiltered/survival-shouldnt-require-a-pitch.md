@@ -73,7 +73,4 @@ the system didn't just fail to provide care. it turned the failure into a platfo
 ## See also
 
 - [the benefit](/unfiltered/the-system-monetized-the-damage) - the cap that sends you here
-- [the silence](/unfiltered/expression-has-a-cost-floor) - expression has a floor, and this is above it
 - [the floor](/unfiltered/nobody-told-you-there-were-prerequisites) - the people who can't even campaign
-- [the rules](/unfiltered/the-rules-were-bought) - who profits from the dysfunction
-- [the gate](/unfiltered/every-freedom-is-a-money-problem) - every freedom has a price tag

@@ -82,9 +82,5 @@ they can't see that the bottom three steps are missing. that the fourth one is b
 ## See also
 
 - [the floor](/unfiltered/nobody-told-you-there-were-prerequisites) - the prerequisites "just" doesn't see
-- [the pipeline](/unfiltered/school-was-never-about-learning) - the things nobody taught you
-- [the grind](/unfiltered/the-system-filled-every-gap-you-had) - the reason there's no energy left
 - [the benefit](/unfiltered/the-system-monetized-the-damage) - "just go to therapy" - with what sessions?
 - [the gate](/unfiltered/every-freedom-is-a-money-problem) - "just leave" - with what money?
-- [the rules](/unfiltered/the-rules-were-bought) - "just vote" - to change what?
-- [the mirror](/unfiltered/if-the-ai-can-one-shot-this) - why the model can say "just" too
