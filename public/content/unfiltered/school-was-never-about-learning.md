@@ -32,7 +32,7 @@ school does several things. learning is one of them, and not the primary one.
 
 **as sorting:** effectively, but not fairly. the sorting correlates with family income, zip code, race, parental education, and access to resources more than it correlates with ability. the system sorts, but what it's sorting by is mostly pre-existing advantage. the kid who tests well in a well-funded school and the kid who tests poorly in an underfunded one aren't being measured on the same scale. the sorting looks meritocratic. it's largely hereditary.
 
-**as credentialing:** effectively, by design. the credential works because everyone agrees it works. the degree opens doors not because it proves competence but because the doors are calibrated to require it. this is circular and self-sustaining. you need the degree because the job requires it. the job requires it because everyone has one. everyone has one because the job requires it.
+**as credentialing:** effectively, by design. the credential works because everyone agrees it works. the degree opens doors - it doesn't prove competence, the doors are just calibrated to require it. this is circular and self-sustaining. you need the degree because the job requires it. the job requires it because everyone has one. everyone has one because the job requires it.
 
 **as compliance training:** very effectively. this is arguably school's most successful output. after twelve-plus years, the pattern - show up on time, do assigned work, accept evaluation by authority, operate within someone else's structure - is invisible. it doesn't feel like training. it feels like reality. [the job](/unfiltered/your-best-hours-belong-to-someone-else) inherits a workforce that already knows how to comply. school did that.
 

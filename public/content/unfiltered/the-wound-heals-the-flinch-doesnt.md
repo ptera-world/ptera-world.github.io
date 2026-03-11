@@ -22,7 +22,7 @@ that's the scar. not the event. the pattern that formed around the event.
 
 **shutdown.** the opposite of the flinch. instead of reacting fast, you stop reacting at all. the feeling gets too big, so the system cuts the wire. you go flat. you go distant. you're there but you're not there. dissociation, they call it. it's not a choice. it's an emergency exit the mind built when the regular exits were blocked. and when the exits were blocked early enough, or completely enough, the mind sometimes builds more than one exit - more than one way of being, walled off from each other, because no single self could hold all of what was happening. that's not a disorder. that's architecture. the mind did the only thing it could with what it was given.
 
-**hyperindependence.** never asking for help. never relying on anyone. not because you don't want connection - because the last time you were dependent on someone, they were the source of the damage. relying on yourself is the only option that doesn't risk betrayal. it's also the loneliest option. but lonely is safer than vulnerable, and the scar taught you that.
+**hyperindependence.** never asking for help. never relying on anyone. you want connection. but the last time you were dependent on someone, they were the source of the damage. relying on yourself is the only option that doesn't risk betrayal. it's also the loneliest option. but lonely is safer than vulnerable, and the scar taught you that.
 
 **control.** if everything is in order, nothing can go wrong. the rituals, the planning, the need to know what's coming. chaos was where the damage happened. structure is the wall you built around it. the control isn't about the thing being controlled. it's about the thing you're preventing from happening again.
 
@@ -44,7 +44,7 @@ here's the part that doesn't get talked about enough.
 
 the scar doesn't just shape how you react to danger. it shapes how you react to safety. to love. to someone being kind without wanting something. to the absence of threat.
 
-someone offers care and the hypervigilant part asks: what do they want? someone is consistently safe and the part that learned to expect betrayal waits for the other shoe. someone gets close and the shutdown activates - not because they're dangerous, but because closeness is where the damage happened, and the body doesn't distinguish between this closeness and that one.
+someone offers care and the hypervigilant part asks: what do they want? someone is consistently safe and the part that learned to expect betrayal waits for the other shoe. someone gets close and the shutdown activates - they're not dangerous, but closeness is where the damage happened, and the body doesn't distinguish between this closeness and that one.
 
 the scar damages the thing it's trying to protect. the patterns that kept you safe from harm also keep you safe from connection, trust, vulnerability, rest. the armor works. it also weighs a ton. and you can't take it off because taking it off requires the very safety it prevents you from feeling.
 

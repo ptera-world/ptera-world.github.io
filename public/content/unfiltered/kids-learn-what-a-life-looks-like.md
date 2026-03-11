@@ -26,7 +26,7 @@ you learn that tired is normal. that the person you love most comes home deplete
 
 you learn that money is the thing everything else depends on. you don't understand the specifics yet - [the gate](/unfiltered/every-freedom-is-a-money-problem) is abstract when you're eight - but you understand the weight. you understand that certain conversations make your parents tense. you understand that some things you want are met with a pause that means calculation, not consideration.
 
-you learn that work is the center and everything else orbits it. not because anyone says so. because the schedule says so. because the alarm says so. because the tiredness says so.
+you learn that work is the center and everything else orbits it. nobody says so. the schedule says so. the alarm says so. the tiredness says so.
 
 ## what you don't learn
 
@@ -42,7 +42,7 @@ the template passes down. not through words. through what a day looks like.
 
 your parents didn't choose the template. they inherited it from their parents, who inherited it from theirs. each generation watched the one before and absorbed the shape. sometimes the shape improved - more money, less physical labor, better conditions. but the structure held. alarm, work, tired, home, phone, sleep, alarm.
 
-and when you grow up and enter [the job](/unfiltered/your-best-hours-belong-to-someone-else), it feels natural. not because it is natural. because you've been watching it since before you could walk. the school trained the compliance. the template trained the acceptance. by the time you're sitting at your own desk, answering your own emails, coming home to your own couch - the pattern is so deep it doesn't feel like a pattern. it feels like being an adult.
+and when you grow up and enter [the job](/unfiltered/your-best-hours-belong-to-someone-else), it feels natural. it isn't. you've just been watching it since before you could walk. the school trained the compliance. the template trained the acceptance. by the time you're sitting at your own desk, answering your own emails, coming home to your own couch - the pattern is so deep it doesn't feel like a pattern. it feels like being an adult.
 
 "when I grow up" used to mean possibility. by the time you actually grow up, it means: which version of the template will you run?
 

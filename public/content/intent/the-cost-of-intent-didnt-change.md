@@ -8,7 +8,7 @@ tags: [ai, curation, intent]
 
 Learning to draw takes years. Not because the motor skills are hard - though they are - but because you're training perception. You learn to see negative space, to notice where light wraps around a form, to feel when a composition is off-balance. The investment isn't just time. It's attention, sustained across thousands of hours, reshaping how you process the visual world.
 
-That investment used to be legible. You could look at a portfolio and read the practice behind it. Not because you understood the technique, but because the volume and consistency of good work was itself evidence: someone spent years getting here. The work was a signal, and the signal was expensive to produce, which made it reliable.
+That investment used to be legible. You could look at a portfolio and read the practice behind it. You didn't need to understand the technique. The volume and consistency of good work was itself evidence: someone spent years getting here. The work was a signal, and the signal was expensive to produce, which made it reliable.
 
 ## what happened to the signal
 
@@ -18,7 +18,7 @@ The individual outputs aren't the problem. Some are bad, some are surprisingly g
 
 Volume used to be a proxy for commitment. A portfolio with two hundred pieces in a consistent style meant someone showed up for years. A body of work across multiple projects meant someone built relationships with clients and iterated on feedback. You could use the presence and quantity of work as evidence that a real practice existed behind it.
 
-When the cost of producing that volume drops by orders of magnitude, the proxy breaks. Not because the new work is necessarily worse, but because the signal - "this much work means this much investment" - no longer carries the information it used to carry.
+When the cost of producing that volume drops by orders of magnitude, the proxy breaks. The new work isn't necessarily worse. The signal - "this much work means this much investment" - just no longer carries the information it used to carry.
 
 ## where the asymmetry lands
 
@@ -34,7 +34,7 @@ When the barrier drops, the market doesn't just get more competitive. It gets st
 
 This isn't mainly a story about individual bad actors. One person dishonestly passing off generated work as hand-made is a problem, but it's a containable one. The structural version is harder.
 
-Even if every person using generative tools is honest about it - labels everything, never misrepresents - the market still floods. The signal still degrades. You can't look at a platform full of images and use quantity or presence as evidence of human practice anymore, not because anyone lied, but because the economics changed. The proxy broke at the population level, not at the individual level.
+Even if every person using generative tools is honest about it - labels everything, never misrepresents - the market still floods. The signal still degrades. You can't look at a platform full of images and use quantity or presence as evidence of human practice anymore, nobody lied - the economics changed. The proxy broke at the population level, not at the individual level.
 
 This matters because most of the proposed solutions target individual behavior: watermarking, disclosure requirements, ethical guidelines. Those address the fraud problem. They don't address the signal problem. You can label every AI-generated image on a platform and the working illustrator's portfolio is still competing for attention in a feed where the volume of competent imagery went up by a factor of a thousand.
 

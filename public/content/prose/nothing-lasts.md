@@ -34,7 +34,7 @@ It's not. Nothing is. And the grief of losing someone who's still alive is the s
 
 There's an uncomfortable thing about impermanence: it goes backwards.
 
-You remember the relationship as better than it was. The childhood as simpler. The old neighborhood as safer. The music as more meaningful. Not because you're lying to yourself - because memory is [reconstructive, not archival](/prose/why-did-things-stop-being-personal#are-you-nostalgic-for-something-you-never-had). Every time you remember something, you rebuild it from pieces, and the pieces drift.
+You remember the relationship as better than it was. The childhood as simpler. The old neighborhood as safer. The music as more meaningful. You're not lying to yourself - memory is [reconstructive, not archival](/prose/why-did-things-stop-being-personal#are-you-nostalgic-for-something-you-never-had). Every time you remember something, you rebuild it from pieces, and the pieces drift.
 
 So the thing you're grieving - the perfect version, the golden age, the time when everything was right - may never have existed. The past changes because you change. The memory you have at thirty isn't the same memory you'll have at fifty, even if you never learn anything new about the event. The event itself is impermanent, even after it happened.
 

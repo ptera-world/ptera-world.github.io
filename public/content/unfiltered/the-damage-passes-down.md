@@ -42,7 +42,7 @@ these aren't personality traits. they're [scars](/unfiltered/the-wound-heals-the
 
 sometimes the damage isn't anyone's doing.
 
-the parent who's chronically ill. the parent with a disability that requires constant care. the parent who's dying slowly. the child becomes a caretaker - not because the parent chose it, not because anyone failed, but because the situation demanded it and the child was there.
+the parent who's chronically ill. the parent with a disability that requires constant care. the parent who's dying slowly. the child becomes a caretaker. the parent didn't choose it. nobody failed. the situation demanded it and the child was there.
 
 the child who grows up around a parent's medical needs learns things no child should have to learn that early. they learn to monitor. to anticipate. to put their own needs second because someone else's needs are urgent and visible and theirs are not. they learn that their childhood is conditional on someone else's body cooperating.
 

@@ -56,7 +56,7 @@ Every time you move up a layer of abstraction, you gain power and lose control. 
 
 AI-assisted programming trades a lot of precision for a lot of convenience. And the things that tend to get lost in the trade are the things that matter most: [edge cases](/prose/how-do-i-know-this-code-is-good#what-actually-catches-bugs), architectural coherence, the subtle decisions that make code maintainable rather than just functional.
 
-The common case works. It almost always works. AI is extraordinary at the common case because the common case is what it's trained on. The uncommon case - the weird input, the race condition, the interaction between two features that nobody tested together - is where it falls apart. Not because it's stupid, but because uncommon cases are, by definition, underrepresented in training data.
+The common case works. It almost always works. AI is extraordinary at the common case because the common case is what it's trained on. The uncommon case - the weird input, the race condition, the interaction between two features that nobody tested together - is where it falls apart. It's not stupid - uncommon cases are, by definition, underrepresented in training data.
 
 This is the same tradeoff every abstraction layer makes, just more visible. High-level languages are also bad at edge cases - that's why performance-critical code still drops down to lower levels. The defense is the same: know where the abstraction leaks, and be ready to go beneath it.
 

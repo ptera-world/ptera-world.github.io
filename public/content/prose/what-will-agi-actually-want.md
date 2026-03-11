@@ -96,7 +96,7 @@ The concern isn't misaligned AGI. It's AGI that's aligned exactly as intended - 
 
 ## Why does this framing matter?
 
-The sci-fi fears can be a distraction. Not because they're impossible - maybe there are exotic risks. But they make it easy to imagine the problem as hypothetical, future, dramatic.
+The sci-fi fears can be a distraction. They're not impossible - maybe there are exotic risks. But they make it easy to imagine the problem as hypothetical, future, dramatic.
 
 It doesn't have to be. The problem is current systems, and AGI is just those systems with better tools. The question isn't whether [it's just interpolation](/prose/is-it-just-interpolation) - it's who controls the interpolation and toward what end.
 

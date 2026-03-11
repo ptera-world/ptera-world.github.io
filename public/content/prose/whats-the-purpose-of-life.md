@@ -58,7 +58,7 @@ This is where it gets hard.
 
 Being yourself requires a minimum level of safety. And [safety isn't evenly distributed](/prose/why-are-you-lonely).
 
-Some people can't be themselves at work. Some can't be themselves at home. Some can't be themselves in public. Not because of [perfectionism](/prose/why-is-perfectionism-a-trap) or [fear of failure](/prose/how-do-i-do-things) - because of real consequences. Social rejection. Job loss. Family rupture. Violence.
+Some people can't be themselves at work. Some can't be themselves at home. Some can't be themselves in public. It's not [perfectionism](/prose/why-is-perfectionism-a-trap) or [fear of failure](/prose/how-do-i-do-things) - it's real consequences. Social rejection. Job loss. Family rupture. Violence.
 
 "Be yourself" as advice is tone-deaf when the environment punishes it. The person who's closeted at work isn't failing to be themselves. They're making a survival calculation. The person masking their neurodivergence isn't inauthentic. They're navigating a world that wasn't built for them.
 

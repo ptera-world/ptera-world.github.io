@@ -45,7 +45,7 @@ housing is the gate in its purest form.
 
 rent is converting your labor into someone else's equity. every month, you pay - and at the end of it you own nothing. the landlord's mortgage gets paid. the landlord's asset appreciates. your labor flows through the rent check into someone else's wealth, and you get to stay in the building for another thirty days.
 
-so you buy. except buying means the mortgage - thirty years of future labor, committed in advance, at interest. the house costs what it costs not because of what it's made of but because of where it is, and where it is determines whether you can get to [the job](/unfiltered/your-best-hours-belong-to-someone-else). so the price of shelter is downstream of the price of labor, and the price of labor is downstream of the price of shelter. the loop closes.
+so you buy. except buying means the mortgage - thirty years of future labor, committed in advance, at interest. the house costs what it costs - the materials aren't the price, the location is, and where it is determines whether you can get to [the job](/unfiltered/your-best-hours-belong-to-someone-else). so the price of shelter is downstream of the price of labor, and the price of labor is downstream of the price of shelter. the loop closes.
 
 and shelter isn't optional. you can't opt out of housing the way you can opt out of a streaming service. it's not a subscription you chose. it's a subscription to survival - one that takes 30, 40, 50 percent of your income before you've bought food or paid for the car that gets you to the job that pays the rent. the floor of the pyramid isn't free. it's the most expensive thing you'll ever pay for, every single month, for the rest of your life.
 

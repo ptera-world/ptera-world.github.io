@@ -32,7 +32,7 @@ That's why "but this isn't art" is so convincing. You look at the output and it 
 
 ## Don't you already do this?
 
-You arrange things. Not because they need to be arranged - because you want them a certain way. You pick words carefully. You choose colors. You place objects. You organize your space, your schedule, your sentences.
+You arrange things. They don't need to be arranged - you want them a certain way. You pick words carefully. You choose colors. You place objects. You organize your space, your schedule, your sentences.
 
 Some of that is function. Some of it is preference. And some of it - the part where you could have done it differently and you did it *this* way - is intent. That's the part that's art. You've been doing it your whole life. You just never called it that because the [label](/prose/what-are-labels-anyway) told you art lives somewhere else.
 
@@ -50,7 +50,7 @@ Art's power doesn't come from scarcity. It comes from intent. And intent doesn't
 
 The fear that "everything is art" devalues art is the same fear behind every [label](/prose/what-are-labels-anyway) that excludes: if anyone can be this, then being this means nothing. But that's the label talking. The experience of meaning something - of putting intent into what you make - doesn't need the label to be real.
 
-And it cuts the other way too. Some drawings aren't art. A homework assignment you didn't care about. A painting-by-numbers. They're drawings - they're not art. Not because they're bad. Because there was no intent. The medium doesn't guarantee art any more than it disqualifies it. A painting with no intent is less art than a spreadsheet with intent. That's not a contradiction - it follows from what intent means.
+And it cuts the other way too. Some drawings aren't art. A homework assignment you didn't care about. A painting-by-numbers. They're drawings - they're not art. They're not bad. There was just no intent. The medium doesn't guarantee art any more than it disqualifies it. A painting with no intent is less art than a spreadsheet with intent. That's not a contradiction - it follows from what intent means.
 
 ## Why does this matter?
 

@@ -36,9 +36,9 @@ Each cycle gives you the anticipation hit and almost nothing else. The reward ra
 
 Some people accidentally find their way out. Not because they're smarter or more disciplined. Because they stumbled into an environment where the reward loops align with deep work instead of fighting it.
 
-A musician gets lost in practice for hours. Not because they have superhuman focus - because the activity itself provides the rewards: the sound improving, the passage clicking, the feeling of the instrument responding. The dopamine cycle works *for* them: anticipation of getting the phrase right, followed by actually getting it right. Seek, find, seek, find.
+A musician gets lost in practice for hours. They don't have superhuman focus - the activity itself provides the rewards: the sound improving, the passage clicking, the feeling of the instrument responding. The dopamine cycle works *for* them: anticipation of getting the phrase right, followed by actually getting it right. Seek, find, seek, find.
 
-A programmer falls into hyperfocus building something. Not because they're neurologically different - because the reward loops align. Write code, run it, see if it works. The feedback is immediate, concrete, and earned. Each cycle resolves. The anticipation leads to an actual outcome.
+A programmer falls into hyperfocus building something. Same mechanism - the reward loops align. Write code, run it, see if it works. The feedback is immediate, concrete, and earned. Each cycle resolves. The anticipation leads to an actual outcome.
 
 A painter, a writer in flow, a cook improvising, a mechanic diagnosing a problem - any activity where the rewards come from the work itself, where each cycle of effort produces a real result, where anticipation leads to resolution instead of more anticipation.
 

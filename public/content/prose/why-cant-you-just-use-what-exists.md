@@ -34,7 +34,7 @@ Every tool encodes assumptions. A word processor assumes documents are pages. A 
 
 When you use a tool, you absorb its assumptions. They become your assumptions. You stop noticing them. The [spreadsheet's grid](/prose/why-do-i-reinvent-everything#how-does-popularity-become-a-ratchet) becomes "how data works." The project manager's task list becomes "how work works." The assumptions become load-bearing and invisible at the same time.
 
-Building from scratch is one way to make the assumptions visible again. Not because your version is better. Because building encourages you to confront every decision the original tool made implicitly. "Why is it a grid?" "Why is it linear?" "Why does this come before that?" Most of the time, the answers are good. Sometimes they're not answers at all - just "because the first version did it that way."
+Building from scratch is one way to make the assumptions visible again. Your version won't be better. But building forces you to confront every decision the original tool made implicitly. "Why is it a grid?" "Why is it linear?" "Why does this come before that?" Most of the time, the answers are good. Sometimes they're not answers at all - just "because the first version did it that way."
 
 Those non-answers are where [the interesting work lives](/prose/why-do-i-reinvent-everything#what-if).
 
@@ -56,7 +56,7 @@ Using someone else's tool means your output has their fingerprints on it, not yo
 
 Building your own means the choices are yours. Even if the result is worse by every objective measure, it's *yours* in a way that using someone else's work can never be. The shape reflects your thinking. The architecture embodies your understanding. The limitations are your limitations, not inherited ones.
 
-This sounds like ego. And maybe it partly is. But it's also the mechanism by which [new ideas enter the world](/prose/there-used-to-be-two-kinds-of-programmer#what-got-lost). A lot of genuinely new tools started as someone refusing to use what existed - not because they thought they could do better, but because they wanted to think differently about the problem. The personal motivation and the creative output are tangled up in the same impulse.
+This sounds like ego. And maybe it partly is. But it's also the mechanism by which [new ideas enter the world](/prose/there-used-to-be-two-kinds-of-programmer#what-got-lost). A lot of genuinely new tools started as someone refusing to use what existed - they didn't think they could do better, they wanted to think differently about the problem. The personal motivation and the creative output are tangled up in the same impulse.
 
 ## When should you actually just use what exists?
 
@@ -74,11 +74,11 @@ When the friction is real. When using the existing tool requires you to think ab
 
 When the understanding matters more than the output. When you're trying to learn something deep about a domain and the only way to learn it is to [build from the ground up](/prose/why-do-i-reinvent-everything). When the point isn't the artifact but the knowledge that comes from making it.
 
-When you have a question. "What if this were different?" is a valid reason to rebuild. Not because the answer will be useful. Because [the question itself is valuable](/prose/are-we-building-toward-something#are-we-optimizing-for-interesting), and you can't answer it without building the alternative.
+When you have a question. "What if this were different?" is a valid reason to rebuild. The answer might not be useful. But [the question itself is valuable](/prose/are-we-building-toward-something#are-we-optimizing-for-interesting), and you can't answer it without building the alternative.
 
 The NIH instinct isn't always right. But it's not always wrong either. And the people who never feel it - who always use what exists, who never rebuild, who never ask "but what if?" - are the people who inherit every assumption without examining any of them.
 
-Sometimes the wheel needs reinventing. Not because it's broken. Because [you don't know why it's round until you try making it square](/prose/why-do-i-reinvent-everything#how-does-popularity-become-a-ratchet).
+Sometimes the wheel needs reinventing. It's not broken. But [you don't know why it's round until you try making it square](/prose/why-do-i-reinvent-everything#how-does-popularity-become-a-ratchet).
 
 ## See also
 

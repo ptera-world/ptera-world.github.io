@@ -52,7 +52,7 @@ Willpower is a finite resource that depletes with use. If your strategy for chan
 
 What seems to work is changing the defaults. Making the new behavior easier than the old one. Restructuring your environment so the path of least resistance leads somewhere better.
 
-This is why [software matters](/prose/whats-actually-wrong). Software is environment. The tools you use, the interfaces you interact with, the friction in your daily life - these shape behavior more than most decisions you make. A notification that pulls you back to scrolling is stronger than your intention to read a book. Not because you're weak. Because [design tends to win over willpower](/prose/why-is-software-hard).
+This is why [software matters](/prose/whats-actually-wrong). Software is environment. The tools you use, the interfaces you interact with, the friction in your daily life - these shape behavior more than most decisions you make. A notification that pulls you back to scrolling is stronger than your intention to read a book. You're not weak - [design tends to win over willpower](/prose/why-is-software-hard).
 
 ## Why do people stay in patterns they hate?
 

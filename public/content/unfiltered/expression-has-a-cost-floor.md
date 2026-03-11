@@ -6,7 +6,7 @@ tags: [social]
 
 # Expression has a cost floor.
 
-there's a song by stephen called "crossfire." the emotional register the essays on the main site can't reach. not because the author lacks feeling but because the voice contract prohibits it.
+there's a song by stephen called "crossfire." the emotional register the essays on the main site can't reach. the author doesn't lack feeling - the voice contract prohibits it.
 
 the bridge: "can I trust what I'm given / when faith still needs a gun / whose ammunition / justifies the wrong?" that's the same question as [can you tell when it's wrong](/prose/can-you-tell-when-its-wrong) - evaluating a system using the system's own criteria, from the backseat, with no visibility on who set the spec. except the song doesn't analyze it. the song just *has* it. three minutes. reaches you in the chest before you can intellectualize it.
 

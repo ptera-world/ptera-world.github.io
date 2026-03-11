@@ -78,7 +78,7 @@ The pattern: financial independence. The money problem is already solved. They c
 
 And the result is some of the best software that exists.
 
-Which points at something uncomfortable. Good software is gated behind wealth. Not because it costs money to build - because it costs *time*, and time is only free if you've already solved money. The intersection of skills is necessary. But it's not sufficient. You also need the freedom to sit at that intersection full-time without starving.
+Which points at something uncomfortable. Good software is gated behind wealth. It doesn't cost money to build - it costs *time*, and time is only free if you've already solved money. The intersection of skills is necessary. But it's not sufficient. You also need the freedom to sit at that intersection full-time without starving.
 
 Everyone else who makes good software is making a tradeoff they probably shouldn't have to. Burning free time they could be spending on rest, family, health. It's the same intersection, the same intent, the same quality - paid for with something they can't easily afford.
 
@@ -92,7 +92,7 @@ But post-scarcity probably won't happen soon. Not because it can't. Because the 
 
 The companies building the tools that could free everyone from work are grinding their own employees harder than ever. Building the post-scarcity future on pre-scarcity labor practices. The capacity exists. The will doesn't.
 
-So good software stays rare. Not because of skill. Not because of knowledge. Not because of tooling. Because the freedom to make it is a luxury, and luxuries aren't distributed by merit.
+So good software stays rare. The skill is there. The knowledge is there. The tooling is there. But the freedom to make it is a luxury, and luxuries aren't distributed by merit.
 
 ## What if I don't want to be special?
 
@@ -132,7 +132,7 @@ Not in dollars. In something less renewable.
 
 Good software costs someone's evenings. Their weekends. Their health, sometimes. Their years. The currency isn't money - it's the irreplaceable kind. Time. Energy. The parts of a life you don't get back.
 
-That's why it's rare. Not because it's hard. Not because the knowledge is missing. Not because the tools aren't there. Because the price is too high for almost anyone to pay. And the people who pay it don't get reimbursed.
+That's why it's rare. It's not hard. The knowledge isn't missing. The tools are there. The price is just too high for almost anyone to pay. And the people who pay it don't get reimbursed.
 
 Money is renewable. Time isn't. Good software might be the most expensive kind of thing there is, measured in the only currency that matters.
 

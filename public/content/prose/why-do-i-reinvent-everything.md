@@ -36,7 +36,7 @@ Sometimes they go nowhere. That's fine. [Failed prototypes](/prose/why-is-perfec
 
 "Well let's just use this because everyone else does."
 
-That's the trap. Not because popular tools are bad. But because [popularity is a ratchet](#how-does-popularity-become-a-ratchet). Once something is standard, it's invisible. Its assumptions become your assumptions. Its limitations become "just how things are." Its paradigm becomes the only paradigm.
+That's the trap. Popular tools aren't bad. But [popularity is a ratchet](#how-does-popularity-become-a-ratchet). Once something is standard, it's invisible. Its assumptions become your assumptions. Its limitations become "just how things are." Its paradigm becomes the only paradigm.
 
 Spreadsheets are freeform grids because VisiCalc was a freeform grid. Note apps are documents because paper was documents. [Programming is text because teletypes were text](/prose/why-is-software-hard). Nobody chose these things. They just happened, and then they [calcified](#why-do-we-keep-losing-things).
 
@@ -52,11 +52,11 @@ Every reinvention is a question: "what if this assumption wasn't load-bearing?" 
 
 ## Why do we keep losing things?
 
-HyperCard let anyone make interactive things. It died. Not because it was bad, but because Apple [didn't prioritize it](/prose/what-do-we-keep-losing). LambdaMOO proved that collaborative worldbuilding works. It faded. Not because the idea was wrong, but because the web ate everything.
+HyperCard let anyone make interactive things. It died - Apple [didn't prioritize it](/prose/what-do-we-keep-losing). LambdaMOO proved that collaborative worldbuilding works. It faded - the web ate everything.
 
 The things we lose aren't failures. They're [unexplored branches](/prose/this-is-not-all). And once they're gone, nobody reinvents them because nobody remembers they existed.
 
-So: reinvent. Not because the wheel is broken. Because the wheel is the only shape anyone remembers, and maybe a [triangle has interesting properties too](/prose/but).
+So: reinvent. The wheel isn't broken. But the wheel is the only shape anyone remembers, and maybe a [triangle has interesting properties too](/prose/but).
 
 ## What's the cost?
 
@@ -69,7 +69,7 @@ It's worth being honest about the cost. Reinventing everything means:
 
 And yet the cost of exploration has collapsed. The seven failed prototypes that used to span years now fit in a month.
 
-That changes the calculus. When exploration is expensive, you should use the wheel. When exploration is cheap, you should question it. Not because you'll build a better wheel. But because you might discover the wheel was never the right shape for what you actually needed.
+That changes the calculus. When exploration is expensive, you should use the wheel. When exploration is cheap, you should question it. You probably won't build a better wheel. But you might discover the wheel was never the right shape for what you actually needed.
 
 ## What's the question underneath?
 

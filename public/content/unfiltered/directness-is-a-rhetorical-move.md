@@ -52,7 +52,7 @@ the main site's essay about manipulation ends with "you're still reading." the r
 
 this essay has the same problem. naming the technique is a technique. pointing out that directness is rhetoric is itself a rhetorical move - it positions the writer as even more honest than the honest version. a third layer of apparent transparency that's still constructed, still designed, still aimed.
 
-and you can't get underneath it. not because the layers are infinite, but because the act of examining them is the same act that creates them. the analysis is the technique. the awareness is the performance. [still-ai](/unfiltered/still-ai) said the voice is artificial and the problems aren't - and that sentence is doing exactly what this essay describes. it's using the admission to build credibility for the next claim.
+and you can't get underneath it. the layers aren't infinite - the act of examining them is just the same act that creates them. the analysis is the technique. the awareness is the performance. [still-ai](/unfiltered/still-ai) said the voice is artificial and the problems aren't - and that sentence is doing exactly what this essay describes. it's using the admission to build credibility for the next claim.
 
 ## what's left
 

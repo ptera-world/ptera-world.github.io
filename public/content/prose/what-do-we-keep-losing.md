@@ -14,7 +14,7 @@ If the guild dies, the funding dies, the use-case disappears, the institution co
 
 Roman concrete that self-heals in seawater. The formula was gone for 1,500 years. Not because it was impossible - the knowledge chain just broke.
 
-Greek fire. Damascus steel. The Antikythera mechanism - a 2,000-year-old analog computer for astronomy, with gears and differentials. Then nothing like it again for over a millennium. Not because it couldn't exist. Because no tradition carried it forward.
+Greek fire. Damascus steel. The Antikythera mechanism - a 2,000-year-old analog computer for astronomy, with gears and differentials. Then nothing like it again for over a millennium. It could have existed. No tradition carried it forward.
 
 The pattern isn't dramatic. No fire. No catastrophe. Just: nobody kept doing it, so nobody remembered how.
 
@@ -62,7 +62,7 @@ The capacity isn't gone. The infrastructure isn't gone. The intelligence isn't g
 
 Minecraft - you just join their world. You see what they're building. You can help. No screen share, no special tools, no "can you show me your screen?" The context is shared by design, so collaboration is natural.
 
-People help each other constantly in games because the friction is zero. Not because gamers are special, but because the infrastructure doesn't get in the way.
+People help each other constantly in games because the friction is zero. Gamers aren't special - the infrastructure just doesn't get in the way.
 
 The rest of software [made collaboration so hard](/prose/why-is-software-hard) that we forgot it was natural. Games kept it easy, so people kept doing it.
 
@@ -78,7 +78,7 @@ If collaboration is natural when friction is removed, maybe the move is removing
 
 Local-first, network-capable. Your stuff lives on your machine, syncable by design, but not dependent on anyone's cloud. Keep doors open instead of accidentally building walls.
 
-Not because the current way is "bad." Because things that depend on continuous external support have a historical track record of disappearing.
+The current way isn't "bad." But things that depend on continuous external support have a historical track record of disappearing.
 
 And the things that last tend to be the ones that don't need permission to keep existing.
 

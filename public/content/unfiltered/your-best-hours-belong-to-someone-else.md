@@ -22,7 +22,7 @@ and the eight hours aren't even yours while you're in them. they belong to someo
 
 [the grind](/unfiltered/the-system-filled-every-gap-you-had) talks about the gap between surviving and collapsing - the space where you're supposed to live. the job is why the gap is empty.
 
-not because you're lazy. because you're spent. the thing that required your best attention, your most alert hours, your most creative thinking - that was the job. what's left for you is the residue. the part of the day where you're running on fumes.
+you're not lazy. you're spent. the thing that required your best attention, your most alert hours, your most creative thinking - that was the job. what's left for you is the residue. the part of the day where you're running on fumes.
 
 this is by design, not by accident. if the job got your second-best hours and your personal life got your best, you'd eventually notice the imbalance and leave. the job needs your best to function. so it takes your best. and what comes home is whatever survives.
 
@@ -52,7 +52,7 @@ the framing converts a structural problem into a personal one. every time.
 
 most people never ask: is this how it has to be?
 
-not because they're not smart enough. because asking the question is expensive. if the answer is "no, there are other ways to organize labor and survival" - then what? you still have rent due friday. the question doesn't change the rent. it just makes the rent feel worse.
+they're smart enough. asking the question is just expensive. if the answer is "no, there are other ways to organize labor and survival" - then what? you still have rent due friday. the question doesn't change the rent. it just makes the rent feel worse.
 
 so you don't ask. you go to work. you do the thing. you come home. you scroll. you sleep. you do it again. and the question - the one about whether your life should mostly consist of doing someone else's thing - sits quietly in a room you don't visit.
 

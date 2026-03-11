@@ -40,7 +40,7 @@ and people can lie. not always deliberately - sometimes people lie to themselves
 
 but friend groups have their own dynamics. hierarchies that no one named. the person whose feelings take up the most space. the person who's always fine so everyone assumes they are. the unspoken rules about what can be said and what gets met with awkward silence.
 
-and friend groups are fragile in a way families aren't. the friend who can't hold your hardest truth doesn't have a biological obligation to stay. they can drift. they can pull back. they can be overwhelmed by what you showed them and not have the tools to say so, and instead just... be less available. the friendship fades not because of conflict but because you needed the space to be safe and it wasn't, and neither of you knew how to say that.
+and friend groups are fragile in a way families aren't. the friend who can't hold your hardest truth doesn't have a biological obligation to stay. they can drift. they can pull back. they can be overwhelmed by what you showed them and not have the tools to say so, and instead just... be less available. the friendship fades - no conflict, just that you needed the space to be safe and it wasn't, and neither of you knew how to say that.
 
 the friend you can call at 2am - everyone says you need one. how many people actually have one? not someone who'd pick up. someone who'd pick up and not make you feel worse for calling.
 

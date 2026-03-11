@@ -50,7 +50,7 @@ and the feed follows you into the room. the group chat where someone shares a ta
 
 the feed doesn't just show you content. it moves you.
 
-you watch one video. the algorithm offers another, slightly more intense. you engage with one community. the algorithm suggests another, slightly more extreme. not because it wants to radicalize you. because each step increased engagement, and engagement is the metric. the pipeline isn't designed. it's *emerged*. it's what optimization produces when the metric is attention and the supply of content is infinite.
+you watch one video. the algorithm offers another, slightly more intense. you engage with one community. the algorithm suggests another, slightly more extreme. it doesn't want to radicalize you. each step just increased engagement, and engagement is the metric. the pipeline isn't designed. it's *emerged*. it's what optimization produces when the metric is attention and the supply of content is infinite.
 
 [the loop](/unfiltered/the-belief-feeds-on-its-own-resistance) describes belief systems that feed on their own resistance. the algorithm is the loop's best friend. the person who's searching for meaning - who's depleted by [the grind](/unfiltered/the-system-filled-every-gap-you-had), carrying [the shelf](/unfiltered/the-parts-of-yourself-you-put-away), looking for answers - gets served content that provides certainty, community, an explanation for why everything hurts. one click at a time, each step feeling like discovery, each step closing the walls a little tighter.
 
@@ -70,7 +70,7 @@ it replaces rest with [coping](/unfiltered/the-system-broke-you-then-sold-the-fi
 
 you didn't choose the algorithm. you chose to open the app. the algorithm chose everything after that - what you see, in what order, with what framing, next to what context. the choices that shape your perception of the world were made by a system optimizing for a metric that has nothing to do with your wellbeing.
 
-and the system has more data about you than you have about yourself. it knows what you linger on, what you skip, what time of day you're most vulnerable, what emotional state makes you engage most. it knows your [scars](/unfiltered/the-wound-heals-the-flinch-doesnt) better than your therapist does - not because it understands them, but because it's measured what they respond to.
+and the system has more data about you than you have about yourself. it knows what you linger on, what you skip, what time of day you're most vulnerable, what emotional state makes you engage most. it knows your [scars](/unfiltered/the-wound-heals-the-flinch-doesnt) better than your therapist does - it doesn't understand them, it's just measured what they respond to.
 
 you're making decisions in a world the algorithm curated for you. your opinions, your fears, your sense of what's normal and what's threatening - all of it shaped by a feed that was shaped by a metric that was shaped by a revenue model. the person you are after a decade of algorithmic curation is not the person you would have been without it. and you can't know the difference, because you only have the one version.
 

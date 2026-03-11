@@ -42,7 +42,7 @@ Here's the practical difference between "vibe coded garbage" and "AI-assisted so
 
 **What actually works:** design the architecture, define the interfaces and constraints, let the AI fill in implementations, the compiler rejects the broken ones, tests verify the contracts, edge cases break the hidden assumptions, lints catch the smells, you review the structure, you use it and it either survives or you fix it.
 
-Every step is a filter. Code passes through the compiler, through the test suite, through adversarial inputs, through the linter, through your structural review, through actual usage. What survives that gauntlet is good code. Not because the AI is perfect, but because imperfection gets caught.
+Every step is a filter. Code passes through the compiler, through the test suite, through adversarial inputs, through the linter, through your structural review, through actual usage. What survives that gauntlet is good code. The AI isn't perfect - imperfection just gets caught.
 
 This is exactly the same gauntlet that human-written code passes through. The only difference is who typed it.
 

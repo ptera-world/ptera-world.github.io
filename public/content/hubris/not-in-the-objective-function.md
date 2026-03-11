@@ -42,7 +42,7 @@ the difficulty of separating "I failed" from "the structure failed me" is that y
 
 and the interpretation that's most available - the one that's been packaged and handed to you for the entirety of your life - is that outcomes reflect choices. that where you end up is a function of what you put in. this is partly true. it's true enough to feel true. and it routes the discomfort inward, which is useful for a structure that would rather not be named as the variable.
 
-the version that's harder to reach - not because it requires unusual intelligence, but because you'd need time and space that the structure doesn't leave you - is that some of what happened wasn't about you at all. it was about which direction the system moves wealth, who the rules were written to protect, what gets scored as success and for whom.
+the version that's harder to reach - it doesn't require unusual intelligence, you'd just need time and space that the structure doesn't leave you - is that some of what happened wasn't about you at all. it was about which direction the system moves wealth, who the rules were written to protect, what gets scored as success and for whom.
 
 you being a cost to be minimized was never personal. you were just not in the part of the model where people are considered.
 

@@ -38,9 +38,9 @@ this is the difference between a system that can be questioned and one that can'
 
 the loop doesn't just keep you in. it separates you from everyone who isn't.
 
-it starts small. the language changes - you learn terms, frameworks, ways of seeing that the people around you don't share. conversations with people outside the system become harder. not because the topics are different, but because the lens is. you see the world through a frame they haven't been given, and the gap between your frame and theirs feels more and more like proof that your frame is necessary.
+it starts small. the language changes - you learn terms, frameworks, ways of seeing that the people around you don't share. conversations with people outside the system become harder. the topics aren't different - the lens is. you see the world through a frame they haven't been given, and the gap between your frame and theirs feels more and more like proof that your frame is necessary.
 
-then the relationships shift. friends drift. family becomes complicated. not because anyone is hostile - because the system's priorities take precedence, gradually, over everything else. the meetings, the practices, the community obligations fill the hours that other relationships used to fill. [the grind](/unfiltered/the-system-filled-every-gap-you-had) of devotion replaces the grind of labor, and the result is the same: no time left for anything outside the structure.
+then the relationships shift. friends drift. family becomes complicated. nobody's hostile - the system's priorities just take precedence, gradually, over everything else. the meetings, the practices, the community obligations fill the hours that other relationships used to fill. [the grind](/unfiltered/the-system-filled-every-gap-you-had) of devotion replaces the grind of labor, and the result is the same: no time left for anything outside the structure.
 
 and the alienation itself becomes a feature. the isolation is reframed as consecration. you're separate because you're different. the loneliness is the cost of the truth. the people who left your life - they couldn't handle the commitment. the loss proves the value of what remains.
 
@@ -62,7 +62,7 @@ the exit is walking out of a burning building into a world where nobody knows yo
 
 and the [scars](/unfiltered/the-wound-heals-the-flinch-doesnt) from the loop are specific. the inability to trust your own judgment - because the system spent years overriding it. the guilt that activates when you do something the system prohibited - even years later, even when you know better. the loneliness of having alienated everyone who wasn't inside, and now being outside with no one.
 
-rebuilding after the loop is rebuilding from zero. not because you lost everything. because the loop replaced everything with itself, and when you take it out, what's left is the shape of its absence.
+rebuilding after the loop is rebuilding from zero. the loop replaced everything with itself, and when you take it out, what's left is the shape of its absence.
 
 ## the mechanism, not the belief
 

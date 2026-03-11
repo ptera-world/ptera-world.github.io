@@ -18,7 +18,7 @@ A construction site has scaffolding, exposed wiring, unfinished walls. You see t
 
 A building has rooms. You walk through a door and you're somewhere. You don't think about the wiring. You don't see the framing. You respond to the space, not the structure.
 
-Most creative work gets stuck at the construction site. Not because it can't become a building. Because the builder can't [stop seeing the scaffolding](/prose/why-do-i-build-tools#whats-the-difference-between-architect-mode-and-inhabit-mode).
+Most creative work gets stuck at the construction site. It could become a building. The builder just can't [stop seeing the scaffolding](/prose/why-do-i-build-tools#whats-the-difference-between-architect-mode-and-inhabit-mode).
 
 ## Why does building feel safer?
 

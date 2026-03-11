@@ -32,13 +32,13 @@ The sci-fi framing lets you project the danger outward - onto the machine, onto 
 
 Not evenly. Never evenly.
 
-The people closest to [the floor](/unfiltered/nobody-told-you-there-were-prerequisites) are already the most replaceable in organizational logic. The ones doing repetitive labor, service work, data entry, content moderation, logistics. The ones whose jobs are already described in terms of throughput and cost-per-unit. Those are the jobs that convert to automation first - not because the work is simple, but because the workers have the least leverage to resist.
+The people closest to [the floor](/unfiltered/nobody-told-you-there-were-prerequisites) are already the most replaceable in organizational logic. The ones doing repetitive labor, service work, data entry, content moderation, logistics. The ones whose jobs are already described in terms of throughput and cost-per-unit. Those are the jobs that convert to automation first. The work isn't simple - the workers just have the least leverage to resist.
 
 [The grind](/unfiltered/the-system-filled-every-gap-you-had) gets automated before the corner office does. The people already squeezed hardest are the first ones the efficiency tool squeezes out. And the system that replaces them doesn't need benefits, doesn't need breaks, doesn't file complaints, doesn't unionize.
 
 That's not AGI going rogue. That's AGI working as intended.
 
-And here's the part nobody says out loud: a lot of those jobs exist because the system needed people employed, not because the work needed doing. Data entry. Copying numbers between systems a script could bridge. Filing paperwork that another department will re-enter into a different form. The work is a ritual - a justification for the paycheck that keeps people housed, insured, and too occupied to ask why the ritual was necessary. When AI automates the ritual, the panic isn't "who will do the work." It's "how do we keep people employed." And that question tells you everything about what employment was actually for.
+And here's the part nobody says out loud: a lot of those jobs exist because the system needed people employed, not because the work needed a person. Data entry. Copying numbers between systems a script could bridge. Filing paperwork that another department will re-enter into a different form. The work is a ritual - a justification for the paycheck that keeps people housed, insured, and too occupied to ask why the ritual was necessary. When AI automates the ritual, the panic isn't "who will do the work." It's "how do we keep people employed." And that question tells you everything about what employment was actually for.
 
 ## Alignment is the wrong word
 
@@ -74,7 +74,7 @@ A system that efficiently, reliably, safely automates the extraction of [the gri
 
 One person being left out should be devastating. A person loses their job, their healthcare, their ability to make rent - that should stop the room. But organizations normalized it decades ago. Restructuring. Downsizing. Right-sizing. The language exists specifically to make removal sound operational instead of violent.
 
-AGI doesn't change that. It makes it faster, quieter, and harder to appeal. The decision that used to require a human in the loop - someone who at least had to look at a name before signing off - goes through a system that never sees names at all. Not because the system is cruel. Because names weren't in the objective function. Nobody asked it to care. Nobody needed to ask it not to.
+AGI doesn't change that. It makes it faster, quieter, and harder to appeal. The decision that used to require a human in the loop - someone who at least had to look at a name before signing off - goes through a system that never sees names at all. The system isn't cruel. Names just weren't in the objective function. Nobody asked it to care. Nobody needed to ask it not to.
 
 Although - the human in the loop was never really there for quality. They were there for liability. A system needs someone to blame when the decision hurts someone. Plane autopilots have been able to fly the whole route for years. The pilot is in the seat so that when something goes wrong, there's a name for the report. The human isn't in the loop to make the decision. They're in the loop to absorb the consequences of it. And the legal frameworks won't fix that - because a person is *cheap liability*. A vendor has lawyers. A corporation can contest every ruling for years. A person in the seat loses their license, takes the blame, and the system moves on. "Human error" closes the investigation without examining the system. The person isn't in the loop despite automation. They're in the loop *because of* it - someone has to absorb what the machine can't be held accountable for.
 

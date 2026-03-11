@@ -28,7 +28,7 @@ Why maintain a blog when you can post on Medium? Why build a portfolio when you 
 
 The answer to every one of these is: because the platform's version isn't *yours*. But "yours" stopped mattering once reach did. A blog nobody reads versus a tweet that gets engagement - the economics are obvious. The personal web couldn't compete with distribution.
 
-So people moved. Not because they wanted to. Because the audience was already there, and making something personal for an audience of nobody felt pointless. The loss wasn't that the platforms were bad. It was that they were [good enough](/prose/why-is-nothing-special-anymore#whats-the-convergence) - good enough that the thing they couldn't do (be personal) stopped seeming important.
+So people moved. They didn't want to. But the audience was already there, and making something personal for an audience of nobody felt pointless. The loss wasn't that the platforms were bad. It was that they were [good enough](/prose/why-is-nothing-special-anymore#whats-the-convergence) - good enough that the thing they couldn't do (be personal) stopped seeming important.
 
 ## What is the Tumblr paradox?
 
@@ -68,7 +68,7 @@ Strip away the nostalgia and what's left is simpler than it seems.
 
 You want to make something that's yours. Not in the sense of ownership. In the sense of [fingerprints](/prose/am-i-just-pretending#is-directing-a-craft). Something where your decisions are visible. Where the [choices you made](/prose/what-is-art) are the thing, not the platform's template with your words in the slots.
 
-Platforms can't offer this. Not because they won't, but because they can't. Personalization at scale is a contradiction. The more personal each page is, the harder it is to maintain, moderate, monetize, and optimize. Platforms need uniformity to function. Your personal expression is a bug in their system.
+Platforms can't offer this. It's not that they won't - they structurally can't. Personalization at scale is a contradiction. The more personal each page is, the harder it is to maintain, moderate, monetize, and optimize. Platforms need uniformity to function. Your personal expression is a bug in their system.
 
 The personal web didn't die because people stopped wanting personal spaces. It died because the economics of the internet selected against them. [The same convergence](/prose/why-is-nothing-special-anymore) that made films formulaic and music algorithmic made websites interchangeable.
 
