@@ -24,16 +24,19 @@
 The graph should be the primary way to experience the content. Essays are one format; fragments (short, graph-native thoughts) are another. The reading experience is spatial exploration, not linear consumption.
 
 ### Runtime behavior (all configurable, opinionated defaults)
-- [ ] **Dynamic layout on focus** — force layout runs continuously via rAF, reorganizes neighborhood around focused node. Focused node pins in place, neighbors pull closer, distant nodes drift. Already have `runLayout` in `layout.ts` and filter-triggered force layout; extend to focus-triggered
-- [ ] **Neighborhood visibility** — only show local N-hop neighborhood around focus. Nodes beyond range fade/disappear. Fixes mobile UX (rendering cost proportional to what you're looking at)
-- [ ] **Text on canvas** — node descriptions render directly on canvas at appropriate zoom level, not behind panel clicks
-- [ ] **All behaviors configurable** — `src/settings.ts` created. Dynamic layout, neighborhood focus, edge rendering, focus highlighting, card intermediate state, node growth — each toggleable via URL params. Everything in `this-site-is-designed.md` can be disabled
+- [x] **Dynamic layout on focus** — `src/focus-layout.ts`: animated force simulation via rAF, 2-hop neighborhood, focused node pins. Wired into input.ts via onFocusChange callback
+- [x] **Neighborhood visibility** — `data-neighborhood="distant"` fades non-neighbors. Enabled via `?neighborhoodFocus=true`
+- [x] **Text on canvas** — CSS for readable descriptions at near zoom. Enabled via `?textOnCanvas=true`. Currently uses frontmatter descriptions; richer content when fragments grow
+- [x] **All behaviors configurable** — `src/settings.ts` with URL param loading. Settings: dynamicLayout, neighborhoodFocus, focusHighlight, edgesVisible, cardEnabled, nodeGrowth, textOnCanvas
 - [ ] **Hyperlink nodes** — nodes that are just links to other entrypoints (e.g. `/` ↔ `/prose/` ↔ `/unfiltered/`), enabling cross-collection navigation on the graph itself
+- [ ] **Visual testing** — the dynamic layout + neighborhood features are wired but need real-world testing and parameter tuning
 
 ### Content
-- [ ] **Fragment content type** — new first-class content alongside essays. Short, graph-native, written as fragments from the start. Edges are the scaffolding, not essay structure
+- [x] **Fragment content type** — `public/content/cluster/fragments.md` + 33 fragments in `public/content/fragments/`. Dense cross-links. Zero code changes needed.
+- [x] **Fragment extraction** — 30 atomic ideas extracted from essay redundancy (documented in FRAGMENTS.md)
 - [ ] **Essays as secondary format** — still linkable, still refined, but secondary to the graph. Could eventually be assembled dynamically from fragments based on view history (stored in query params)
-- [ ] **Essays could move to a separate entrypoint** — freeing the main graph to be fragment-native
+- [ ] **`/prose/` entrypoint** — move essays to their own entrypoint, freeing the default graph to be fragment-native
+- [ ] **New fragments** — write natively as fragments, not distilled from essays. Content that's graph-shaped from the start
 
 ### Ongoing
 - [ ] **Adversarial AI writing audits** — continue "prove this is AI-written" audits (like TELLS.md). Lower priority if essays become secondary or move to another entrypoint, but still valuable for the essay format
