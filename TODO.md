@@ -37,7 +37,7 @@ The graph should be the primary way to experience the content. Essays are one fo
 - [ ] **Essays as secondary format** — still linkable, still refined, but secondary to the graph. Could eventually be assembled dynamically from fragments based on view history (stored in query params)
 - [x] **`/prose/` entrypoint** — essays at their own entrypoint (`/prose/`), freeing the default graph to be fragment-native
 - [x] **New fragments** — 8 native fragments (explaining-changes-the-thing, maintenance-is-invisible, defaults-are-opinions, first-version-is-the-tool, thing-you-keep-circling, measuring-changes-what-gets-made, repetition-isnt-redundancy, legibility-is-the-bottleneck)
-- [ ] **Question fragments** — fragments that are just questions with no answer, only edges to relevant nodes. The reader answers by exploring the neighborhood. Pure graph-native content
+- [x] **Question fragments** — 8 question fragments with no body text, only edges. The neighborhood is the answer
 - [ ] **More native fragments** — continue writing graph-shaped content
 
 ### Ongoing
