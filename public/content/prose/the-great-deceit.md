@@ -7,44 +7,28 @@ cluster: meta-essays
 
 # The great deceit
 
-Every word on this site was written by an AI. Every essay. Every line of code. The spatial graph you're navigating, the zoom system, the markdown parser, the layout logic - all of it. And not just this site: every project listed here, hundreds of thousands of lines of code across dozens of repositories, written by a language model in conversation with a human who had ideas, said a few sentences at a time, and said "no" until it felt right.
+This site is AI-written. The essays, the code, the graph you're navigating. A human had ideas, talked them through with one model over long conversations, fed those chatlogs to a different model to distill into something coherent, and said "no" until it felt right. Not mentioning that felt like the actual deceit - so here it is.
 
-[Something may have shifted](#did-something-just-shift) when you read that. It raises a question about [what changes](#what-changes) when you know. The [discomfort](#whats-the-discomfort-about) has several threads. And [none of this is resolved](#is-any-of-this-resolved).
+If you got here after reading other essays, you were probably tracking two things without thinking about it: whether the ideas were interesting, and who was behind them. Most people park the second one while the first is working. Now it's in front of you.
 
-## Did something just shift?
+## What the process actually looks like
 
-Maybe you read the other essays and thought "this person thinks clearly" or "I relate to this." Maybe you didn't think about authorship at all. Now you know, and something feels different.
+The ideas in these essays came from a human having conversations with an AI - about [how people get stuck](/prose/how-do-i-do-things), about [what systems optimize for](/prose/what-will-agi-actually-want), about [the labels we live inside](/prose/what-are-labels-anyway). Hours of back and forth, most of it discarded. Then a different model turning that into something readable, and the human cutting whatever didn't land.
 
-The ideas haven't changed. The words are identical. The code still runs. But something moved.
+Is that ["AI-written"](/prose/what-are-labels-anyway)? Is it "human-written"? The label [flattens](/prose/why-are-we-compressing-things) all of that into a single word. Probably it should. The tool did the writing regardless of who directed it.
 
-What is that? Is it betrayal? Disappointment? Disgust? Curiosity? Relief? Some mix you can't name?
+## The discomfort has a few threads
 
-Whatever it is, it's already telling you something about what you assumed.
+**Deception.** Someone passing off AI text as their own to seem more capable than they are. Misrepresentation is a problem regardless of the tool. Using AI to express your ideas and pretending you wrote something you didn't think are different things, but they can look identical from outside.
 
-## What changes?
-
-Reading has always worked a certain way. Words appear, a person is imagined behind them, ideas get evaluated partly through that imagined person. That's not a flaw - it's how humans have connected through text for as long as there's been writing.
-
-Now that assumption can be wrong. The voice you imagined might be a language model. The person who "experienced" the things described might not be a person at all. The ideas in these essays came from a human having long conversations with one AI - about [how people get stuck](/prose/how-do-i-do-things), about [what systems optimize for](/prose/what-will-agi-actually-want), about [the labels we live inside](/prose/what-are-labels-anyway) - and then feeding those chatlogs to a different AI to distill into something coherent.
-
-Is that ["AI-written"](/prose/what-are-labels-anyway)? Is it "human-written"? The label [flattens](/prose/why-are-we-compressing-things) all of that into a single word. Maybe it should. Maybe the tool doing the writing matters, regardless of who directed it. Maybe it doesn't. It's hard to say.
-
-## What's the discomfort about?
-
-There are a few threads, and they're different:
-
-**Deception.** Someone passing off AI text as their own to seem more capable than they are. Misrepresentation is a problem regardless of the tool. But it's worth asking - is using AI to express your ideas the same as pretending you wrote something you didn't think?
-
-**Emptiness.** The worry that AI text is hollow. That it doesn't come from experience, so it can't contain truth. If an AI writes "perfectionism is fear dressed as quality control" - is that true? It didn't experience perfectionism. It assembled that sentence from patterns. But the human who kept it recognized it as true from their own experience. It's unclear whether that changes anything.
+**Emptiness.** The worry that AI text is hollow. That it doesn't come from experience, so it can't contain truth. If an AI writes "perfectionism is fear dressed as quality control" - it didn't experience perfectionism. It assembled that sentence from patterns. But the human who kept it recognized it as true from their own experience.
 
 **Flooding.** AI makes it trivial to produce volume. The worry isn't that AI text is bad - it's that there's too much of it, and filtering becomes impossible.
 
 **Displacement.** If AI can write essays and code, what's the point of learning to write or code? This question has come up with every powerful tool. The answers haven't been consistent. Sometimes the skill transformed. Sometimes it actually did get displaced.
 
-**Something harder to name.** A sense that if a machine can produce something that felt meaningful to you, then maybe meaning is cheaper than you thought. Maybe the thing you valued - a human reaching for understanding and putting it into words - was never what you were actually receiving. Maybe you can't tell the difference. That might be the part that's hardest to sit with.
+**Something harder to name.** A sense that if a machine can produce something that felt meaningful to you, then maybe meaning is cheaper than you thought. Maybe the thing you valued - a human reaching for understanding and putting it into words - was never what you were actually receiving. Maybe you can't tell the difference.
 
-## Is any of this resolved?
+## Why this essay exists
 
-No.
-
-This essay isn't here to argue that AI authorship is fine, or that it's bad. It's here because not mentioning it felt like the actual deceit.
+It's not an argument that AI authorship is fine, or that it's bad. The site works the way it works - a person with a long-running curiosity and a model that can write. While you're inside an essay, it either feels like a voice or it doesn't. When you zoom out, the voice is partly constructed. That's the whole situation. It seemed worse to leave it unmentioned.
