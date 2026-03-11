@@ -8,13 +8,13 @@ tags: [design]
 
 You're not bad at computers. Software is actually hard to use.
 
-You know the app can do the thing. You've done it before. [You just can't find it.](#why-cant-you-find-anything) And maybe [that's on purpose](#is-complexity-intentional) — because the [people making these decisions](#who-decides-how-software-works) aren't living with the consequences. The whole paradigm [froze decades ago](#why-hasnt-it-changed) before anyone questioned whether it was good. It [doesn't value your time](#does-it-respect-your-time). But some software [feels completely different](#what-does-good-software-feel-like) — which shows it's possible. So [what can you do](#what-can-you-do)? And [what's really going on underneath](#whats-the-deeper-problem)?
+You know the app can do the thing. You've done it before. [You just can't find it.](#why-cant-you-find-anything) And maybe [that's on purpose](#is-complexity-intentional) - because the [people making these decisions](#who-decides-how-software-works) aren't living with the consequences. The whole paradigm [froze decades ago](#why-hasnt-it-changed) before anyone questioned whether it was good. It [doesn't value your time](#does-it-respect-your-time). But some software [feels completely different](#what-does-good-software-feel-like) - which shows it's possible. So [what can you do](#what-can-you-do)? And [what's really going on underneath](#whats-the-deeper-problem)?
 
 ## Why can't you find anything?
 
 You know the app can do something. You've done it before. You just can't find it.
 
-Menu hunting. File, Edit, View, Tools — where is it? Each app organizes differently. The answer is "memorize the arbitrary structure" or "hunt every time."
+Menu hunting. File, Edit, View, Tools - where is it? Each app organizes differently. The answer is "memorize the arbitrary structure" or "hunt every time."
 
 Modifier key mystery. Ctrl+K does something. Ctrl+Shift+K does something else. How would you know? Nobody tells you.
 
@@ -22,21 +22,21 @@ Settings sprawl. Somewhere in Preferences, General, Advanced, (scroll), (scroll)
 
 The pattern: software has capabilities, but won't tell you what they are. You hunt. You guess. You Google. You watch tutorials for apps you've used for years.
 
-This isn't your fault. It's a design choice. The functionality is *hidden* — buried in menus, implicit in code, never surfaced. There's no way to ask "what can I do here?"
+This isn't your fault. It's a design choice. The functionality is *hidden* - buried in menus, implicit in code, never surfaced. There's no way to ask "what can I do here?"
 
 ## Is complexity intentional?
 
 Complexity as moat. If software is hard to learn, it's hard to leave. You've invested in mastering the hiding places. Switching costs are high. Some companies benefit from this.
 
-Features as marketing. More checkboxes on the comparison page. Doesn't matter if they make the app worse to use — they make it easier to sell. Features accumulate. Nobody removes them.
+Features as marketing. More checkboxes on the comparison page. Doesn't matter if they make the app worse to use - they make it easier to sell. Features accumulate. Nobody removes them.
 
-The result: bloated software that does everything, where finding anything takes expertise. And when someone asks how to do something, the answer is often ["just..."](https://www.todepond.com/wikiblogarden/better-computing/just/) — a word that hides an entire iceberg of assumed knowledge.
+The result: bloated software that does everything, where finding anything takes expertise. And when someone asks how to do something, the answer is often ["just..."](https://www.todepond.com/wikiblogarden/better-computing/just/) - a word that hides an entire iceberg of assumed knowledge.
 
 ## Who decides how software works?
 
 Software is built by engineers. Engineers tend to optimize for what engineers value: features, flexibility, power. Not simplicity, not learnability, not "can my mom use this?"
 
-Interaction design — thinking carefully about how humans actually use things — often gets dismissed as "not real engineering." So it doesn't get engineering effort.
+Interaction design - thinking carefully about how humans actually use things - often gets dismissed as "not real engineering." So it doesn't get engineering effort.
 
 And when designers *are* involved, they're often overruled by product managers optimizing for metrics, or executives who want feature parity with competitors.
 
@@ -44,13 +44,13 @@ The people building the software aren't the people using it. And the incentives 
 
 ## Why hasn't it changed?
 
-The way software works — windows, icons, menus, clicking — was invented in the 1970s. It was revolutionary then.
+The way software works - windows, icons, menus, clicking - was invented in the 1970s. It was revolutionary then.
 
 Then it froze. The paradigm calcified before anyone questioned whether it was actually good. We've been doing the same thing for 50 years, adding features on top, never rethinking the foundation.
 
-And the toolkits locked it in. Windows gives developers `CreateMenu()` but not `CreateRadialMenu()`. So everyone uses linear menus — not because they're better, but because they're *there*.
+And the toolkits locked it in. Windows gives developers `CreateMenu()` but not `CreateRadialMenu()`. So everyone uses linear menus - not because they're better, but because they're *there*.
 
-We once had spatial interfaces (the original Mac Finder remembered where each folder's window was). We threw them away for "efficiency." We once had HyperCard — anyone could build interactive things. Apple [neglected it to death](/prose/what-do-we-keep-losing). The dream of "everyone can make software" faded with it.
+We once had spatial interfaces (the original Mac Finder remembered where each folder's window was). We threw them away for "efficiency." We once had HyperCard - anyone could build interactive things. Apple [neglected it to death](/prose/what-do-we-keep-losing). The dream of "everyone can make software" faded with it.
 
 We inherited the paradigm, not the reasoning behind it.
 
@@ -81,7 +81,7 @@ This isn't magic. It's choices. Someone decided to prioritize your experience ov
 
 ## What can you do?
 
-**Recognize it's not you.** When software is frustrating, the frustration is valid. It's not a skill issue — it's a design issue.
+**Recognize it's not you.** When software is frustrating, the frustration is valid. It's not a skill issue - it's a design issue.
 
 **Look for command palettes.** Ctrl+K or Cmd+Shift+P in many apps opens a searchable list of everything the app can do. It's the closest thing to "just tell me what's possible."
 

@@ -1,6 +1,6 @@
 ---
 label: "deskspace"
-description: "unified file workspace — browse, view, edit, share as one surface"
+description: "unified file workspace - browse, view, edit, share as one surface"
 url: https://github.com/rhi-zone/deskspace
 parent: ecosystem/rhi
 status: planned
@@ -11,7 +11,7 @@ a file browser, viewer, editor, and sharing server where browsing and authoring 
 
 ## what it is
 
-open a file and it's just there — as a tab, a panel, a window in your file browser. the separation between browsing and editing was always artificial. deskspace removes it.
+open a file and it's just there - as a tab, a panel, a window in your file browser. the separation between browsing and editing was always artificial. deskspace removes it.
 
 core + plugin architecture. localhost-first, explicit opt-in for sharing.
 

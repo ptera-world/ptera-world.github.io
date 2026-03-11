@@ -16,11 +16,11 @@ the people most affected by the systems these essays describe are the least like
 
 the whole self-actualization framework is a stack of prerequisites nobody mentions.
 
-at the bottom: safety. physical safety. financial safety. the kind where you know where you're sleeping and whether the lights stay on. above that: time. not "free time" in the sense of a hobby — time in the sense of a gap between surviving and collapsing. above that: capacity. the leftover energy after navigating a world that wasn't built for you. above that: language. the words and frameworks to describe what you're experiencing. above that: platform. somewhere to put the words where someone might encounter them.
+at the bottom: safety. physical safety. financial safety. the kind where you know where you're sleeping and whether the lights stay on. above that: time. not "free time" in the sense of a hobby - time in the sense of a gap between surviving and collapsing. above that: capacity. the leftover energy after navigating a world that wasn't built for you. above that: language. the words and frameworks to describe what you're experiencing. above that: platform. somewhere to put the words where someone might encounter them.
 
 and then, at the top, you get to "be yourself."
 
-every layer filters. each one removes most of the people below it. by the time you reach the top — the part where you have enough safety, time, capacity, language, and platform to sit with a 2000-word essay about meaning — you're in a very small room. and the room doesn't look like the world.
+every layer filters. each one removes most of the people below it. by the time you reach the top - the part where you have enough safety, time, capacity, language, and platform to sit with a 2000-word essay about meaning - you're in a very small room. and the room doesn't look like the world.
 
 ## what the neutral voice can't say
 
@@ -32,7 +32,7 @@ that distance is a privilege. not just a perspective.
 
 "systems work against you" is an observation when you have enough. it's a daily cost when you don't. "safety isn't evenly distributed" is a sentence in an essay when you're safe. it's your whole life when you're not.
 
-the neutral voice calls this "calculated compassion" — staying calm because a public page is a loaded gun and you don't know who picks it up. and that's true. but it's also true that the calm comes easy when the systems aren't pointed at you.
+the neutral voice calls this "calculated compassion" - staying calm because a public page is a loaded gun and you don't know who picks it up. and that's true. but it's also true that the calm comes easy when the systems aren't pointed at you.
 
 ## who isn't here
 
@@ -40,7 +40,7 @@ the person working two jobs to cover rent doesn't come home and write about syst
 
 the person navigating a system that wasn't built for them spends their energy navigating it, not documenting it. the documentation is a luxury that requires leftover capacity, and the system already took it.
 
-the person who's closeted, or masking, or surviving a household that punishes who they are — they're not writing essays about identity. they're rationing themselves. spending what little they have on getting through today. the essay is a thing you write when today is handled.
+the person who's closeted, or masking, or surviving a household that punishes who they are - they're not writing essays about identity. they're rationing themselves. spending what little they have on getting through today. the essay is a thing you write when today is handled.
 
 this isn't metaphor. this is just what happens. expression costs something. every voice that reaches you is someone who had enough to speak. the people with the least to spare are the most absent from every conversation about them.
 
@@ -52,7 +52,7 @@ the people with time, energy, platform, and safety get to define what "the disco
 
 the loudest voices on any issue are the voices that could afford to be loud. sometimes they're the ones closest to the problem. often they're not. often they're people with enough distance to have an opinion and enough platform to broadcast it. the signal gets shaped by who can transmit, not by who has the most to transmit.
 
-this is how "the silent majority" works. they're not silent by choice. they're silent by exhaustion. the crossfire already took the capacity that speaking requires. and the people who do speak — on their behalf, near them, about them — are always proxies. always someone who had enough left over.
+this is how "the silent majority" works. they're not silent by choice. they're silent by exhaustion. the crossfire already took the capacity that speaking requires. and the people who do speak - on their behalf, near them, about them - are always proxies. always someone who had enough left over.
 
 representation is always by proxy. always.
 

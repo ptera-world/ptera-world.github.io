@@ -6,17 +6,17 @@ tags: [identity, design]
 
 # Who am I?
 
-You've probably tried to answer this. Personality tests. Journaling. Therapy. Introspection at 2 AM. And maybe you got something — a description, a set of traits, a [label](/prose/what-are-labels-anyway) that felt close.
+You've probably tried to answer this. Personality tests. Journaling. Therapy. Introspection at 2 AM. And maybe you got something - a description, a set of traits, a [label](/prose/what-are-labels-anyway) that felt close.
 
 But did it stick? Or did it feel right for a while and then stop fitting?
 
-That might be because "who am I" isn't a question with an answer. It's [not that kind of question](#why-isnt-it-that-kind-of-question). The self isn't something you find — it's something that [keeps emerging](#how-does-the-self-keep-emerging). And the way it emerges isn't through thinking. It's through [three things](#what-actually-builds-a-self) that feed each other.
+That might be because "who am I" isn't a question with an answer. It's [not that kind of question](#why-isnt-it-that-kind-of-question). The self isn't something you find - it's something that [keeps emerging](#how-does-the-self-keep-emerging). And the way it emerges isn't through thinking. It's through [three things](#what-actually-builds-a-self) that feed each other.
 
 ## Why isn't it that kind of question?
 
 "What's your name?" has an answer. "Where do you live?" has an answer. "Who am I?" feels like it should have one too. A real, stable, findable answer that you just haven't located yet.
 
-But try to say it. "I am..." What follows? A job title? A role? A personality type? A list of traits? Every answer is a [compression](/prose/why-are-we-compressing-things) — a slice of something too large to fit in a sentence.
+But try to say it. "I am..." What follows? A job title? A role? A personality type? A list of traits? Every answer is a [compression](/prose/why-are-we-compressing-things) - a slice of something too large to fit in a sentence.
 
 And the answer changes. Who you were five years ago isn't who you are now. Who you are at work isn't who you are with friends. Who you are when you're rested isn't who you are when you're depleted. Which one is the real you?
 
@@ -24,21 +24,21 @@ All of them. None of them. The question assumes a fixed thing to find. There doe
 
 ## How does the self keep emerging?
 
-You didn't decide to like the things you like. You encountered them and something resonated. You didn't decide your values — they formed through experience, conflict, mistake, and occasional clarity. You didn't plan your personality — it emerged from genetics, environment, choices, and things that happened to you.
+You didn't decide to like the things you like. You encountered them and something resonated. You didn't decide your values - they formed through experience, conflict, mistake, and occasional clarity. You didn't plan your personality - it emerged from genetics, environment, choices, and things that happened to you.
 
 The self isn't architecture. It's more like weather. It has patterns, tendencies, recurring shapes. But it's not a blueprint you can read. It's something you observe, in motion, over time.
 
-Which means "who am I" might not be answered by looking inward alone. Looking inward gives you your [existing labels](/prose/what-are-labels-anyway) — the stories you already tell about yourself. To find what's actually there, including the parts you haven't met yet, you probably need more than introspection.
+Which means "who am I" might not be answered by looking inward alone. Looking inward gives you your [existing labels](/prose/what-are-labels-anyway) - the stories you already tell about yourself. To find what's actually there, including the parts you haven't met yet, you probably need more than introspection.
 
 ## What actually builds a self?
 
 ### Analysis
 
-Seeing what's actually there. Not the story — the pattern.
+Seeing what's actually there. Not the story - the pattern.
 
 What do you actually do when nobody's watching? Not what you think you should do. Not what you tell people you do. What you actually do. Where does your attention go when it's free? What makes you angry that doesn't seem to bother other people? What bores you that excites everyone else?
 
-Analysis isn't judgment. It's observation. The anxious pattern isn't bad — it's information. The avoidance isn't weakness — it's data. The thing you keep coming back to despite telling yourself you shouldn't — that's signal.
+Analysis isn't judgment. It's observation. The anxious pattern isn't bad - it's information. The avoidance isn't weakness - it's data. The thing you keep coming back to despite telling yourself you shouldn't - that's signal.
 
 Most people skip this because honest self-observation is uncomfortable. The gap between who you think you are and what you actually do is where a lot of the interesting stuff lives. And it's not always flattering.
 
@@ -46,7 +46,7 @@ Most people skip this because honest self-observation is uncomfortable. The gap 
 
 Finding out what's there by making something and seeing what comes out.
 
-You discover what you think by trying to say it. You discover what you care about by building something and noticing what you fight for. You discover your taste by making choices — this word, not that one; this color, not that one; this approach, not that one.
+You discover what you think by trying to say it. You discover what you care about by building something and noticing what you fight for. You discover your taste by making choices - this word, not that one; this color, not that one; this approach, not that one.
 
 Expression isn't just art. It's any act of making a choice that reflects something internal. How you arrange a room. What you cook when nobody's coming over. The projects you start at midnight. The conversations you keep having.
 
@@ -74,9 +74,9 @@ Discovery without either is just consumption. New experiences that wash over you
 
 But together:
 
-You discover something new. You express it — make something, say something, [try something](/prose/how-do-i-do-things). You analyze what that revealed — oh, I care about this more than I thought. That analysis opens new questions. Those questions lead to new discovery. The cycle continues.
+You discover something new. You express it - make something, say something, [try something](/prose/how-do-i-do-things). You analyze what that revealed - oh, I care about this more than I thought. That analysis opens new questions. Those questions lead to new discovery. The cycle continues.
 
-And the self — the answer to "who am I" — is whatever this process is producing right now. Not a destination. A direction. Always moving, never arriving, and [that's worth sitting with](/prose/whats-the-purpose-of-life).
+And the self - the answer to "who am I" - is whatever this process is producing right now. Not a destination. A direction. Always moving, never arriving, and [that's worth sitting with](/prose/whats-the-purpose-of-life).
 
 ## Why is this hard?
 

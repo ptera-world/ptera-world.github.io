@@ -8,28 +8,28 @@ tags: [identity, social]
 
 Not change that happens to you. That's just life. The scary kind is the change you want. The one you've been thinking about. The one you know would be better. And you still can't move.
 
-[Why is change hard?](/prose/why-is-change-so-hard) covers the mechanics — the insight trap, the willpower myth, the environment problem. This is about something underneath that: the fear itself. What it is. [Where it lives.](#where-does-the-fear-live) [What it's protecting.](#what-is-it-protecting) And why it's [loudest when you're closest](#why-is-it-loudest-when-youre-closest).
+[Why is change hard?](/prose/why-is-change-so-hard) covers the mechanics - the insight trap, the willpower myth, the environment problem. This is about something underneath that: the fear itself. What it is. [Where it lives.](#where-does-the-fear-live) [What it's protecting.](#what-is-it-protecting) And why it's [loudest when you're closest](#why-is-it-loudest-when-youre-closest).
 
 ## Where does the fear live?
 
 Not in the change itself. In what change means.
 
-If you change, the current version of you ends. Not dramatically — nobody dies. But the person who had these habits, these patterns, these coping mechanisms, this [identity](/prose/what-are-labels-anyway) — that person stops existing. Even if what replaces them is better.
+If you change, the current version of you ends. Not dramatically - nobody dies. But the person who had these habits, these patterns, these coping mechanisms, this [identity](/prose/what-are-labels-anyway) - that person stops existing. Even if what replaces them is better.
 
 That's a kind of death. A small one. And your nervous system doesn't distinguish between small deaths and real ones. It just knows: something familiar is ending. And it pulls the alarm.
 
-The fear isn't irrational. It's your system doing exactly what it's designed to do — keep you alive by keeping things the same. The problem is that "the same" stopped working a while ago, and your system hasn't caught up.
+The fear isn't irrational. It's your system doing exactly what it's designed to do - keep you alive by keeping things the same. The problem is that "the same" stopped working a while ago, and your system hasn't caught up.
 
 ## What is it protecting?
 
-Every fear of change is protecting something specific. Not "the status quo" in the abstract — something concrete.
+Every fear of change is protecting something specific. Not "the status quo" in the abstract - something concrete.
 
 - **Changing careers** protects against: finding out you're not good enough in the new field. Starting over. Losing status. Wasted years if it doesn't work.
 - **Leaving a relationship** protects against: being alone. Being wrong about wanting to leave. Hurting someone. The unknown.
 - **Being yourself** protects against: rejection. Discovering [who you actually are](/prose/who-am-i) and not liking it. Losing people who liked the performance.
 - **Starting something** protects against: [failure](/prose/why-is-perfectionism-a-trap). Finishing and it being bad. Succeeding and having to keep going.
 
-The fear isn't formless. It has a specific shape. And naming the shape — saying out loud "I'm afraid that if I change, I'll find out I'm not good enough" — takes away some of its power. Not all. Some.
+The fear isn't formless. It has a specific shape. And naming the shape - saying out loud "I'm afraid that if I change, I'll find out I'm not good enough" - takes away some of its power. Not all. Some.
 
 ## What's the grief nobody mentions?
 
@@ -43,19 +43,19 @@ People who can't change aren't always afraid of the new thing. Sometimes they're
 
 ## Why is it loudest when you're closest?
 
-The fear tends to get worse right before the change happens. Not before you start thinking about it — that's just anxiety. The real intensity hits when it becomes real. When you've written the email but haven't sent it. When you've packed the box but haven't moved. When you've said "I need to tell you something" and haven't said the thing yet.
+The fear tends to get worse right before the change happens. Not before you start thinking about it - that's just anxiety. The real intensity hits when it becomes real. When you've written the email but haven't sent it. When you've packed the box but haven't moved. When you've said "I need to tell you something" and haven't said the thing yet.
 
 This is the resistance's last stand. Your system knows the change is imminent. The alarm goes to maximum. Every doubt floods in at once. "Maybe this is wrong." "Maybe I should wait." "Maybe the current situation isn't that bad."
 
-If you've felt this — the sudden certainty that you should stop, right at the edge — it's worth considering that it might not be wisdom. It might be the fear recognizing it's about to lose. The closer you are to change, the louder it gets.
+If you've felt this - the sudden certainty that you should stop, right at the edge - it's worth considering that it might not be wisdom. It might be the fear recognizing it's about to lose. The closer you are to change, the louder it gets.
 
-Most people turn back at this point. And then feel relief. And then, a week later, feel the same stuck feeling they were trying to escape. Because the relief wasn't real — it was just the alarm turning off.
+Most people turn back at this point. And then feel relief. And then, a week later, feel the same stuck feeling they were trying to escape. Because the relief wasn't real - it was just the alarm turning off.
 
 ## What's on the other side?
 
 Nobody can tell you what's on the other side of a specific change. It might be better. It might be worse. It might be different in ways you can't predict.
 
-But something does seem to be consistently true: on the other side, you know something you didn't know before. Whether it works or not. You know what it feels like to actually do the thing, not just think about it. That knowledge — the [felt experience](/prose/why-is-change-so-hard) of having tried — seems to be the thing that actually updates the deep systems that keep you stuck.
+But something does seem to be consistently true: on the other side, you know something you didn't know before. Whether it works or not. You know what it feels like to actually do the thing, not just think about it. That knowledge - the [felt experience](/prose/why-is-change-so-hard) of having tried - seems to be the thing that actually updates the deep systems that keep you stuck.
 
 You can't think your way through the fear. You can only walk through it and find out what's there. [Embarrassingly small steps](/prose/how-do-i-do-things) count. The first step doesn't have to be the email. It can be opening the draft.
 

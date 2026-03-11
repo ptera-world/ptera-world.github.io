@@ -20,7 +20,7 @@ The answer is almost always yes. And the answer to "should we stop?" is almost a
 
 ## Is it because I think I can do it better?
 
-To be clear about what this isn't — it's not ego. It's not "I'm smarter than the people who built the original." They did incredible work. Years of it. Battle-tested, community-supported, production-hardened work.
+To be clear about what this isn't - it's not ego. It's not "I'm smarter than the people who built the original." They did incredible work. Years of it. Battle-tested, community-supported, production-hardened work.
 
 It's not about the destination. It's about [what you learn on the way](#what-if).
 
@@ -40,7 +40,7 @@ That's the trap. Not because popular tools are bad. But because [popularity is a
 
 Spreadsheets are freeform grids because VisiCalc was a freeform grid. Note apps are documents because paper was documents. [Programming is text because teletypes were text](/prose/why-is-software-hard). Nobody chose these things. They just happened, and then they [calcified](#why-do-we-keep-losing-things).
 
-Reinventing — badly, naively, from the wrong angle — is one way to notice the calcification. It's hard to see the water you're swimming in until you try to swim in something else.
+Reinventing - badly, naively, from the wrong angle - is one way to notice the calcification. It's hard to see the water you're swimming in until you try to swim in something else.
 
 ## How does popularity become a ratchet?
 

@@ -16,7 +16,7 @@ the job causes stress. the stress causes burnout. the burnout shows up in your p
 
 nobody in this loop is fixing the thing that's broken. the therapy isn't there to make you well. it's there to make you functional. functional enough to keep producing. the goal isn't health. the goal is output with fewer interruptions.
 
-and if you actually burn out — if the coping stops working and the performance drops and the reviews get bad — that's a you problem. you had access to the resources. you had the EAP number. you had the meditation app. the system gave you everything it was supposed to give you. if you still broke, that's on you.
+and if you actually burn out - if the coping stops working and the performance drops and the reviews get bad - that's a you problem. you had access to the resources. you had the EAP number. you had the meditation app. the system gave you everything it was supposed to give you. if you still broke, that's on you.
 
 ## the bundle
 
@@ -24,7 +24,7 @@ the healthcare is tied to the job. in most of the US, losing your job means losi
 
 think about what that means. you can't leave the thing that's hurting you without also losing access to the thing that's treating the hurt. the exit costs include losing the treatment for the damage the thing you're exiting caused. that's not a safety net. that's a lock.
 
-and everyone knows this. every person who's stayed in a job that was grinding them down because they couldn't afford to lose the insurance — they know. it's not a secret. it's not a conspiracy. it's just the structure, sitting there, doing exactly what it was designed to do.
+and everyone knows this. every person who's stayed in a job that was grinding them down because they couldn't afford to lose the insurance - they know. it's not a secret. it's not a conspiracy. it's just the structure, sitting there, doing exactly what it was designed to do.
 
 ## what burnout actually costs you
 
@@ -46,9 +46,9 @@ the framing tells you everything. when something is a "benefit," it's a gift fro
 
 most people don't talk about this at work. not because they don't see it. because talking about it is a career risk.
 
-saying "this job is burning me out" in a performance review is not a neutral statement. it's a signal. it says: this person might leave. this person might underperform. this person is a liability. the honest version — "the structure of this work is causing psychological damage" — gets translated by the system into "this person can't handle it."
+saying "this job is burning me out" in a performance review is not a neutral statement. it's a signal. it says: this person might leave. this person might underperform. this person is a liability. the honest version - "the structure of this work is causing psychological damage" - gets translated by the system into "this person can't handle it."
 
-so you don't say it. you use the EAP. you see the therapist. you learn coping strategies. you come back on monday and perform the version of yourself that meets expectations. the therapy helped — not by making you well, but by making you quieter about not being well.
+so you don't say it. you use the EAP. you see the therapist. you learn coping strategies. you come back on monday and perform the version of yourself that meets expectations. the therapy helped - not by making you well, but by making you quieter about not being well.
 
 ## the cap
 
@@ -60,11 +60,11 @@ the cap is maybe the most honest part of the whole structure. it tells you exact
 
 and the damage doesn't know about the cap. burnout doesn't check whether you've hit your session limit. anxiety doesn't wait for the new plan year. the thing that's breaking you operates on its own schedule. the thing that's supposed to help you operates on a fiscal one.
 
-so you learn to ration. you learn to save sessions for when it gets bad enough. you learn that "bad" has tiers — there's regular bad, which you just sit with, and bad enough to use one of your limited sessions on. you become the triage nurse for your own psychological damage, deciding which wounds are worth spending a session on and which ones you can just carry.
+so you learn to ration. you learn to save sessions for when it gets bad enough. you learn that "bad" has tiers - there's regular bad, which you just sit with, and bad enough to use one of your limited sessions on. you become the triage nurse for your own psychological damage, deciding which wounds are worth spending a session on and which ones you can just carry.
 
 "i stopped going to therapy because the benefits don't cover that much."
 
-read that sentence again. someone recognized they needed help. found a therapist. started the work — and starting is the hardest part, the part where you admit something is wrong, the part the system should be desperate to protect. and then the spreadsheet said stop. not the therapist. not the patient. the spreadsheet.
+read that sentence again. someone recognized they needed help. found a therapist. started the work - and starting is the hardest part, the part where you admit something is wrong, the part the system should be desperate to protect. and then the spreadsheet said stop. not the therapist. not the patient. the spreadsheet.
 
 the person is still damaged. the work is still causing the damage. the treatment was working. and it ended because a number on a plan document said that's all you get.
 
@@ -76,7 +76,7 @@ this is what it looks like when health is a line item. the budget doesn't flex f
 
 the system doesn't prevent the damage. it monetizes the repair. and it ties the repair to the thing causing the damage. and it calls this a benefit. and enough people accept the framing that it holds.
 
-it holds because the alternative — saying "this is violent and someone is responsible and it's not abstract" — doesn't fit in a performance review. doesn't fit in a benefits negotiation. doesn't fit in the professional voice that the professional world requires.
+it holds because the alternative - saying "this is violent and someone is responsible and it's not abstract" - doesn't fit in a performance review. doesn't fit in a benefits negotiation. doesn't fit in the professional voice that the professional world requires.
 
 it fits here.
 

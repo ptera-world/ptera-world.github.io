@@ -8,29 +8,29 @@ tags: [technology]
 
 You didn't type every line. Maybe you didn't type most of them. An AI wrote the implementation while you held the reins. It compiles, it runs, it passes the tests. But you can't shake the feeling that you're [trusting something you don't fully understand](/prose/am-i-just-pretending).
 
-The thing is, you've always been trusting things you don't fully understand. That's not new — it just wasn't as visible before.
+The thing is, you've always been trusting things you don't fully understand. That's not new - it just wasn't as visible before.
 
 ## Does anyone read every line?
 
-The fantasy of the programmer who reads and understands every line of their codebase is exactly that — a fantasy. It stops being possible around 10,000 lines. By 100,000 it's absurd. The Linux kernel is 30 million lines. Nobody understands all of it. Not even the person who started it.
+The fantasy of the programmer who reads and understands every line of their codebase is exactly that - a fantasy. It stops being possible around 10,000 lines. By 100,000 it's absurd. The Linux kernel is 30 million lines. Nobody understands all of it. Not even the person who started it.
 
-What programmers actually do is build layers of trust. You trust the compiler — the tool that translates code into something the machine can run. You trust the type system — rules that prevent entire categories of mistakes structurally. You trust the test suite. You trust the linter — an automated reviewer that catches common mistakes. You trust the code review. You trust the abstraction boundaries — the walls between components that limit how far a bug can spread. Each layer catches different things. Together, they're enough.
+What programmers actually do is build layers of trust. You trust the compiler - the tool that translates code into something the machine can run. You trust the type system - rules that prevent entire categories of mistakes structurally. You trust the test suite. You trust the linter - an automated reviewer that catches common mistakes. You trust the code review. You trust the abstraction boundaries - the walls between components that limit how far a bug can spread. Each layer catches different things. Together, they're enough.
 
-AI-generated code doesn't change this. It adds a question — "do I trust the author?" — but that question already existed for every library you import, every snippet you copy, every coworker's changes you approve.
+AI-generated code doesn't change this. It adds a question - "do I trust the author?" - but that question already existed for every library you import, every snippet you copy, every coworker's changes you approve.
 
 ## What actually catches bugs?
 
 Here's what catches bugs, in rough order of [how much you should rely on them](#whats-the-stack):
 
-**The type system** catches the most. In a strict language, if the code compiles, an enormous category of bugs is already eliminated — memory corruption, null references, data races, type mismatches. This isn't trust. It's proof. The compiler doesn't care who wrote the code.
+**The type system** catches the most. In a strict language, if the code compiles, an enormous category of bugs is already eliminated - memory corruption, null references, data races, type mismatches. This isn't trust. It's proof. The compiler doesn't care who wrote the code.
 
-**Tests** catch the next layer. Does it do what it's supposed to? If you wrote the tests — even if the AI wrote the implementation — you defined the contract. The implementation either honors it or it doesn't.
+**Tests** catch the next layer. Does it do what it's supposed to? If you wrote the tests - even if the AI wrote the implementation - you defined the contract. The implementation either honors it or it doesn't.
 
-**Adversarial testing** catches what tests miss. Normal tests verify the happy path — does it work when the input is correct? Adversarial testing asks what happens when the input is *hostile*. Edge cases. Empty values. Integers at the boundary. Malformed data. Inputs designed to break assumptions. This is where AI-generated code tends to be most vulnerable, because AI optimizes for the common case. It produces code that works beautifully on reasonable inputs and silently corrupts on unreasonable ones. Fuzz testing — throwing random garbage at the code to see what breaks — helps. Property testing — asserting that general rules hold across thousands of generated inputs — helps. But the instinct — "what's the worst thing someone could feed this?" — is irreplaceable.
+**Adversarial testing** catches what tests miss. Normal tests verify the happy path - does it work when the input is correct? Adversarial testing asks what happens when the input is *hostile*. Edge cases. Empty values. Integers at the boundary. Malformed data. Inputs designed to break assumptions. This is where AI-generated code tends to be most vulnerable, because AI optimizes for the common case. It produces code that works beautifully on reasonable inputs and silently corrupts on unreasonable ones. Fuzz testing - throwing random garbage at the code to see what breaks - helps. Property testing - asserting that general rules hold across thousands of generated inputs - helps. But the instinct - "what's the worst thing someone could feed this?" - is irreplaceable.
 
-**Lints** — automated style and correctness checkers — catch idiom violations, common mistakes, performance issues, and suspicious patterns. They're mechanical reviewers that never get tired and never wave things through because it's Friday.
+**Lints** - automated style and correctness checkers - catch idiom violations, common mistakes, performance issues, and suspicious patterns. They're mechanical reviewers that never get tired and never wave things through because it's Friday.
 
-**Structure** catches architectural problems. Is the code modular? Are the abstractions [at the right level](/prose/the-right-tool-for-the-job)? Do the boundaries between components make sense? You don't need to read every line to see structure. You need to read the interfaces — the shapes of the components and how they connect. The shape of the code is visible without reading the body.
+**Structure** catches architectural problems. Is the code modular? Are the abstractions [at the right level](/prose/the-right-tool-for-the-job)? Do the boundaries between components make sense? You don't need to read every line to see structure. You need to read the interfaces - the shapes of the components and how they connect. The shape of the code is visible without reading the body.
 
 **Review by use** catches everything else. You use the tool. It works or it doesn't. It handles your edge cases or it doesn't. Over time, trust accumulates not from reading but from [running](#how-does-trust-accumulate).
 
@@ -50,7 +50,7 @@ This is exactly the same gauntlet that human-written code passes through. The on
 
 You don't trust code because you read it. You trust code because it [survived](#what-actually-catches-bugs).
 
-The first time you run your tool on real data and it produces correct output, that's a bit of trust. Not in every line — in the *system*. The tenth time, more trust. The time it fails and you fix it and it works again, even more. Trust is empirical.
+The first time you run your tool on real data and it produces correct output, that's a bit of trust. Not in every line - in the *system*. The tenth time, more trust. The time it fails and you fix it and it works again, even more. Trust is empirical.
 
 After a thousand test cases, after months of use, after dozens of bug fixes, you know the code is good the same way you know your car works. Not because you inspected every bolt. Because you drove it to work every day and it got you there.
 

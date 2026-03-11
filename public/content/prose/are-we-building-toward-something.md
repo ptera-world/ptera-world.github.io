@@ -16,7 +16,7 @@ That's not a roadmap. That's someone [wandering through a hardware store](/prose
 
 Some of it shipped. Tools that are [feature complete](/project/wick), libraries that other projects depend on. These exist, they work, nobody asked for them, and finishing them felt like nothing.
 
-Some of it's active. A [decompiler](/project/reincarnate) motivated by a port written by hand years ago. A [game about being a person](/project/existence) that's technically playable. A [code analyzer](/project/normalize) that keeps growing. These have momentum because they have pull — something in the world that seems to want them to exist.
+Some of it's active. A [decompiler](/project/reincarnate) motivated by a port written by hand years ago. A [game about being a person](/project/existence) that's technically playable. A [code analyzer](/project/normalize) that keeps growing. These have momentum because they have pull - something in the world that seems to want them to exist.
 
 Most of it's sleeping. Scaffolding and no users. Waiting for demand that may or may not come. Cheap to build, cheap to maintain, potentially worthless.
 
@@ -24,19 +24,19 @@ And then there's the graveyard. The projects that [taught something by failing](
 
 ## What do the dead projects say?
 
-Every abandoned project is a sentence. Not about the project — about you.
+Every abandoned project is a sentence. Not about the project - about you.
 
 The one where someone already solved it better: "don't compete with solved problems." The one that needed discipline you didn't have: "respect the gap between vision and capacity." The one where you forked instead of building from scratch: "originality matters to you." The one that was the same idea as another project but less tangible: "prefer the concrete version."
 
-They're not random. Each one narrows the space. Read together, they work like a compass — not pointing at a destination, but away from things that don't fit.
+They're not random. Each one narrows the space. Read together, they work like a compass - not pointing at a destination, but away from things that don't fit.
 
 Everyone has dead projects. Most people see them as failures. They might actually be some of the most honest feedback you can get about [what you actually want](/prose/whats-the-purpose-of-life).
 
 ## What's the pattern you can't see from inside?
 
-From the outside, the surviving projects often share something the builder can't see. A document converter, a decompiler, a code analyzer, a simulation of human experience — they don't look related. But they all take something opaque and make it [visible](/prose/why-do-i-build-tools). That's not a product vision. It's more like a reflex. But reflexes come from somewhere.
+From the outside, the surviving projects often share something the builder can't see. A document converter, a decompiler, a code analyzer, a simulation of human experience - they don't look related. But they all take something opaque and make it [visible](/prose/why-do-i-build-tools). That's not a product vision. It's more like a reflex. But reflexes come from somewhere.
 
-Your pattern might be different. Maybe everything you start involves connecting people. Or simplifying complexity. Or preserving things that are disappearing. You probably won't see it from inside. The pattern tends to live in the negative space — the thing you keep doing without deciding to.
+Your pattern might be different. Maybe everything you start involves connecting people. Or simplifying complexity. Or preserving things that are disappearing. You probably won't see it from inside. The pattern tends to live in the negative space - the thing you keep doing without deciding to.
 
 ## Are we optimizing for interesting?
 
@@ -52,7 +52,7 @@ That's not useful yet. It might never be. Or it might turn out that one of those
 
 You're not building toward something. You're also not just building.
 
-You're exploring a space. The projects are probes — each one asks "what if this worked differently?" The dead ones mark the boundaries. The sleeping ones mark the possibilities. The active ones mark where the space [pushed back with something interesting](/prose/why-do-i-build-tools#but-can-you-inhabit-what-you-built).
+You're exploring a space. The projects are probes - each one asks "what if this worked differently?" The dead ones mark the boundaries. The sleeping ones mark the possibilities. The active ones mark where the space [pushed back with something interesting](/prose/why-do-i-build-tools#but-can-you-inhabit-what-you-built).
 
 Is that enough? Is exploration without a destination [a purpose](/prose/whats-the-purpose-of-life)?
 

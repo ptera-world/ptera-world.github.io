@@ -78,7 +78,7 @@ It's a game. It has mechanics, rewards, feedback loops. But optimized for what?
 - **Your attention is the product** - You're not the customer. Advertisers are.
 - **No endpoint** - Good games end. Social media never does. There's always more scroll.
 
-It uses all the techniques of good games — but inverted. Exploiting instead of serving.
+It uses all the techniques of good games - but inverted. Exploiting instead of serving.
 
 ## Why does Discord work?
 

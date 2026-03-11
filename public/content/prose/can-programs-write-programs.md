@@ -6,7 +6,7 @@ tags: [technology]
 
 # Can programs write programs?
 
-The answer has always been yes. Compilers are programs that write programs. Templates are programs that write programs. Macros, code generators, transpilers — all programs writing programs. This has been normal for decades.
+The answer has always been yes. Compilers are programs that write programs. Templates are programs that write programs. Macros, code generators, transpilers - all programs writing programs. This has been normal for decades.
 
 So why does it feel different now?
 
@@ -14,7 +14,7 @@ So why does it feel different now?
 
 The old program-writing-programs were *structural*. A compiler takes one precisely defined language and transforms it into another precisely defined language. The input and output are both fully specified. The transformation is deterministic. The same input always produces the same output.
 
-The new program-writing-programs are *stochastic*. An AI takes a vague description — "make a login page" — and produces code that might work. The input is fuzzy. The output is probabilistic. The same input might produce different output each time.
+The new program-writing-programs are *stochastic*. An AI takes a vague description - "make a login page" - and produces code that might work. The input is fuzzy. The output is probabilistic. The same input might produce different output each time.
 
 Both are programs writing programs. But they're different in a way that matters: the old kind preserves meaning. The new kind [guesses at it](/prose/can-you-tell-when-its-wrong).
 
@@ -36,7 +36,7 @@ Every previous layer had a guarantee: the transformation preserved the meaning. 
 
 AI doesn't provide this guarantee. The meaning might travel intact. Or it might get [subtly distorted](/prose/can-you-tell-when-its-wrong#what-if-the-ai-solved-the-wrong-problem). Or it might be completely wrong in a way that looks right. There's no formal relationship between "make a login page" and the code that gets produced. There's only statistical correlation trained on examples.
 
-This is genuinely different. And the difference matters. But it doesn't make the pattern new — it makes the pattern *riskier*. The question isn't whether programs can write programs. It's whether programs can write programs *you can trust*.
+This is genuinely different. And the difference matters. But it doesn't make the pattern new - it makes the pattern *riskier*. The question isn't whether programs can write programs. It's whether programs can write programs *you can trust*.
 
 ## What's the fractal structure?
 
@@ -48,7 +48,7 @@ This means you can describe a codebase at any level of detail and it's still mea
 
 A program that writes programs can operate at any of these levels. It can scaffold a whole project from a high-level description. It can fill in a single function from a detailed spec. It can do anything in between. The fractal structure means there's always a natural boundary between "what the human specifies" and "what the program generates."
 
-The question — where should that boundary be? — is actually the same question every programming language answers: [how much detail should the programmer specify, and how much should be automated?](/prose/the-right-tool-for-the-job)
+The question - where should that boundary be? - is actually the same question every programming language answers: [how much detail should the programmer specify, and how much should be automated?](/prose/the-right-tool-for-the-job)
 
 ## What gets lost in the abstraction?
 
@@ -56,9 +56,9 @@ Every time you move up a layer of abstraction, you gain power and lose control. 
 
 AI-assisted programming trades a lot of precision for a lot of convenience. And the things that tend to get lost in the trade are the things that matter most: [edge cases](/prose/how-do-i-know-this-code-is-good#what-actually-catches-bugs), architectural coherence, the subtle decisions that make code maintainable rather than just functional.
 
-The common case works. It almost always works. AI is extraordinary at the common case because the common case is what it's trained on. The uncommon case — the weird input, the race condition, the interaction between two features that nobody tested together — is where it falls apart. Not because it's stupid, but because uncommon cases are, by definition, underrepresented in training data.
+The common case works. It almost always works. AI is extraordinary at the common case because the common case is what it's trained on. The uncommon case - the weird input, the race condition, the interaction between two features that nobody tested together - is where it falls apart. Not because it's stupid, but because uncommon cases are, by definition, underrepresented in training data.
 
-This is the same tradeoff every abstraction layer makes, just more visible. High-level languages are also bad at edge cases — that's why performance-critical code still drops down to lower levels. The defense is the same: know where the abstraction leaks, and be ready to go beneath it.
+This is the same tradeoff every abstraction layer makes, just more visible. High-level languages are also bad at edge cases - that's why performance-critical code still drops down to lower levels. The defense is the same: know where the abstraction leaks, and be ready to go beneath it.
 
 ## What's the recursive dream?
 
@@ -66,11 +66,11 @@ There's an old dream in computer science: a program that writes programs that wr
 
 It doesn't work, though. Not because of any technical limitation, but because [meaning doesn't recurse](/prose/where-does-meaning-live). Each layer of "writing programs" still needs someone to specify what the program should do. You can automate the *how* but not the *what*. The what comes from intent, and intent comes from [the person](/prose/am-i-just-pretending#what-if-the-bottleneck-isnt-the-hand), not the process.
 
-A program can write a program that writes a program. But somewhere at the top of the chain, a person has to say what they want. And "what they want" can't be generated — it can only be [discovered](/prose/why-do-i-build-tools#but-can-you-inhabit-what-you-built).
+A program can write a program that writes a program. But somewhere at the top of the chain, a person has to say what they want. And "what they want" can't be generated - it can only be [discovered](/prose/why-do-i-build-tools#but-can-you-inhabit-what-you-built).
 
 ## What does this mean for you?
 
-Whether or not you write code, this pattern touches your life. Every tool you use was built with some mix of human specification and automated generation. The document you're reading was shaped by tools that fill in details the author didn't specify. The systems you depend on — financial, medical, legal — increasingly use programs that write programs somewhere in their stack.
+Whether or not you write code, this pattern touches your life. Every tool you use was built with some mix of human specification and automated generation. The document you're reading was shaped by tools that fill in details the author didn't specify. The systems you depend on - financial, medical, legal - increasingly use programs that write programs somewhere in their stack.
 
 The question isn't whether to trust this. It's what to trust it *for*.
 

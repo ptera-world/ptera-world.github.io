@@ -8,13 +8,13 @@ tags: [identity, design]
 
 You're not lazy. You're not even procrastinating, exactly. You have the idea. You know roughly what to do. You just... can't start. Or you started and can't finish. Or you finished but can't share it. Because it's [not good enough yet](#is-it-ever-good-enough).
 
-Perfectionism looks like caring about quality. It might actually be [fear wearing a different outfit](#what-is-it-really). It has a [mechanism](#how-does-the-trap-work) that's almost invisible from inside. And the way out isn't [lowering your standards](#is-the-answer-lower-standards) — it's understanding what the standards are actually protecting.
+Perfectionism looks like caring about quality. It might actually be [fear wearing a different outfit](#what-is-it-really). It has a [mechanism](#how-does-the-trap-work) that's almost invisible from inside. And the way out isn't [lowering your standards](#is-the-answer-lower-standards) - it's understanding what the standards are actually protecting.
 
 ## Is it ever good enough?
 
 The draft isn't ready. The code needs refactoring. The design needs one more pass. The essay needs a better opening. The project needs more features before anyone can see it.
 
-Always one more thing. The finish line moves every time you approach it. Not because the work is actually bad — you might not even be able to tell anymore. The standard has become the point. Meeting it has become impossible by design.
+Always one more thing. The finish line moves every time you approach it. Not because the work is actually bad - you might not even be able to tell anymore. The standard has become the point. Meeting it has become impossible by design.
 
 There's a pattern here: if "good enough" keeps shifting, it probably wasn't about quality to begin with. Quality has a definition you can measure against. Perfectionism doesn't seem to.
 
@@ -22,10 +22,10 @@ There's a pattern here: if "good enough" keeps shifting, it probably wasn't abou
 
 Fear, mostly. Specifically:
 
-- **Fear of judgment** — if I put this out and it's bad, people will see that I'm bad.
-- **Fear of failure** — if it doesn't succeed, I've wasted my time and proven I can't do this.
-- **Fear of exposure** — the finished thing reveals what I'm capable of. What if that's not much?
-- **Fear of completion** — as long as it's unfinished, it has potential. Finished things get evaluated.
+- **Fear of judgment** - if I put this out and it's bad, people will see that I'm bad.
+- **Fear of failure** - if it doesn't succeed, I've wasted my time and proven I can't do this.
+- **Fear of exposure** - the finished thing reveals what I'm capable of. What if that's not much?
+- **Fear of completion** - as long as it's unfinished, it has potential. Finished things get evaluated.
 
 Perfectionism works as a defense mechanism. It keeps you safe from all of these by ensuring the thing never reaches the point where any of them could happen.
 
@@ -36,10 +36,10 @@ And it does work, in a way. You never get judged. You never fail publicly. You n
 The trap has a specific structure:
 
 1. You have an idea. It excites you.
-2. You start. The early stage is fun — all potential, no judgment.
+2. You start. The early stage is fun - all potential, no judgment.
 3. The work gets hard. The gap between what's in your head and what you've made becomes visible.
 4. The inner critic activates. "This isn't good enough." "Someone else would do this better." "Why am I even trying?"
-5. You stall. Not dramatically — you just... slow down. Do other things. Come back to it less.
+5. You stall. Not dramatically - you just... slow down. Do other things. Come back to it less.
 6. The project joins the pile of unfinished things. Which confirms the belief: "I never finish anything." Which is just another [label](/prose/what-are-labels-anyway).
 7. Next time, the fear is stronger. Because now there's evidence.
 
@@ -49,9 +49,9 @@ The mechanism is self-reinforcing. Perfectionism tends to create the failure it'
 
 Perfectionism doesn't operate in a vacuum. It has fuel: other people's finished work.
 
-You see the polished output. The published novel. The shipped app. The beautiful illustration. And you [compare](/prose/why-are-we-compressing-things) your draft, your prototype, your sketch — to their final version.
+You see the polished output. The published novel. The shipped app. The beautiful illustration. And you [compare](/prose/why-are-we-compressing-things) your draft, your prototype, your sketch - to their final version.
 
-This comparison doesn't make any sense. You're comparing your process to their product. Your beginning to their end. Your inside — full of doubt and rough edges — to their outside, which has been edited, refined, and curated.
+This comparison doesn't make any sense. You're comparing your process to their product. Your beginning to their end. Your inside - full of doubt and rough edges - to their outside, which has been edited, refined, and curated.
 
 Nobody shows the bad drafts. Nobody posts the version that almost made them quit. So you assume it was easy for them. That they just... did it. That the gap between their idea and their execution was small.
 
@@ -65,7 +65,7 @@ Perfectionism gets really sticky when it bonds to identity.
 
 But "high standards" as identity means you can't lower them. Lowering them means becoming less. Shipping something imperfect means betraying who you are.
 
-So the standards protect themselves. Any attempt to "just ship it" feels wrong — not strategically wrong, but morally wrong. Like you're compromising something essential.
+So the standards protect themselves. Any attempt to "just ship it" feels wrong - not strategically wrong, but morally wrong. Like you're compromising something essential.
 
 What you might actually be compromising is a defense mechanism that's managed to pass itself off as a virtue.
 
@@ -75,11 +75,11 @@ No.
 
 The answer is recognizing what the standards are for. Quality standards serve the work. Perfectionist standards serve fear.
 
-The question to ask isn't "is this good enough?" — that question has no stable answer when perfectionism is driving. The question is: "what is this standard protecting me from?"
+The question to ask isn't "is this good enough?" - that question has no stable answer when perfectionism is driving. The question is: "what is this standard protecting me from?"
 
-If the answer is "putting out bad work" — that's a quality standard. Keep it.
+If the answer is "putting out bad work" - that's a quality standard. Keep it.
 
-If the answer is "being seen" — that's fear. And fear probably shouldn't get to make creative decisions.
+If the answer is "being seen" - that's fear. And fear probably shouldn't get to make creative decisions.
 
 ## What helps?
 

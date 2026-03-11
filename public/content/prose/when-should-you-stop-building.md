@@ -26,7 +26,7 @@ Building is controlled. You decide what happens next. You choose the materials, 
 
 Using what you built is uncontrolled. The thing responds in ways you didn't plan. The edge case you didn't think of surfaces. The interaction you designed feels different from the inside than it looked from the outside. Reality pushes back.
 
-That push-back is uncomfortable. It's also [the whole point](/prose/why-do-i-build-tools#whats-the-whole-point). A thing that never meets reality never becomes real. It stays a construction site forever — impressive to look at, impossible to inhabit.
+That push-back is uncomfortable. It's also [the whole point](/prose/why-do-i-build-tools#whats-the-whole-point). A thing that never meets reality never becomes real. It stays a construction site forever - impressive to look at, impossible to inhabit.
 
 Building is safe because nothing can go wrong. Using is scary because something will. But "something going wrong" is really just another word for [feedback](/prose/how-do-i-know-this-code-is-good#how-does-trust-accumulate). And feedback is how a construction site becomes a building.
 
@@ -34,11 +34,11 @@ Building is safe because nothing can go wrong. Using is scary because something 
 
 You know something is ready when it passes the visceral test: can you use it without flinching?
 
-Not "does it work correctly?" It might work correctly and still feel wrong. The timing is off. The flow is awkward. The thing you do most often takes too many steps. It works, but every time you use it, something catches — a moment of friction, a small "ugh," a micro-frustration that you've been planning to fix for weeks.
+Not "does it work correctly?" It might work correctly and still feel wrong. The timing is off. The flow is awkward. The thing you do most often takes too many steps. It works, but every time you use it, something catches - a moment of friction, a small "ugh," a micro-frustration that you've been planning to fix for weeks.
 
-The visceral test isn't about bugs. It's about feel. Does the thing [respect your experience](/prose/why-is-nothing-special-anymore#where-did-the-trust-go) of using it? Not your experience of building it — your experience of *being in it*?
+The visceral test isn't about bugs. It's about feel. Does the thing [respect your experience](/prose/why-is-nothing-special-anymore#where-did-the-trust-go) of using it? Not your experience of building it - your experience of *being in it*?
 
-If the answer is "no, but I know how to fix it," you're still building. If the answer is "no, and I'm not sure what's wrong," you might be ready to start using — because the only way to find what's wrong is to live in it.
+If the answer is "no, but I know how to fix it," you're still building. If the answer is "no, and I'm not sure what's wrong," you might be ready to start using - because the only way to find what's wrong is to live in it.
 
 ## What's the perfectionism trap?
 
@@ -60,7 +60,7 @@ When you're inhabiting, you see the next moment. The choice in front of you. The
 
 The switch is hard because the builder's eyes don't turn off. You use the thing and immediately see what's wrong with it. The font is off. The flow should be different. That interaction should be three steps, not four. You can't experience the thing because you can't stop analyzing it.
 
-The trick — if there is one — is to let the analysis wait. Use the thing. Notice what you feel. Write down the frustrations *after*, not during. Let the experience happen before you start fixing it.
+The trick - if there is one - is to let the analysis wait. Use the thing. Notice what you feel. Write down the frustrations *after*, not during. Let the experience happen before you start fixing it.
 
 Because fixing it before you experience it means you're fixing what you *think* is wrong. Experiencing it first means you're fixing what's *actually* wrong. And those are rarely the same thing.
 
@@ -68,13 +68,13 @@ Because fixing it before you experience it means you're fixing what you *think* 
 
 There's no formula. But there are some signs worth watching for:
 
-The thing does what you set out to make it do. Not everything you could imagine it doing. What you originally wanted. If you've lost track of what you originally wanted, that itself is a sign — you've been building so long the goal dissolved into the process.
+The thing does what you set out to make it do. Not everything you could imagine it doing. What you originally wanted. If you've lost track of what you originally wanted, that itself is a sign - you've been building so long the goal dissolved into the process.
 
-You're changing things without improving them. Moving code around. Rewriting what works. Replacing one approach with another of equal value. This is [construction for its own sake](/prose/are-we-building-toward-something#what-does-the-honest-inventory-look-like) — and it's comfortable, but it's not progress.
+You're changing things without improving them. Moving code around. Rewriting what works. Replacing one approach with another of equal value. This is [construction for its own sake](/prose/are-we-building-toward-something#what-does-the-honest-inventory-look-like) - and it's comfortable, but it's not progress.
 
-Someone else could use it. Maybe not elegantly. Maybe with rough edges. But they could sit down and do the thing it's meant for. If they can, it's ready. If they can't, the remaining work is specific and identifiable — not the vague "it's not done yet."
+Someone else could use it. Maybe not elegantly. Maybe with rough edges. But they could sit down and do the thing it's meant for. If they can, it's ready. If they can't, the remaining work is specific and identifiable - not the vague "it's not done yet."
 
-You're avoiding it. Maybe the most reliable sign. If you find reasons not to use the thing you built — always one more fix, one more feature, one more cleanup before it's ready — you're probably not building toward completion. You're building to [avoid completion](/prose/why-is-perfectionism-a-trap). Because completion means judgment. And judgment means finding out if the thing you made is what you actually wanted.
+You're avoiding it. Maybe the most reliable sign. If you find reasons not to use the thing you built - always one more fix, one more feature, one more cleanup before it's ready - you're probably not building toward completion. You're building to [avoid completion](/prose/why-is-perfectionism-a-trap). Because completion means judgment. And judgment means finding out if the thing you made is what you actually wanted.
 
 ## So stop building?
 

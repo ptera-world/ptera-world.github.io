@@ -6,15 +6,15 @@ tags: [social, identity]
 
 # But.
 
-Maybe the most interesting word in the language. Not because of what it means — because of where it points.
+Maybe the most interesting word in the language. Not because of what it means - because of where it points.
 
 ## The hinge
 
 Everything turns on "but."
 
-"I love you, but..." — the love just got erased. "That's a great idea, but..." — the idea just got killed. "I support you, but..." — no you don't.
+"I love you, but..." - the love just got erased. "That's a great idea, but..." - the idea just got killed. "I support you, but..." - no you don't.
 
-Everything before "but" is preamble. Everything after is what the person actually means. The first half is performance — the appearance of fairness, balance, openness. The second half is the truth.
+Everything before "but" is preamble. Everything after is what the person actually means. The first half is performance - the appearance of fairness, balance, openness. The second half is the truth.
 
 People pick up on this instinctively. When someone starts with a compliment and you hear "but" coming, your chest tightens before the word lands. You already know what's next. The compliment was just the runway.
 
@@ -28,7 +28,7 @@ But "but" isn't always a knife.
 "Nobody really knows me. *But* I'm still here."
 "It's just interpolation. *But* it made me think."
 
-Same word. Same structure. Completely different function. Here, "but" isn't erasing — it's refusing. The first half acknowledges reality. The second half pushes against it.
+Same word. Same structure. Completely different function. Here, "but" isn't erasing - it's refusing. The first half acknowledges reality. The second half pushes against it.
 
 This is the "but" worth paying attention to. The one that says: yes, I see the obstacle. I'm going anyway.
 
@@ -42,7 +42,7 @@ The dismisser's "but" always points toward negation. "That's impressive, *but* i
 
 And then there's the "but" that points forward. "This is hard. *But* I'm doing it." "I failed. *But* I learned something." "It's not done. *But* it exists."
 
-Same word. The direction is a choice — one most people don't notice they're making.
+Same word. The direction is a choice - one most people don't notice they're making.
 
 ## There's always a but
 
@@ -62,7 +62,7 @@ The people who stop before the "but" are simplifying. The people who stop after 
 
 ## "But" as honesty
 
-The essays on this site are full of "buts." That's not a weakness — it's kind of the whole idea.
+The essays on this site are full of "buts." That's not a weakness - it's kind of the whole idea.
 
 Easy answers don't have a "but." "Just do X" doesn't have a "but." Motivational posters don't have a "but." And they don't tend to help, because anyone who's actually stuck already knows the "but" exists. Pretending it doesn't is insulting.
 

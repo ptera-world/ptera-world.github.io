@@ -20,15 +20,15 @@ The professional's relationship to code is instrumental. Code is a tool for achi
 
 ## The other one
 
-The other one builds things to understand them. Not to ship them. Not because someone asked. Because there's a question — "what if this worked differently?" — and the only way to answer it is to build it and see.
+The other one builds things to understand them. Not to ship them. Not because someone asked. Because there's a question - "what if this worked differently?" - and the only way to answer it is to build it and see.
 
 This person had a name. The name was **hacker**.
 
 Not the movie version. Not the criminal version. The original meaning: someone who explores systems by building and modifying them, driven by curiosity rather than requirements. Someone who takes things apart to see how they work and puts them back together differently to see what happens.
 
-That word got stolen. First by media, who needed a villain for computer crime stories. Then by culture, who absorbed the criminal meaning and forgot the original. Then by marketing, who turned "hack" into a synonym for "trick" or "shortcut" — life hacks, growth hacks, hackathons that are really just timed product sprints.
+That word got stolen. First by media, who needed a villain for computer crime stories. Then by culture, who absorbed the criminal meaning and forgot the original. Then by marketing, who turned "hack" into a synonym for "trick" or "shortcut" - life hacks, growth hacks, hackathons that are really just timed product sprints.
 
-The original meaning — [building as exploration](/prose/why-do-i-reinvent-everything), curiosity as method, the refusal to accept "that's just how it works" — doesn't have a word anymore.
+The original meaning - [building as exploration](/prose/why-do-i-reinvent-everything), curiosity as method, the refusal to accept "that's just how it works" - doesn't have a word anymore.
 
 ## Why the distinction matters
 
@@ -42,17 +42,17 @@ So the work gets reframed. It becomes "side projects" (implying there's a main p
 
 ## The merge that didn't work
 
-The industry tried to merge them. "Full-stack developer." "10x engineer." The idea that one person should be both — curious enough to innovate, disciplined enough to ship. Creative and professional. Exploratory and productive.
+The industry tried to merge them. "Full-stack developer." "10x engineer." The idea that one person should be both - curious enough to innovate, disciplined enough to ship. Creative and professional. Exploratory and productive.
 
 Some people are both. But the modes are different. You can't explore and ship at the same time. Exploration requires [tolerance for dead ends](/prose/why-is-perfectionism-a-trap). Shipping requires killing dead ends. Exploration follows curiosity. Shipping follows requirements. The skills overlap but the mindsets don't.
 
-What actually happened is the professional track won. Not because it's better — because it's legible. You can measure tickets closed. You can't measure [insights gained](/prose/why-do-i-build-tools#what-actually-feels-good). You can put "shipped feature X" on a resume. You can't put "discovered that document conversion should be a pipeline not a monolith." The [metrics select](/prose/whats-actually-wrong) for the professional and render the explorer invisible.
+What actually happened is the professional track won. Not because it's better - because it's legible. You can measure tickets closed. You can't measure [insights gained](/prose/why-do-i-build-tools#what-actually-feels-good). You can put "shipped feature X" on a resume. You can't put "discovered that document conversion should be a pipeline not a monolith." The [metrics select](/prose/whats-actually-wrong) for the professional and render the explorer invisible.
 
 ## What got lost
 
 The original hacker culture produced things that changed everything. The personal computer. The internet. Open source. Hypertext. Video games. Not because someone wrote a requirements doc. Because someone asked "what if?" and built the answer.
 
-These weren't professional products. They were [explorations that turned out to matter](/prose/are-we-building-toward-something#are-we-optimizing-for-interesting). The professional ecosystem that grew around them — the companies, the methodologies, the career paths — exists because explorers created the territory that professionals now maintain.
+These weren't professional products. They were [explorations that turned out to matter](/prose/are-we-building-toward-something#are-we-optimizing-for-interesting). The professional ecosystem that grew around them - the companies, the methodologies, the career paths - exists because explorers created the territory that professionals now maintain.
 
 That dynamic is still going. The next thing that changes everything will probably come from someone building something nobody asked for, to answer a question nobody thought to ask. It won't have a business case. It won't have a user story. It'll have a person who couldn't stop thinking "what if?"
 

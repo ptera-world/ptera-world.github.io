@@ -12,7 +12,7 @@ but the damage doesn't stay in the mind. it lands in the body. and the body keep
 
 ## what stress actually is
 
-stress isn't a feeling. it's a chemical state. cortisol, adrenaline, inflammatory markers. the body doesn't know the difference between a predator and a performance review. it runs the same emergency response for both — elevated heart rate, suppressed digestion, narrowed focus, immune system on hold. the emergency response was designed for minutes. [the grind](/unfiltered/the-system-filled-every-gap-you-had) runs it for years.
+stress isn't a feeling. it's a chemical state. cortisol, adrenaline, inflammatory markers. the body doesn't know the difference between a predator and a performance review. it runs the same emergency response for both - elevated heart rate, suppressed digestion, narrowed focus, immune system on hold. the emergency response was designed for minutes. [the grind](/unfiltered/the-system-filled-every-gap-you-had) runs it for years.
 
 chronic stress isn't "being stressed out." it's your body running an emergency protocol that never ends. the inflammation becomes baseline. the tension becomes posture. the elevated cortisol becomes weight gain, insomnia, brain fog, immune suppression. the body adapts to the emergency by breaking down slowly instead of all at once.
 
@@ -20,7 +20,7 @@ and the system calls this "aging." or "lifestyle factors." or "pre-existing cond
 
 ## what exhaustion actually is
 
-the tiredness at the end of [the grind](/unfiltered/the-system-filled-every-gap-you-had) isn't laziness. it's depletion. the body spent its resources — glucose, neurotransmitters, the capacity to regulate emotion and sustain attention — on eight hours of someone else's priorities. what comes home is the residue. the feeling of being tired isn't a mood. it's a metabolic state. the tank is empty. and the system expects you to fill it with six hours of sleep and do it again.
+the tiredness at the end of [the grind](/unfiltered/the-system-filled-every-gap-you-had) isn't laziness. it's depletion. the body spent its resources - glucose, neurotransmitters, the capacity to regulate emotion and sustain attention - on eight hours of someone else's priorities. what comes home is the residue. the feeling of being tired isn't a mood. it's a metabolic state. the tank is empty. and the system expects you to fill it with six hours of sleep and do it again.
 
 the person who collapses on the couch and scrolls isn't choosing dopamine over meaning. their body is choosing the lowest-energy activity available because the energy is gone. the phone isn't competing with a walk or a hobby or a creative project. it's competing with staring at a wall. the scroll wins because the body has nothing left to offer anything else.
 
@@ -28,7 +28,7 @@ the person who collapses on the couch and scrolls isn't choosing dopamine over m
 
 two to three hours a day in a car or on a train. sitting. the body was built to move and you're holding it still in a metal box because the place you can afford to live isn't the place you have to work.
 
-the back pain isn't mysterious. the weight gain isn't a puzzle. the cardiovascular decline isn't surprising. the body is doing exactly what a body does when you take away its movement for three hours a day, five days a week, for decades. the damage is mechanical. predictable. and entirely structural — it's not that you're not exercising enough. it's that [the job](/unfiltered/your-best-hours-belong-to-someone-else) requires you to not move for most of your waking life.
+the back pain isn't mysterious. the weight gain isn't a puzzle. the cardiovascular decline isn't surprising. the body is doing exactly what a body does when you take away its movement for three hours a day, five days a week, for decades. the damage is mechanical. predictable. and entirely structural - it's not that you're not exercising enough. it's that [the job](/unfiltered/your-best-hours-belong-to-someone-else) requires you to not move for most of your waking life.
 
 ## chronic conditions
 
@@ -40,7 +40,7 @@ or worse: the chronic condition becomes a pre-existing condition. which means th
 
 ## disability
 
-and when the body breaks enough — when the accumulated damage crosses a threshold from "chronic condition" to "can't work" — the system has a category for that. disability.
+and when the body breaks enough - when the accumulated damage crosses a threshold from "chronic condition" to "can't work" - the system has a category for that. disability.
 
 disability benefits exist. they're not enough. they require proving you can't work, which requires documentation, which requires doctors, which requires [the benefit](/unfiltered/the-system-monetized-the-damage), which might have run out. the process of proving your body is broken is itself exhausting for a body that's broken.
 

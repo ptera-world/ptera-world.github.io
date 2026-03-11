@@ -20,9 +20,9 @@ If you really believed everything changes, you probably wouldn't:
 - Expect relationships to feel the same as when they started
 - Grieve that things aren't how they used to be
 - [Refuse to try](/prose/how-much-could-i-possibly-do) because you already know how it'll go
-- Demand permanence from anything — jobs, identities, beliefs, people
+- Demand permanence from anything - jobs, identities, beliefs, people
 
-But you do some of these. Everyone does. Because the alternative — actually living as if nothing is fixed — is disorienting. We want stable ground. We want to arrive somewhere and stay.
+But you do some of these. Everyone does. Because the alternative - actually living as if nothing is fixed - is disorienting. We want stable ground. We want to arrive somewhere and stay.
 
 There's nowhere to stay, though.
 
@@ -30,7 +30,7 @@ There's nowhere to stay, though.
 
 Because brains are prediction machines. They build models of the world and use them to navigate. The models need stability to work. If everything changes constantly, the model is never accurate, and the brain feels unsafe.
 
-So we freeze things. [Labels](/prose/what-are-labels-anyway) freeze identity. Habits freeze behavior. Beliefs freeze understanding. Institutions freeze culture. We build structures — mental, social, physical — designed to resist change. And they work, for a while, until they don't.
+So we freeze things. [Labels](/prose/what-are-labels-anyway) freeze identity. Habits freeze behavior. Beliefs freeze understanding. Institutions freeze culture. We build structures - mental, social, physical - designed to resist change. And they work, for a while, until they don't.
 
 The [frozen software paradigm](/prose/why-is-software-hard). The labels that [became ceilings](/prose/what-are-labels-anyway). The patterns you [can't break](/prose/why-is-change-so-hard) because they hardened into identity. The knowledge systems that [stopped being maintained](/prose/what-do-we-keep-losing) and vanished. All the same mechanism: something was frozen, reality kept moving, and the gap between the frozen thing and reality grew until something broke.
 
@@ -38,31 +38,31 @@ The [frozen software paradigm](/prose/why-is-software-hard). The labels that [be
 
 "I need to change." People say this like change is a thing you do once. A decision. A moment. Before and after.
 
-It's not. Change is continuous. You're changing right now. You were changing before you read this. You'll be changing after. The question was never "should I change" — it was "am I paying attention to the change that's already happening?"
+It's not. Change is continuous. You're changing right now. You were changing before you read this. You'll be changing after. The question was never "should I change" - it was "am I paying attention to the change that's already happening?"
 
-The [insight trap](/prose/why-is-change-so-hard) is partly about this. People wait for the moment of change — the breakthrough, the epiphany, the decision that fixes everything. That moment doesn't come. Or it comes and nothing is different the next day. Because change isn't a moment. It's a direction sustained over time.
+The [insight trap](/prose/why-is-change-so-hard) is partly about this. People wait for the moment of change - the breakthrough, the epiphany, the decision that fixes everything. That moment doesn't come. Or it comes and nothing is different the next day. Because change isn't a moment. It's a direction sustained over time.
 
 ## Loss is change
 
-The things you've lost — people, possibilities, versions of yourself — weren't taken from you by some external force. They changed. Or you changed. Or the context changed. And what existed in the old configuration doesn't exist in the new one.
+The things you've lost - people, possibilities, versions of yourself - weren't taken from you by some external force. They changed. Or you changed. Or the context changed. And what existed in the old configuration doesn't exist in the new one.
 
-This isn't comforting. "Everything changes" doesn't make loss hurt less. But it reframes it: loss isn't a malfunction. It's what change looks like from the inside. The grief is real. The expectation that things should have stayed — that's the part worth questioning.
+This isn't comforting. "Everything changes" doesn't make loss hurt less. But it reframes it: loss isn't a malfunction. It's what change looks like from the inside. The grief is real. The expectation that things should have stayed - that's the part worth questioning.
 
-[What do we keep losing?](/prose/what-do-we-keep-losing) Everything. Always. The question is what we carry forward and what we let go. Preservation isn't about stopping change — it's about choosing what survives the transition.
+[What do we keep losing?](/prose/what-do-we-keep-losing) Everything. Always. The question is what we carry forward and what we let go. Preservation isn't about stopping change - it's about choosing what survives the transition.
 
 ## Growth is change
 
-The flip side. Every skill you've learned, every relationship that deepened, every time you surprised yourself — that was change too. The same mechanism that produces loss produces growth.
+The flip side. Every skill you've learned, every relationship that deepened, every time you surprised yourself - that was change too. The same mechanism that produces loss produces growth.
 
-You can't have one without the other. The version of you that's capable of new things is not the version that existed before. Something was lost — comfort, certainty, the old self-concept — and something was gained. [Being yourself](/prose/whats-the-purpose-of-life) isn't a fixed state. It's the process of continuously becoming.
+You can't have one without the other. The version of you that's capable of new things is not the version that existed before. Something was lost - comfort, certainty, the old self-concept - and something was gained. [Being yourself](/prose/whats-the-purpose-of-life) isn't a fixed state. It's the process of continuously becoming.
 
-The [fear of failure](/prose/why-is-perfectionism-a-trap) is partly fear of change. If you try and fail, you've changed — you're now someone who tried and failed. If you try and succeed, you've also changed — you're now someone with new capabilities and new expectations. Either way, the old you is gone. That can be scary even when the change is good.
+The [fear of failure](/prose/why-is-perfectionism-a-trap) is partly fear of change. If you try and fail, you've changed - you're now someone who tried and failed. If you try and succeed, you've also changed - you're now someone with new capabilities and new expectations. Either way, the old you is gone. That can be scary even when the change is good.
 
 ## Nothing on this site is final
 
 These essays change. New ones alter the meaning of old ones just by existing nearby. Links get added. Ideas get revised. The graph shifts.
 
-That's not a limitation. [That's the point.](/prose/this-is-not-all) A finished essay would be a frozen thing pretending reality stopped moving. These don't pretend that. They're snapshots of thinking in motion — true enough for now, probably wrong enough later to need updating.
+That's not a limitation. [That's the point.](/prose/this-is-not-all) A finished essay would be a frozen thing pretending reality stopped moving. These don't pretend that. They're snapshots of thinking in motion - true enough for now, probably wrong enough later to need updating.
 
 The [graph structure](/prose/this-site-is-manipulative) embodies this. No beginning. No ending. No linear progression from introduction to conclusion. Just a web that grows and shifts. Because that's what's actually happening. To the ideas, to the author, to you.
 

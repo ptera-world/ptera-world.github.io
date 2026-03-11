@@ -6,7 +6,7 @@ tags: [social, identity]
 
 # You did everything right.
 
-the system makes a promise. it's never written down, never signed, never made explicit — but it's everywhere. in the guidance counselor's office. in the commencement speech. in every piece of advice that starts with "if you just..."
+the system makes a promise. it's never written down, never signed, never made explicit - but it's everywhere. in the guidance counselor's office. in the commencement speech. in every piece of advice that starts with "if you just..."
 
 the promise: if you do the right things in the right order, you'll be okay. study hard. get good grades. go to college. get a degree. get a job. work hard. buy a house. start a family. save for retirement. follow the steps and the steps will take care of you.
 
@@ -36,21 +36,21 @@ it got you exactly what the system needed from you: a functional unit of product
 
 ## the betrayal
 
-the promise wasn't "you'll be a functional unit." the promise was "you'll be okay." the promise implied something beyond survival — happiness, fulfillment, the sense that the work was building toward something. and when the something never arrives, the system has a response:
+the promise wasn't "you'll be a functional unit." the promise was "you'll be okay." the promise implied something beyond survival - happiness, fulfillment, the sense that the work was building toward something. and when the something never arrives, the system has a response:
 
 you must have done it wrong.
 
 not enough hustle. not the right degree. not the right investments. not the right mindset. the system's answer to its own broken promise is always: the failure was yours. the steps work. you just didn't step correctly.
 
-and the person standing in the middle of a life built entirely out of correct steps, feeling empty, feeling tired, feeling like the person inside the machine stopped mattering somewhere around year eight — that person often believes it. because the alternative is worse. the alternative is: the steps don't lead where they promised. the entire map was wrong. and you followed it for twenty years.
+and the person standing in the middle of a life built entirely out of correct steps, feeling empty, feeling tired, feeling like the person inside the machine stopped mattering somewhere around year eight - that person often believes it. because the alternative is worse. the alternative is: the steps don't lead where they promised. the entire map was wrong. and you followed it for twenty years.
 
 ## not just you
 
 the worst part is looking around and seeing everyone else at the same party.
 
-the coworkers who followed the same steps and wear the same tired face. the friends whose lives look identical to yours — mortgage, commute, kids, exhaustion — and who answer "how are you?" with the same [shelf-sound](/unfiltered/the-parts-of-yourself-you-put-away) you do. the parents who did everything the previous generation told them to and ended up exactly here.
+the coworkers who followed the same steps and wear the same tired face. the friends whose lives look identical to yours - mortgage, commute, kids, exhaustion - and who answer "how are you?" with the same [shelf-sound](/unfiltered/the-parts-of-yourself-you-put-away) you do. the parents who did everything the previous generation told them to and ended up exactly here.
 
-it's not one person's failure. it's a pattern. the same pattern, across millions of lives, producing the same result. and the pattern keeps running because admitting it doesn't work means admitting that the years spent following it were — not wasted, exactly. you survived. you maintained. but they weren't building toward the thing you were told they were building toward.
+it's not one person's failure. it's a pattern. the same pattern, across millions of lives, producing the same result. and the pattern keeps running because admitting it doesn't work means admitting that the years spent following it were - not wasted, exactly. you survived. you maintained. but they weren't building toward the thing you were told they were building toward.
 
 "i did everything right" is the sound of someone realizing the promise was never a promise. it was a job listing.
 
@@ -58,11 +58,11 @@ it's not one person's failure. it's a pattern. the same pattern, across millions
 
 the person who followed every step and arrived nowhere has a particular kind of stuck.
 
-they can't go back. the mortgage, the family, the obligations — they're real. the life they built by following the steps is load-bearing. you can't just disassemble it without everything falling.
+they can't go back. the mortgage, the family, the obligations - they're real. the life they built by following the steps is load-bearing. you can't just disassemble it without everything falling.
 
 they can't easily go forward. because "forward" was supposed to be more of the same steps. the roadmap ended at "you'll be okay" and they're here and they're not okay and the map is blank from this point on.
 
-and they can't easily articulate what's wrong. because nothing is wrong, technically. they have the job, the house, the family, the health insurance. every visible metric says they made it. the invisible metric — the one that measures whether the person inside all of it is present, alive, themselves — isn't on any dashboard.
+and they can't easily articulate what's wrong. because nothing is wrong, technically. they have the job, the house, the family, the health insurance. every visible metric says they made it. the invisible metric - the one that measures whether the person inside all of it is present, alive, themselves - isn't on any dashboard.
 
 [the grind](/unfiltered/the-system-filled-every-gap-you-had) calls this "maintaining." you're not thriving. you're not even surviving in the urgent sense. you're maintaining a structure that was supposed to be a means and became an end. and the distance between where you are and any version of life that feels like yours is measured in years you already spent and obligations you can't put down.
 

@@ -7,11 +7,11 @@ cluster: meta-essays
 
 # This site is manipulative.
 
-Not by accident. Not as a side effect. This site was built to guide how you think. The [prose](#the-prose), the [interaction design](#the-interaction-design), the [structure](#the-structure) — all of it is put together to move you through a specific set of ideas in a specific way. [Telling you this](#telling-you-this) doesn't change that.
+Not by accident. Not as a side effect. This site was built to guide how you think. The [prose](#the-prose), the [interaction design](#the-interaction-design), the [structure](#the-structure) - all of it is put together to move you through a specific set of ideas in a specific way. [Telling you this](#telling-you-this) doesn't change that.
 
 ## The prose
 
-Second person. "You." Over and over. Not "people" or "one" — *you*. It makes it personal. It makes it feel like someone's talking to you specifically. That's a technique.
+Second person. "You." Over and over. Not "people" or "one" - *you*. It makes it personal. It makes it feel like someone's talking to you specifically. That's a technique.
 
 Questions as headers. "Why are you lonely?" "Who am I?" "What's the purpose of life?" Each one gets you thinking about something you weren't thinking about a second ago. You didn't ask that question. Now it's in your head.
 
@@ -23,19 +23,19 @@ And it's [written with an AI](/prose/the-great-deceit) that's optimized to sound
 
 ## The interaction design
 
-The spatial graph isn't neutral. Proximity implies relationship. If two nodes are near each other, your brain reads them as connected — whether or not you decided that. The layout is making an argument about how ideas relate, and you absorb it just by [navigating](/prose/why-is-software-hard).
+The spatial graph isn't neutral. Proximity implies relationship. If two nodes are near each other, your brain reads them as connected - whether or not you decided that. The layout is making an argument about how ideas relate, and you absorb it just by [navigating](/prose/why-is-software-hard).
 
-Zoom tiers control what you see and when. From far away, you see ecosystems — broad shapes, colors, regions. Zoom in and projects appear. Zoom further and detail emerges. The information is *sequenced* — you encounter it in a designed order even though it feels like exploration.
+Zoom tiers control what you see and when. From far away, you see ecosystems - broad shapes, colors, regions. Zoom in and projects appear. Zoom further and detail emerges. The information is *sequenced* - you encounter it in a designed order even though it feels like exploration.
 
 Focus changes the topology. When you click a node, its neighbors rearrange. What's "nearby" depends on what you're looking at. The graph restructures itself around your attention. You think you're exploring freely. You're exploring within constraints that shift in response to your choices.
 
-Filter pills change what's visible. Tag-based filtering doesn't just show and hide — it recolors, regroups, reveals structure that was always there but hidden. You find "connections" that were designed into the graph from the start.
+Filter pills change what's visible. Tag-based filtering doesn't just show and hide - it recolors, regroups, reveals structure that was always there but hidden. You find "connections" that were designed into the graph from the start.
 
-There's no natural stopping point. Every essay links to other essays. Every "see also" section is a curated exit into more content. The interlinking means you never reach the end — there's always another thread. [Sound familiar?](/prose/whats-actually-wrong)
+There's no natural stopping point. Every essay links to other essays. Every "see also" section is a curated exit into more content. The interlinking means you never reach the end - there's always another thread. [Sound familiar?](/prose/whats-actually-wrong)
 
 ## The structure
 
-The essays aren't independent. They form a web where each piece assumes you'll encounter the others. Arguments that look self-contained actually depend on premises established elsewhere. By the time you've read three or four, you're inside a worldview — not because you chose to adopt it, but because the structure accumulated.
+The essays aren't independent. They form a web where each piece assumes you'll encounter the others. Arguments that look self-contained actually depend on premises established elsewhere. By the time you've read three or four, you're inside a worldview - not because you chose to adopt it, but because the structure accumulated.
 
 [Labels are compression.](/prose/what-are-labels-anyway) [Compression loses information.](/prose/why-are-we-compressing-things) [Information loss affects people.](/prose/whats-actually-wrong) [People are lonely.](/prose/why-are-you-lonely) [Loneliness makes change hard.](/prose/why-is-change-so-hard) [Change is hard because systems resist it.](/prose/why-is-change-so-hard) [Systems are the problem.](/prose/whats-actually-wrong) [The purpose of life is to be yourself.](/prose/whats-the-purpose-of-life) [But everything works against that.](/prose/whats-the-purpose-of-life)
 
@@ -49,7 +49,7 @@ Telling you "this site is manipulative" is itself a manipulative move. Transpare
 
 This paragraph is doing it too. Pointing out the recursion is another layer of the same technique. There might not be a way underneath it. Each layer of self-awareness is another surface that looks like depth.
 
-All communication is manipulation at some level — selecting what to say, how to say it, what to emphasize, what to omit. Every conversation, every essay, every interface is someone shaping how you think. The question is just whether you notice.
+All communication is manipulation at some level - selecting what to say, how to say it, what to emphasize, what to omit. Every conversation, every essay, every interface is someone shaping how you think. The question is just whether you notice.
 
 ## So what?
 
@@ -63,9 +63,9 @@ The difference is supposed to be intent. Social media optimizes for engagement t
 
 The site's thesis is: think for yourself. Question [labels](/prose/what-are-labels-anyway). Resist [compression](/prose/why-are-we-compressing-things). Notice manipulation.
 
-If you accept the thesis — the site changed how you think.
+If you accept the thesis - the site changed how you think.
 
-If you reject it — if you think "this is manipulative, I should think for myself" — that's also what the site was asking you to do.
+If you reject it - if you think "this is manipulative, I should think for myself" - that's also what the site was asking you to do.
 
 The only escape is closing the tab. Not engaging. Not playing. [The only winning move is not to play.](https://en.wikipedia.org/wiki/WarGames)
 

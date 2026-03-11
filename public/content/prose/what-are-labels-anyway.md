@@ -8,7 +8,7 @@ tags: [social]
 
 You're not your Myers-Briggs type. You're not your diagnosis. You're not your generation, your zodiac sign, your attachment style, your Hogwarts house.
 
-You probably know this about other people. It's obvious that a label can't capture someone else's complexity. But [your own labels](#what-labels-do-you-wear) feel different — they feel like facts. Like self-knowledge. They might not be. They might be [stories you're living inside](#how-do-labels-become-real), and they might [set the ceiling](#is-there-a-ceiling-you-cant-see) for what you think you can be. And there's something interesting: [loosen your grip on your own labels](#what-if-you-held-them-loosely), and you might stop gripping others' labels so tightly too.
+You probably know this about other people. It's obvious that a label can't capture someone else's complexity. But [your own labels](#what-labels-do-you-wear) feel different - they feel like facts. Like self-knowledge. They might not be. They might be [stories you're living inside](#how-do-labels-become-real), and they might [set the ceiling](#is-there-a-ceiling-you-cant-see) for what you think you can be. And there's something interesting: [loosen your grip on your own labels](#what-if-you-held-them-loosely), and you might stop gripping others' labels so tightly too.
 
 ## What labels do you wear?
 
@@ -32,11 +32,11 @@ You collected these. You built a self-concept out of them. And now you live insi
 
 Labels aren't just descriptions. They're [constraints](/prose/why-are-we-compressing-things).
 
-Once you believe you're "not creative," you [stop trying](/prose/how-do-i-do-things) creative things. Why would you? You already know the outcome. The label becomes a filter — you notice evidence that confirms it, dismiss evidence that contradicts it.
+Once you believe you're "not creative," you [stop trying](/prose/how-do-i-do-things) creative things. Why would you? You already know the outcome. The label becomes a filter - you notice evidence that confirms it, dismiss evidence that contradicts it.
 
 This is the part that's hard to see from inside: **you are living as if the label is true, which makes it true, which confirms the label.**
 
-The kid labeled "gifted" who can't handle struggle — because struggle means they're not gifted anymore. The person labeled "anxious" who stops trying to change — because the label says this is just who they are. The one who "isn't good with people" who avoids social situations — and never gets better at them.
+The kid labeled "gifted" who can't handle struggle - because struggle means they're not gifted anymore. The person labeled "anxious" who stops trying to change - because the label says this is just who they are. The one who "isn't good with people" who avoids social situations - and never gets better at them.
 
 The label didn't describe a fixed reality. It created one.
 
@@ -46,7 +46,7 @@ Your labels set boundaries on who you're allowed to become.
 
 Not external boundaries. Internal ones. The ones you enforce on yourself without noticing.
 
-"I could never do that — I'm not that kind of person."
+"I could never do that - I'm not that kind of person."
 
 What kind of person? The kind defined by a label you picked up years ago, in a different context, when you were different?
 
@@ -86,7 +86,7 @@ There's something that tends to happen when you loosen your own labels: it chang
 
 If you're not your labels, neither are they. If your "awkward" was a story you could rewrite, maybe their "difficult" is too. If your ceiling was imaginary, maybe theirs is too.
 
-You stop flattening people. Not because you decided to be more open-minded — but because you felt, from inside, how much the [flattening](/prose/why-are-we-compressing-things) costs.
+You stop flattening people. Not because you decided to be more open-minded - but because you felt, from inside, how much the [flattening](/prose/why-are-we-compressing-things) costs.
 
 That understanding transfers. It tends to start with yourself.
 

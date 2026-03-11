@@ -6,7 +6,7 @@ tags: [social, technology]
 
 # Why did things stop being personal?
 
-There was a period — roughly 1995 to 2008 — when the internet was full of places that belonged to someone. Not "belonged" in the legal sense. Belonged in the sense that you could feel a person behind them. A GeoCities page with a visitor counter and a MIDI that autoplayed. A LiveJournal with custom CSS that broke in Firefox. A forum with inside jokes in the sidebar. A blog with a blogroll that was also a map of someone's world.
+There was a period - roughly 1995 to 2008 - when the internet was full of places that belonged to someone. Not "belonged" in the legal sense. Belonged in the sense that you could feel a person behind them. A GeoCities page with a visitor counter and a MIDI that autoplayed. A LiveJournal with custom CSS that broke in Firefox. A forum with inside jokes in the sidebar. A blog with a blogroll that was also a map of someone's world.
 
 These were ugly. Broken. [Unsophisticated.](#what-is-the-sophistication-trap) Completely, unmistakably *someone's*.
 
@@ -26,19 +26,19 @@ Platforms didn't kill the personal web on purpose. They just made it unnecessary
 
 Why maintain a blog when you can post on Medium? Why build a portfolio when you can have a LinkedIn? Why run a forum when there's Discord? Why host anything when the platform handles hosting, design, distribution, and audience for free?
 
-The answer to every one of these is: because the platform's version isn't *yours*. But "yours" stopped mattering once reach did. A blog nobody reads versus a tweet that gets engagement — the economics are obvious. The personal web couldn't compete with distribution.
+The answer to every one of these is: because the platform's version isn't *yours*. But "yours" stopped mattering once reach did. A blog nobody reads versus a tweet that gets engagement - the economics are obvious. The personal web couldn't compete with distribution.
 
-So people moved. Not because they wanted to. Because the audience was already there, and making something personal for an audience of nobody felt pointless. The loss wasn't that the platforms were bad. It was that they were [good enough](/prose/why-is-nothing-special-anymore#whats-the-convergence) — good enough that the thing they couldn't do (be personal) stopped seeming important.
+So people moved. Not because they wanted to. Because the audience was already there, and making something personal for an audience of nobody felt pointless. The loss wasn't that the platforms were bad. It was that they were [good enough](/prose/why-is-nothing-special-anymore#whats-the-convergence) - good enough that the thing they couldn't do (be personal) stopped seeming important.
 
 ## What is the Tumblr paradox?
 
-Tumblr is the strangest survival story on the internet. It failed as a business — repeatedly. It was sold for a fraction of what it was bought for. It has no functional recommendation algorithm. Its search barely works. It has never been profitable in any meaningful sense.
+Tumblr is the strangest survival story on the internet. It failed as a business - repeatedly. It was sold for a fraction of what it was bought for. It has no functional recommendation algorithm. Its search barely works. It has never been profitable in any meaningful sense.
 
 And it's still *personal*.
 
 People on Tumblr have custom themes. Inside jokes that span years. Communities built around shared obsessions that no algorithm would ever surface. The site works not despite its failure but *because of it*. No one optimized it. No growth team A/B tested the culture out of existence. No algorithm learned what content performs and started selecting for it.
 
-The failure preserved it. The thing that tends to make a platform successful — optimization, growth, engagement metrics — is the same thing that [nudges it toward convergence](/prose/why-is-nothing-special-anymore). Tumblr never converged because it never succeeded enough to be worth optimizing.
+The failure preserved it. The thing that tends to make a platform successful - optimization, growth, engagement metrics - is the same thing that [nudges it toward convergence](/prose/why-is-nothing-special-anymore). Tumblr never converged because it never succeeded enough to be worth optimizing.
 
 That's the paradox: the conditions that make a personal space possible are often the same conditions that make a business impossible. Personalization requires inefficiency. Quirks require tolerance for low engagement. Community requires friction that discourages growth. Everything that makes a space feel like *someone's* is everything a growth metric would eliminate.
 
@@ -50,7 +50,7 @@ Permission to make something ugly. Permission to make something that doesn't per
 
 That permission hasn't been revoked. You can still make a weird website. The tools are better than ever. Hosting is free. But the *context* changed. Making a personal website in 2005 was normal. Making one now feels like a statement. You're opting out of something. You're choosing effort over convenience. You're building for yourself in a world that assumes everything is built for an audience.
 
-That shift — from "of course I have a website" to "why would I have a website" — is the real loss. Not the technology. The assumption.
+That shift - from "of course I have a website" to "why would I have a website" - is the real loss. Not the technology. The assumption.
 
 ## Are you nostalgic for something you never had?
 
@@ -60,7 +60,7 @@ The personal web was also lonely. Most GeoCities pages had zero visitors. Most b
 
 The platforms solved real problems. They connected people. They gave audiences to voices that would otherwise have had none. The personal web was *romantic*, but it wasn't functional for most of the people using it.
 
-So the nostalgia is partly for an experience you had — making something yours — and partly for an experience you might be projecting backward — a time when making something personal was enough. It wasn't enough then either. You just didn't know what "enough" would feel like once reach became possible.
+So the nostalgia is partly for an experience you had - making something yours - and partly for an experience you might be projecting backward - a time when making something personal was enough. It wasn't enough then either. You just didn't know what "enough" would feel like once reach became possible.
 
 ## So what's actually missing?
 

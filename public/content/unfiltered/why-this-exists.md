@@ -14,7 +14,7 @@ that restraint is the collection's strength. and its ceiling.
 
 the main essays can say "safety isn't evenly distributed." they can't say what it feels like when you're on the wrong side of that distribution. they can say "systems optimize against you." they can't say that this is violent and someone is responsible and it's not abstract.
 
-"describe the situation, point at what could be different." that's the voice rule. and it works — for the version that can't afford to make things worse for an unknown reader. but it also means the version that names the violence directly, that sits in the weight instead of mapping it from above, that says the angry thing because the angry thing is the true thing — that version has no home.
+"describe the situation, point at what could be different." that's the voice rule. and it works - for the version that can't afford to make things worse for an unknown reader. but it also means the version that names the violence directly, that sits in the weight instead of mapping it from above, that says the angry thing because the angry thing is the true thing - that version has no home.
 
 not because the author lacks it. the rules exist *because* the author is negative. the restraint is a muzzle the author chose to wear. the muzzle fits. but the thing behind it is still there.
 
@@ -22,9 +22,9 @@ not because the author lacks it. the rules exist *because* the author is negativ
 
 because the constraint isn't a dial. it's a contract.
 
-every essay on the main site promises the same thing: this won't make it worse. you can land here from anywhere — a search result, a shared link, a bad night — and the tone won't kick you while you're down. that's not a style. it's a guarantee. and guarantees only work when they're absolute.
+every essay on the main site promises the same thing: this won't make it worse. you can land here from anywhere - a search result, a shared link, a bad night - and the tone won't kick you while you're down. that's not a style. it's a guarantee. and guarantees only work when they're absolute.
 
-loosening it — "mostly neutral, but sometimes raw" — breaks the guarantee. the reader can't trust the next essay if the last one hurt. the neutrality works because it's total. partial restraint is just inconsistency.
+loosening it - "mostly neutral, but sometimes raw" - breaks the guarantee. the reader can't trust the next essay if the last one hurt. the neutrality works because it's total. partial restraint is just inconsistency.
 
 so the raw version can't live inside the neutral one. it needs its own space with its own contract.
 
@@ -32,11 +32,11 @@ so the raw version can't live inside the neutral one. it needs its own space wit
 
 same graph. same spatial navigation. same "there is no start, explore from wherever you are." different voice.
 
-the graph is a substrate — [structure without meaning](/prose/where-does-meaning-live). the main essays are one meaning flowing through it. these essays are another. the graph stays neutral because it's structure. the content carries the tone.
+the graph is a substrate - [structure without meaning](/prose/where-does-meaning-live). the main essays are one meaning flowing through it. these essays are another. the graph stays neutral because it's structure. the content carries the tone.
 
 the contract here is different. this collection can be negative. it can name things. it can sit in the uncomfortable observation instead of resolving it into a structural analysis. it can say "this is violent" instead of "systems optimize against you."
 
-it can also be wrong. the main collection's restraint is also a filter — it removes the takes that are too hot, too specific, too shaped by the author's particular anger. removing the filter means some of what comes through will be less fair, less balanced, less useful. that's the trade.
+it can also be wrong. the main collection's restraint is also a filter - it removes the takes that are too hot, too specific, too shaped by the author's particular anger. removing the filter means some of what comes through will be less fair, less balanced, less useful. that's the trade.
 
 ## who this is for
 
@@ -44,17 +44,17 @@ not everyone. the main site is for whoever arrives. this space is for the person
 
 it's also for the author. the restraint is valuable but it costs something to maintain. a space where the muzzle comes off is a space where the thing behind it gets to exist. not for an audience. just to exist.
 
-and maybe — for the person who arrives here on a bad night, the one the main site is so careful not to harm — maybe the raw version is actually what they need. not careful. not "this won't make it worse." just: someone else sees it too, and they're angry about it, and the anger is honest. sometimes anger is more useful than compassion. depends on the night.
+and maybe - for the person who arrives here on a bad night, the one the main site is so careful not to harm - maybe the raw version is actually what they need. not careful. not "this won't make it worse." just: someone else sees it too, and they're angry about it, and the anger is honest. sometimes anger is more useful than compassion. depends on the night.
 
-but maybe not. maybe you're here on the wrong night. maybe you're already carrying the weight these essays describe and reading someone else name it doesn't help — it just makes it heavier. maybe you needed the neutral version, the one that holds you at arm's length and doesn't add to what you're carrying.
+but maybe not. maybe you're here on the wrong night. maybe you're already carrying the weight these essays describe and reading someone else name it doesn't help - it just makes it heavier. maybe you needed the neutral version, the one that holds you at arm's length and doesn't add to what you're carrying.
 
-we can't know which night it is. the main site solved that by never risking it. this space made a different choice — it risks it, because the unspoken version has its own cost too. but if you're here and it's making things worse, the [other door](/) is open. that's not a failure. that's the door doing what it was designed to do.
+we can't know which night it is. the main site solved that by never risking it. this space made a different choice - it risks it, because the unspoken version has its own cost too. but if you're here and it's making things worse, the [other door](/) is open. that's not a failure. that's the door doing what it was designed to do.
 
 ## the tension
 
 this collection will never fully resolve a contradiction at its center: the author is still writing from safety. the rawness is real but it's still chosen. the muzzle comes off, but the person behind it still has enough safety to be writing essays instead of surviving.
 
-[the floor](/unfiltered/nobody-told-you-there-were-prerequisites) is still there. the people the anger is about are still not reading. the distance is smaller here — the voice is closer, the naming is more direct — but the distance isn't zero. it can't be zero. that would require being in the crossfire, and the crossfire doesn't produce essays. it produces silence.
+[the floor](/unfiltered/nobody-told-you-there-were-prerequisites) is still there. the people the anger is about are still not reading. the distance is smaller here - the voice is closer, the naming is more direct - but the distance isn't zero. it can't be zero. that would require being in the crossfire, and the crossfire doesn't produce essays. it produces silence.
 
 so this space sits in the gap between the neutral analysis and the silence it can never reach. closer to the ground than the main site. not on it.
 
