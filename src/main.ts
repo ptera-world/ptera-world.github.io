@@ -11,6 +11,7 @@ import { loadSettingsFromUrl } from "./settings";
 import { createMinimap } from "./minimap";
 import { initGroupingState, buildGroupingUI, restoreGroupingFromUrl, getTagColor, setOnGroupingChange, resetToCurrentGrouping } from "./grouping-state";
 import { siteConfig, getActiveCollection, siteUrl } from "./site-config";
+import { landingEl } from "./dom";
 
 loadSettingsFromUrl();
 import { getSettings } from "./settings";
@@ -132,6 +133,36 @@ const settings = getSettings();
 if (settings.textOnCanvas) worldEl.dataset.textOnCanvas = "";
 if (!settings.edgesVisible) worldEl.dataset.edgesHidden = "";
 if (!settings.nodeGrowth) worldEl.dataset.noGrowth = "";
+
+// Nudge nodes that overlap the landing element after fonts are ready
+document.fonts.ready.then(() => {
+  const rect = landingEl.getBoundingClientRect();
+  const worldRect = worldEl.getBoundingClientRect();
+  const zoom = camera.zoom || 1;
+  // Convert landing pixel rect to world-space bounds
+  const lCx = (rect.left + rect.width / 2 - worldRect.left) / zoom;
+  const lCy = (rect.top + rect.height / 2 - worldRect.top) / zoom;
+  const halfW = rect.width / zoom / 2 + 20; // 20px padding
+  const halfH = rect.height / zoom / 2 + 20;
+
+  let nudged = false;
+  for (const node of graph.nodes) {
+    if (node.tags.includes("meta")) continue;
+    const dx = node.x - lCx;
+    const dy = node.y - lCy;
+    if (Math.abs(dx) < halfW + node.radius && Math.abs(dy) < halfH + node.radius) {
+      // Push radially outward from landing center
+      const dist = Math.hypot(dx, dy) || 1;
+      const pushDist = Math.hypot(halfW + node.radius, halfH + node.radius) - dist + 5;
+      if (pushDist > 0) {
+        node.x += (dx / dist) * pushDist;
+        node.y += (dy / dist) * pushDist;
+        nudged = true;
+      }
+    }
+  }
+  if (nudged) updatePositions(graph);
+});
 
 // Re-enable transitions after initial setup
 requestAnimationFrame(() => {

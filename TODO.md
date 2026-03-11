@@ -12,10 +12,10 @@
 - [x] Fix layout (broken by content-agnostic refactor) — resolved by layout engine rewrite
 - [ ] `visible-at` constraint should not assume 1920×1080 — support multiple common viewport sizes or a range
 - [ ] Replace `center:` absolute coordinates in cluster YAMLs with relative constraints (`near:`, `below:`, etc.)
-- [ ] Implement force layout adaptive feedback loop: derive params from geometry, run, measure 4 quality metrics (overlap, spread, edge satisfaction, clustering), adjust and re-run
-- [ ] Wire essays cluster back to force layout via adaptive loop (currently dead code path)
+- [x] Implement force layout adaptive feedback loop: `runForceLayoutAdaptive` — 6 attempts, 4 quality axes, directional param adjustments
+- [x] Wire essays cluster back to force layout via adaptive loop — essays use `layout: force` + `groupingPlacement: free`, force sim runs at step 6
 - [ ] Implement dynamic layout: runtime viewport adaptation within tight bounds of build-time solution
-- [ ] Landing element overlap: measure the landing element's bounding box at startup (after fonts load), convert to world coordinates at current zoom, nudge overlapping nodes away — can't be solved at build time since element size depends on CSS/fonts/zoom
+- [x] Landing element overlap: runtime nudge after `document.fonts.ready` — measures landing bounding box, converts to world coordinates, pushes overlapping nodes radially outward
 - [ ] Multiple meta nodes: currently all placed at (0,0) and camera picks the first one — define primary/secondary semantics, layout rules for multiple meta nodes, and camera centroid behavior
 - [x] Concentric ring layout for large clusters — auto-splits into inner/outer rings when >10 items, with staggered placement
 
