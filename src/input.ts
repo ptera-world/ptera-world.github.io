@@ -9,6 +9,10 @@ import { siteConfig, getActiveCollection, siteUrl } from "./site-config";
 import { keybinds, defineSchema, fromBindings, registerComponents, fuzzyMatcher } from "keybinds";
 import type { Command } from "keybinds";
 
+export interface InputCallbacks {
+  onFocusChange?: (node: Node | null) => void;
+}
+
 export interface InputHandle {
   navigateTo(node: Node, push?: boolean, animate?: boolean): void;
   commands: Command[];
@@ -75,6 +79,7 @@ export function setupInput(
   viewport: HTMLElement,
   camera: Camera,
   graph: Graph,
+  callbacks: InputCallbacks = {},
 ): InputHandle {
   let dragging = false;
   let lastX = 0;
@@ -101,6 +106,7 @@ export function setupInput(
     const wasThisNode = focusedNode === node;
     focusedNode = node;
     setFocus(graph, node, true);
+    callbacks.onFocusChange?.(node);
     if (isPanelOpen() || (isCardOpen() && wasThisNode)) {
       openPanel(node.id, node.label, false);
     } else {
@@ -123,6 +129,7 @@ export function setupInput(
   function clearFocus(push = true): void {
     focusedNode = null;
     setFocus(graph, null);
+    callbacks.onFocusChange?.(null);
     hideCard();
     if (push) {
       history.pushState(null, "", preserveParams());

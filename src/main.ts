@@ -6,10 +6,13 @@ import { initPanel, openPanel } from "./panel";
 import { showCard, hideCard, getCurrentCardNode, setCardToggleFilter, setCardIsTagActive, setCardGetTagColor } from "./card";
 import { createFilter, buildFilterUI, applyFilter, getVisibleIds, setActive, updateFilterPillColors } from "./filter";
 import { runLayout } from "./layout";
+import { createFocusLayout } from "./focus-layout";
+import { loadSettingsFromUrl } from "./settings";
 import { createMinimap } from "./minimap";
 import { initGroupingState, buildGroupingUI, restoreGroupingFromUrl, getTagColor, setOnGroupingChange, resetToCurrentGrouping } from "./grouping-state";
 import { siteConfig, getActiveCollection, siteUrl } from "./site-config";
 
+loadSettingsFromUrl();
 const camera = createCamera();
 const graph = createGraph();
 
@@ -107,7 +110,10 @@ createMinimap(camera, graph, (x, y, animate) => {
 });
 updateTransform(camera);
 window.addEventListener("resize", () => updateTransform(camera));
-const input = setupInput(document.getElementById("viewport")!, camera, graph);
+const focusLayout = createFocusLayout(graph);
+const input = setupInput(document.getElementById("viewport")!, camera, graph, {
+  onFocusChange: (node) => focusLayout.onFocusChange(node),
+});
 initPanel(camera, graph);
 
 // Handle ?focus= query param (snap without animation on page load)

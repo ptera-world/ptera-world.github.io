@@ -330,6 +330,10 @@ html, body {
 .node[data-filtered="surfaced"] { opacity: 0.4; pointer-events: auto; }
 .edge[data-filtered="surfaced"] { opacity: 0.3; }
 
+/* Neighborhood focus — fade distant nodes */
+.node[data-neighborhood="distant"] { opacity: 0.06; pointer-events: none; transition: opacity 400ms; }
+.node[data-neighborhood="distant"] .node-text { display: none; }
+
 /* Command palette (keybinds web component) */
 command-palette { position: fixed; inset: 0; z-index: 200; }
 command-palette::part(backdrop) { position: fixed; inset: 0; background: rgba(0,0,0,0.5); }

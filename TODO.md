@@ -19,5 +19,22 @@
 - [ ] Multiple meta nodes: currently all placed at (0,0) and camera picks the first one — define primary/secondary semantics, layout rules for multiple meta nodes, and camera centroid behavior
 - [ ] Concentric ring layout for large clusters (rhi with 19 children, essays with 42 nodes) — inner/outer rings instead of one huge ring with empty center
 
-## Content — Tell 9 (ongoing)
-- [ ] Future essays should emerge from specific, strange observations rather than addressing universal questions. A human writer notices something particular and works outward — not inward from a category. The current topic list (purpose of life, loneliness, identity, meaning, AGI) maps too neatly onto an LLM's training distribution
+## Living graph — the graph as reading surface
+
+The graph should be the primary way to experience the content. Essays are one format; fragments (short, graph-native thoughts) are another. The reading experience is spatial exploration, not linear consumption.
+
+### Runtime behavior (all configurable, opinionated defaults)
+- [ ] **Dynamic layout on focus** — force layout runs continuously via rAF, reorganizes neighborhood around focused node. Focused node pins in place, neighbors pull closer, distant nodes drift. Already have `runLayout` in `layout.ts` and filter-triggered force layout; extend to focus-triggered
+- [ ] **Neighborhood visibility** — only show local N-hop neighborhood around focus. Nodes beyond range fade/disappear. Fixes mobile UX (rendering cost proportional to what you're looking at)
+- [ ] **Text on canvas** — node descriptions render directly on canvas at appropriate zoom level, not behind panel clicks
+- [ ] **All behaviors configurable** — `src/settings.ts` created. Dynamic layout, neighborhood focus, edge rendering, focus highlighting, card intermediate state, node growth — each toggleable via URL params. Everything in `this-site-is-designed.md` can be disabled
+- [ ] **Hyperlink nodes** — nodes that are just links to other entrypoints (e.g. `/` ↔ `/prose/` ↔ `/unfiltered/`), enabling cross-collection navigation on the graph itself
+
+### Content
+- [ ] **Fragment content type** — new first-class content alongside essays. Short, graph-native, written as fragments from the start. Edges are the scaffolding, not essay structure
+- [ ] **Essays as secondary format** — still linkable, still refined, but secondary to the graph. Could eventually be assembled dynamically from fragments based on view history (stored in query params)
+- [ ] **Essays could move to a separate entrypoint** — freeing the main graph to be fragment-native
+
+### Ongoing
+- [ ] **Adversarial AI writing audits** — continue "prove this is AI-written" audits (like TELLS.md). Lower priority if essays become secondary or move to another entrypoint, but still valuable for the essay format
+- [ ] **Tell 9** — future essays should emerge from specific, strange observations rather than addressing universal questions. A human writer notices something particular and works outward — not inward from a category
