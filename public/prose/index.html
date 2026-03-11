@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en" data-collection="prose">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>prose — ptera.world</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div id="app">
+    <div id="viewport" role="application" aria-roledescription="spatial graph">
+      <div id="world">
+        <div id="card" hidden role="dialog" aria-label="Node details"></div>
+      </div>
+      <div id="filter-bar"></div>
+      <div id="grouping-bar"></div>
+    </div>
+    <div id="panel" hidden role="complementary" aria-label="Project details">
+      <div id="panel-divider"></div>
+      <div id="panel-content">
+        <div id="panel-header">
+          <h2 id="panel-title"></h2>
+          <span id="panel-actions">
+            <a id="panel-open" href="/" target="_blank" title="Open in new tab">&#x2197;</a>
+            <button id="panel-close" aria-label="Close panel">&times;</button>
+          </span>
+        </div>
+        <div id="panel-body"></div>
+      </div>
+    </div>
+  </div>
+  <div id="live-region" class="sr-only" aria-live="polite"></div>
+  <script type="module" src="/prose/main.js"></script>
+</body>
+</html>

@@ -443,6 +443,11 @@ html[data-collection="unfiltered"] { --accent: oklch(0.75 0.12 15); }
 html[data-collection="unfiltered"] .landing-name { color: var(--accent); }
 html[data-collection="unfiltered"] .landing-body { color: #aaa; }
 
+/* Collection: prose */
+html[data-collection="prose"] { --accent: oklch(0.78 0.09 45); }
+html[data-collection="prose"] .landing-name { color: var(--accent); }
+html[data-collection="prose"] .landing-body { color: #aaa; }
+
 /* Visually hidden (screen-reader only) */
 .sr-only {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;

@@ -28,15 +28,16 @@ The graph should be the primary way to experience the content. Essays are one fo
 - [x] **Neighborhood visibility** — `data-neighborhood="distant"` fades non-neighbors. Enabled via `?neighborhoodFocus=true`
 - [x] **Text on canvas** — CSS for readable descriptions at near zoom. Enabled via `?textOnCanvas=true`. Currently uses frontmatter descriptions; richer content when fragments grow
 - [x] **All behaviors configurable** — `src/settings.ts` with URL param loading. Settings: dynamicLayout, neighborhoodFocus, focusHighlight, edgesVisible, cardEnabled, nodeGrowth, textOnCanvas
-- [ ] **Hyperlink nodes** — nodes that are just links to other entrypoints (e.g. `/` ↔ `/prose/` ↔ `/unfiltered/`), enabling cross-collection navigation on the graph itself
+- [x] **Hyperlink nodes** — portal nodes in `public/content/portal/` with `url:` fields that navigate to other collections on second click (first click shows card)
 - [ ] **Visual testing** — the dynamic layout + neighborhood features are wired but need real-world testing and parameter tuning
 
 ### Content
 - [x] **Fragment content type** — `public/content/cluster/fragments.md` + 33 fragments in `public/content/fragments/`. Dense cross-links. Zero code changes needed.
 - [x] **Fragment extraction** — 30 atomic ideas extracted from essay redundancy (documented in FRAGMENTS.md)
 - [ ] **Essays as secondary format** — still linkable, still refined, but secondary to the graph. Could eventually be assembled dynamically from fragments based on view history (stored in query params)
-- [ ] **`/prose/` entrypoint** — move essays to their own entrypoint, freeing the default graph to be fragment-native
-- [ ] **New fragments** — write natively as fragments, not distilled from essays. Content that's graph-shaped from the start
+- [x] **`/prose/` entrypoint** — essays at their own entrypoint (`/prose/`), freeing the default graph to be fragment-native
+- [x] **New fragments** — 8 native fragments (explaining-changes-the-thing, maintenance-is-invisible, defaults-are-opinions, first-version-is-the-tool, thing-you-keep-circling, measuring-changes-what-gets-made, repetition-isnt-redundancy, legibility-is-the-bottleneck)
+- [ ] **More native fragments** — continue writing graph-shaped content
 
 ### Ongoing
 - [ ] **Adversarial AI writing audits** — continue "prove this is AI-written" audits (like TELLS.md). Lower priority if essays become secondary or move to another entrypoint, but still valuable for the essay format
