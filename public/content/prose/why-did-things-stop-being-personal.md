@@ -44,7 +44,7 @@ That's the paradox: the conditions that make a personal space possible are often
 
 ## What are you actually nostalgic for?
 
-When people miss GeoCities, they're not missing the under-construction GIFs. They're missing the *permission*.
+When people miss GeoCities, they're not missing the under-construction GIFs. They're missing the *permission* it implied.
 
 Permission to make something ugly. Permission to make something that doesn't perform. Permission to have a web presence that's just... a thing you made, for no reason, with no audience in mind, that exists because you wanted it to exist.
 

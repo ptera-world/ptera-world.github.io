@@ -6,7 +6,7 @@ tags: [identity, social, design]
 
 # What if your brain isn't broken?
 
-You can't focus. You pick up your phone without deciding to. You start things and don't finish them. You have seventeen tabs open and can't remember why. You scroll past the thing you opened the app to find. You sit down to work and forty minutes vanish into nothing.
+Can't focus. Pick up the phone without deciding to. Start things and don't finish them. You have seventeen tabs open and can't remember why. You scroll past the thing you opened the app to find. You sit down to work and forty minutes vanish into nothing.
 
 Something is wrong with you. Everyone says so. You probably have a label for it - or suspect you should.
 
@@ -14,7 +14,7 @@ But what if the problem isn't your brain? [What if the problem is where you are?
 
 ## Is the environment the problem?
 
-A fish doesn't know it's in water. You don't notice the attention environment you're swimming in because it's everywhere and it's been everywhere for so long that it feels like reality.
+A fish doesn't know it's in water. People don't notice the attention environment they're swimming in because it's everywhere and it's been everywhere for so long that it feels like reality.
 
 Infinite scroll. Push notifications. Variable reward schedules. Engagement metrics. Algorithmic feeds tuned to maximize time-on-platform. Every app, every platform, every screen in your life is running the same optimization: keep you looking. Not thinking. Not learning. Not [doing something that matters to you](/prose/whats-the-purpose-of-life). Looking.
 

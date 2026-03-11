@@ -20,7 +20,7 @@ The pattern isn't dramatic. No fire. No catastrophe. Just: nobody kept doing it,
 
 ## What's actually being lost?
 
-We tend to romanticize these as objects. Pyramids = big stones. Alexandria = burned scrolls. But what actually disappeared was systems.
+There's a tendency to romanticize these as objects. Pyramids = big stones. Alexandria = burned scrolls. But what actually disappeared was systems.
 
 The pyramids - we know the physics. Limestone, ramps, copper tools. What we lost was the *process culture*. The logistics, the coordination, the organizational knowledge that made it routine. It's a bit like having source code but losing the build system, the deployment scripts, the dev culture, the institutional memory.
 

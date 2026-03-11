@@ -22,7 +22,7 @@ But there's another version that looks identical from the outside and is complet
 
 It doesn't feel like ego. It feels like *friction*.
 
-You look at the existing tool. It works. It does the thing. But it does the thing in a way that doesn't match how you think about the problem. The abstractions are wrong - not incorrect, just *wrong for you*. The assumptions encoded in the design are someone else's assumptions. The shape of the tool implies a shape of thinking, and it's not your shape.
+The existing tool works. It does the thing. But it does the thing in a way that doesn't match how you think about the problem. The abstractions are wrong - not incorrect, just *wrong for you*. The assumptions encoded in the design are someone else's assumptions. The shape of the tool implies a shape of thinking, and it's not your shape.
 
 You could adapt. Learn to think the way the tool thinks. Thousands of people did. They're productive and happy. There's nothing wrong with the tool.
 

@@ -8,7 +8,7 @@ tags: [social]
 
 You're not your Myers-Briggs type. You're not your diagnosis. You're not your generation, your zodiac sign, your attachment style, your Hogwarts house.
 
-You probably know this about other people. It's obvious that a label can't capture someone else's complexity. But [your own labels](#what-labels-do-you-wear) feel different - they feel like facts. Like self-knowledge. They might not be. They might be [stories you're living inside](#how-do-labels-become-real), and they might [set the ceiling](#is-there-a-ceiling-you-cant-see) for what you think you can be. And there's something interesting: [loosen your grip on your own labels](#what-if-you-held-them-loosely), and you might stop gripping others' labels so tightly too.
+Most people know this about other people. It's obvious that a label can't capture someone else's complexity. But [your own labels](#what-labels-do-you-wear) feel different - they feel like facts. Like self-knowledge. They might not be. They might be [stories you're living inside](#how-do-labels-become-real), and they might [set the ceiling](#is-there-a-ceiling-you-cant-see) for what you think you can be. And there's something interesting: [loosen your grip on your own labels](#what-if-you-held-them-loosely), and you might stop gripping others' labels so tightly too.
 
 ## What labels do you wear?
 
@@ -26,7 +26,7 @@ But where did they come from?
 - A diagnosis that became an identity
 - Something you failed at once and decided meant something permanent
 
-You collected these. You built a self-concept out of them. And now you live inside it.
+People collect these. Build a self-concept out of them. And then live inside it.
 
 ## How do labels become real?
 

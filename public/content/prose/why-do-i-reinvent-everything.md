@@ -6,7 +6,7 @@ tags: [identity, technology]
 
 # Why do I reinvent everything?
 
-Every project starts the same way. You sketch an idea. You get excited. You start building. And then, inevitably, someone asks: "aren't you just reinventing the wheel?"
+Every project starts the same way. Sketch an idea. Get excited. Start building. And then, inevitably, someone asks: "aren't you just reinventing the wheel?"
 
 Yes. Probably. Let's do it anyway.
 

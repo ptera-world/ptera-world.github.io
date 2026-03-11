@@ -49,7 +49,7 @@ Telling you "this site is manipulative" is itself a manipulative move. Transpare
 
 This paragraph is doing it too. Pointing out the recursion is another layer of the same technique. There might not be a way underneath it. Each layer of self-awareness is another surface that looks like depth.
 
-All communication is manipulation at some level - selecting what to say, how to say it, what to emphasize, what to omit. Every conversation, every essay, every interface is someone shaping how you think. The question is just whether you notice.
+All communication is manipulation at some level - selecting what to say, how to say it, what to emphasize, what to omit. Every conversation, every essay, every interface is someone shaping how people think. The question is just whether anyone notices.
 
 ## So what?
 

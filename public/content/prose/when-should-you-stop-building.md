@@ -6,7 +6,7 @@ tags: [identity, technology]
 
 # When should you stop building?
 
-You know the feeling. The thing is almost done. Almost usable. Almost ready. Just one more feature. One more fix. One more refactor. One more layer of polish before you can actually *use* it.
+The feeling is familiar. The thing is almost done. Almost usable. Almost ready. Just one more feature. One more fix. One more refactor. One more layer of polish before you can actually *use* it.
 
 You've been almost done for months.
 

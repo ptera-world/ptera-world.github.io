@@ -20,7 +20,7 @@ FFmpeg is basically perfect at what it does. Blender competes with software that
 
 The patterns are documented. The prior art exists. Decades of examples of [how to make software that respects people](/prose/why-is-software-hard). Design principles. Usability research. Interface guidelines. None of this is secret. Anyone can study it.
 
-And everyone *knows* software is bad. Users feel it every day. Developers feel it every day. People who build software go home and struggle with other people's software. The friction isn't invisible. Everyone can see it. Everyone is unsatisfied.
+And everyone *knows* software is bad. Users feel it every day. Developers feel it every day. The people building software go home and struggle with other people's software. The friction isn't invisible. Everyone can see it. Everyone is unsatisfied.
 
 And they go to work the next day and make more bad software.
 

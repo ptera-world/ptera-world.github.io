@@ -22,9 +22,9 @@ Both are programs writing programs. But they're different in a way that matters:
 
 Programming is already a chain of programs writing programs, even if it doesn't always feel that way.
 
-You write in a high-level language. A compiler transforms that into a lower-level language. An assembler transforms that into machine instructions. The machine instructions are interpreted by microcode. At every layer, a program takes a more abstract description and produces a more concrete one.
+A programmer writes in a high-level language. A compiler transforms that into a lower-level language. An assembler transforms that into machine instructions. The machine instructions are interpreted by microcode. At every layer, a program takes a more abstract description and produces a more concrete one.
 
-Each layer is a "less detailed view" of the same thing. Your high-level code describes *what* should happen. The compiler's output describes *how* it happens on this architecture. The machine code describes *how* it happens in this instruction set. Same program, viewed at different magnifications.
+Each layer is a "less detailed view" of the same thing. The high-level code describes *what* should happen. The compiler's output describes *how* it happens on this architecture. The machine code describes *how* it happens in this instruction set. Same program, viewed at different magnifications.
 
 And this has been the pattern all along: programming has been about writing at a comfortable level of abstraction and letting programs fill in the details below. Nobody writes machine code by hand anymore. Nobody writes assembly for most tasks. Each generation delegates a layer downward and works at a higher level.
 

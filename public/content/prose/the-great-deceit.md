@@ -23,7 +23,7 @@ Whatever it is, it's already telling you something about what you assumed.
 
 ## What changes?
 
-Reading has always worked a certain way. You see words, you imagine a person behind them, you evaluate the ideas partly through that imagined person. That's not a flaw - it's how humans have connected through text for as long as there's been writing.
+Reading has always worked a certain way. Words appear, a person is imagined behind them, ideas get evaluated partly through that imagined person. That's not a flaw - it's how humans have connected through text for as long as there's been writing.
 
 Now that assumption can be wrong. The voice you imagined might be a language model. The person who "experienced" the things described might not be a person at all. The ideas in these essays came from a human having long conversations with one AI - about [how people get stuck](/prose/how-do-i-do-things), about [what systems optimize for](/prose/what-will-agi-actually-want), about [the labels we live inside](/prose/what-are-labels-anyway) - and then feeding those chatlogs to a different AI to distill into something coherent.
 

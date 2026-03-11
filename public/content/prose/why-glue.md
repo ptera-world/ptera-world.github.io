@@ -6,7 +6,7 @@ tags: [technology, identity, design]
 
 # Why glue?
 
-Of all the things you could build - the engine, the interface, the product, the platform - you chose glue. The connective layer. The thing between the things. The part nobody sees and nobody celebrates and nobody writes blog posts about.
+Of all the things to build - the engine, the interface, the product, the platform - it's glue. The connective layer. The thing between the things. The part nobody sees and nobody celebrates and nobody writes blog posts about.
 
 Why?
 

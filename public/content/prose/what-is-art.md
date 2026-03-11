@@ -24,7 +24,7 @@ Art isn't a talent. Talent is a [label](/prose/what-are-labels-anyway) that turn
 
 ## But what if this isn't art?
 
-You've said this. About your work. About your hobby. About the thing you care about more than you'd admit. You looked at it and compared it to the things you've been told count as art - the gallery paintings, the published novels, the performed music - and concluded yours doesn't qualify.
+People say this. About their work. About their hobby. About the thing they care about more than they'd admit. You looked at it and compared it to the things you've been told count as art - the gallery paintings, the published novels, the performed music - and concluded yours doesn't qualify.
 
 You were comparing the wrong part. You compared the *thing*. But the art was never in the thing. It was in the intent behind the thing. And you can't see intent from the outside. You can't see it in a gallery. You can only feel it while you're making something.
 
@@ -32,7 +32,7 @@ That's why "but this isn't art" is so convincing. You look at the output and it 
 
 ## Don't you already do this?
 
-You arrange things. They don't need to be arranged - you want them a certain way. You pick words carefully. You choose colors. You place objects. You organize your space, your schedule, your sentences.
+People arrange things. They don't need to be arranged - they want them a certain way. They pick words carefully. Choose colors. Place objects. Organize their space, their schedule, their sentences.
 
 Some of that is function. Some of it is preference. And some of it - the part where you could have done it differently and you did it *this* way - is intent. That's the part that's art. You've been doing it your whole life. You just never called it that because the [label](/prose/what-are-labels-anyway) told you art lives somewhere else.
 

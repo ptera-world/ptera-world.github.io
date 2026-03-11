@@ -6,7 +6,7 @@ tags: [social, design]
 
 # Why is nothing special anymore?
 
-Not nothing. There are still things that surprise you. But they're harder to find. And the things that reach the most people - the blockbusters, the AAA games, the algorithmic playlists, the trending content - feel increasingly the same. Competent. Polished. Frictionless. And empty in a way that's hard to name.
+Not nothing. There are still things that surprise. But they're harder to find. And the things that reach the most people - the blockbusters, the AAA games, the algorithmic playlists, the trending content - feel increasingly the same. Competent. Polished. Frictionless. And empty in a way that's hard to name.
 
 [What happened?](#what-happened)
 

@@ -14,7 +14,7 @@ Not change that happens to you. That's just life. The scary kind is the change y
 
 Not in the change itself. In what change means.
 
-If you change, the current version of you ends. Not dramatically - nobody dies. But the person who had these habits, these patterns, these coping mechanisms, this [identity](/prose/what-are-labels-anyway) - that person stops existing. Even if what replaces them is better.
+Change means the current version ends. Not dramatically - nobody dies. But the person who had these habits, these patterns, these coping mechanisms, this [identity](/prose/what-are-labels-anyway) - that person stops existing. Even if what replaces them is better.
 
 That's a kind of death. A small one. And your nervous system doesn't distinguish between small deaths and real ones. It just knows: something familiar is ending. And it pulls the alarm.
 

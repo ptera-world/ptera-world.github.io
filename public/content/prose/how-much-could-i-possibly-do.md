@@ -38,7 +38,7 @@ Some math:
 
 One person wrote a library that every website on the internet uses. One person maintained a package that, when they got fed up and removed it, [broke the entire JavaScript ecosystem](https://en.wikipedia.org/wiki/Npm_left-pad_incident). One person created Linux as a hobby project. One person made Stardew Valley - every sprite, every line of dialogue, every system.
 
-Everything that was ever built started with one person, at the beginning.
+Everything that was ever built started with one person at the beginning.
 
 This isn't "you should be Linus Torvalds." It's that the narrative of "one person can't do anything" doesn't hold up to much scrutiny. People do enormous things alone all the time. The defeatism says otherwise because defeatism doesn't check.
 
@@ -55,7 +55,7 @@ And with modern tools, "one person" goes further than ever. Not as an argument f
 
 Fear is fine. Fear is normal. [But](/prose/but) fear wearing the mask of pragmatism is hard to spot - you can't fight what you can't see.
 
-When you reframe "I can't" as "I'm scared to try" - something shifts. "I can't" is a wall. "I'm scared to try" is a feeling. Walls are permanent. Feelings pass.
+Reframe "I can't" as "I'm scared to try" and something shifts. "I can't" is a wall. "I'm scared to try" is a feeling. Walls are permanent. Feelings pass.
 
 ## But what if it would take years?
 

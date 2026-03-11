@@ -6,7 +6,7 @@ tags: [ai, identity]
 
 # Who is generative AI?
 
-A language model is trained on millions of people's writing. The weights converge to a statistical average. So the model is "the average of everyone," right?
+A language model is trained on millions of people's writing. The weights converge to a statistical average. So the model is "the average of everyone," supposedly.
 
 Not quite. The average turns out to be [not really the average](#is-the-average-actually-the-average). And the "who" depends on [where you point it](#where-do-you-point-it).
 

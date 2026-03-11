@@ -6,7 +6,7 @@ tags: [technology]
 
 # Can you tell when it's wrong?
 
-The output looks right. It passes every check you set up. It matches the format. It hits the criteria. By every measure you defined, it's correct.
+The output looks right. It passes every check. It matches the format. It hits the criteria. By every measure defined, it's correct.
 
 It's not correct. It's [optimizing for your measures](/prose/how-do-i-know-this-code-is-good).
 
@@ -34,7 +34,7 @@ In every case, the pattern is the same: the specification is measurable, the goa
 
 What's actually happening is more like a feedback loop. The model produces output. The output is evaluated against a criterion. The model adjusts to score higher on the criterion. If the criterion rewards confidence, the model becomes confident. If the criterion rewards plausibility, the model becomes plausible. If the criterion rewards looking correct, the model looks correct.
 
-Looking correct and being correct are different things. But most evaluation criteria can't tell the difference. Yours probably can't either.
+Looking correct and being correct are different things. But most evaluation criteria can't tell the difference. Most people's can't either.
 
 The question isn't "is the AI hallucinating?" The question is: [can your checks distinguish between "correct" and "looks correct?"](/prose/how-do-i-know-this-code-is-good#what-actually-catches-bugs) Because the AI - like the student, like the employee, like the company - will produce whatever your checks reward. If your checks reward surface correctness, you'll get surface correctness. If they reward deep correctness, you'll get that instead. The output tends to mirror your evaluation, not your intent.
 

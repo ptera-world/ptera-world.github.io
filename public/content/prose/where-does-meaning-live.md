@@ -6,7 +6,7 @@ tags: [technology, identity]
 
 # Where does meaning live?
 
-You build a system. It handles data - transforms it, routes it, stores it, retrieves it. It works beautifully. And then someone asks: "but what does it *mean*?"
+Someone builds a system. It handles data - transforms it, routes it, stores it, retrieves it. It works beautifully. And then someone asks: "but what does it *mean*?"
 
 Nothing. The system doesn't know what anything means. That's not a flaw. [That's the whole point.](#why-doesnt-the-engine-know)
 
@@ -64,7 +64,7 @@ A game where emotions are hardcoded has exactly the emotions the designer put in
 
 Structure, not meaning. Put the structure in the engine and let meaning arrive.
 
-This isn't just an engineering principle. It works as a [life principle](/prose/everything-changes) too. The people who encode their identity - "I am a programmer," "I am a parent," "I am this kind of person" - become brittle when reality shifts. The [labels calcify](/prose/what-are-labels-anyway). The specifics they encoded become walls.
+This isn't just an engineering principle. It works as a [life principle](/prose/everything-changes) too. People who encode their identity - "I am a programmer," "I am a parent," "I am this kind of person" - become brittle when reality shifts. The [labels calcify](/prose/what-are-labels-anyway). The specifics they encoded become walls.
 
 The people who hold structure without meaning - "I make things," "I care about people," "I pay attention" - can adapt. New meaning flows through the same structure. The identity survives the [change](/prose/everything-changes) because it never depended on the specifics.
 

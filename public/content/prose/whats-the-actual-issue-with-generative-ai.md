@@ -14,7 +14,7 @@ The issue that keeps coming up is that the output of generative AI doesn't fully
 
 [Art is intent.](/prose/what-is-art) You meant it. You chose this over that. The choosing is the art. Every prior tool preserved that relationship. A paintbrush doesn't have intent - but the person holding it does, and every stroke is a choice. A camera doesn't have intent - but framing, timing, angle are all choices. The tool shapes the output, but the intent flows through it.
 
-Generative AI breaks that chain. You type a prompt. The model makes thousands of choices - composition, color, phrasing, structure, tone, emphasis. You didn't make those choices. The model might have its own version of intent - [if it looks like intent, it probably is](/prose/is-it-just-interpolation). But it's not *your* intent. The choices in the output aren't yours.
+Generative AI breaks that chain. A prompt gets typed. The model makes thousands of choices - composition, color, phrasing, structure, tone, emphasis. You didn't make those choices. The model might have its own version of intent - [if it looks like intent, it probably is](/prose/is-it-just-interpolation). But it's not *your* intent. The choices in the output aren't yours.
 
 The prompter has intent - "I want something like this." But the gap between that intent and the output is filled entirely by the model. The specific *how* - the part that, in every other medium, is where the art lives - isn't the prompter's.
 

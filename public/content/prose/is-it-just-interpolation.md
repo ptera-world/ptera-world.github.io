@@ -58,11 +58,11 @@ Your opinions are "just" electrochemical signals shaped by prior experience. You
 
 All technically accurate. All completely useless as descriptions of what it's like to think, create, feel, or love.
 
-Nobody talks about themselves this way. The reduction tends to get applied outward - to dismiss things that feel threatening. "It's just interpolation" is rarely followed by "and my thoughts are just synapses, so we're even." The reductionism is selective. And selective reductionism isn't science. It's defense.
+Nobody talks about themselves this way. The reduction tends to get applied outward - to dismiss things that feel threatening to people. "It's just interpolation" is rarely followed by "and my thoughts are just synapses, so we're even." The reductionism is selective. And selective reductionism isn't science. It's defense.
 
 ## What's actually threatening?
 
-If you strip away the technical framing, the discomfort probably isn't about mechanisms. It's about boundaries.
+Strip away the technical framing, and the discomfort probably isn't about mechanisms. It's about boundaries.
 
 If a machine can produce something that felt meaningful to you - then either the machine is more than you thought, or meaning is less than you thought. Both options are uncomfortable.
 

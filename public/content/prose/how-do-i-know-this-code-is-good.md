@@ -6,7 +6,7 @@ tags: [technology]
 
 # How do I know this code is good?
 
-You didn't type every line. Maybe you didn't type most of them. An AI wrote the implementation while you held the reins. It compiles, it runs, it passes the tests. But you can't shake the feeling that you're [trusting something you don't fully understand](/prose/am-i-just-pretending).
+Nobody typed every line. Maybe not most of them. An AI wrote the implementation while a person held the reins. It compiles, it runs, it passes the tests. But you can't shake the feeling that you're [trusting something you don't fully understand](/prose/am-i-just-pretending).
 
 The thing is, you've always been trusting things you don't fully understand. That's not new - it just wasn't as visible before.
 

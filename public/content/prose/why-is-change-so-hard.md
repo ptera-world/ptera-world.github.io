@@ -6,7 +6,7 @@ tags: [identity, social]
 
 # Why is change so hard?
 
-You know the pattern is bad. You've known for months, maybe years. You can describe it perfectly. You can explain to someone else exactly what they should do differently. And you keep doing the same thing.
+The pattern is bad. It's been bad for months, maybe years. Describing it perfectly is easy. Explaining to someone else exactly what they should do differently is easy. And then - the same thing, again.
 
 This isn't about [external change](/prose/what-can-i-change). It's about you. Why [knowing better doesn't help](#why-doesnt-knowing-help). Why [insight isn't enough](#whats-the-insight-trap). Why the gap between [understanding and doing](#why-doesnt-knowing-translate-to-doing) is so wide. And why it's [not a failure of willpower](#if-its-not-willpower-what-is-it).
 

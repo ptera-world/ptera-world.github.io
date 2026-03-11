@@ -6,9 +6,9 @@ tags: [design]
 
 # Why is software hard?
 
-You're not bad at computers. Software is actually hard to use.
+Nobody is bad at computers. Software is actually hard to use.
 
-You know the app can do the thing. You've done it before. [You just can't find it.](#why-cant-you-find-anything) And maybe [that's on purpose](#is-complexity-intentional) - because the [people making these decisions](#who-decides-how-software-works) aren't living with the consequences. The whole paradigm [froze decades ago](#why-hasnt-it-changed) before anyone questioned whether it was good. It [doesn't value your time](#does-it-respect-your-time). But some software [feels completely different](#what-does-good-software-feel-like) - which shows it's possible. So [what can you do](#what-can-you-do)? And [what's really going on underneath](#whats-the-deeper-problem)?
+The app can do the thing. It's been done before. [It just can't be found.](#why-cant-you-find-anything) And maybe [that's on purpose](#is-complexity-intentional) - because the [people making these decisions](#who-decides-how-software-works) aren't living with the consequences. The whole paradigm [froze decades ago](#why-hasnt-it-changed) before anyone questioned whether it was good. It [doesn't value your time](#does-it-respect-your-time). But some software [feels completely different](#what-does-good-software-feel-like) - which shows it's possible. So [what can you do](#what-can-you-do)? And [what's really going on underneath](#whats-the-deeper-problem)?
 
 ## Why can't you find anything?
 

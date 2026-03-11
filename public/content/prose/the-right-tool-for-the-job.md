@@ -6,7 +6,7 @@ tags: [design, social]
 
 # The right tool for the job.
 
-You've heard this. Probably said it. "Use the right tool for the job." It sounds like practical wisdom. Sometimes [it is](#when-its-true). Mostly [it isn't](#when-its-not). And the way it's usually deployed has almost nothing to do with tools or jobs - it's about [defending territory](#whats-actually-being-said).
+Everyone's heard this. Probably said it. "Use the right tool for the job." It sounds like practical wisdom. Sometimes [it is](#when-its-true). Mostly [it isn't](#when-its-not). And the way it's usually deployed has almost nothing to do with tools or jobs - it's about [defending territory](#whats-actually-being-said).
 
 ## When it's true
 
@@ -66,9 +66,9 @@ But it's harder. It requires engaging. It requires admitting that you might not 
 
 ## Tools shape thinking
 
-There's a deeper layer worth looking at. "Right tool for the job" assumes the tool is neutral - a means to an end. Pick it up, do the job, put it down.
+There's a deeper layer worth looking at. "Right tool for the job" assumes the tool is neutral - a means to an end. Pick it up, do the job, put it down. That's not how tools work.
 
-But tools aren't neutral. They shape how you think about the problem. A spreadsheet gets you thinking in grids. A relational database gets you thinking in tables. A graph database gets you thinking in relationships. A Lisp gets you thinking in transformations. The tool doesn't just solve the problem - it defines what the problem looks like.
+Tools shape how people think about the problem. A spreadsheet gets you thinking in grids. A relational database gets you thinking in tables. A graph database gets you thinking in relationships. A Lisp gets you thinking in transformations. The tool doesn't just solve the problem - it defines what the problem looks like.
 
 So "the right tool for the job" has a circularity. The job looks different depending on which tool you're holding. The "right" tool is often just the one that makes the job look like something you already know how to do.
 

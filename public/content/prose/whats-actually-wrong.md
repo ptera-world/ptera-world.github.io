@@ -23,7 +23,7 @@ They want to create. They have ideas. They [don't start](/prose/how-do-i-do-thin
 - **It stopped being fun** - Used to enjoy it. Now it feels like work. Or obligation. Or performance.
 - **No immediate reward** - The payoff is distant. The couch is right here.
 - **No one to share it with** - What's the point if nobody sees it? Or worse - what if they do?
-- **Easier things grab attention** - Infinite scroll is right there. Zero effort. Guaranteed stimulation.
+- **Easier things grab attention** - infinite scroll is right there. Zero effort. Guaranteed stimulation.
 - **Life** - Depression. Burnout. Exhaustion. Responsibilities. Health. Money. Time.
 
 Some of these are ancient. Some were created by software. The infinite scroll didn't exist until someone built it. The comparison metrics didn't exist until platforms added them. The attention economy is a design choice, not a law of nature.

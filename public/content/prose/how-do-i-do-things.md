@@ -8,7 +8,7 @@ tags: [social]
 
 This is a real question. Not rhetorical. Not a setup for advice.
 
-There are ideas sitting in your head - things you want to make, learn, try. They've been there a while. You haven't started. Or you started and stopped. And at some point the question stops being frustration and becomes genuine: how do people actually do things?
+There are ideas sitting in people's heads - things they want to make, learn, try. They've been there a while. Haven't started. Or started and stopped. And at some point the question stops being frustration and becomes genuine: how do people actually do things?
 
 ## Why isn't it obvious?
 

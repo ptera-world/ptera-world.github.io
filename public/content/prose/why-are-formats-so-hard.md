@@ -8,7 +8,7 @@ tags: [technology, programming]
 
 Everything on a computer is a format. Every file, every stream, every message between programs - just bytes arranged according to some convention that somebody decided on, usually decades ago, often without writing it down.
 
-When formats work, they're invisible. You open a JPEG and see a photo. You play an MP4 and watch a video. The format did its job - it carried meaning from one program to another without you having to think about how.
+When formats work, they're invisible. Open a JPEG and see a photo. Play an MP4 and watch a video. The format did its job - it carried meaning from one program to another without you having to think about how.
 
 When formats don't work - when the file won't open, when the export is corrupted, when you need to get data from one tool to another and there's no path - that's when you realize [how much of "using a computer" is actually format translation](#what-is-a-format-problem).
 

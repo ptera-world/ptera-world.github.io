@@ -6,11 +6,11 @@ tags: [design, technology]
 
 # Why do you have to install things?
 
-You want to resize an image. You want to convert a PDF. You want to record your screen. Simple operations - the kind of thing a computer should obviously be able to do.
+Resize an image. Convert a PDF. Record the screen. Simple operations - the kind of thing a computer should obviously be able to do.
 
 But first: find the app. Download it. Run the installer. Click through the dialogs. Maybe create an account. Maybe restart. Now you have a program permanently on your machine that you'll use once and forget about until you notice it's eating disk space six months later.
 
-You didn't want a program. You wanted a capability. The program was just [the container it happened to come in](#why-is-the-app-the-unit).
+Nobody wanted a program. They wanted a capability. The program was just [the container it happened to come in](#why-is-the-app-the-unit).
 
 ## Why is the app the unit?
 

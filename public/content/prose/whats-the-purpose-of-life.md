@@ -16,7 +16,7 @@ Not "be authentic." Not "follow your heart." Not any of the inspirational poster
 
 It means: the thing you're doing with your life - does it come from you? Your actual preferences, curiosities, fears, joys? Or from a template you absorbed? A script someone handed you? An identity you assembled from other people's expectations?
 
-Most people are living some version of what they were told to want. The career, the milestones, the markers of success. Not because those things are bad - sometimes they fit perfectly. But sometimes they don't, and you can't tell the difference because you never checked.
+Most people are living some version of what they were told to want. The career, the milestones, the markers of success. Not because those things are bad - sometimes they fit perfectly. But sometimes they don't, and it's hard to tell the difference without checking.
 
 "Being yourself" means checking. Continuously. Not once - as a practice.
 

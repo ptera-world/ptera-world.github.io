@@ -6,7 +6,7 @@ tags: [identity, social]
 
 # Nothing lasts.
 
-You already know this. [Everything changes](/prose/everything-changes). Things break, fade, disappear. People leave. Memories blur. The things you built [stop being maintained](/prose/where-is-all-the-good-software). The things you loved [stop existing](/prose/what-do-we-keep-losing). This is not news.
+Everyone already knows this. [Everything changes](/prose/everything-changes). Things break, fade, disappear. People leave. Memories blur. The things you built [stop being maintained](/prose/where-is-all-the-good-software). The things you loved [stop existing](/prose/what-do-we-keep-losing). This is not news.
 
 But there's a difference between knowing it and living like you know it. And there's a difference between grief and expectation. The grief is real. The expectation - that it should have lasted - is the part that tends to break you.
 
@@ -34,7 +34,7 @@ It's not. Nothing is. And the grief of losing someone who's still alive is the s
 
 There's an uncomfortable thing about impermanence: it goes backwards.
 
-You remember the relationship as better than it was. The childhood as simpler. The old neighborhood as safer. The music as more meaningful. You're not lying to yourself - memory is [reconstructive, not archival](/prose/why-did-things-stop-being-personal#are-you-nostalgic-for-something-you-never-had). Every time you remember something, you rebuild it from pieces, and the pieces drift.
+People remember the relationship as better than it was. The childhood as simpler. The old neighborhood as safer. The music as more meaningful. It's not lying - memory is [reconstructive, not archival](/prose/why-did-things-stop-being-personal#are-you-nostalgic-for-something-you-never-had). Every time you remember something, you rebuild it from pieces, and the pieces drift.
 
 So the thing you're grieving - the perfect version, the golden age, the time when everything was right - may never have existed. The past changes because you change. The memory you have at thirty isn't the same memory you'll have at fifty, even if you never learn anything new about the event. The event itself is impermanent, even after it happened.
 

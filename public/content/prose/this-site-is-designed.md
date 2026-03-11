@@ -21,7 +21,7 @@ This reflects something about how knowledge works. The structure depends on the 
 
 ## Interaction
 
-The graph is a space, not a page. You navigate it spatially - pan, zoom, arrow keys that move to the nearest node in that direction. WASD. A minimap you can drag. It's treated as a place you're *in*, not a document you're reading.
+The graph is a space, not a page. It's navigated spatially - pan, zoom, arrow keys that move to the nearest node in that direction. WASD. A minimap you can drag. It's treated as a place you're *in*, not a document you're reading.
 
 Progressive disclosure everywhere. Hover a node and it highlights - but so do related nodes, with opacity and scale based on relatedness. Edges brighten and thicken. The graph shows you the *neighborhood* of an idea, not just the idea itself, with the strength of each connection visible in how much each neighbor responds. Ecosystems that partially match a filter are partially opaque - not in or out, but *how much* in. Everything is gradient, nothing is binary.
 

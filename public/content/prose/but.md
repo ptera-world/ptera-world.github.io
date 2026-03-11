@@ -16,7 +16,7 @@ Everything turns on "but."
 
 Everything before "but" is preamble. Everything after is what the person actually means. The first half is performance - the appearance of fairness, balance, openness. The second half is the truth.
 
-People pick up on this instinctively. When someone starts with a compliment and you hear "but" coming, your chest tightens before the word lands. You already know what's next. The compliment was just the runway.
+People pick up on this instinctively. When someone starts with a compliment and the "but" is coming, the chest tightens before the word lands. Everyone already knows what's next. The compliment was just the runway.
 
 ## The other direction
 
@@ -34,7 +34,7 @@ This is the "but" worth paying attention to. The one that says: yes, I see the o
 
 ## Which way does yours point?
 
-Most people don't notice the direction of their own "but."
+Most people don't notice the direction of their own "buts."
 
 The defeatist's "but" always points toward surrender. "I could try, *but* what's the point." "I want to, *but* I'm not good enough." "Things could change, *but* they won't." Every sentence starts with possibility and ends with giving up.
 

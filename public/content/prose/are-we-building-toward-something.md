@@ -36,7 +36,7 @@ Everyone has dead projects. Most people see them as failures. They might actuall
 
 From the outside, the surviving projects often share something the builder can't see. A document converter, a decompiler, a code analyzer, a simulation of human experience - they don't look related. But they all take something opaque and make it [visible](/prose/why-do-i-build-tools). That's not a product vision. It's more like a reflex. But reflexes come from somewhere.
 
-Your pattern might be different. Maybe everything you start involves connecting people. Or simplifying complexity. Or preserving things that are disappearing. You probably won't see it from inside. The pattern tends to live in the negative space - the thing you keep doing without deciding to.
+The pattern might be different for everyone. Maybe everything someone starts involves connecting people. Or simplifying complexity. Or preserving things that are disappearing. You probably won't see it from inside. The pattern tends to live in the negative space - the thing you keep doing without deciding to.
 
 ## Are we optimizing for interesting?
 

@@ -6,7 +6,7 @@ tags: [identity, social]
 
 # Everything changes.
 
-You already know this. Seasons change. People change. Relationships change. Bodies change. Ideas change. The you reading this is not the you from five years ago and will not be the you five years from now.
+Everyone already knows this. Seasons change. People change. Relationships change. Bodies change. Ideas change. The you reading this is not the you from five years ago and will not be the you five years from now.
 
 This is obvious. And [almost nobody lives as if it's true](#almost-nobody-lives-like-this).
 
@@ -28,7 +28,7 @@ There's nowhere to stay, though.
 
 ## Why is this hard?
 
-Because brains are prediction machines. They build models of the world and use them to navigate. The models need stability to work. If everything changes constantly, the model is never accurate, and the brain feels unsafe.
+Because brains are prediction machines. They build models of the world and use them to navigate it. The models need stability to work. If everything changes constantly, the model is never accurate, and the brain feels unsafe.
 
 So we freeze things. [Labels](/prose/what-are-labels-anyway) freeze identity. Habits freeze behavior. Beliefs freeze understanding. Institutions freeze culture. We build structures - mental, social, physical - designed to resist change. And they work, for a while, until they don't.
 
@@ -36,7 +36,7 @@ The [frozen software paradigm](/prose/why-is-software-hard). The labels that [be
 
 ## Change isn't an event
 
-"I need to change." People say this like change is a thing you do once. A decision. A moment. Before and after.
+"I need to change." People say this like change is a thing that happens once. A decision. A moment. Before and after.
 
 It's not. Change is continuous. You're changing right now. You were changing before you read this. You'll be changing after. The question was never "should I change" - it was "am I paying attention to the change that's already happening?"
 

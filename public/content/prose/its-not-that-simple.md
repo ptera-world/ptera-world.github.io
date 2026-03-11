@@ -6,7 +6,7 @@ tags: [social, design]
 
 # It's not that simple.
 
-You've heard someone say "X is better than Y." And you've heard someone else say "well, there are tradeoffs." That feels more sophisticated. More nuanced. More honest.
+Someone says "X is better than Y." Someone else says "well, there are tradeoffs." That feels more sophisticated. More nuanced. More honest.
 
 It is. [But.](/prose/but)
 

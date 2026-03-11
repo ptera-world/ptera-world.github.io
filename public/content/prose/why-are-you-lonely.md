@@ -12,13 +12,13 @@ This isn't about isolation. It's about [depth](#is-anyone-going-deep). The conve
 
 ## Is anyone going deep?
 
-Think about your last ten conversations. How many went past the surface?
+Think about the last ten conversations. How many went past the surface?
 
 Not "deep" as in heavy topics. Deep as in: the other person saw something about you that you didn't show on purpose. You learned something about them that surprised you. You left feeling *known*, not just heard.
 
 Most conversations are exchanges. Information, opinions, jokes, updates. You talk about work. About the weather. About shared interests. It's pleasant. It might even be fun. But when it's over, has anything actually transferred?
 
-You know things *about* people. Their job, their hobbies, their opinions. They know things about you. But knowing about someone and knowing someone are completely different.
+We know things *about* people. Their job, their hobbies, their opinions. They know things about us. But knowing about someone and knowing someone are completely different.
 
 ## Why doesn't connection happen?
 

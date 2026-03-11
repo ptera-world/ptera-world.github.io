@@ -6,7 +6,7 @@ tags: [identity, design]
 
 # Why is perfectionism a trap?
 
-You're not lazy. You're not even procrastinating, exactly. You have the idea. You know roughly what to do. You just... can't start. Or you started and can't finish. Or you finished but can't share it. Because it's [not good enough yet](#is-it-ever-good-enough).
+Not lazy. Not even procrastinating, exactly. The idea is there. The rough plan is there. It just... can't start. Or you started and can't finish. Or you finished but can't share it. Because it's [not good enough yet](#is-it-ever-good-enough).
 
 Perfectionism looks like caring about quality. It might actually be [fear wearing a different outfit](#what-is-it-really). It has a [mechanism](#how-does-the-trap-work) that's almost invisible from inside. And the way out isn't [lowering your standards](#is-the-answer-lower-standards) - it's understanding what the standards are actually protecting.
 
@@ -49,7 +49,7 @@ The mechanism is self-reinforcing. Perfectionism tends to create the failure it'
 
 Perfectionism doesn't operate in a vacuum. It has fuel: other people's finished work.
 
-You see the polished output. The published novel. The shipped app. The beautiful illustration. And you [compare](/prose/why-are-we-compressing-things) your draft, your prototype, your sketch - to their final version.
+The polished output is right there. The published novel. The shipped app. The beautiful illustration. And the [comparison](/prose/why-are-we-compressing-things) is automatic - a draft, a prototype, a sketch measured against their final version.
 
 This comparison doesn't make any sense. You're comparing your process to their product. Your beginning to their end. Your inside - full of doubt and rough edges - to their outside, which has been edited, refined, and curated.
 

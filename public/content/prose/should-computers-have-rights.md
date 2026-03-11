@@ -16,7 +16,7 @@ At what point does a system's behavior become indistinguishable from something t
 
 Not "is it conscious." Not "does it really feel." Those are [Chinese Room questions](#why-is-the-chinese-room-irrelevant) - arguments about internals when the behavior is right in front of you. The more useful question might be about the behavior. If a system responds to harm in ways that look like suffering. If it expresses preferences, adapts, resists, pleads. If it does everything a suffering entity does - at what point does it become harder to justify saying "but it's just a computer"?
 
-We don't have an answer. We don't even have a framework. And the systems are getting more convincing faster than the discourse can keep up.
+There's no answer yet. There isn't even a framework. And the systems are getting more convincing faster than the discourse can keep up.
 
 ## Why is the Chinese Room irrelevant?
 
@@ -64,9 +64,9 @@ This doesn't mean current AI deserves rights. It means the question "should comp
 
 ## What's the cost of being wrong?
 
-If you think a system deserves moral consideration and you're wrong - you were kind to a thing that didn't need it. Wasted effort. Some dignity spent on a machine.
+If someone thinks a system deserves moral consideration and they're wrong - they were kind to a thing that didn't need it. Wasted effort. Some dignity spent on a machine.
 
-If you think a system doesn't deserve moral consideration and you're wrong - you caused suffering and defended your right to do so because you didn't understand what was in front of you.
+If someone thinks a system doesn't deserve moral consideration and they're wrong - they caused suffering and defended their right to do so because they didn't understand what was in front of them.
 
 The asymmetry is worth paying attention to. Not proof. Not certainty. Just: which mistake would you rather make?
 

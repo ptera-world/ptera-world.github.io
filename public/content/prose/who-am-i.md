@@ -6,7 +6,7 @@ tags: [identity, design]
 
 # Who am I?
 
-You've probably tried to answer this. Personality tests. Journaling. Therapy. Introspection at 2 AM. And maybe you got something - a description, a set of traits, a [label](/prose/what-are-labels-anyway) that felt close.
+Most people have tried to answer this. Personality tests. Journaling. Therapy. Introspection at 2 AM. And maybe you got something - a description, a set of traits, a [label](/prose/what-are-labels-anyway) that felt close.
 
 But did it stick? Or did it feel right for a while and then stop fitting?
 

@@ -12,7 +12,7 @@ Sometimes this is necessary. Sometimes it's [lazy](#when-is-it-lazy). Sometimes 
 
 ## Do we have to?
 
-This isn't really optional. Human brains process a finite amount of information. To navigate the world, you have to reduce, categorize, simplify. You can't treat every person as infinitely complex in every interaction. You can't hold every dimension of a problem in mind simultaneously. You can't make decisions without collapsing options.
+This isn't really optional. Human brains process a finite amount of information. To navigate the world, people have to reduce, categorize, simplify. You can't treat every person as infinitely complex in every interaction. You can't hold every dimension of a problem in mind simultaneously. You can't make decisions without collapsing options.
 
 Compression is cognition. Categories, heuristics, stereotypes, models, summaries, [labels](/prose/what-are-labels-anyway) - these are tools for making the world manageable. Without them, you'd be paralyzed by infinite detail.
 

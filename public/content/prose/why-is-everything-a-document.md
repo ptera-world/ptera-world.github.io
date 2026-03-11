@@ -24,7 +24,7 @@ But "a page" is what people expect because "a page" is what they've always gotte
 
 ## What is information actually?
 
-Think about any complex thing you know well. A project you're working on. A subject you've studied. A community you're part of. A recipe you've adapted over years.
+Think about any complex thing people know well. A project being worked on. A subject studied deeply. A community you're part of. A recipe you've adapted over years.
 
 Is it a document? Is it a flat surface you read top to bottom?
 
