@@ -86,7 +86,7 @@ export function buildWorld(graph: Graph): void {
     if (node.tags.includes("meta")) continue;
 
     const el = document.createElement("div");
-    el.className = "node";
+    el.className = "node project";
     el.dataset.id = node.id;
     if (node.tags.includes("essay")) el.dataset.kind = "essay";
     el.style.left = `${node.x}px`;

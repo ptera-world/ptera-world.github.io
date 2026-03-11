@@ -29,7 +29,7 @@ The graph should be the primary way to experience the content. Essays are one fo
 - [x] **Text on canvas** — CSS for readable descriptions at near zoom. Enabled via `?textOnCanvas=true`. Currently uses frontmatter descriptions; richer content when fragments grow
 - [x] **All behaviors configurable** — `src/settings.ts` with URL param loading. Settings: dynamicLayout, neighborhoodFocus, focusHighlight, edgesVisible, cardEnabled, nodeGrowth, textOnCanvas
 - [x] **Hyperlink nodes** — portal nodes in `public/content/portal/` with `url:` fields that navigate to other collections on second click (first click shows card)
-- [ ] **Visual testing** — the dynamic layout + neighborhood features are wired but need real-world testing and parameter tuning
+- [x] **Visual testing** — code review found and fixed 5 issues: undefined `stop()` crash on unfocus, text-on-canvas scale inverted at near zoom (0.45→0.85), `.node.project` class never assigned (tier visibility broken), neighborhood fading coupled to dynamic layout (now independent), neighborhood+filtered CSS interaction
 
 ### Content
 - [x] **Fragment content type** — `public/content/cluster/fragments.md` + 33 fragments in `public/content/fragments/`. Dense cross-links. Zero code changes needed.

@@ -46,25 +46,27 @@ export function createFocusLayout(graph: Graph) {
   }
 
   function onFocusChange(node: Node | null): void {
-    if (!getSettings().dynamicLayout) return;
-
+    const settings = getSettings();
     const newId = node?.id ?? null;
     if (newId === focusedId) return;
     focusedId = newId;
 
     if (!focusedId) {
-      stop();
-      for (const n of graph.nodes) {
-        n.x = n.baseX;
-        n.y = n.baseY;
+      if (settings.dynamicLayout) {
+        for (const n of graph.nodes) {
+          n.x = n.baseX;
+          n.y = n.baseY;
+        }
+        updatePositions(graph);
       }
-      updatePositions(graph);
       clearNeighborhoodAttr();
       return;
     }
 
     neighborIds = getNeighborhood(focusedId, NEIGHBORHOOD_HOPS);
     applyNeighborhoodAttr();
+
+    if (!settings.dynamicLayout) return;
 
     vx.clear();
     vy.clear();

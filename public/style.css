@@ -330,13 +330,14 @@ html, body {
 .node[data-filtered="surfaced"] { opacity: 0.4; pointer-events: auto; }
 .edge[data-filtered="surfaced"] { opacity: 0.3; }
 
-/* Neighborhood focus — fade distant nodes */
+/* Neighborhood focus — fade distant nodes (overrides filtered states) */
 .node[data-neighborhood="distant"] { opacity: 0.06; pointer-events: none; transition: opacity 400ms; }
 .node[data-neighborhood="distant"] .node-text { display: none; }
+.node[data-neighborhood="distant"][data-filtered="hidden"] { opacity: 0.04; }
 
 /* Text on canvas — descriptions become readable content at near zoom */
-#world[data-text-on-canvas] .node-text { white-space: normal; max-width: 200px; text-align: left; }
-#world[data-text-on-canvas][data-tier="near"] .node-text { transform: translateX(-50%) scale(0.45); max-width: 300px; }
+#world[data-text-on-canvas] .node-text { white-space: normal; max-width: 200px; }
+#world[data-text-on-canvas][data-tier="near"] .node-text { transform: translateX(-50%) scale(0.85); max-width: 300px; }
 #world[data-text-on-canvas][data-tier="near"] .node-desc { font-size: 13px; line-height: 1.5; color: #aaa; }
 #world[data-text-on-canvas][data-tier="near"] .node-label { font-size: 14px; font-weight: bold; color: #ddd; }
 
