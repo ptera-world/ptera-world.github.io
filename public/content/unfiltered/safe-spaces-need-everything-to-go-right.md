@@ -16,7 +16,7 @@ safety isn't the absence of danger. it's the presence of trust - specifically, t
 
 that's an enormous ask. it requires every person in the room to be capable of holding what's shared without reacting in a way that makes the sharing worse. every person. not most. every single one. because safety is set by the least safe person present.
 
-one person who redirects the conversation to themselves. one person who gives advice when you needed to be heard. one person who carries it outside the room. one person who flinches at what you said and makes their flinch your problem. one person who means well and still makes the space unsafe - not through malice, through incapacity. they can't hold what you're holding, so they drop it, and now it's on the floor and you have to pick it up and put it back on [the shelf](/unfiltered/the-parts-of-yourself-you-put-away) and pretend you never took it down.
+one person who redirects the conversation to themselves. one person who gives advice when you needed to be heard. one person who carries it outside the room. one person who flinches at what you said and makes their flinch your problem. one person who means well and still makes the space unsafe - not through malice. they can't hold what you're holding, and it overflows. they can't hold what you're holding, so they drop it, and now it's on the floor and you have to pick it up and put it back on [the shelf](/unfiltered/the-parts-of-yourself-you-put-away) and pretend you never took it down.
 
 that's all it takes. one.
 

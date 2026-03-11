@@ -20,7 +20,7 @@ housing markets in many cities have been "working" for decades. they produce con
 
 this isn't a story about bad actors. the people in the room when those rules were written weren't cartoon villains. they were people with interests, optimizing for outcomes that were good for them, in a structure that rewarded them for doing so. the structure selected for their continued participation - more resources, more influence, more ability to shape what happens next.
 
-the question isn't whether the people inside these systems are good or bad. it's what the system scores as "success." whatever reliably produces more resources, more survival, more influence over the scoring will outcompete everything else - not through conspiracy, just through the same logic that produced the housing market in the first place. the inputs that got rewarded kept coming. the ones that didn't, didn't.
+the question isn't whether the people inside these systems are good or bad. it's what the system scores as "success." whatever reliably produces more resources, more survival, more influence over the scoring will outcompete everything else - not through conspiracy. through the same logic that produced the housing market in the first place. the inputs that got rewarded kept coming. the ones that didn't, didn't.
 
 ## what is the AI being aligned to?
 

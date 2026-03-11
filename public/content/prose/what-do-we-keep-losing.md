@@ -32,7 +32,7 @@ Physical things survive neglect. But knowledge systems need continuous care. The
 
 Stone tablets last 5,000 years. Magnetic tape lasts 50. Cloud services last as long as the company exists.
 
-We've already lost software ecosystems, game engines, file formats, source code, tools, languages, operating systems, entire online cultures. Not through disaster - through deprecation.
+We've already lost software ecosystems, game engines, file formats, source code, tools, languages, operating systems, entire online cultures. Not through disaster. Through deprecation, one service at a time.
 
 No ruins. No rubble. No broken arches. Just 404s and dead repos.
 

@@ -46,6 +46,6 @@ you can't find the meeting where the decision was made. there was no meeting. th
 
 the parts of culture that persisted are the parts that could justify themselves on the scorecard. the parts that couldn't are mostly still here, but smaller, and staffed by people who are subsidizing them with time they could otherwise spend elsewhere.
 
-what you end up with is a culture that didn't choose this - a culture that was selected into it, the way a species is selected by an environment it didn't design. and the environment keeps selecting. not through malice. just through the quiet logic of what gets renewed.
+what you end up with is a culture that didn't choose this - a culture that was selected into it, the way a species is selected by an environment it didn't design. and the environment keeps selecting. not through malice. through the quiet logic of what gets renewed.
 
 ## See also
