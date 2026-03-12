@@ -4,7 +4,7 @@
  * requestAnimationFrame for smooth visual transitions.
  */
 import type { Graph, Node } from "./graph";
-import { updatePositions, nodeEls } from "./dom";
+import { updatePositions, nodeEls, worldEl } from "./dom";
 import { getSettings } from "./settings";
 
 const REPEL = 4000;
@@ -62,11 +62,14 @@ export function createFocusLayout(graph: Graph) {
       cancelAnimationFrame(rafId);
       rafId = 0;
       if (settings.dynamicLayout) {
+        // Animate snap-back via temporary CSS transition
+        worldEl.dataset.settling = "";
         for (const n of graph.nodes) {
           n.x = n.baseX;
           n.y = n.baseY;
         }
         updatePositions(graph);
+        setTimeout(() => { delete worldEl.dataset.settling; }, 350);
       }
       clearNeighborhoodAttr();
       return;

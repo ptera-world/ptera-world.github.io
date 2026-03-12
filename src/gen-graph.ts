@@ -33,6 +33,8 @@ interface ParsedNode {
   id: string;
   label: string;
   description: string;
+  /** Fragment body text (markdown content minus heading and ## See also). */
+  body?: string;
   url?: string;
   parent?: string;
   iconRadius?: number;
@@ -428,7 +430,104 @@ const files = allFiles.filter((f) => !CONFIG_ONLY_DIRS.has(f.category));
 const nodes: ParsedNode[] = [];
 const nodeIds = new Set<string>();
 
+/** Estimate collision radius from body text dimensions.
+ * Body: 11px, ~5.5px/char, max-width 280px CSS, line-height 1.5 (16.5px). */
+function fragmentCollisionRadius(body: string): number {
+  const maxW = 280;
+  const lines = body.split("\n").reduce(
+    (sum, line) => sum + Math.max(1, Math.ceil(line.length * 5.5 / maxW)), 0,
+  );
+  const textW = Math.min(body.length * 5.5, maxW);
+  const textH = lines * 16.5;
+  return Math.hypot(textW / 2, textH / 2) + 12;
+}
+
+/** Parse a _index.md multi-fragment file into individual fragment entries. */
+function parseMultiFragmentFile(
+  text: string, category: string, clusterForDir: ClusterConfig | undefined,
+): { node: ParsedNode; edgeTargets: string[] }[] {
+  const sections = text.split(/\n---\n/).map((s) => s.trim()).filter(Boolean);
+  const results: { node: ParsedNode; edgeTargets: string[] }[] = [];
+  const autoTags = [...(clusterForDir?.autoTags ?? [])];
+
+  for (const section of sections) {
+    // Extract ## heading
+    const headingMatch = section.match(/^## (.+)/);
+    if (!headingMatch) continue;
+    const label = headingMatch[1]!.trim();
+    const slug = label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+    const id = `${category}/${slug}`;
+
+    // Parse metadata lines (tags:, edges:) and body
+    const lines = section.slice(headingMatch[0].length).trimStart().split("\n");
+    let tags: string[] = [];
+    let edgeTargets: string[] = [];
+    let bodyStartIdx = 0;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i]!;
+      const tagsMatch = line.match(/^tags:\s*(.+)/);
+      const edgesMatch = line.match(/^edges:\s*(.+)/);
+      if (tagsMatch) {
+        tags = tagsMatch[1]!.split(",").map((t) => t.trim()).filter(Boolean);
+        bodyStartIdx = i + 1;
+      } else if (edgesMatch) {
+        edgeTargets = edgesMatch[1]!.split(",").map((t) => t.trim()).filter(Boolean);
+        bodyStartIdx = i + 1;
+      } else if (line === "") {
+        bodyStartIdx = i + 1;
+      } else {
+        break;
+      }
+    }
+
+    const body = lines.slice(bodyStartIdx).join("\n").trim();
+    const allTags = [...new Set([...autoTags, ...tags])];
+    const radius = radiusFromStatus(undefined);
+    const collisionRadius = body ? fragmentCollisionRadius(body) : undefined;
+
+    results.push({
+      node: {
+        id,
+        label,
+        description: "",
+        body: body || undefined,
+        tags: allTags,
+        radius,
+        collisionRadius,
+        iconRadius: clusterForDir?.iconRadius,
+        color: "",
+        cluster: clusterForDir?.id,
+        x: 0,
+        y: 0,
+      },
+      edgeTargets: edgeTargets.map((t) => `${category}/${t}`),
+    });
+  }
+
+  return results;
+}
+
+// Deferred fragment edges from _index.md (resolved after all nodes are known)
+const deferredFragmentEdges: { from: string; to: string }[] = [];
+
 for (const { id, path, category } of files) {
+  // Handle _index.md multi-fragment files
+  if (id.endsWith("/_index")) {
+    const text = await readFile(path, "utf-8");
+    const clusterForDir = dirToCluster.get(category);
+    if (!clusterForDir) continue;
+    const fragments = parseMultiFragmentFile(text, category, clusterForDir);
+    for (const { node, edgeTargets } of fragments) {
+      nodes.push(node);
+      nodeIds.add(node.id);
+      for (const target of edgeTargets) {
+        deferredFragmentEdges.push({ from: node.id, to: target });
+      }
+    }
+    continue;
+  }
+
   const text = await readFile(path, "utf-8");
   const fm = parseFrontmatter(text);
   if (!fm) continue;
@@ -449,22 +548,6 @@ for (const { id, path, category } of files) {
 
   const radius = fm.radius ?? radiusFromStatus(fm.status);
 
-  // Fragments are text-based — estimate collision radius from text rectangle.
-  // Label: 13px bold, ~7.5px/char. Desc: 11px, ~5.5px/char, max-width 280px CSS.
-  const isFragment = allTags.includes("fragment");
-  let collisionRadius = fm.collisionRadius != null ? Number(fm.collisionRadius) : undefined;
-  if (isFragment && collisionRadius == null) {
-    const labelW = fm.label.length * 7.5;
-    const descMaxW = 280;
-    const labelLines = Math.max(1, Math.ceil(labelW / descMaxW));
-    const textW = Math.min(labelW, descMaxW);
-    const descLines = fm.description
-      ? fm.description.split("\n").reduce((sum, line) => sum + Math.max(1, Math.ceil(line.length * 5.5 / descMaxW)), 0)
-      : 0;
-    const textH = labelLines * 17 + descLines * 16.5 + (descLines > 0 ? 6 : 0);
-    collisionRadius = Math.hypot(textW / 2, textH / 2) + 12;
-  }
-
   nodes.push({
     id,
     label: fm.label,
@@ -474,7 +557,6 @@ for (const { id, path, category } of files) {
     status: fm.status,
     tags: allTags,
     radius,
-    collisionRadius,
     trail: (fm as any).trail,
     iconRadius: clusterForDir?.iconRadius,
     color: fm.color ?? "",
@@ -540,6 +622,17 @@ for (const { id, path } of files) {
       const sorted = [id, target].sort();
       edges.push({ from: sorted[0]!, to: sorted[1]!, strength: 0.5 });
     }
+  }
+}
+
+// Add deferred fragment edges from _index.md files
+for (const { from, to } of deferredFragmentEdges) {
+  if (!nodeIds.has(from) || !nodeIds.has(to)) continue;
+  const key = [from, to].sort().join("|");
+  if (!seen.has(key)) {
+    seen.add(key);
+    const sorted = [from, to].sort();
+    edges.push({ from: sorted[0]!, to: sorted[1]!, strength: 0.5 });
   }
 }
 
@@ -1328,6 +1421,7 @@ const nodeLines = nodes.map((n) => {
   fields.push(`color: ${quote(n.color)}`);
   if (n.status) fields.push(`status: "${n.status}"`);
   fields.push(`tags: [${n.tags.map((t) => `"${t}"`).join(", ")}]`);
+  if (n.body) fields.push(`body: ${quote(n.body)}`);
   if (n.trail) fields.push(`trail: ${quote(n.trail)}`);
   return `  { ${fields.join(", ")} },`;
 }).join("\n");

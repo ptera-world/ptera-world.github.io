@@ -165,11 +165,13 @@ document.fonts.ready.then(() => {
     }
   }
   if (nudged) updatePositions(graph);
-  // Re-enable transitions now that initial layout is stable.
-  // Synchronous removal in the same microtask as updatePositions:
-  // the browser hasn't painted yet, so translate is already at its
-  // final value when transitions are re-enabled — no animation.
-  delete worldEl.dataset.noTransition;
+  // Double-rAF: first rAF ensures the browser commits the nudged positions,
+  // second rAF fires after paint — safe to re-enable transitions.
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      delete worldEl.dataset.noTransition;
+    });
+  });
 });
 
 // Restore filters on popstate (back/forward)

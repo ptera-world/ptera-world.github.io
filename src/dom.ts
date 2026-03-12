@@ -95,26 +95,18 @@ export function buildWorld(graph: Graph): void {
     el.style.setProperty("--color", node.color);
 
     if (isFragment) {
-      // Fragments are text-based — no dot, text is the hit target
+      // Fragments are text-based — no dot, body text is the hit target
       el.style.setProperty("--r", "0px");
       const text = document.createElement("div");
       text.className = "node-text node-hit";
       text.setAttribute("role", "button");
       text.tabIndex = -1;
       text.setAttribute("aria-label", node.label);
-      const label = document.createElement("div");
-      label.className = "node-label";
-      label.textContent = node.label;
-      text.appendChild(label);
-      if (node.description) {
-        const desc = document.createElement("div");
-        desc.className = "node-desc";
-        const parts = node.description.split("\n");
-        for (let i = 0; i < parts.length; i++) {
-          if (i > 0) desc.appendChild(document.createElement("br"));
-          desc.appendChild(document.createTextNode(parts[i]!));
-        }
-        text.appendChild(desc);
+      if (node.body) {
+        const bodyEl = document.createElement("div");
+        bodyEl.className = "node-body";
+        bodyEl.textContent = node.body;
+        text.appendChild(bodyEl);
       }
       el.appendChild(text);
       hitNodes.set(text, node);

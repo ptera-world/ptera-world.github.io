@@ -45,10 +45,11 @@ html, body {
   position: absolute;
   width: calc(var(--r) * 2); height: calc(var(--r) * 2);
   transform: translate(-50%, -50%);
-  transition: opacity 200ms, scale 200ms ease-out, translate 300ms ease-out, --color 400ms ease-out;
+  transition: opacity 200ms, scale 200ms ease-out, --color 400ms ease-out;
 }
 #world[data-no-transition] .node,
 #world[data-no-transition] .edge { transition: none; }
+#world[data-settling] .node { transition: opacity 200ms, scale 200ms ease-out, translate 300ms ease-out, --color 400ms ease-out; }
 /* Hide graph containment edges (ecosystem parent→child) in non-ecosystem groupings */
 #world:not([data-grouping="ecosystem"]) .edge[data-origin="graph"][data-type="containment"] { opacity: 0; pointer-events: none; }
 .node.region { z-index: 0; opacity: var(--eco-filter-opacity, 1); }
@@ -66,9 +67,8 @@ html, body {
   pointer-events: auto; cursor: pointer;
   text-align: left;
 }
-.node.fragment .node-label { font-size: 13px; font-weight: bold; color: var(--color); line-height: 1.3; }
-.node.fragment .node-desc { font-size: 11px; color: #888; margin-top: 3px; line-height: 1.5; }
-.node.fragment .node-text:hover .node-label { filter: brightness(1.3); }
+.node.fragment .node-body { font-size: 11px; color: #aaa; line-height: 1.5; }
+.node.fragment .node-text:hover .node-body { color: #ddd; }
 
 /* Project dot */
 .node-dot {

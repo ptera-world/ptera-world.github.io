@@ -25,6 +25,8 @@ export interface Node {
   color: string;
   status?: "production" | "fleshed-out" | "early" | "planned";
   tags: string[];
+  /** Fragment body text (rendered on canvas). */
+  body?: string;
   /** Optional tagline shown below description on the landing element. */
   trail?: string;
 }
