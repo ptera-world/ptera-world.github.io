@@ -10,7 +10,7 @@ Every project starts the same way. Sketch an idea. Get excited. Start building. 
 
 Yes. Probably. Let's do it anyway.
 
-## Is reinventing everything a ritual now?
+## The ritual
 
 It's become a ritual at this point. Every single project gets the question. Sometimes you ask yourself. Sometimes someone else asks. Sometimes the LLM asks.
 
@@ -18,11 +18,11 @@ Are we reinventing this? Are we rebuilding that? Are we just making a worse vers
 
 The answer is almost always yes. And the answer to "should we stop?" is almost always no.
 
-## Is it because I think I can do it better?
+## Not because I think I can do it better
 
 To be clear about what this isn't - it's not ego. It's not "I'm smarter than the people who built the original." They did incredible work. Years of it. Battle-tested, community-supported, production-hardened work.
 
-It's not about the destination. It's about [what you learn on the way](#what-if).
+The point is [what you learn on the way](#what-if).
 
 ## What if?
 
@@ -38,7 +38,7 @@ Sometimes they go nowhere. That's fine. [Failed prototypes](/prose/why-is-perfec
 
 That's the trap. Popular tools aren't bad. But [popularity is a ratchet](#how-does-popularity-become-a-ratchet). Once something is standard, it's invisible. Its assumptions become your assumptions. Its limitations become "just how things are." Its paradigm becomes the only paradigm.
 
-Spreadsheets are freeform grids because VisiCalc was a freeform grid. Note apps are documents because paper was documents. [Programming is text because teletypes were text](/prose/why-is-software-hard). Nobody chose these things. They just happened, and then they [calcified](#why-do-we-keep-losing-things).
+Spreadsheets are freeform grids because VisiCalc was a freeform grid. Note apps are documents because paper was documents. [Programming is text because teletypes were text](/prose/why-is-software-hard). Nobody chose these things. They just happened, and then they [calcified](#the-things-we-keep-losing).
 
 Reinventing - badly, naively, from the wrong angle - is one way to notice the calcification. It's hard to see the water you're swimming in until you try to swim in something else.
 
@@ -50,7 +50,7 @@ Good software sometimes wins. But winning locks everything in. The winner's inte
 
 Every reinvention is a question: "what if this assumption wasn't load-bearing?" Sometimes it is. Sometimes the assumption exists for deep structural reasons and you discover those reasons the hard way. *That's also valuable.* Now you know why it's like this, instead of just accepting that it is.
 
-## Why do we keep losing things?
+## The things we keep losing
 
 HyperCard let anyone make interactive things. It died - Apple [didn't prioritize it](/prose/what-do-we-keep-losing). LambdaMOO proved that collaborative worldbuilding works. It faded - the web ate everything.
 
@@ -58,7 +58,7 @@ The things we lose aren't failures. They're [unexplored branches](/prose/this-is
 
 So: reinvent. The wheel isn't broken. But the wheel is the only shape anyone remembers, and maybe a [triangle has interesting properties too](/prose/but).
 
-## What's the cost?
+## The cost
 
 It's worth being honest about the cost. Reinventing everything means:
 
@@ -69,9 +69,9 @@ It's worth being honest about the cost. Reinventing everything means:
 
 And yet the cost of exploration has collapsed. The seven failed prototypes that used to span years now fit in a month.
 
-That changes the calculus. When exploration is expensive, you should use the wheel. When exploration is cheap, you should question it. You probably won't build a better wheel. But you might discover the wheel was never the right shape for what you actually needed.
+That changes the calculus. When exploration is expensive, you should use the wheel. When exploration is cheap, you should question it. You won't build a better wheel. But you might discover the wheel was never the right shape for what you actually needed.
 
-## What's the question underneath?
+## The question underneath
 
 "Why do you reinvent everything?" has an implied "instead of shipping something."
 

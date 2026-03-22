@@ -69,8 +69,3 @@ the progress bar is the most honest UI element in the entire system. it tells yo
 [the floor](/unfiltered/nobody-told-you-there-were-prerequisites) says the people most affected are the least likely to be reading, writing, making anything at all. the campaign proves it at scale: even the act of asking for help - the bare minimum of participation - requires resources the most desperate don't have.
 
 the system didn't just fail to provide care. it turned the failure into a platform. gave it a UI. added a progress bar. and called it community.
-
-## See also
-
-- [the benefit](/unfiltered/the-system-monetized-the-damage) - the cap that sends you here
-- [the floor](/unfiltered/nobody-told-you-there-were-prerequisites) - the people who can't even campaign

@@ -58,4 +58,4 @@ this collection will never fully resolve a contradiction at its center: the auth
 
 so this space sits in the gap between the neutral analysis and the silence it can never reach. closer to the ground than the main site. not on it.
 
-that's honest. probably the most honest thing here.
+that's honest. the most honest thing here.

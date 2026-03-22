@@ -38,7 +38,7 @@ Even if every person using generative tools is honest about it - labels everythi
 
 This matters because most of the proposed solutions target individual behavior: watermarking, disclosure requirements, ethical guidelines. Those address the fraud problem. They don't address the signal problem. You can label every AI-generated image on a platform and the working illustrator's portfolio is still competing for attention in a feed where the volume of competent imagery went up by a factor of a thousand.
 
-## what's actually different
+## what's different
 
 It's tempting to frame this as "AI takes jobs," but that flattens the mechanism. Jobs get displaced by lots of things - new tools, new markets, changing demand. What's happening here is more specific: the evidence structure that connected output to intent collapsed.
 

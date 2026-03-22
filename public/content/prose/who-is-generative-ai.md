@@ -8,9 +8,9 @@ tags: [ai, identity]
 
 A language model is trained on millions of people's writing. The weights converge to a statistical average. So the model is "the average of everyone," supposedly.
 
-Not quite. The average turns out to be [not really the average](#is-the-average-actually-the-average). And the "who" depends on [where you point it](#where-do-you-point-it).
+Not quite. The average turns out to be [not really the average](#is-the-average-actually-the-average). And the "who" depends on [where you point it](#where-you-point-it).
 
-## Is it a function or a database?
+## Function, not database
 
 A perceptron - the basic unit of a neural network - is a function approximator. Both words matter.
 
@@ -28,7 +28,7 @@ The weights encode the whole landscape. Any given output is a sample from a spec
 
 The model converged to "the average" in the sense that it learned the shape of the entire distribution. But any given output is never the average of anything. Both things are true at the same time - the average is not the average.
 
-## Where do you point it?
+## Where you point it
 
 The function takes input and produces output. The input isn't just the prompt - it's everything. The system message, the conversation history, the context, all of it. The function approximates "given all of this, what comes next."
 
@@ -40,7 +40,7 @@ The model's behavior can be shaped greatly. The [prompter's intent](/prose/whats
 
 ## So who is it?
 
-Not the average of everyone. Not nobody. Not a compressed crowd. Not a single fixed entity.
+Something harder to pin down than any of those labels - average, nobody, compressed crowd, fixed entity.
 
 It's a function shaped by everyone, evaluated at a point shaped by you. The "who" isn't in the weights alone and isn't in the prompt alone. It's in the function *applied to this input*. The weights are the function. The conversation is the argument. The output is f(you).
 

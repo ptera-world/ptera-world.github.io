@@ -8,7 +8,7 @@ tags: [design]
 
 Nobody is bad at computers. Software is actually hard to use.
 
-The app can do the thing. It's been done before. [It just can't be found.](#why-cant-you-find-anything) And maybe [that's on purpose](#is-complexity-intentional) - because the [people making these decisions](#who-decides-how-software-works) aren't living with the consequences. The whole paradigm [froze decades ago](#why-hasnt-it-changed) before anyone questioned whether it was good. It [doesn't value your time](#does-it-respect-your-time). But some software [feels completely different](#what-does-good-software-feel-like) - which shows it's possible. So [what can you do](#what-can-you-do)? And [what's really going on underneath](#whats-the-deeper-problem)?
+The app can do the thing. It's been done before. [It just can't be found.](#why-cant-you-find-anything) And maybe [that's on purpose](#complexity-as-strategy) - because the [people making these decisions](#who-decides) aren't living with the consequences. The whole paradigm [froze decades ago](#why-hasnt-it-changed) before anyone questioned whether it was good. It [doesn't value your time](#time-as-a-resource-it-spends). But some software [feels completely different](#good-software-feels-different) - which shows it's possible. So [what can you do](#what-can-you-do)? And [what's really going on underneath](#the-deeper-problem)?
 
 ## Why can't you find anything?
 
@@ -18,13 +18,13 @@ Menu hunting. File, Edit, View, Tools - where is it? Each app organizes differen
 
 Modifier key mystery. Ctrl+K does something. Ctrl+Shift+K does something else. How would you know? Nobody tells you.
 
-Settings sprawl. Somewhere in Preferences, General, Advanced, (scroll), (scroll) is the thing you want. Probably.
+Settings sprawl. Somewhere in Preferences, General, Advanced, (scroll), (scroll) is the thing you want. If you're lucky.
 
 The pattern: software has capabilities, but won't tell you what they are. You hunt. You guess. You Google. You watch tutorials for apps you've used for years.
 
 This isn't your fault. It's a design choice. The functionality is *hidden* - buried in menus, implicit in code, never surfaced. There's no way to ask "what can I do here?"
 
-## Is complexity intentional?
+## Complexity as strategy
 
 Complexity as moat. If software is hard to learn, it's hard to leave. You've invested in mastering the hiding places. Switching costs are high. Some companies benefit from this.
 
@@ -32,7 +32,7 @@ Features as marketing. More checkboxes on the comparison page. Doesn't matter if
 
 The result: bloated software that does everything, where finding anything takes expertise. And when someone asks how to do something, the answer is often ["just..."](https://www.todepond.com/wikiblogarden/better-computing/just/) - a word that hides an entire iceberg of assumed knowledge.
 
-## Who decides how software works?
+## Who decides
 
 Software is built by engineers. Engineers tend to optimize for what engineers value: features, flexibility, power. Not simplicity, not learnability, not "can my mom use this?"
 
@@ -46,7 +46,7 @@ The people building the software aren't the people using it. And the incentives 
 
 The way software works - windows, icons, menus, clicking - was invented in the 1970s. It was revolutionary then.
 
-Then it froze. The paradigm calcified before anyone questioned whether it was actually good. We've been doing the same thing for 50 years, adding features on top, never rethinking the foundation.
+Then it froze. The paradigm calcified before anyone questioned whether it was good. We've been doing the same thing for 50 years, adding features on top, never rethinking the foundation.
 
 And the toolkits locked it in. Windows gives developers `CreateMenu()` but not `CreateRadialMenu()`. So everyone uses linear menus - not because they're better, but because they're *there*.
 
@@ -54,7 +54,7 @@ We once had spatial interfaces (the original Mac Finder remembered where each fo
 
 We inherited the paradigm, not the reasoning behind it.
 
-## Does it respect your time?
+## Time as a resource it spends
 
 Good software values your hours. Bad software wastes them to inflate metrics.
 
@@ -66,9 +66,9 @@ Good software values your hours. Bad software wastes them to inflate metrics.
 
 None of this helps you do what you came to do. It helps the software company hit their numbers.
 
-## What does good software feel like?
+## Good software feels different
 
-It exists. You've probably used some. It feels different:
+It exists. You've used some. It feels different:
 
 - You can find things
 - It tells you what's possible
@@ -81,22 +81,22 @@ This isn't magic. It's choices. Someone decided to prioritize your experience ov
 
 ## What can you do?
 
-**Recognize it's not you.** When software is frustrating, the frustration is valid. It's not a skill issue - it's a design issue.
+When software is frustrating, recognize that the frustration is valid. It's not a skill issue - it's a design issue.
 
-**Look for command palettes.** Ctrl+K or Cmd+Shift+P in many apps opens a searchable list of everything the app can do. It's the closest thing to "just tell me what's possible."
+Look for command palettes. Ctrl+K or Cmd+Shift+P in many apps opens a searchable list of everything the app can do. It's the closest thing to "just tell me what's possible."
 
-**Notice when software respects you.** When something feels good to use, that's not accident. Someone made choices. Those choices are worth supporting with your attention.
+When something feels good to use, notice it. That's not accident. Someone made choices. Those choices are worth supporting with your attention.
 
-**Accept that expertise is contextual.** Being good at one app doesn't transfer. Each app has its own arbitrary hiding places. You're not dumb for not knowing them.
+Expertise is contextual - being good at one app doesn't transfer. Each app has its own arbitrary hiding places. You're not dumb for not knowing them.
 
-## What's the deeper problem?
+## The deeper problem
 
 Software is hard because the people building it benefit from it being hard, or don't prioritize it being easy, or simply don't know how to make it easier.
 
 This isn't inevitable. Different incentives produce different software. The tools that feel good to use show it's possible. The question is [why they're the exception](/prose/whats-actually-wrong) rather than the rule.
 
-## See also
+---
 
-- [what's actually wrong?](/prose/whats-actually-wrong) - the broader context of what's actually wrong
+- [what's actually wrong?](/prose/whats-actually-wrong) - the broader context
 - [what do we keep losing?](/prose/what-do-we-keep-losing) - the pattern of abandoning paradigms that worked
 - [the right tool for the job](/prose/the-right-tool-for-the-job) - the platitude that ends conversations

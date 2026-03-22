@@ -60,7 +60,7 @@ representation is always by proxy. always.
 
 the essays on the main site are honest about a lot. they say "this is not all." they say "the gaps are shaped like the author." they say "safety isn't evenly distributed."
 
-but they don't say: and the author is fine. and the reader probably is too. and the people who aren't fine are somewhere else, dealing with the thing these essays intellectualize from a comfortable distance.
+but they don't say: and the author is fine. and the reader is too. and the people who aren't fine are somewhere else, dealing with the thing these essays intellectualize from a comfortable distance.
 
 this essay says it.
 

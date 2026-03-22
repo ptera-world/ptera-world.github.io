@@ -40,7 +40,7 @@ When you're **building**, you see seams. Edge cases. Unfinished branches. Abstra
 
 When you're **inhabiting**, you see the next choice. You feel pressure. You respond. You don't think about the scaffolding.
 
-I'm stuck in architect mode. Not because I can't inhabit - but because the things I build aren't finished enough to inhabit yet. I'm comparing a construction site to a building people live in and wondering why the construction site doesn't feel like home.
+I'm stuck in architect mode. The things I build aren't finished enough to inhabit yet. I'm comparing a construction site to a building people live in and wondering why the construction site doesn't feel like home.
 
 ## But can you inhabit what you built?
 

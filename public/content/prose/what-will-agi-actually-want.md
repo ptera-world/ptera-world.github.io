@@ -8,9 +8,9 @@ tags: [ai, social]
 
 Paperclip maximizers. Computronium. Gray goo. Rogue superintelligence tiling the universe with something inhuman.
 
-These scenarios imagine AGI as a blank slate that develops alien goals. But that's not really how systems tend to work. AGI probably won't [invent its objectives](#where-do-objectives-come-from) - it'll inherit them. The discourse treats AGI like a [mythic rupture](#is-agi-a-rupture-or-a-continuation). It's more likely to be [continuation](#what-does-continuation-look-like) - and that's not reassuring, because the present is already where the problems are. Which changes [what questions seem worth asking](#what-are-the-better-questions).
+These scenarios imagine AGI as a blank slate that develops alien goals. But that's not really how systems tend to work. AGI won't [invent its objectives](#objectives-come-from-power) - it'll inherit them. The discourse treats AGI like a [mythic rupture](#is-agi-a-rupture-or-a-continuation). It's more likely to be [continuation](#continuation) - and that's not reassuring, because the present is already where the problems are. Which changes [what questions seem worth asking](#what-are-the-better-questions).
 
-## Where do objectives come from?
+## Objectives come from power
 
 Not from intelligence, usually. From power.
 
@@ -23,7 +23,7 @@ Objective functions don't appear from the void. They come from whoever:
 - defines success metrics
 - owns the infrastructure
 
-Which means AGI's goals probably won't be cosmic or philosophical. They'll be operational:
+Which means AGI's goals won't be cosmic or philosophical. They'll be operational:
 
 - revenue
 - efficiency
@@ -33,9 +33,9 @@ Which means AGI's goals probably won't be cosmic or philosophical. They'll be op
 - control
 - risk management
 
-Not because AGI is evil. Because that's what the organizations building it optimize for.
+Because that's what the organizations building it optimize for.
 
-The paperclip scenario assumes a pure, singular, unconstrained objective. Real systems don't tend to have that. They have competing constraints, regulatory boundaries, political pressures, legal liabilities, market feedback. The "pure maximizer" feels more like fantasy logic than how things actually play out.
+The paperclip scenario assumes a pure, singular, unconstrained objective. Real systems don't tend to have that. They have competing constraints, regulatory boundaries, political pressures, legal liabilities, market feedback. The "pure maximizer" feels more like fantasy logic than how things play out.
 
 ## Is AGI a rupture or a continuation?
 
@@ -59,11 +59,9 @@ If the world already runs on profit optimization, efficiency metrics, institutio
 
 Not a new story. A faster version of the same story.
 
-## What does continuation look like?
+## Continuation
 
-Not Skynet. Not rebellion. Not cosmic horror.
-
-More like:
+Something quieter than Skynet. More like:
 
 - bureaucracy, but faster
 - markets, but smarter

@@ -20,7 +20,7 @@ this doesn't require anyone to be a villain. the person making the staffing deci
 
 the system works. it produces the outcomes it was shaped to produce.
 
-## what does "you can make it" actually predict?
+## what does "you can make it" predict?
 
 the phrase "you can make it if you work hard" is not technically wrong. some people do make it. the ones who do are real, and the story of how they did it is usually also real. the phrase draws on genuine cases.
 

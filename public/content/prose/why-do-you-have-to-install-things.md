@@ -10,9 +10,9 @@ Resize an image. Convert a PDF. Record the screen. Simple operations - the kind 
 
 But first: find the app. Download it. Run the installer. Click through the dialogs. Maybe create an account. Maybe restart. Now you have a program permanently on your machine that you'll use once and forget about until you notice it's eating disk space six months later.
 
-Nobody wanted a program. They wanted a capability. The program was just [the container it happened to come in](#why-is-the-app-the-unit).
+Nobody wanted a program. They wanted a capability. The program was just [the container it happened to come in](#the-app-as-unit).
 
-## Why is the app the unit?
+## The app as unit
 
 Software used to ship on physical media. A floppy disk, a CD-ROM. The disk was a coherent unit because it had to be - you couldn't ship half a program on half a disk. So the "application" became the atomic thing: one disk, one installer, one entry in the Start menu, one coherent bundle of capabilities.
 
@@ -20,11 +20,11 @@ That physical constraint disappeared decades ago. But the model survived. We sti
 
 The app boundary was never conceptual. It was logistical. "All the things you might want to do with photos" isn't a natural category - it's a shipping decision. Why does the same program that imports photos also edit them, also organize them, also create slideshows? Because it all fit on the same disk. Because it all belonged to the same company. Because the bundle was the product.
 
-## What does a normal person actually do?
+## What normal people do
 
 They google "resize image online."
 
-Not because web apps are better. Often they're worse - slower, more limited, ad-plastered. But the distribution model is frictionless. You click a link. The capability exists. You use it. You close the tab.
+Web apps are often worse - slower, more limited, ad-plastered. But the distribution model is frictionless. You click a link. The capability exists. You use it. You close the tab.
 
 No installation. No commitment. No leftover files. No uninstaller that doesn't fully uninstall. The web won as a distribution mechanism, not as a platform. Everything had to become a web app to take advantage of that zero-friction entry, whether or not the web was the right runtime for the job.
 
@@ -42,13 +42,13 @@ When trying is free, the whole relationship with software discovery changes. You
 
 ## Why does this feel impossible on most systems?
 
-macOS has Homebrew - genuinely good, close to frictionless. But it's still install-first, not try-first. Windows has several competing package managers, none of them the default, half the ecosystem still saying "download the .exe from our website."
+macOS has Homebrew - good, close to frictionless. But it's still install-first, not try-first. Windows has several competing package managers, none of them the default, half the ecosystem still saying "download the .exe from our website."
 
 And Nix, which gets the model right - ephemeral, reproducible, fully reversible - has a [learning curve that keeps most people out](/prose/why-is-software-hard). The concept is accessible. The implementation assumes you already think in terms of derivations and store paths and flake inputs. The gap between "this is how it should work" and "I can actually use this" is still wide.
 
 The funny thing is that Nix runs everywhere. macOS, any Linux distro, WSL. It's not a platform-specific solution - it's a *model* that happens to travel across platforms. One package manager, same commands, same guarantees, doesn't care what's underneath. That's rare. Most tooling picks a side.
 
-## What's underneath the installation problem?
+## Underneath the installation problem
 
 The [app isn't the natural unit](/prose/why-is-everything-a-document). The capability is. "Resize this image" doesn't belong to any particular program. Neither does "convert this format" or "play this file" or "find this text." These are operations that exist independently of whatever bundle happens to implement them.
 

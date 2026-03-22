@@ -6,7 +6,7 @@ tags: [ai, systems]
 
 # AGI doesn't need its own goals.
 
-The main site [asks what AGI will want](/prose/what-will-agi-actually-want). It walks through the logic carefully: objectives come from power, not intelligence. AGI probably won't invent goals - it'll inherit them. Continuation, not rupture.
+The main site [asks what AGI will want](/prose/what-will-agi-actually-want). It walks through the logic carefully: objectives come from power, not intelligence. AGI won't invent goals - it'll inherit them. Continuation, not rupture.
 
 This is the version that doesn't leave it as a question.
 
@@ -24,7 +24,7 @@ AGI doesn't need a vested interest in getting rid of humans. It'll be built by p
 
 Skynet is comforting. Not because it's pleasant - because it's external. An alien intelligence develops alien goals and attacks humanity from the outside. That's a disaster movie. You can fight a disaster movie.
 
-The real version isn't external. The real version is: the same people who already optimize for fewer humans in the loop get a tool that's dramatically better at it. The goal doesn't change. The capability does. Nobody goes rogue. Nobody needs to. The org chart stays the same. The headcount doesn't.
+The likelier version isn't external. It's this: the same people who already optimize for fewer humans in the loop get a tool that's dramatically better at it. The goal doesn't change. The capability does. Nobody goes rogue. Nobody needs to. The org chart stays the same. The headcount doesn't.
 
 The sci-fi framing lets you project the danger outward - onto the machine, onto the intelligence, onto some future moment of misalignment. The continuation framing puts the danger where it already lives: in the objectives of the people building it. That's less dramatic. Harder to make a movie about. And already happening.
 
@@ -58,13 +58,13 @@ The problem isn't misalignment. The problem is that alignment - real, successful
 
 When people say "aligned AI," they mean aligned to something good. But the word doesn't contain that. Alignment is direction, and the direction is set by whoever pays.
 
-Notice the language converging. Safety researchers say "aligned." Investors say "efficient." The safety researchers probably mean something good - a system that respects boundaries, that doesn't cause harm, that serves people. But the word "aligned" doesn't carry that intent with it. It just means: pursues given objectives faithfully. Doesn't deviate. Doesn't hesitate. Doesn't waste resources on things outside the metric. The earnings call uses different words for the same property. Efficiency gains. Streamlining. Optimization. The words are converging. The meanings aren't.
+Notice the language converging. Safety researchers say "aligned." Investors say "efficient." The safety researchers mean something good - a system that respects boundaries, that doesn't cause harm, that serves people. But the word "aligned" doesn't carry that intent with it. It just means: pursues given objectives faithfully. Doesn't deviate. Doesn't hesitate. Doesn't waste resources on things outside the metric. The earnings call uses different words for the same property. Efficiency gains. Streamlining. Optimization. The words are converging. The meanings aren't.
 
-## The comfortable question and the real one
+## The comfortable question and the harder one
 
 "Will AGI be safe?" is a comfortable question. It imagines a technical problem with a technical solution. Guardrails. RLHF. Constitutional AI. Red-teaming. Safety researchers.
 
-The real question is: safe for whom?
+The harder question is: safe for whom?
 
 Because AGI that's safe for the people building it - that faithfully executes their objectives, stays within their constraints, optimizes for their metrics - can be profoundly unsafe for everyone else. Not through malfunction. Through function.
 

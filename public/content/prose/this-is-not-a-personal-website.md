@@ -9,7 +9,7 @@ cluster: meta-essays
 
 It has projects. It has essays. It has a spatial graph you can explore. It looks like a portfolio. It looks like someone presenting themselves to the world.
 
-It's not. [Not because it's dishonest](#what-it-isnt) - because a personal website implies something [it can't deliver](#what-a-personal-website-claims). This is [one facet](#one-facet) of a person. Not the person.
+It's not. A personal website implies something [it can't deliver](#what-a-personal-website-claims). This is [one facet](#one-facet) of a person. Not the person.
 
 ## What a personal website claims
 

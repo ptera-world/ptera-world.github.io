@@ -8,15 +8,15 @@ tags: [infrastructure, games]
 
 Roman concrete that self-heals in seawater - the formula was known, and then it wasn't. For 1,500 years. Not because it was impossible. Because the knowledge chain broke. Nobody burned the instructions. Nobody banned the technique. The people who knew how just stopped passing it on, and eventually nobody remembered.
 
-That pattern keeps repeating. Technology isn't preserved by existence. It's preserved by continuous practice. If the guild dies, the funding dies, the use-case disappears, the institution collapses - the tech evaporates, even if the idea was known. And the real loss tends not to be the object - it's [the system that kept it alive](#whats-actually-being-lost). Digital seems to make this [worse, not better](#is-digital-more-fragile). We used to [align around preservation](#did-we-forget-how-to-align) - entire civilizations did. Games [keep showing](#why-do-games-keep-getting-it-right) what happens when friction is removed. So [what does that mean](#what-does-this-mean-for-building) for how we build?
+That pattern keeps repeating. Technology isn't preserved by existence. It's preserved by continuous practice. If the guild dies, the funding dies, the use-case disappears, the institution collapses - the tech evaporates, even if the idea was known. And the loss tends not to be the object - it's [the system that kept it alive](#systems-not-objects). Digital seems to make this [worse, not better](#is-digital-more-fragile). We used to [align around preservation](#alignment-we-forgot) - entire civilizations did. Games [keep showing](#why-do-games-keep-getting-it-right) what happens when friction is removed. So [what does that mean](#what-does-this-mean-for-building) for how we build?
 
-## What has already vanished?
+## Already vanished
 
 Greek fire. Damascus steel. The Antikythera mechanism - a 2,000-year-old analog computer for astronomy, with gears and differentials. Then nothing like it again for over a millennium. It could have existed. No tradition carried it forward.
 
 The pattern isn't dramatic. No fire. No catastrophe. Just: nobody kept doing it, so nobody remembered how.
 
-## What's actually being lost?
+## Systems, not objects
 
 There's a tendency to romanticize these as objects. Pyramids = big stones. Alexandria = burned scrolls. But what actually disappeared was systems.
 
@@ -38,19 +38,19 @@ We once had HyperCard - anyone could build interactive things, and many did. App
 
 The technology existed. It proved useful. Then it got captured, or neglected, or superseded by something worse but better-funded.
 
-## Did we forget how to align?
+## Alignment we forgot
 
 We still have megascale systems. Markets, militaries, supply chains, platforms. We can coordinate billions of people.
 
 But almost exclusively around consumption, extraction, competition, and growth.
 
-Not so much around preservation. Not continuity. Not shared memory. Not collective stewardship.
+Almost never around preservation, continuity, shared memory, collective stewardship.
 
 Alexandria worked because thousands of people, across cultures and languages, aligned around a single civilizational function. The pyramids worked because an entire society organized around a multi-generational project. Early universities carried knowledge across centuries.
 
 These weren't "projects." They were civilizational organs.
 
-We don't tend to build those anymore. We build products. Platforms. Services. Ecosystems. APIs. Not millennium-scale institutions. Not knowledge systems designed to outlive their creators.
+We don't tend to build those anymore. We build products. Platforms. Services. Ecosystems. APIs. Things designed to scale, not to last. Things that outlive their funding round, maybe, but rarely their creators.
 
 The internet was supposed to fix this. It made the world feel small - anyone can reach anyone, instantly, anywhere. But [connection isn't closeness](/prose/whats-actually-wrong). We're more reachable than ever and not much closer. Billions of people on the same network, mostly consuming in parallel rather than building together.
 
@@ -79,9 +79,3 @@ Local-first, network-capable. Your stuff lives on your machine, syncable by desi
 The current way isn't "bad." But things that depend on continuous external support have a historical track record of disappearing.
 
 And the things that last tend to be the ones that don't need permission to keep existing.
-
-## See also
-
-- [what's actually wrong?](/prose/whats-actually-wrong) - the broader question of what's actually wrong
-- [why is software hard?](/prose/why-is-software-hard) - how the frozen paradigm replaced what we lost
-- [how much could I possibly do?](/prose/how-much-could-i-possibly-do) - one person building against the tide

@@ -10,14 +10,14 @@ money is the universal prerequisite. every other freedom - time, safety, health,
 
 [where is all the good software](/prose/where-is-all-the-good-software) says "time is only free if you've already solved money." and then it moves on. it shouldn't have moved on.
 
-## what money actually gates
+## what money gates
 
-- **time.** you buy time by earning enough to not need all your hours. but earning enough requires selling your hours. the gate is circular.
-- **safety.** housing costs money. food costs money. the physical security that [the floor](/unfiltered/nobody-told-you-there-were-prerequisites) lists as the bottom of the pyramid - that's a monthly payment.
-- **health.** [the benefit](/unfiltered/the-system-monetized-the-damage) covered this. healthcare is tied to employment. the body's needs are a subscription service.
-- **thinking.** you can't sit with a hard question when you're calculating whether you can afford groceries this week. cognitive bandwidth has a cost, and poverty taxes it directly. every decision about money is a decision you're not making about anything else.
-- **expression.** making things requires tools, space, time, and the belief that making is worth doing. the first three cost money. the fourth requires enough safety to feel like making matters - which costs money.
-- **relationships.** being present with people requires not being somewhere else earning. loneliness isn't just a social problem. it's an economic one.
+- time, first. you buy it by earning enough to not need all your hours. but earning enough requires selling your hours. the gate is circular.
+- housing costs money. food costs money. the physical security that [the floor](/unfiltered/nobody-told-you-there-were-prerequisites) lists as the bottom of the pyramid - all of that is a monthly payment. safety is a subscription.
+- so is health. [the benefit](/unfiltered/the-system-monetized-the-damage) covered this - healthcare tied to employment, the body's needs gated by a paycheck.
+- and you can't sit with a hard question when you're calculating whether you can afford groceries this week. cognitive bandwidth has a cost. poverty taxes it directly. every decision about money is a decision you're not making about anything else.
+- making things requires tools, space, time, and the belief that making is worth doing. the first three cost money. the fourth requires enough safety to feel like making matters - which costs money. expression is downstream of everything above it.
+- being present with people requires not being somewhere else earning. loneliness isn't just a social problem. it's an economic one.
 
 everything on the pyramid is downstream of money. and money is downstream of labor. and labor is downstream of [the job](/unfiltered/your-best-hours-belong-to-someone-else). the whole structure is a funnel that converts your life into someone else's profit and gives you back just enough to keep the conversion running.
 
@@ -33,7 +33,7 @@ the mortgage is thirty years of your future labor, committed in advance. the stu
 
 ## what it does to "be yourself"
 
-[the purpose of life](/prose/whats-the-purpose-of-life) says: be yourself. that requires analysis, expression, discovery. all three require time. time requires money. money requires the job. the job requires you to not be yourself for eight hours a day.
+[the purpose of life](/prose/whats-the-purpose-of-life) says: be yourself. that requires paying attention to who you are and doing things that show you who you could be. both require time. time requires money. money requires the job. the job requires you to not be yourself for eight hours a day.
 
 the gate isn't blocking self-actualization from the outside. it's structured so that the path to self-actualization runs through its opposite. you become yourself by first spending most of your life being someone else's instrument. and by the time you've earned enough to stop, you've spent the years you can't get back.
 
@@ -59,9 +59,4 @@ for most people, the number is not unreasonable. it's not "billionaire." it's "e
 
 the distance between where most people are and that number is not vast. but the system is designed so that the distance never closes. because closing it means you stop needing the system. and the system needs you to need it.
 
-raises track inflation. housing costs absorb income gains. lifestyle expectations scale with earnings. the number moves as you approach it. not because you're bad with money. because the economy is structured to keep the gap exactly wide enough that you keep working.
-
-## See also
-
-- [the job](/unfiltered/your-best-hours-belong-to-someone-else) - most of your waking life belongs to someone else
-- [the floor](/unfiltered/nobody-told-you-there-were-prerequisites) - every layer is downstream of this
+raises track inflation. housing costs absorb income gains. lifestyle expectations scale with earnings. the number moves as you approach it. the economy is structured to keep the gap exactly wide enough that you keep working.

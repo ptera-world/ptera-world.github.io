@@ -6,91 +6,49 @@ tags: [social]
 
 # What are labels anyway?
 
-You're not your Myers-Briggs type. You're not your diagnosis. You're not your generation, your zodiac sign, your attachment style, your Hogwarts house.
+"I'm not a math person." You probably have one of these. Something you picked up somewhere — a teacher, a bad afternoon, a personality quiz — and just kept. It didn't feel like picking something up. It felt like noticing something that was already true.
 
-Most people know this about other people. It's obvious that a label can't capture someone else's complexity. But [your own labels](#what-labels-do-you-wear) feel different - they feel like facts. Like self-knowledge. They might not be. They might be [stories you're living inside](#how-do-labels-become-real), and they might [set the ceiling](#is-there-a-ceiling-you-cant-see) for what you think you can be. And there's something interesting: [loosen your grip on your own labels](#what-if-you-held-them-loosely), and you might stop gripping others' labels so tightly too.
+That's the thing about self-labels. They disguise themselves as observations. "I'm awkward." "I'm not creative." "I'm the anxious one." These sound like self-awareness. They sound like someone who's done the work of understanding themselves. And maybe they are that. But they're also doing something else at the same time.
 
-## What labels do you wear?
+## Where do they come from?
 
-Not the ones others put on you. The ones you put on yourself.
+A teacher's offhand comment when you were eight. A pattern you noticed in adolescence and never revisited. A test you took online that told you your "type." A diagnosis that quietly became an identity. Something you failed at once and decided meant something permanent about you.
 
-"I'm not a math person." "I'm awkward." "I'm not creative." "I'm the anxious one." "I'm bad at relationships." "I'm not a leader."
+People collect these and build a self-concept out of them. Which is fine, in the same way that a map is fine — it tells you roughly where things are, it just isn't the territory. The problem is nobody thinks of their self-labels as a map. The map feels like the ground.
 
-These don't feel like labels. They feel like observations. Things you learned about yourself over time. Self-awareness.
+## Labels do things
 
-But where did they come from?
+A label isn't just a description. It's a [constraint](/prose/why-are-we-compressing-things).
 
-- A teacher's offhand comment when you were eight
-- A pattern you noticed in adolescence and never questioned
-- A test you took online that told you your "type"
-- A diagnosis that became an identity
-- Something you failed at once and decided meant something permanent
+Once you believe you're "not creative," you [stop trying](/prose/how-do-i-do-things) creative things. Why would you? You already know the outcome. The label becomes a filter — you notice evidence that confirms it, dismiss evidence that contradicts it. You are living as if the label is true, which makes it true, which confirms the label. That loop is hard to see from inside it.
 
-People collect these. Build a self-concept out of them. And then live inside it.
-
-## How do labels become real?
-
-Labels aren't just descriptions. They're [constraints](/prose/why-are-we-compressing-things).
-
-Once you believe you're "not creative," you [stop trying](/prose/how-do-i-do-things) creative things. Why would you? You already know the outcome. The label becomes a filter - you notice evidence that confirms it, dismiss evidence that contradicts it.
-
-This is the part that's hard to see from inside: **you are living as if the label is true, which makes it true, which confirms the label.**
-
-The kid labeled "gifted" who can't handle struggle - because struggle means they're not gifted anymore. The person labeled "anxious" who stops trying to change - because the label says this is just who they are. The one who "isn't good with people" who avoids social situations - and never gets better at them.
+The kid labeled "gifted" who can't handle struggle — because struggle means they're not gifted anymore. The person labeled "anxious" who stops trying to change — because the label says this is just who they are. The one who "isn't good with people" who avoids social situations and never gets better at them.
 
 The label didn't describe a fixed reality. It created one.
 
-## Is there a ceiling you can't see?
+I keep wanting to say something clean here, like "so just stop labeling yourself," but that's not how it works either. You need concepts to think about yourself. You need some kind of shorthand. The question is whether the shorthand is running the show.
 
-Your labels set boundaries on who you're allowed to become.
+## Your own labels feel different
 
-Not external boundaries. Internal ones. The ones you enforce on yourself without noticing.
+Here's where it gets slippery. You can probably see how labels flatten other people. You know your friend is more than "the shy one." You know your coworker is more than their job title. That part's easy.
 
-"I could never do that - I'm not that kind of person."
+Your own labels feel earned though. You lived the experiences. You observed the patterns. Who would know better than you?
 
-What kind of person? The kind defined by a label you picked up years ago, in a different context, when you were different?
+You. You would also know worse than you. You're the least objective observer of yourself. You see yourself through the labels you've already applied. Confirmation bias runs deep when the subject is you. And there's comfort in labels — they're stable, they explain things, they excuse things. "I can't help it, I'm just [label]." The label becomes a refuge from the discomfort of uncertainty, from the responsibility of change. Letting go of a self-label means admitting you might have been wrong about yourself for a long time, and that the story you've been telling isn't the only one.
 
-People change. Constantly. You're not who you were five years ago. But your labels might be. And if you're still living inside them, you're constraining current-you based on past-you's limitations.
+That's uncomfortable. It's supposed to be.
 
-The ceiling isn't real. It's a story. But you keep your head down anyway.
+## Holding loosely
 
-## Why do self-labels stick?
+What if the labels were hypotheses instead of facts? What if "I'm anxious" became "I've been experiencing anxiety in these contexts"? What if "I'm not creative" became "I haven't found my creative mode yet"?
 
-It's easier to see how labels flatten other people. You know your friend is more than "the shy one." You know your coworker is more than their job title.
+The shift is from identity to pattern. From permanent to contextual.
 
-But your own labels feel earned. You lived the experiences. You observed the patterns. Who would know better than you?
+Test the edges. Do something the label says you can't. [See what happens](/prose/how-do-i-do-things). Maybe the label was right. Maybe it wasn't. You won't know until you check. The person who wrote your self-concept was younger, knew less, had different contexts. You're allowed to revise.
 
-Except: you're also the least objective observer of yourself. You see yourself through the labels you've already applied. Confirmation bias runs deep when the subject is you.
+And there's something that tends to happen when you loosen your own labels — it changes how you see everyone else. If your "awkward" was a story you could rewrite, maybe their "difficult" is too. You stop [flattening](/prose/why-are-we-compressing-things) people once you've felt, from inside, how much the flattening costs.
 
-And there's comfort in labels. They're stable. They explain things. They excuse things. "I can't help it, I'm just [label]." The label becomes a refuge from the discomfort of uncertainty, from the responsibility of change.
-
-Letting go of a self-label means admitting you might have been wrong about yourself. That the story you've been telling isn't the only one. That's uncomfortable.
-
-## What if you held them loosely?
-
-Not "throw away all categories." You need concepts to understand yourself.
-
-But: what if the labels were hypotheses instead of facts? What if "I'm anxious" became "I've been experiencing anxiety in these contexts"? What if "I'm not creative" became "I haven't found my creative mode yet"?
-
-The shift is from identity to pattern. From permanent to contextual. From "this is what I am" to "this is what's been happening."
-
-**Notice the function.** When you reach for a self-label, ask: what is this doing for me? Is it helping me understand, or helping me avoid trying?
-
-**Test the edges.** Do something the label says you can't. [See what happens](/prose/how-do-i-do-things). Maybe the label was right. Maybe it wasn't. You won't know until you check.
-
-**Update the story.** You're allowed to. The person who wrote your self-concept was younger, knew less, had different contexts. You can revise.
-
-## What happens when you let go?
-
-There's something that tends to happen when you loosen your own labels: it changes how you see everyone else.
-
-If you're not your labels, neither are they. If your "awkward" was a story you could rewrite, maybe their "difficult" is too. If your ceiling was imaginary, maybe theirs is too.
-
-You stop flattening people. Not because you decided to be more open-minded - but because you felt, from inside, how much the [flattening](/prose/why-are-we-compressing-things) costs.
-
-That understanding transfers. It tends to start with yourself.
-
-## See also
+## Related
 
 - [who am I?](/prose/who-am-i) - the deeper question labels try to answer
 - [why are you lonely?](/prose/why-are-you-lonely) - when roles keep people from seeing you

@@ -8,15 +8,15 @@ tags: [social, design]
 
 "I'm just one person." "What's the point."
 
-You haven't tried yet. The surrender came first. It [sounds like wisdom](#why-does-giving-up-sound-wise) but it's [learned helplessness](#what-is-learned-helplessness) in a better outfit. And it [closes doors](#what-does-it-cost) before you touch the handle.
+You haven't tried yet. The surrender came first. It [sounds like wisdom](#giving-up-sounds-wise) but it's [learned helplessness](#learned-helplessness) in a better outfit. And it [closes doors](#what-does-it-cost) before you touch the handle.
 
-## Why does giving up sound wise?
+## Giving up sounds wise
 
 "I'm just being realistic." It sounds mature. Grounded.
 
 It's pre-empting failure by refusing to try. You can't fail at something you never started. Not-failing feels like not-losing. Not-losing feels like winning. It's not. It's nothing. But nothing is comfortable.
 
-## What is learned helplessness?
+## Learned helplessness
 
 It's when you've tried before - or watched others try - and it didn't work. And you generalized. "That didn't work" became "things don't work" became "why bother."
 
@@ -24,9 +24,9 @@ The generalization is where it gets tricky. One failure in one context at one ti
 
 Each of these might be true about that specific attempt. None of them are necessarily true about you, permanently, across all contexts. But the brain doesn't store it that way. It stores it as [identity](/prose/what-are-labels-anyway). And identity is sticky.
 
-The learned part matters. This isn't who you are. It's what you were taught - by experience, by failure, by systems that didn't leave room for you to succeed. Learned things can be unlearned. But probably not by thinking about it. More likely by [doing something different](/prose/how-do-i-do-things) and seeing a different result.
+The learned part matters. This isn't who you are. It's what you were taught - by experience, by failure, by systems that didn't leave room for you to succeed. Learned things can be unlearned. But not by thinking about it. More likely by [doing something different](/prose/how-do-i-do-things) and seeing a different result.
 
-## What can "just one person" actually do?
+## What can "just one person" do?
 
 "I'm just one person, what could I possibly do?"
 
@@ -40,7 +40,7 @@ This isn't "you should be Linus Torvalds." It's that the narrative of "one perso
 
 And with modern tools, "one person" goes further than ever. Not as an argument for any specific tool - just the observation that the gap between "idea" and "thing that exists" has never been smaller. The barriers that used to require teams, funding, institutions - many of them are gone. Not all. But many.
 
-## What is "I can't" really doing?
+## What "I can't" is really doing
 
 "I can't" isn't usually an assessment. It's more often a shield.
 
@@ -49,7 +49,7 @@ And with modern tools, "one person" goes further than ever. Not as an argument f
 - "That's for people who are talented" → I'm afraid of finding out I'm not
 - "What's the point" → I'm afraid of caring about something that might not work
 
-Fear is fine. Fear is normal. [But](/prose/but) fear wearing the mask of pragmatism is hard to spot - you can't fight what you can't see.
+Fear is fine. Fear is normal. [But](/prose/but) fear wearing the mask of pragmatism is hard to spot - you can't fight what you can't see. And fear wearing the mask of [high standards](/prose/why-is-perfectionism-a-trap) is even harder.
 
 Reframe "I can't" as "I'm scared to try" and something shifts. "I can't" is a wall. "I'm scared to try" is a feeling. Walls are permanent. Feelings pass.
 
@@ -73,10 +73,6 @@ The idea stays in your head. The skill stays unlearned. The thing stays unbuilt.
 
 Meanwhile someone else - not smarter, not more talented, not more privileged necessarily - just started. Badly. And now they have something and you have a reason why you don't.
 
-The cost of defeatism isn't dramatic. It's quiet. It's all the things that could have existed and don't. All the versions of you that could have emerged and didn't. Not because they were impossible - because you [decided they were](/prose/what-are-labels-anyway) before checking.
+The cost of defeatism isn't dramatic. It's quiet. It's all the things that could have existed and don't. All the versions of you that could have emerged and didn't. Because you [decided they were impossible](/prose/what-are-labels-anyway) before checking.
 
-## See also
-
-- [how do I do things?](/prose/how-do-i-do-things) - practical approaches to starting
-- [why is perfectionism a trap?](/prose/why-is-perfectionism-a-trap) - fear disguised as standards
-- [what can I change?](/prose/what-can-i-change) - finding leverage as one person
+And meanwhile, for the things that aren't impossible at all - that just need someone to [find the leverage](/prose/what-can-i-change) and push - the defeatism takes those off the table too.

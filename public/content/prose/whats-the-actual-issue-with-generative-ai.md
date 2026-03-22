@@ -6,11 +6,11 @@ tags: [ai, social]
 
 # What's the actual issue with generative AI?
 
-Not copyright. Not job loss. Not "it's just [interpolation](/prose/is-it-just-interpolation)." Those are real concerns, but they're downstream of something more fundamental.
+Copyright, job loss, "it's just [interpolation](/prose/is-it-just-interpolation)" - those are real concerns, but they're downstream of something more fundamental.
 
-The issue that keeps coming up is that the output of generative AI doesn't fully reflect [anyone's intent](#whose-intent).
+The issue that keeps coming up is that the output of generative AI doesn't fully reflect [anyone's intent](#the-intent-problem).
 
-## Whose intent?
+## The intent problem
 
 [Art is intent.](/prose/what-is-art) You meant it. You chose this over that. The choosing is the art. Every prior tool preserved that relationship. A paintbrush doesn't have intent - but the person holding it does, and every stroke is a choice. A camera doesn't have intent - but framing, timing, angle are all choices. The tool shapes the output, but the intent flows through it.
 
@@ -26,7 +26,7 @@ When the output *looks like* someone meant every detail - but the prompter didn'
 
 This isn't the same as mass production. A factory-made chair was designed by someone. The choices were made once, then reproduced. Generative AI makes new choices every time - and they're not the prompter's.
 
-## What's the spectrum look like?
+## The spectrum
 
 It's [not that simple](/prose/its-not-that-simple), of course. A person who generates a hundred images and carefully selects one - is the selection intent? A person who iterates on a prompt for hours, refining toward a vision - is that vision intent? A person who takes AI output and modifies it, combines it, builds on it - at what point does their intent enter the work?
 
@@ -48,21 +48,21 @@ The labels split it into two things. It's one spectrum. And the distance between
 
 A director doesn't act. A conductor doesn't play. An architect doesn't lay bricks. The intent lives in one person, the execution in another - and we've always accepted that the result carries the director's vision. "The computer did it" has been leveled at Photoshop, digital painting, Houdini, procedural generation. Every time a tool automated part of the craft, the same objection appeared. And every time, the answer was: the human's intent flows through the tool. The craft changed. The intent didn't.
 
-So what's actually new? Not the split between intent and execution. That's ancient. What's new is that every previous tool had a floor. You couldn't use Photoshop without *some* craft, *some* intentful choices. The tool automated parts of the process, but you still had to do something.
+So what's new? Not the split between intent and execution. That's ancient. What's new is that every previous tool had a floor. You couldn't use Photoshop without *some* craft, *some* intentful choices. The tool automated parts of the process, but you still had to do something.
 
 Generative AI removes the floor. One sentence in, a finished thing out. And then feed that into another model. And another. Each layer dilutes whatever intent was in the original prompt. Recursive generation can reduce the human's contribution to near-zero - intent at parts per billion.
 
 The spectrum didn't just get wider. It extended all the way to the ground. No previous tool did that.
 
-## Where does the intent actually live?
+## Where does the intent live?
 
 [But](/prose/but) this framing - "the prompter has no control" - isn't quite right either. The prompter controls the *input*. What you put in, what you leave out, how you structure it - that determines which region of the [function](/prose/who-is-generative-ai) the output comes from. You don't control the micro-choices. But you shape the space they're made in.
 
-The more carefully you shape the input, the more your intent shows through in the output - even though you never touched the output directly. A vague prompt gives you almost nothing of yourself back. A carefully structured input, iterated and refined, produces output that carries your intent even in details you didn't specify. Not because you chose those details. Because you shaped the space they emerged from.
+The more carefully you shape the input, the more your intent shows through in the output - even though you never touched the output directly. A vague prompt gives you almost nothing of yourself back. A carefully structured input, iterated and refined, produces output that carries your intent even in details you didn't specify. You shaped the space they emerged from.
 
-That's a new kind of intent. Not hand-on-the-brush intent. Not even conductor-leading-the-orchestra intent. Something closer to: you built the room, and the room shaped what happened in it.
+That's a new kind of intent. Something different from hand-on-the-brush, different from conductor-leading-the-orchestra. Closer to: you built the room, and the room shaped what happened in it.
 
-## What doesn't this mean?
+## What this doesn't mean
 
 This isn't "AI bad." This isn't "AI art isn't real art." Those are [labels](/prose/what-are-labels-anyway) that end conversations.
 
@@ -70,11 +70,4 @@ It means the relationship between maker and made is changing in a way we don't h
 
 Whether it's a problem depends on [what you think art is for](/prose/what-is-art). Whether intent in the input counts the same as intent in the output. Whether shaping the space is the same as making the thing.
 
-That seems like the actual issue. Not the economics. Not the legality. The question of where intent lives when the maker and the making are split across two entities - and what that means for everything we thought we knew about [who made this](/prose/the-great-deceit).
-
-## See also
-
-- [what is art?](/prose/what-is-art) - art as intent, not medium
-- [is it just interpolation?](/prose/is-it-just-interpolation) - the technical dismissal
-- [the great deceit](/prose/the-great-deceit) - authorship and what it means
-- [who is generative AI?](/prose/who-is-generative-ai) - the function behind the choices
+That seems like the actual issue. The question underneath the economics and the legality: where does intent live when the maker and the making are split across two entities - and what that means for everything we thought we knew about [who made this](/prose/the-great-deceit).

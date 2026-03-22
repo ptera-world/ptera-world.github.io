@@ -10,7 +10,7 @@ a painting has no price until someone assigns one. before the auction, it's pain
 
 the painting didn't change. what changed is that it became readable to a system that needed it to be readable.
 
-## what does capital actually want?
+## what does capital want?
 
 the obvious answer is money. but the billionaire who keeps going past any point of personal comfort isn't accumulating money to spend - they have more than could be spent. what they're accumulating is score. the number that goes up. and the number going up is the point, not the prelude to something else.
 

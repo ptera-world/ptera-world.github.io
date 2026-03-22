@@ -10,19 +10,19 @@ Everything on a computer is a format. Every file, every stream, every message be
 
 When formats work, they're invisible. Open a JPEG and see a photo. Play an MP4 and watch a video. The format did its job - it carried meaning from one program to another without you having to think about how.
 
-When formats don't work - when the file won't open, when the export is corrupted, when you need to get data from one tool to another and there's no path - that's when you realize [how much of "using a computer" is actually format translation](#what-is-a-format-problem).
+When formats don't work - when the file won't open, when the export is corrupted, when you need to get data from one tool to another and there's no path - that's when you realize [how much of "using a computer" is format translation](#the-format-problem).
 
-## What is a format problem?
+## The format problem
 
 Copy a table from a web page into a word processor. Something goes wrong. The formatting is off, the columns don't align, the links are gone. You didn't do anything wrong. Two programs just disagreed about what a "table" is.
 
-Export your project from one tool. Import it into another. Half the data is missing. Not because either tool is broken - because the export format doesn't have a way to represent everything the first tool knows, and the import format doesn't expect what was actually written.
+Export your project from one tool. Import it into another. Half the data is missing. The export format doesn't have a way to represent everything the first tool knows, and the import format doesn't expect what was written.
 
 These aren't edge cases. This is the normal experience. The seams between programs are format boundaries, and most format boundaries leak. The [bridge problem](/prose/why-is-everything-a-document#whats-the-bridge-problem) isn't abstract. It's every time you've ever copy-pasted something and it came out wrong.
 
 And it goes deeper than user-facing tools. Programs that are supposed to compose - libraries, CLI tools, [the infrastructure underneath everything](/prose/why-glue) - hit the same walls. The output of one doesn't quite match the input of the other. The assumptions encoded in the format don't align. The composition that should be trivial requires a translation layer, and the translation layer is where information gets lost.
 
-## Why doesn't the spec help?
+## The spec doesn't help
 
 Some formats have specifications. A spec is supposed to be the source of truth - the document that tells you exactly how to read and write the format, every field, every flag, every edge case.
 
@@ -36,17 +36,17 @@ The bad case: no spec at all. The format is whatever the reference implementatio
 
 There's a middle ground that's somehow worse than no spec: a spec that exists but disagrees with reality. Where the dominant implementation made choices the spec didn't anticipate, and now every other implementation has to choose between "follow the spec" and "read files that actually exist in the wild." The spec becomes [a document about how things should work](/prose/why-is-everything-a-document), while the implementation is how things actually work, and the gap between them is your problem.
 
-## Why doesn't code generation help?
+## Code generation doesn't help either
 
-If the format has a machine-readable schema - RelaxNG, JSON Schema, ASN.1, whatever - you can generate types from it. Parsers, serializers, validators, all derived from the schema automatically. This is genuinely wonderful when it works.
+If the format has a machine-readable schema - RelaxNG, JSON Schema, ASN.1, whatever - you can generate types from it. Parsers, serializers, validators, all derived from the schema automatically. This is wonderful when it works.
 
-But it only handles the structure. The *semantics* - what do these fields actually mean, what are the invariants, what happens when this field interacts with that field - those live in the parts of the spec that aren't machine-readable. Or in the behavior of the reference implementation. Or in tribal knowledge accumulated over decades of people hitting edge cases and writing blog posts about them.
+But it only handles the structure. The *semantics* - what do these fields mean, what are the invariants, what happens when this field interacts with that field - those live in the parts of the spec that aren't machine-readable. Or in the behavior of the reference implementation. Or in tribal knowledge accumulated over decades of people hitting edge cases and writing blog posts about them.
 
 And code generation can't help with the long tail at all. Most formats don't have schemas. Most formats don't even have good specs. Most formats are "here's a binary blob, the structure was documented in a wiki that no longer exists, the reference implementation is a C library from 2003 that segfaults on malformed input."
 
 For those formats, someone has to sit down with a hex editor and figure it out. Or read the source of whatever program writes the format and reverse-engineer the structure. There's no shortcut. The work is manual, tedious, and foundational - everything downstream depends on getting it right.
 
-## Why does nobody build this?
+## Nobody builds this
 
 Format work is unglamorous. Nobody writes a blog post about finally getting the EXIF rotation flags right. There's no conference talk about parsing OOXML table styles. The work is invisible when it succeeds and frustrating when it doesn't. Nobody gets famous for it.
 

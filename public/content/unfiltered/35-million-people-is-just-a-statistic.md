@@ -70,7 +70,7 @@ and every system - every report, every policy, every headline, every campaign, e
 
 so the weight stays with the person. and the number goes into the system. and the system processes the number. and the person processes the weight. alone.
 
-## See also
+---
 
 - [the floor](/unfiltered/nobody-told-you-there-were-prerequisites) - 35.9 million people who aren't reading this
 - [the benefit](/unfiltered/the-system-monetized-the-damage) - healthcare as a line item

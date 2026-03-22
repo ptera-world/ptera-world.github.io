@@ -39,7 +39,7 @@ Color and layout are independently controllable. You can color by domain and lay
 
 This means you can ask two questions at once. "Where does this project sit in the ecosystem?" through layout. "What domain does it touch?" through color. Two lenses, overlaid, without either collapsing into the other.
 
-It's less a feature than a philosophy. Information shouldn't require you to pick one perspective. You should be able to [hold multiple views at once](/prose/its-not-that-simple). Not binary. Not a spectrum. Composable.
+It's less a feature than a philosophy. Information shouldn't require you to pick one perspective. You should be able to [hold multiple views at once](/prose/its-not-that-simple). Binary is too simple and a spectrum is too flat. Composable.
 
 ## Text
 
@@ -65,7 +65,7 @@ So the interlinks and intralinks work against the medium from inside it. The ess
 
 Every trade-off between fidelity and comprehension is deliberate. Every place where the graph got flattened into text, where the nonlinear got forced into sequence, where honesty was traded for readability - those aren't limitations. They're design choices. Made with [intent](/prose/what-is-art). Like everything else here.
 
-## See also
+---
 
 - [this site is manipulative](/prose/this-site-is-manipulative) - one aspect of the design
 - [what is art?](/prose/what-is-art) - intent behind every choice

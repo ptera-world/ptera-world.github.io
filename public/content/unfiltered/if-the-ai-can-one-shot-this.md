@@ -14,7 +14,7 @@ that's not concerning. that's devastating.
 
 ## why it can do this
 
-not because the model is insightful. because the training data is people.
+because the training data is people.
 
 thousands of people have written about burnout. thousands have written about the healthcare system. thousands have described what it feels like to be ground down by work, to ration therapy sessions, to shelve parts of yourself to stay functional. the pattern is in the model because the pattern is in the corpus. the corpus is the internet. the internet is where people put their pain when they have [just enough](/unfiltered/nobody-told-you-there-were-prerequisites) literacy and platform and energy to write it down.
 

@@ -30,17 +30,15 @@ there's supposed to be a gap between surviving and collapsing. that's where you 
 
 it looks like scrolling. that's the tell.
 
-not because scrolling is bad. because scrolling is what fits. when you have eleven minutes before you need to be somewhere else, you're not starting a project. you're not writing. you're not sitting with a hard thought. you're doing the thing that requires the least activation energy and gives the most immediate relief. the phone is right there. the infinite scroll asks nothing of you.
+scrolling is what fits. when you have eleven minutes before you need to be somewhere else, you're not starting a project. you're not writing. you're not sitting with a hard thought. you're doing the thing that requires the least activation energy and gives the most immediate relief. the phone is right there. the infinite scroll asks nothing of you.
 
 the main essays talk about this - [software designed against you](/prose/whats-actually-wrong), the attention economy, the infinite scroll as slot machine. but they frame it as a design problem. as if the issue is that the scroll is too compelling.
 
 the issue is that the scroll is the only thing that fits in the cracks. the cracks are all you have. and the cracks exist because everything else was already claimed.
 
-## the kids
+and then you look up from the phone and your kid is watching you scroll. they've been watching for a while actually.
 
-this is the part that actually costs something to say.
-
-someone's working to give their kids a better life. and the work is taking them away from their kids' life. the hours spent earning the mortgage are hours not spent in the house the mortgage pays for. the stability they're providing is real. the presence they're not providing is also real.
+someone's working to give their kids a better life. and the work is taking them away from their kids' life. the hours spent earning the mortgage are hours not spent in the house the mortgage pays for. the stability they're providing is real. the presence they're not providing is also real. i keep coming back to the gap thing — the system didn't remove the gap, it filled it, but that's not quite right either. it's more like the gap was never really yours. it was always scheduled for something.
 
 and the kids learn what a life looks like by watching. what they see is: you grow up, you work, you're tired, you maintain, you scroll when you can, you do it again tomorrow. the template passes down not through words but through what a day looks like. the parent doesn't have time to show them anything else because showing them anything else requires time the parent doesn't have.
 
@@ -50,9 +48,7 @@ and the kids learn what a life looks like by watching. what they see is: you gro
 
 this isn't the same as [the silence](/unfiltered/expression-has-a-cost-floor). the person in the crossfire can't speak because survival took everything. the person in the grind can technically speak - they have the means, the literacy, the device. they just don't have any self left to speak *from*. the crossfire takes your capacity through violence. the grind takes it through scheduling.
 
-different mechanisms. same silence. the person at the bottom can't write because they're surviving. the person in the middle can't write because they're maintaining. the person who actually writes is the person who somehow has a gap - and gaps are increasingly rare at every level.
-
-## the trick
+different mechanisms. same silence. the person at the bottom can't write because they're surviving. the person in the middle can't write because they're maintaining. although — the person in the middle would probably object to being compared to the person at the bottom, and they'd be right to, the material conditions aren't comparable. but i'm not comparing conditions. i'm comparing what's left over after the conditions are met. and what's left over is the same amount of nothing. the person who actually writes is the person who somehow has a gap - and gaps are increasingly rare at every level.
 
 the system's best trick is that the grind looks like success. you have a job. you have a house. you have a family. you have health insurance. by every visible measure, you made it.
 
@@ -62,7 +58,7 @@ except it's not. it's a million people's problem. and they're all too tired to c
 
 and when the grind finally breaks something - when the burnout hits, when the anxiety becomes chronic, when you stop being able to feel things - [the system has a response for that too](/unfiltered/the-system-monetized-the-damage). it's in your benefits package. between dental and the 401k match.
 
-## See also
+---
 
 - [the floor](/unfiltered/nobody-told-you-there-were-prerequisites) - the prerequisites nobody mentions
 - [the benefit](/unfiltered/the-system-monetized-the-damage) - the system monetized the damage it causes

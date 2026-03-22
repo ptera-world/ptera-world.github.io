@@ -32,11 +32,11 @@ They're not random. Each one narrows the space. Read together, they work like a 
 
 Everyone has dead projects. Most people see them as failures. They might actually be some of the most honest feedback you can get about [what you actually want](/prose/whats-the-purpose-of-life).
 
-## What's the pattern you can't see from inside?
+## The pattern you can't see from inside
 
 From the outside, the surviving projects often share something the builder can't see. A document converter, a decompiler, a code analyzer, a simulation of human experience - they don't look related. But they all take something opaque and make it [visible](/prose/why-do-i-build-tools). That's not a product vision. It's more like a reflex. But reflexes come from somewhere.
 
-The pattern might be different for everyone. Maybe everything someone starts involves connecting people. Or simplifying complexity. Or preserving things that are disappearing. You probably won't see it from inside. The pattern tends to live in the negative space - the thing you keep doing without deciding to.
+The pattern might be different for everyone. Maybe everything someone starts involves connecting people. Or simplifying complexity. Or preserving things that are disappearing. You won't see it from inside. The pattern tends to live in the negative space - the thing you keep doing without deciding to.
 
 ## Are we optimizing for interesting?
 
@@ -48,7 +48,7 @@ But useful for whom? Useful for *what?* The payroll system is useful because it 
 
 That's not useful yet. It might never be. Or it might turn out that one of those sleeping projects is exactly what someone needs in three years, and it's already there, already modular, already waiting.
 
-## What's the uncomfortable middle?
+## The uncomfortable middle
 
 You're not building toward something. You're also not just building.
 

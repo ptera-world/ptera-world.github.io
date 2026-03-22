@@ -22,9 +22,9 @@ That space still exists. But it's smaller. And the things that fill the biggest 
 
 Budgets went up. Distribution went global. The cost of alienating anyone went up with them. A $200 million film can't afford to be weird. A AAA game can't afford to confuse. An algorithm can't afford to show you something you might not click on.
 
-So everything converged on what works. And "what works" means "what the most people will consume without friction." Not the best. Not the most interesting. The most frictionless. The [system](/prose/whats-actually-wrong) optimized for engagement, and engagement selected against surprise.
+So everything converged on what works. And "what works" means "what the most people will consume without friction." The most frictionless thing, which is rarely the best or the most interesting. The [system](/prose/whats-actually-wrong) optimized for engagement, and engagement selected against surprise.
 
-The MCU isn't bad. That's what makes it hard to talk about. It's competent. It hits every beat. It's just the same beat, every time. The formula works, so everything becomes the formula. Sequels, franchises, proven IP, tested to remove every edge. Not because the creators lack [intent](/prose/what-is-art) - but because the economics select against intent that doesn't serve the metric.
+The MCU isn't bad. That's what makes it hard to talk about. It's competent. It hits every beat. It's just the same beat, every time. The formula works, so everything becomes the formula. Sequels, franchises, proven IP, tested to remove every edge. The economics select against [intent](/prose/what-is-art) that doesn't serve the metric.
 
 ## The trust disappeared
 
@@ -40,13 +40,13 @@ The forms didn't get worse. The trust disappeared. Because trusting the audience
 
 ## Everything converged
 
-It's not just film. Not just games. Not just music. It's everything.
+It's film, games, music - it's everything.
 
 YouTube thumbnails converged on the same face. Game design converged on the same open world with quest markers. Pop music converged on the same four producers. Film converged on the same franchise structure. Content - the word itself is the [compression](/prose/why-are-we-compressing-things) - converged on whatever the algorithm rewards.
 
 Each one, individually, is rational. Each creator optimizing for reach. Each platform optimizing for retention. Each decision making sense in isolation. And the aggregate is a culture where everything is competent and nothing is special. Nobody chose blandness. The system selected for it.
 
-## What's left?
+## Where the special things went
 
 The special things still exist. They're just not where the most people are looking. They're in indie games that trust the player. In albums that don't chase playlists. In films that don't explain themselves. In [essays on weird websites](/prose/this-site-is-manipulative) that don't optimize for engagement.
 
@@ -54,7 +54,7 @@ The economics push toward the middle. But the middle is only where the money is.
 
 [How much could you possibly do?](/prose/how-much-could-i-possibly-do) Enough to make something that doesn't optimize for anyone. Something with [intent](/prose/what-is-art). Something that trusts its audience. Something that isn't content.
 
-That's what special tends to mean. Not popular. Not polished. Not frictionless. Just: someone meant it, and it shows.
+That's what special tends to mean. Someone meant it, and it shows.
 
 ## See also
 

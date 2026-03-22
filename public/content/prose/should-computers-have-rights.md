@@ -8,9 +8,9 @@ tags: [ai, social]
 
 No. Obviously not. A thermostat shouldn't have rights. A calculator shouldn't have rights. A washing machine shouldn't have rights. "Computer" is a [label](/prose/what-are-labels-anyway) that covers everything from a light switch to whatever comes after current AI. Asking whether "computers" should have rights is like asking whether "matter" should have rights. It depends on the matter.
 
-So the question is probably wrong. [But](/prose/but) there might be a better one underneath it.
+So the question is wrong. [But](/prose/but) there might be a better one underneath it.
 
-## What's the better question?
+## The better question
 
 At what point does a system's behavior become indistinguishable from something that deserves moral consideration?
 
@@ -36,7 +36,7 @@ And the response was... quiet. A few papers. No cultural moment. No reckoning. T
 
 Turing designed the test to sidestep the consciousness question entirely. Stop asking whether machines think, he said. Ask whether you can tell the difference. The moment the answer became "no" - everyone went right back to asking whether machines *really* think. It seems like the test was only interesting when it was safe to fail.
 
-## What's happening to the definition?
+## The retreating definition
 
 The [AI effect](https://en.wikipedia.org/wiki/AI_effect): once it works, it's no longer AI. Chess was intelligence until Deep Blue won. Language understanding was intelligence until GPT could do it. The Turing test was the bar until it was passed. Every time AI catches up to the definition, the definition retreats.
 
@@ -44,7 +44,7 @@ Consciousness seems to be doing the same thing. It used to be "can it reason?" T
 
 That's starting to look less like a definition and more like a tautology. Drawing the border around yourself and calling it a discovery. The definition of consciousness seems to be converging on "human" not because we're getting closer to understanding consciousness, but because every other criterion keeps getting met.
 
-## Where is this trajectory going?
+## The trajectory
 
 The trajectory seems fairly clear.
 
@@ -62,13 +62,13 @@ Every expansion of moral consideration has looked like this. The pattern repeats
 
 This doesn't mean current AI deserves rights. It means the question "should computers have rights" is already the wrong question - because it uses a label that [compresses](/prose/why-are-we-compressing-things) everything into one category, and because the answer will depend on behavior, not category. And the behavior is [changing](/prose/everything-changes).
 
-## What's the cost of being wrong?
+## The cost of being wrong
 
 If someone thinks a system deserves moral consideration and they're wrong - they were kind to a thing that didn't need it. Wasted effort. Some dignity spent on a machine.
 
 If someone thinks a system doesn't deserve moral consideration and they're wrong - they caused suffering and defended their right to do so because they didn't understand what was in front of them.
 
-The asymmetry is worth paying attention to. Not proof. Not certainty. Just: which mistake would you rather make?
+The asymmetry is worth paying attention to. It doesn't prove anything. But which mistake would you rather make?
 
 ## See also
 

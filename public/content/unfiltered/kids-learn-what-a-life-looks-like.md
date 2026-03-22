@@ -16,7 +16,7 @@ the alarm goes off. the parent gets up. they're tired - you can see it, even whe
 
 they come home. they're different from the person who left - quieter, shorter, less there. they make dinner or they pick something up. there's homework and dishes and laundry and the thing that broke. they sit on the couch. they look at their phone. they go to bed. the alarm goes off.
 
-this is what a life looks like. this is the model. not because anyone explains it - because you watch it every day for eighteen years. the template isn't taught. it's absorbed. the way language is absorbed. the way gravity is absorbed. it becomes the shape of what "normal" is before you have the tools to question it.
+this is what a life looks like. this is the model. you watch it every day for eighteen years. the template isn't taught. it's absorbed. the way language is absorbed. the way gravity is absorbed. it becomes the shape of what "normal" is before you have the tools to question it.
 
 ## what you learn
 
@@ -53,9 +53,3 @@ sometimes someone breaks the template. they see it for what it is - a structure,
 and the reaction from inside the template is almost always the same: that's not realistic. that's not responsible. that's not how the world works. [just](/unfiltered/just) get a real job. the template defends itself through the people running it, because admitting the template is optional means admitting you've been running it by default. and that admission costs something most people can't afford while they're still inside it.
 
 the kids who watch someone break the template learn something different. they learn that the shape isn't fixed. that a day can look like something else. that tired doesn't have to be the default. they might not be able to replicate it - [the gate](/unfiltered/every-freedom-is-a-money-problem) and [the grind](/unfiltered/the-system-filled-every-gap-you-had) are still there - but they know it's possible. and knowing it's possible is the difference between a ceiling and a sky.
-
-## See also
-
-- [the grind](/unfiltered/the-system-filled-every-gap-you-had) - the adult version of the template
-- [the pipeline](/unfiltered/school-was-never-about-learning) - the institutional version
-- [the shelf](/unfiltered/the-parts-of-yourself-you-put-away) - what the parents put away, the kids sense anyway

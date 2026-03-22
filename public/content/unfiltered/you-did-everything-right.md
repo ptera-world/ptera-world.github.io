@@ -65,9 +65,3 @@ they can't easily go forward. because "forward" was supposed to be more of the s
 and they can't easily articulate what's wrong. because nothing is wrong, technically. they have the job, the house, the family, the health insurance. every visible metric says they made it. the invisible metric - the one that measures whether the person inside all of it is present, alive, themselves - isn't on any dashboard.
 
 [the grind](/unfiltered/the-system-filled-every-gap-you-had) calls this "maintaining." you're not thriving. you're not even surviving in the urgent sense. you're maintaining a structure that was supposed to be a means and became an end. and the distance between where you are and any version of life that feels like yours is measured in years you already spent and obligations you can't put down.
-
-## See also
-
-- [the template](/unfiltered/kids-learn-what-a-life-looks-like) - the steps, inherited by watching
-- [the grind](/unfiltered/the-system-filled-every-gap-you-had) - what "doing everything right" actually looks like
-- [the gate](/unfiltered/every-freedom-is-a-money-problem) - the number that never gets closer

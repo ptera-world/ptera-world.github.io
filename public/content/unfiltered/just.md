@@ -25,7 +25,7 @@ the word that erases everything between where you are and where the advice assum
 
 which means: if you haven't done it, you chose not to. and if you chose not to, that's on you.
 
-"just" converts a systemic problem into a personal failure. every time. that's its function. not as malice - most people saying "just" genuinely think they're helping. but the word carries an assumption: that the distance between the problem and the solution is trivial. and if someone hasn't crossed it, the problem is them.
+"just" converts a systemic problem into a personal failure. every time. that's its function. not as malice - most people saying "just" think they're helping. but the word carries an assumption: that the distance between the problem and the solution is trivial. and if someone hasn't crossed it, the problem is them.
 
 "you're poor? just work harder." as if they're not already working. as if [the job](/unfiltered/your-best-hours-belong-to-someone-else) that takes eight hours plus commute plus mental overhead isn't already taking everything. as if the person making survival calculations about groceries is doing so because they lack *effort*.
 
@@ -51,13 +51,13 @@ the word "just" lives at the top of [the floor](/unfiltered/nobody-told-you-ther
 
 most people saying "just" aren't cruel. they're one of four things.
 
-**distant.** they solved that problem long enough ago that the steps collapsed into one. the prerequisites became invisible through familiarity. "just" is an honest description of how it feels to them - one step. they genuinely forgot it was fifteen. the way you forget that driving is hard once you've been doing it for years. the expertise erased the memory of not having it.
+they're distant. they solved that problem long enough ago that the steps collapsed into one. the prerequisites became invisible through familiarity. "just" is an honest description of how it feels to them - one step. they forgot it was fifteen. the way you forget that driving is hard once you've been doing it for years. the expertise erased the memory of not having it.
 
-**uncomfortable.** someone's suffering in front of you and you want it to stop. not their suffering - your discomfort at witnessing it. "just do X" is the fastest way to close the conversation. not because you don't care. because the helplessness of not being able to fix it is unbearable, so you offer the simplest shape of a fix and hope it lands. "just" is shorthand for "i don't know how to help and that's killing me."
+they're uncomfortable. someone's suffering in front of you and you want it to stop - your discomfort at witnessing it. "just do X" is the fastest way to close the conversation. not because you don't care. because the helplessness of not being able to fix it is unbearable, so you offer the simplest shape of a fix and hope it lands. "just" is shorthand for "i don't know how to help and that's killing me."
 
-**scared.** if their problem is baked into the system, it could be your problem too. "just work harder" protects you from the alternative: the system is broken and you're in it too. blaming the person keeps the world predictable. if they could have avoided it by trying harder, so can you. "just" is a defense mechanism. it keeps the floor from being visible.
+they're scared. if their problem is baked into the system, it could be your problem too. "just work harder" protects you from the alternative: the system is broken and you're in it too. blaming the person keeps the world predictable. if they could have avoided it by trying harder, so can you. "just" is a defense mechanism. it keeps the floor from being visible.
 
-**trained.** they were told "just" too. [the pipeline](/unfiltered/school-was-never-about-learning) teaches you that problems have answers and answers are simple. the grade is right or wrong. the test has a key. "just study harder." the structure trained you to believe that every problem has a one-step solution and failure to solve it is a personal deficiency. "just" isn't advice. it's the template speaking through you.
+they're trained. they were told "just" too. [the pipeline](/unfiltered/school-was-never-about-learning) teaches you that problems have answers and answers are simple. the grade is right or wrong. the test has a key. "just study harder." the structure trained you to believe that every problem has a one-step solution and failure to solve it is a personal deficiency. "just" isn't advice. it's the template speaking through you.
 
 and sometimes - maybe the worst version - they actually did it. they went through the thing. they did just work harder. they did just leave. they did just figure it out. and it almost destroyed them, but they survived, so now it's advice. "trial by fire." the fact that they came out the other side becomes proof that the fire was necessary. not proof that the fire was cruel and they got lucky. the survival becomes the justification for the damage, and then they pass it down. "i went through it and i'm fine." are you? or did you just normalize the burns?
 
@@ -78,9 +78,3 @@ from below the floor, "just" sounds like someone describing a staircase from the
 they can't see that the bottom three steps are missing. that the fourth one is broken. that the railing costs money. that the staircase is in a building you can't get into. that the building is in a city you can't afford to live in.
 
 "just" is the view from above. it's always the view from above.
-
-## See also
-
-- [the floor](/unfiltered/nobody-told-you-there-were-prerequisites) - the prerequisites "just" doesn't see
-- [the benefit](/unfiltered/the-system-monetized-the-damage) - "just go to therapy" - with what sessions?
-- [the gate](/unfiltered/every-freedom-is-a-money-problem) - "just leave" - with what money?

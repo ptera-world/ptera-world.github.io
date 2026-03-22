@@ -8,41 +8,37 @@ tags: [identity, social]
 
 To be yourself.
 
-Some people will find that obvious. Others will find it idiotic. Some will find it both. That's fine. But before you dismiss it - [what does it actually mean](#what-does-it-actually-mean)? Because it's not as simple as it sounds. Being yourself requires [knowing yourself](#do-you-have-to-know-yourself), which requires [trying things](#do-you-have-to-try), which requires [failing](#do-you-have-to-fail), which requires [safety](#do-you-have-to-be-safe). And nearly everything is [working against you](#is-everything-working-against-you).
+Some people will find that obvious. Others will find it idiotic. Some will find it both. That's fine. But before you dismiss it - [what does it mean](#what-does-it-mean)? Because it's not as simple as it sounds. Being yourself requires [knowing yourself](#knowing-yourself), which requires [trying things](#trying-things), which requires [failing](#failing), which requires [safety](#do-you-have-to-be-safe). And nearly everything is [working against you](#is-everything-working-against-you).
 
-## What does it actually mean?
+## What it means
 
-Not "be authentic." Not "follow your heart." Not any of the inspirational poster versions.
+Skip past "be authentic" and "follow your heart" and the rest of the inspirational poster versions.
 
 It means: the thing you're doing with your life - does it come from you? Your actual preferences, curiosities, fears, joys? Or from a template you absorbed? A script someone handed you? An identity you assembled from other people's expectations?
 
-Most people are living some version of what they were told to want. The career, the milestones, the markers of success. Not because those things are bad - sometimes they fit perfectly. But sometimes they don't, and it's hard to tell the difference without checking.
+Most people are living some version of what they were told to want. The career, the milestones, the markers of success. Sometimes they fit perfectly. But sometimes they don't, and it's hard to tell the difference without checking.
 
 "Being yourself" means checking. Continuously. Not once - as a practice.
 
-## Do you have to know yourself?
+## Knowing yourself
 
 You can't be something you haven't met.
 
 And knowing yourself isn't just introspection. Sitting and thinking about [who you are](/prose/who-am-i) mostly gives you your existing [labels](/prose/what-are-labels-anyway) back. "I'm the kind of person who..." - are you? Or is that just the story you've been telling?
 
-Knowing yourself seems to involve three things:
+Knowing yourself seems to require two things that most people do separately but that only work together: paying attention to what's already happening inside you, and [doing things](/prose/how-do-i-do-things) that create new information to pay attention to. Your patterns, your reactions, your real preferences versus your performed ones — those are there already, but you can't see them clearly from the inside. You need to make something, try something, encounter something unfamiliar, and then watch what it stirs up.
 
-- **Analysis** - seeing what's actually there. Your patterns, your reactions, your real preferences versus your performed ones.
-- **Expression** - [making things](/prose/how-do-i-do-things) and seeing what comes out. You discover what you think by trying to say it. You discover what you care about by building something and seeing what you fight for.
-- **Discovery** - encountering the parts of yourself that only exist in contexts you haven't been in yet. You can't introspect your way to a hobby you've never tried. You can't think your way to a skill you've never practiced. The self isn't a fixed thing waiting to be found. It's something that emerges through contact with the world.
+The self isn't a fixed thing waiting to be found. It [keeps emerging](/prose/who-am-i) through contact with the world — and through noticing what that contact reveals.
 
-These feed each other. You discover something, express it, analyze what that revealed, which opens new discovery.
+## Trying things
 
-## Do you have to try?
-
-Discovery requires action. Not big action. Not "find yourself" by traveling the world. Just - [trying things](/prose/how-do-i-do-things). Small things. Things that might not work. Things that feel pointless. Things you'd never "decide" to do but might stumble into if the friction were low enough.
+Discovery requires action. Small action, close to home - [trying things](/prose/how-do-i-do-things). Small things. Things that might not work. Things that feel pointless. Things you'd never "decide" to do but might stumble into if the friction were low enough.
 
 The trouble is everything conspires to stop you from trying. [Perfectionism](/prose/why-is-perfectionism-a-trap) says "not until it's good enough." [Defeatism](/prose/how-much-could-i-possibly-do) says "what's the point." [Labels](/prose/what-are-labels-anyway) say "I'm not that kind of person." And the couch is right there.
 
 Being yourself requires the willingness to try things that the current version of yourself would never do. Because the current version is incomplete. It's always incomplete. That's not a problem - that's the process.
 
-## Do you have to fail?
+## Failing
 
 Not as a motivational slogan. As mechanics.
 
@@ -88,11 +84,6 @@ Nothing dramatic. Nothing sudden.
 - [Find safe contexts](/prose/why-are-you-lonely). Even one person who sees the real you changes everything.
 - [Accept the pace](/prose/why-is-change-so-hard). Being yourself is a direction, not a destination. You don't arrive.
 
-The purpose of life is to be yourself. Not the finished version. Not the version you think you should be. The actual, current, incomplete, evolving version.
+The purpose of life is to be yourself. The actual, current, incomplete, evolving version - not the finished one you keep waiting for.
 
 That's enough.
-
-## See also
-
-- [who am I?](/prose/who-am-i) - the process of finding out
-- [why are you lonely?](/prose/why-are-you-lonely) - the safety problem

@@ -12,7 +12,7 @@ the bridge: "can I trust what I'm given / when faith still needs a gun / whose a
 
 the essays are what you write when you have enough distance to notice the crossfire. the song is what you make when you're close enough to feel it. neither comes from inside it.
 
-## what expression actually requires
+## what expression requires
 
 writing an essay requires: time, energy, language, a device, connectivity, literacy, the belief that speaking matters, and a moment of capacity pointed outward instead of toward surviving the next hour.
 
@@ -22,7 +22,7 @@ posting a tweet requires less. but still a phone, still connectivity, still lite
 
 every format has a floor. the floor is: what does this cost, and does the person have it?
 
-the people in the crossfire - the ones the systems are actually grinding - are below most floors. not because they have nothing to say. because saying it requires something the crossfire already took.
+the people in the crossfire - the ones the systems are grinding - are below most floors. not because they have nothing to say. because saying it requires something the crossfire already took.
 
 ## what silence sounds like
 
@@ -34,7 +34,7 @@ when someone doesn't speak up - because they're exhausted, because they're survi
 
 and the conversation shapes itself around who's in it. the concerns that get airtime are the concerns of people who had enough to voice them. the priorities that get attention are the priorities of people who had the energy to articulate them. the framing - the words, the frameworks, the way the problem is described - comes from people with enough distance to describe it.
 
-the people closest to the problem are the most absent from the description of it.
+the people closest to the problem are the most absent from the description of it. [the floor](/unfiltered/nobody-told-you-there-were-prerequisites) keeps going down.
 
 ## the content machine
 
@@ -46,7 +46,7 @@ a tweet that goes viral. a thread that gets engagement. a personal essay that ge
 
 or it doesn't reach anyone at all. most writing doesn't. and writing from the margins has less distribution by default - fewer followers, fewer platforms willing to amplify, fewer editors who recognize it, fewer readers who can sit with it. the same problem as [where is all the good software](/prose/where-is-all-the-good-software): the work exists but never becomes visible.
 
-or - and this is the one nobody likes to say - speaking doesn't help. you name the system. nothing changes. the person who read it says "wow, powerful" and scrolls to the next thing. the speaking cost you something real and the return was someone else's momentary discomfort. that math stops working fast.
+or - and this is the one nobody likes to say - speaking doesn't help. you name the system. nothing changes. the person who read it says "wow, powerful" and scrolls to the next thing. the speaking cost you something real and the return was someone else's momentary discomfort. that math stops working fast. the [documented pain](/unfiltered/if-the-ai-can-one-shot-this) didn't change anything.
 
 ## what format fits
 
@@ -58,7 +58,7 @@ which means the actual people in the crossfire don't have the song either. they 
 
 the floor keeps going down. every time you think you've found the most accessible format, there's someone below it.
 
-essays are what you write when you have enough distance to organize. songs are what you make when you have enough to feel and shape it. protest is what you do when you have enough to show up. and the people below all of those? they survive. that's it. that's the format. survival, unrecorded, ending when it ends.
+essays are what you write when you have enough distance to organize. songs are what you make when you have enough to feel and shape it. protest is what you do when you have enough to show up. and the people below all of those? they survive. that's it. that's the format. survival, unrecorded, ending when it ends. and above the floor, the people who could speak [put it on the shelf instead](/unfiltered/the-parts-of-yourself-you-put-away).
 
 ## why this matters here
 
@@ -66,10 +66,4 @@ this site is a graph of ideas. it talks about meaning, about systems, about what
 
 nothing wrong with that. we write from where we are.
 
-but the people those systems are actually optimizing against are not reading this. not writing this. not making songs about this. they're somewhere else, and the somewhere else is not a metaphor.
-
-## See also
-
-- [the floor](/unfiltered/nobody-told-you-there-were-prerequisites) - the prerequisites nobody mentions
-- [the mirror](/unfiltered/if-the-ai-can-one-shot-this) - why the documented pain didn't change anything
-- [the shelf](/unfiltered/the-parts-of-yourself-you-put-away) - silence from above the floor
+but the people those systems are optimizing against are not reading this. not writing this. not making songs about this. they're somewhere else, and the somewhere else is not a metaphor.

@@ -36,7 +36,7 @@ friend groups are closer to safe than family, sometimes, because you chose them.
 
 except choosing people is a skill, and it's a skill you learned from [the inheritance](/unfiltered/the-damage-passes-down). the patterns your family installed - what love looks like, what trust feels like, what "normal" is - those patterns are the lens you chose through. the person who grew up with unpredictable care might choose friends who are exciting and unreliable, because that's what closeness feels like. the person who learned to earn affection might choose friends who need saving. the choosing felt right at the time. it always does. whether the judgment was correct is a question you sometimes don't get to answer until the room fails you.
 
-and people can lie. not always deliberately - sometimes people lie to themselves about who they are, and then you're choosing based on a version of them that doesn't exist. the friend who genuinely believes they're safe, who'd tell you they're safe, who isn't. the person who means every word of "you can tell me anything" and can't actually hold what you tell them. the gap between who someone thinks they are and who they are when it matters - you can't see that gap until you've already trusted them across it.
+and people can lie. not always deliberately - sometimes people lie to themselves about who they are, and then you're choosing based on a version of them that doesn't exist. the friend who believes they're safe, who'd tell you they're safe, who isn't. the person who means every word of "you can tell me anything" and can't actually hold what you tell them. the gap between who someone thinks they are and who they are when it matters - you can't see that gap until you've already trusted them across it.
 
 but friend groups have their own dynamics. hierarchies that no one named. the person whose feelings take up the most space. the person who's always fine so everyone assumes they are. the unspoken rules about what can be said and what gets met with awkward silence.
 
@@ -98,10 +98,4 @@ safe spaces aren't nowhere because people are bad. they're nowhere because safet
 
 you need a room full of people who have enough - enough rest, enough processing, enough of their own needs met - to hold someone else's weight without dropping it. [the grind](/unfiltered/the-system-filled-every-gap-you-had) doesn't produce those people. it produces people who are doing their best with what's left over. and what's left over isn't always enough to make a room safe.
 
-so people carry [the shelf](/unfiltered/the-parts-of-yourself-you-put-away). not because there's nowhere to put it down. because putting it down requires a room that can hold it, and that room requires conditions the system doesn't create.
-
-## See also
-
-- [the shelf](/unfiltered/the-parts-of-yourself-you-put-away) - what you'd put down if you could
-- [the scar](/unfiltered/the-wound-heals-the-flinch-doesnt) - what the absence of safety leaves behind
-- [the inheritance](/unfiltered/the-damage-passes-down) - why family isn't always safe
+so people carry [the shelf](/unfiltered/the-parts-of-yourself-you-put-away). putting it down requires a room that can hold it, and that room requires conditions the system doesn't create.

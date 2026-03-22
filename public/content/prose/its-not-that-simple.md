@@ -20,7 +20,7 @@ But anyone who's actually worked with both knows: it depends. On context, on con
 
 So someone says: "it's not one-sided. There are tradeoffs." And that feels like growth. You've moved from simple to nuanced.
 
-But you've actually moved from one box to two boxes.
+But you've moved from one box to two boxes.
 
 ## It's not a binary
 
@@ -63,10 +63,3 @@ Every step in this progression - one-sided, binary, spectrum, multifaceted - is 
 We compress because we have to. Brains are finite. Conversations are finite. Decisions require reducing options. But - [there's always a but](/prose/but) - compression has costs. The [label](/prose/what-are-labels-anyway) that becomes a ceiling. The binary that erases the middle. The "just" that [shrinks something enormous](/prose/is-it-just-interpolation) to something dismissable.
 
 [What are we losing?](/prose/why-are-we-compressing-things)
-
-## See also
-
-- [why are we compressing things?](/prose/why-are-we-compressing-things) - the deeper question
-- [what are labels anyway?](/prose/what-are-labels-anyway) - compression applied to identity
-- [but.](/prose/but) - the word that resists flattening
-- [is it just interpolation?](/prose/is-it-just-interpolation) - compression applied to dismiss

@@ -6,7 +6,7 @@ tags: [identity, social]
 
 # What is art?
 
-Not paintings. Not music. Not writing. Those are mediums. Art lives in all of them, but it isn't any of them. Art isn't a category of things. It's a quality of how things were made.
+Paintings, music, writing - those are mediums. Art lives in all of them, but it isn't any of them. Art isn't a category of things. It's a quality of how things were made.
 
 Art is intent.
 
@@ -16,7 +16,7 @@ You meant it. You chose this over that, not because function demanded it, but be
 
 A pile of things on the floor is mess. A pile of things on the floor that you *meant* - that's art. Nothing changed except the intent. The pile is identical. The difference is entirely inside the person who put it there.
 
-Code that works is engineering. Code that works *this way* because you chose it - intent. A meal that feeds you is cooking. A meal you made because you wanted it to taste like *this* - intent. Even if it didn't turn out right. The intent existed before the outcome. The outcome is irrelevant to whether it was art. A spreadsheet that tracks numbers is accounting. A spreadsheet you [organized this way](#dont-you-already-do-this) because it felt right - intent.
+Code that works is engineering. Code that works *this way* because you chose it - intent. A meal that feeds you is cooking. A meal you made because you wanted it to taste like *this* - intent. Even if it didn't turn out right. The intent existed before the outcome. The outcome is irrelevant to whether it was art. A spreadsheet that tracks numbers is accounting. A spreadsheet you [organized this way](#you-already-do-this) because it felt right - intent.
 
 Sketching something you see is art. Tracing it - maybe not. The output can look similar. But sketching has interpretation - you choose what to emphasize, what to leave out, how to render what you see. Tracing removes that choice. You follow a line that already exists. Same medium, same subject, different intent.
 
@@ -30,7 +30,7 @@ You were comparing the wrong part. You compared the *thing*. But the art was nev
 
 That's why "but this isn't art" is so convincing. You look at the output and it looks ordinary. It looks like code, like food, like a garden, like a [well-organized desk](/prose/how-do-i-do-things). It doesn't look like art. But looking at the output is like reading an essay and [judging it by who wrote it](/prose/the-great-deceit). You're looking at the residue and missing the process.
 
-## Don't you already do this?
+## You already do this
 
 People arrange things. They don't need to be arranged - they want them a certain way. They pick words carefully. Choose colors. Place objects. Organize their space, their schedule, their sentences.
 
@@ -52,16 +52,10 @@ The fear that "everything is art" devalues art is the same fear behind every [la
 
 And it cuts the other way too. Some drawings aren't art. A homework assignment you didn't care about. A painting-by-numbers. They're drawings - they're not art. They're not bad. There was just no intent. The medium doesn't guarantee art any more than it disqualifies it. A painting with no intent is less art than a spreadsheet with intent. That's not a contradiction - it follows from what intent means.
 
-## Why does this matter?
+## It matters
 
 Because people who don't think they make art don't value what they make. They dismiss the care they put into things. They say "it's just a spreadsheet" or "it's just code" or "it's just how I like my kitchen." The "just" erases the intent. And once the intent is erased, the thing that made it meaningful - to you, the person who made it - disappears.
 
 [How much could you possibly do?](/prose/how-much-could-i-possibly-do) More than you think. But not if you've convinced yourself that what you already do doesn't count.
 
-Art isn't rare. Art isn't special. Art is intent, and intent is everywhere. The thing that might actually be rare is noticing it - in yourself.
-
-## See also
-
-- [what are labels anyway?](/prose/what-are-labels-anyway) - "art" as a label that excludes
-- [how much could I possibly do?](/prose/how-much-could-i-possibly-do) - dismissing your own capacity
-- [the great deceit](/prose/the-great-deceit) - judging the thing instead of the process
+Art isn't rare. Art isn't special. Art is intent, and intent is everywhere. The thing that might be rare is noticing it - in yourself.

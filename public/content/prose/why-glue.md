@@ -34,7 +34,7 @@ So ambitious people build engines. They build products. They build the thing wit
 
 ## The proof is in the stack
 
-The most successful piece of software ever written isn't an application. It's a kernel. Linux sits between hardware and everything built on top of it - connecting processes to memory, devices to interfaces, userspace to the machine. It runs phones, servers, supercomputers, the cloud, basically everything. Not because it's glamorous. Because it connects everything else.
+The most successful piece of software ever written isn't an application. It's a kernel. Linux sits between hardware and everything built on top of it - connecting processes to memory, devices to interfaces, userspace to the machine. It runs phones, servers, supercomputers, the cloud, basically everything. Because it connects everything else.
 
 The most popular programming language isn't the fastest or the most elegant. It's Python - slow by itself, not great at any single thing. But it glues everything together: C libraries to data pipelines, ML frameworks to scripts, fast components to human intent. It won by being the best connective layer, not the best execution layer.
 
@@ -66,7 +66,7 @@ The leverage isn't in the model. It's in what wraps the model. The context layer
 
 ## Boundaries
 
-What does glue actually remove? Boundaries.
+What does glue remove? Boundaries.
 
 The boundary between raw data and structured information. The boundary between one file format and another. The boundary between the thing you have and the thing you need. Between the tool's output and your understanding. Between what the computer knows and what you can see.
 
@@ -82,7 +82,7 @@ There's a project. An ecosystem, really. A collection of tools for structural co
 
 It's called [rhi](https://rhi.zone/). And its tagline is: "A glue layer for computers. Removing boundaries between you and your computer."
 
-Not an engine. Not a model. Not a product. A glue layer. The thing between things. The [connective tissue](/prose/why-is-everything-a-document#the-bridge-problem) that makes separate tools act like one surface.
+A glue layer. The thing between things. The [connective tissue](/prose/why-is-everything-a-document#the-bridge-problem) that makes separate tools act like one surface.
 
 That's a strange thing to commit to building. It's choosing the invisible layer. The one that gets no credit when it works and all the blame when it breaks. The one that isn't the thing you use - it's the reason the things you use can work together.
 
@@ -103,9 +103,3 @@ So: why glue?
 Because it's where the composition happens. Because it's where the leverage seems to be. Because it's where nobody else is building. Because the unglamorous thing that connects everything might be more important than the glamorous thing that does one thing well.
 
 And because someone has to. The engines exist. The models exist. The interfaces exist. What's missing - what's always missing - is the thing that makes them work together. The invisible layer. The [thing you don't notice until it's gone](/prose/what-do-we-keep-losing).
-
-## See also
-
-- [why do i build tools?](/prose/why-do-i-build-tools) - making the opaque legible
-- [why is everything a document?](/prose/why-is-everything-a-document) - boundaries that shouldn't exist
-- [can you tell when it's wrong?](/prose/can-you-tell-when-its-wrong) - why the wrapper matters more than the model

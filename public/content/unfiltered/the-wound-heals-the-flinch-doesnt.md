@@ -14,17 +14,17 @@ that's the scar. not the event. the pattern that formed around the event.
 
 ## what the patterns look like
 
-**the flinch.** someone raises their voice and your body reacts before your brain catches up. it doesn't matter that this person isn't the person who hurt you. your nervous system learned that raised voice means danger, and it learned it with the kind of certainty that doesn't respond to logic. the flinch is faster than thought. it was designed to be. that's how it kept you alive.
+the flinch is the simplest one. someone raises their voice and your body reacts before your brain catches up. it doesn't matter that this person isn't the person who hurt you. your nervous system learned that raised voice means danger, and it learned it with the kind of certainty that doesn't respond to logic. the flinch is faster than thought. it was designed to be. that's how it kept you alive.
 
-**hypervigilance.** scanning every room for exits. reading every face for signs of anger. monitoring tone, body language, micro-expressions - constantly, automatically, exhaustingly. the world trained you to detect threats early because detecting them late had consequences. now you detect threats that aren't there, and the detection itself is draining enough to [fill whatever gap](/unfiltered/the-system-filled-every-gap-you-had) might have been left for rest.
+hypervigilance looks like scanning every room for exits. reading every face for signs of anger. monitoring tone, body language, micro-expressions - constantly, automatically, exhaustingly. the world trained you to detect threats early because detecting them late had consequences. now you detect threats that aren't there, and the detection itself is draining enough to [fill whatever gap](/unfiltered/the-system-filled-every-gap-you-had) might have been left for rest.
 
-**people-pleasing.** if you can make everyone happy, no one gets angry. if no one gets angry, you're safe. the math made sense once. maybe the person who hurt you was unpredictable, and keeping them pleased was the only variable you could control. so you got very, very good at it. and now you do it with everyone - the boss, the partner, the stranger. not because you want to please them. because displeasure still feels like the prelude to something worse.
+people-pleasing runs on a simple equation. if you can make everyone happy, no one gets angry. if no one gets angry, you're safe. the math made sense once. maybe the person who hurt you was unpredictable, and keeping them pleased was the only variable you could control. so you got very, very good at it. and now you do it with everyone - the boss, the partner, the stranger. not because you want to please them. because displeasure still feels like the prelude to something worse.
 
-**shutdown.** the opposite of the flinch. instead of reacting fast, you stop reacting at all. the feeling gets too big, so the system cuts the wire. you go flat. you go distant. you're there but you're not there. dissociation, they call it. it's not a choice. it's an emergency exit the mind built when the regular exits were blocked. and when the exits were blocked early enough, or completely enough, the mind sometimes builds more than one exit - more than one way of being, walled off from each other, because no single self could hold all of what was happening. that's not a disorder. that's architecture. the mind did the only thing it could with what it was given.
+shutdown is the opposite of the flinch. instead of reacting fast, you stop reacting at all. the feeling gets too big, so the system cuts the wire. you go flat. you go distant. you're there but you're not there. dissociation, they call it. it's not a choice. it's an emergency exit the mind built when the regular exits were blocked. and when the exits were blocked early enough, or completely enough, the mind sometimes builds more than one exit - more than one way of being, walled off from each other, because no single self could hold all of what was happening. that's not a disorder. that's architecture. the mind did the only thing it could with what it was given.
 
-**hyperindependence.** never asking for help. never relying on anyone. you want connection. but the last time you were dependent on someone, they were the source of the damage. relying on yourself is the only option that doesn't risk betrayal. it's also the loneliest option. but lonely is safer than vulnerable, and the scar taught you that.
+hyperindependence means never asking for help. never relying on anyone. you want connection. but the last time you were dependent on someone, they were the source of the damage. relying on yourself is the only option that doesn't risk betrayal. it's also the loneliest option. but lonely is safer than vulnerable, and the scar taught you that.
 
-**control.** if everything is in order, nothing can go wrong. the rituals, the planning, the need to know what's coming. chaos was where the damage happened. structure is the wall you built around it. the control isn't about the thing being controlled. it's about the thing you're preventing from happening again.
+control is the quiet one. if everything is in order, nothing can go wrong. the rituals, the planning, the need to know what's coming. chaos was where the damage happened. structure is the wall you built around it. the control isn't about the thing being controlled. it's about the thing you're preventing from happening again.
 
 ## what the system sees
 
@@ -66,7 +66,7 @@ and it requires someone - a therapist, a partner, a friend - who can hold space 
 
 what do you do when the thing you need to heal requires the exact capacity the wound took from you?
 
-## See also
+---
 
 - [the body](/unfiltered/the-damage-lands-in-your-body) - where the scar lives physically
 - [the shelf](/unfiltered/the-parts-of-yourself-you-put-away) - the scar's quieter cousin

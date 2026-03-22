@@ -44,7 +44,7 @@ you voted. your candidate won, or didn't. and then... the rent is the same. the 
 
 and then there's the people who stopped. not out of ignorance. out of the math. one vote among millions, for pre-selected candidates, running on platforms shaped by donors, in a system where the lobbying continues regardless of who wins. the rational calculation isn't apathy. it's: the cost is real and the expected impact rounds to zero.
 
-and then there's the biggest group: people who vote but have no real investment in what they're voting for. they show up because they're supposed to. they pick a side because there are two sides and you have to pick one. they didn't read the policy platforms. they didn't research the ballot measures. not because they're stupid - because politics is exhausting and opaque and nobody made it accessible and they have [a job](/unfiltered/your-best-hours-belong-to-someone-else) and [kids](/unfiltered/the-system-filled-every-gap-you-had) and twelve minutes of free time and spending those twelve minutes parsing healthcare policy isn't going to happen.
+and then there's the biggest group: people who vote but have no real investment in what they're voting for. they show up because they're supposed to. they pick a side because there are two sides and you have to pick one. they didn't read the policy platforms. they didn't research the ballot measures. politics is exhausting and opaque and nobody made it accessible and they have [a job](/unfiltered/your-best-hours-belong-to-someone-else) and [kids](/unfiltered/the-system-filled-every-gap-you-had) and twelve minutes of free time and spending those twelve minutes parsing healthcare policy isn't going to happen.
 
 so they vote on vibes. on which candidate seems more likable. on which party their family votes for. on one issue they care about, ignoring the rest. the ballot is thirty items long and they have an opinion on two of them. the system asks for an informed decision and provides no realistic path to becoming informed.
 
@@ -66,14 +66,8 @@ so the room stays small. the interests in the room stay concentrated. the rules 
 
 and then the system does something clever. it turns the whole thing into a spectacle.
 
-left vs. right. red vs. blue. us vs. them. the real questions - who writes the rules, who profits, who pays - get buried under identity battles. you're not asking "why is healthcare tied to employment." you're asking "which party do you support." the first question threatens the structure. the second question *is* the structure, working as designed.
+left vs. right. red vs. blue. us vs. them. the questions that matter - who writes the rules, who profits, who pays - get buried under identity battles. you're not asking "why is healthcare tied to employment." you're asking "which party do you support." the first question threatens the structure. the second question *is* the structure, working as designed.
 
 the teams keep you engaged without being effective. you have opinions. you argue online. you feel strongly about issues. you vote for your side. and the lobbying continues regardless of who wins, because the lobbying isn't partisan. the industries funding it donate to both sides. the access is bipartisan. the room stays the same room no matter which team is in the chairs.
 
 the partisan fight is real - the issues matter, the differences are genuine, the stakes are not fake. but the fight happens inside a structure that neither team is incentivized to change. because the structure is what got them into the room. changing it means changing how they got there. and nobody renovates the ladder they're standing on.
-
-## See also
-
-- [the gate](/unfiltered/every-freedom-is-a-money-problem) - every freedom has a price tag
-- [the silence](/unfiltered/expression-has-a-cost-floor) - the people most affected are most absent
-- [the floor](/unfiltered/nobody-told-you-there-were-prerequisites) - participation requires capacity requires safety requires money

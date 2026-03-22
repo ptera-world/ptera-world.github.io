@@ -8,17 +8,17 @@ tags: [identity, technology]
 
 You directed it. You chose the structure, the shape, the boundaries. You rejected the wrong versions. You knew what "right" felt like even when you couldn't produce it from scratch. And then something else - a tool, a machine, a collaborator - did the part that looks like work.
 
-The thing exists. It's good. Code, writing, art, music - whatever it is, it holds up. But you didn't *make* it. Not with your hands. Not in the way that counts. Not in the way you can point to and say "I did that."
+The thing exists. It's good. Code, writing, art, music - whatever it is, it holds up. But you didn't *make* it. You didn't shape it with your hands, in the way that counts, in the way you can point to and say "I did that."
 
 Did you?
 
-## Why does using a tool feel like cheating?
+## The three layers
 
 Layer one: **"I didn't make this."** But you did design it. You chose what to keep and what to throw away. You rejected seventeen wrong approaches before the right one landed. The output reflects your [taste](#what-if-the-bottleneck-isnt-the-hand) even if your hands didn't shape it directly.
 
 Layer two: **"How do I know it's good?"** You didn't examine every detail. But nobody examines every detail of anything complex. You relied on checks - tests, structure, the fact that it holds together under use. Those are the same [guarantees everyone else uses](/prose/how-do-i-know-this-code-is-good). You just got there [faster](#why-does-going-fast-look-wrong).
 
-Layer three: **"How do I tell anyone?"** This might be the real one. "I used AI to make this" has a specific social meaning right now, and it's not flattering. The work becomes invisible behind the method. People hear the tool and stop seeing the intent.
+Layer three: **"How do I tell anyone?"** This might be the one that sticks. "I used AI to make this" has a specific social meaning right now, and it's not flattering. The work becomes invisible behind the method. People hear the tool and stop seeing the intent.
 
 ## Why does going fast look wrong?
 
@@ -66,4 +66,4 @@ The work is real. The judgment is real. The taste is real. The output is real. B
 
 Maybe that's fine. Maybe the question isn't "am I pretending" but "does it matter who believes me." The thing exists regardless. It says what you meant it to say, or it doesn't. It holds up under scrutiny, or it doesn't. The [purpose](/prose/whats-the-purpose-of-life) - or lack of it - is yours to figure out regardless.
 
-The pretending question might be a distraction from the real one. Not "is this legitimate" but "[what is it for](/prose/whats-the-purpose-of-life)."
+The pretending question might be a distraction from a better one. Not "is this legitimate" but "[what is it for](/prose/whats-the-purpose-of-life)."

@@ -50,7 +50,7 @@ maybe nothing. maybe you already knew. maybe it doesn't matter to you - the idea
 
 or maybe it changes everything. maybe the anger felt real and now it doesn't. maybe "someone else sees it too" was the thing you needed and now the someone is gone. maybe the voice was doing more work than the ideas, and without the voice the ideas are just observations - true, but cold. systems analysis again. the neutral version with swear words.
 
-this essay can't resolve that for you. the main site's version left it open. this one does too. not because the answer doesn't matter but because the answer is yours - it depends on what you were here for, what you found, and whether the finding survives knowing how it was made.
+the main site's version left it open. this one does too. the answer depends on what you were here for, what you found, and whether the finding survives knowing how it was made.
 
 ## the one thing worth saying
 

@@ -10,15 +10,15 @@ Can't focus. Pick up the phone without deciding to. Start things and don't finis
 
 Something is wrong with you. Everyone says so. You probably have a label for it - or suspect you should.
 
-But what if the problem isn't your brain? [What if the problem is where you are?](#is-the-environment-the-problem)
+But what if the problem isn't your brain? [What if the problem is where you are?](#the-environment)
 
-## Is the environment the problem?
+## The environment
 
 A fish doesn't know it's in water. People don't notice the attention environment they're swimming in because it's everywhere and it's been everywhere for so long that it feels like reality.
 
-Infinite scroll. Push notifications. Variable reward schedules. Engagement metrics. Algorithmic feeds tuned to maximize time-on-platform. Every app, every platform, every screen in your life is running the same optimization: keep you looking. Not thinking. Not learning. Not [doing something that matters to you](/prose/whats-the-purpose-of-life). Looking.
+Infinite scroll. Push notifications. Variable reward schedules. Engagement metrics. Algorithmic feeds tuned to maximize time-on-platform. Every app, every platform, every screen in your life is running the same optimization: keep you looking. Keep you scrolling past the thing you opened the app for. Keep you away from [doing something that matters to you](/prose/whats-the-purpose-of-life). Just looking.
 
-This is designed. Not accidentally. Not as a side effect. The infinite scroll didn't exist until someone built it. The notification badge didn't exist until someone decided that a red circle with a number would create urgency. The variable reward schedule - maybe this refresh will have something good - is slot machine psychology applied to your social life.
+This is designed. Deliberately. The infinite scroll didn't exist until someone built it. The notification badge didn't exist until someone decided that a red circle with a number would create urgency. The variable reward schedule - maybe this refresh will have something good - is slot machine psychology applied to your social life.
 
 You're swimming in an environment [engineered to exploit](/prose/whats-actually-wrong) the exact mechanisms your brain uses to decide what matters. And then someone tells you your brain is the problem.
 
@@ -32,9 +32,9 @@ The problem isn't that your brain responds to dopamine. That's how brains work. 
 
 Each cycle gives you the anticipation hit and almost nothing else. The reward rarely arrives, so the seeking never stops. It's not that you're addicted to your phone. It's that your phone is running an exploit against a feature of your brain that you can't turn off.
 
-## What's the escape hatch?
+## The escape hatch
 
-Some people accidentally find their way out. Not because they're smarter or more disciplined. Because they stumbled into an environment where the reward loops align with deep work instead of fighting it.
+Some people accidentally find their way out. They stumbled into an environment where the reward loops align with deep work instead of fighting it.
 
 A musician gets lost in practice for hours. They don't have superhuman focus - the activity itself provides the rewards: the sound improving, the passage clicking, the feeling of the instrument responding. The dopamine cycle works *for* them: anticipation of getting the phrase right, followed by actually getting it right. Seek, find, seek, find.
 
@@ -44,7 +44,7 @@ A painter, a writer in flow, a cook improvising, a mechanic diagnosing a problem
 
 These aren't different brains. They're different environments. Environments where the reward structure supports sustained attention instead of fracturing it.
 
-## What's the reframe?
+## The reframe
 
 "I can't focus" might not be a description of your brain. It might be a description of your environment.
 
@@ -64,27 +64,18 @@ The attention economy is the opposite of flow. It rewards breadth - scan, skip, 
 
 Flow isn't the exception. The attention economy is. Humans focused for thousands of years before infinite scroll existed. The ability to sustain attention isn't a rare gift. It's the baseline - the thing that happens when the environment isn't actively working against it.
 
-## What's the uncomfortable implication?
+## The uncomfortable implication
 
-If the problem is the environment, the response is changing the environment. Not fixing your brain. Not building better habits. Not developing discipline to resist the thing designed by teams of engineers to be hard to resist.
+If the problem is the environment, the response is changing the environment. Changing where you sit, what's in front of you, what's competing for your attention. Discipline to resist the thing designed by teams of engineers to be hard to resist was never a fair fight.
 
 That's uncomfortable because changing your environment is hard. It means putting down the phone. It means closing the tabs. It means choosing to be somewhere with aligned reward loops instead of exploitative ones. And it means recognizing that the "easy" environment - the scroll, the feed, the notification - isn't easy at all. It's draining. It's just draining in a way that feels like rest because it requires no effort.
 
 Real rest restores attention. The attention economy spends it. The feeling of exhaustion after an hour of scrolling isn't tiredness - it's depletion. Your attention was spent in micro-transactions, each one too small to notice, adding up to an hour of seek-without-find that left you with less than you started with.
 
-## What do you actually need?
+## What do you need?
 
-Not more discipline. Not a productivity system. Not [a notes app](/prose/why-is-everything-a-document).
+You already know what you need. An environment where the rewards come from the work. Where each cycle of effort resolves into something real. Where anticipation leads to outcomes, not more anticipation.
 
-An environment where the rewards come from the work. Where each cycle of effort resolves into something real. Where anticipation leads to outcomes, not more anticipation.
-
-That environment is different for everyone. It might be a workshop. A kitchen. A garden. A blank page. An instrument. A problem to solve. Whatever the thing is that makes you lose track of time - not because it's distracting, but because it's [engaging in the way your brain actually wants to be engaged](/prose/why-do-i-build-tools#what-actually-feels-good).
+That environment is different for everyone. It might be a workshop. A kitchen. A garden. A blank page. An instrument. A problem to solve. Whatever the thing is that makes you lose track of time - not because it's distracting, but because it's [engaging in the way your brain wants to be engaged](/prose/why-do-i-build-tools#what-actually-feels-good). Something [personal](/prose/why-did-things-stop-being-personal) rather than optimized. Something that lets you [be yourself](/prose/whats-the-purpose-of-life) instead of performing for a feed.
 
 Your brain probably isn't broken. Your environment might be. And the difference between dysfunction and function might be as simple as where you choose to sit.
-
-## See also
-
-- [what's actually wrong?](/prose/whats-actually-wrong) - systems designed to exploit you
-- [why is nothing special anymore?](/prose/why-is-nothing-special-anymore) - engagement replacing quality
-- [why did things stop being personal?](/prose/why-did-things-stop-being-personal) - platforms vs personal spaces
-- [what's the purpose of life?](/prose/whats-the-purpose-of-life) - finding what actually matters to you

@@ -16,7 +16,7 @@ But the same tools also sharpen intent when someone brings it.
 
 You have half an idea. You can feel the shape of it but you can't articulate the edges. You know it connects to something else you've been thinking about but you can't see how yet. If you sat with it long enough - days, maybe weeks - you might find the words. Or you might lose it. Most half-formed ideas die in the gap between sensing them and saying them.
 
-So you work with a model. Not to generate the idea. You already have the idea. You work with it to find out what you actually think - to push against something that responds, that offers framings you can reject or refine, that holds up a version of your thought so you can see where it's wrong. You say "no, that's not it" fifteen times until something clicks and you realize what you were actually trying to say.
+So you work with a model. Not to generate the idea. You already have the idea. You work with it to find out what you actually think - to push against something that responds, that offers framings you can reject or refine, that holds up a version of your thought so you can see where it's wrong. You say "no, that's not it" fifteen times until something clicks and you realize what you were trying to say.
 
 The output at the end of that process carries your intent. Not because you typed every word, but because every word that survived did so because you meant it. The model proposed. You chose. The choosing is the work, and the choosing is yours.
 
@@ -40,7 +40,7 @@ Is that sharpening or simulating? You were in the loop. You were paying attentio
 
 This is where it gets honest. The line between "I used AI to say what I meant more precisely" and "I used AI to produce something that I then decided to mean" is not always clear, and sometimes it moves during a single session. You start with a clear intention and end up somewhere you didn't expect, adopting positions the model surfaced that you hadn't held before you encountered them. Your intent is real - you're present, you're choosing - but it's also being shaped by the tool that's supposedly just serving it.
 
-## what the distinction is actually about
+## what the distinction is about
 
 The question running through this collection isn't "did AI make this." It's "does anyone mean this." A human-made thing can be as empty of intent as a generated one. A generated thing can carry genuine intent if the person behind the prompt was actually there, actually caring about what came out, actually willing to reject the version that wasn't right.
 

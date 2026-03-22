@@ -12,7 +12,7 @@ most people spend most of their waking hours doing something they didn't choose,
 
 ## the trade
 
-you trade time for money. that's the deal. except time is the only non-renewable resource you have. money comes back. time doesn't. the trade is always unequal - not because the salary is wrong but because the currency on your side of the table is your life.
+you trade time for money. that's the deal. except time is the only non-renewable resource you have. money comes back. time doesn't. the trade is always unequal - the currency on your side of the table is your life.
 
 eight hours of work. plus the commute. plus getting ready. plus winding down. plus the mental overhead - the emails you think about at dinner, the meeting you're dreading tomorrow, the task you didn't finish that follows you home. the job doesn't take eight hours. it takes the shape of the day. everything else fits around it.
 
@@ -54,11 +54,6 @@ most people never ask: is this how it has to be?
 
 they're smart enough. asking the question is just expensive. if the answer is "no, there are other ways to organize labor and survival" - then what? you still have rent due friday. the question doesn't change the rent. it just makes the rent feel worse.
 
-so you don't ask. you go to work. you do the thing. you come home. you scroll. you sleep. you do it again. and the question - the one about whether your life should mostly consist of doing someone else's thing - sits quietly in a room you don't visit.
+so you don't ask. you go to work. you do the thing. you come home. you scroll. you sleep. you do it again. and the question - the one about whether your life should mostly consist of doing someone else's thing - sits quietly in a room you don't visit. "[be yourself](/prose/whats-the-purpose-of-life)" - during which hours? [the grind](/unfiltered/the-system-filled-every-gap-you-had) filled all of them.
 
 [the floor](/unfiltered/nobody-told-you-there-were-prerequisites) says the people in the crossfire don't have time to think. but the people in the job don't have time to think either. different reason, same result. the crossfire takes your capacity through violence. the job takes it through filling. either way, the question goes unasked.
-
-## See also
-
-- [the grind](/unfiltered/the-system-filled-every-gap-you-had) - the hours are full and none of them are yours
-- [what's the purpose of life?](/prose/whats-the-purpose-of-life) - "be yourself" - during which hours?

@@ -42,7 +42,7 @@ The failure preserved it. The thing that tends to make a platform successful - o
 
 That's the paradox: the conditions that make a personal space possible are often the same conditions that make a business impossible. Personalization requires inefficiency. Quirks require tolerance for low engagement. Community requires friction that discourages growth. Everything that makes a space feel like *someone's* is everything a growth metric would eliminate.
 
-## What are you actually nostalgic for?
+## The permission
 
 When people miss GeoCities, they're not missing the under-construction GIFs. They're missing the *permission* it implied.
 
@@ -50,9 +50,9 @@ Permission to make something ugly. Permission to make something that doesn't per
 
 That permission hasn't been revoked. You can still make a weird website. The tools are better than ever. Hosting is free. But the *context* changed. Making a personal website in 2005 was normal. Making one now feels like a statement. You're opting out of something. You're choosing effort over convenience. You're building for yourself in a world that assumes everything is built for an audience.
 
-That shift - from "of course I have a website" to "why would I have a website" - is the real loss. Not the technology. The assumption.
+That shift - from "of course I have a website" to "why would I have a website" - is what disappeared. Not the technology. The assumption.
 
-## Are you nostalgic for something you never had?
+## Nostalgia for something you never had
 
 There's an uncomfortable side to this. Some of the grief isn't for something that existed the way we remember it.
 
@@ -62,7 +62,7 @@ The platforms solved real problems. They connected people. They gave audiences t
 
 So the nostalgia is partly for an experience you had - making something yours - and partly for an experience you might be projecting backward - a time when making something personal was enough. It wasn't enough then either. You just didn't know what "enough" would feel like once reach became possible.
 
-## So what's actually missing?
+## So what's missing?
 
 Strip away the nostalgia and what's left is simpler than it seems.
 
@@ -74,9 +74,9 @@ The personal web didn't die because people stopped wanting personal spaces. It d
 
 ## How do you make it personal anyway?
 
-You can still make personal things. [This site](/prose/this-is-not-a-personal-website) is personal. Not because it's hand-coded HTML with a tiled background. Because decisions are visible. Because it doesn't [optimize for engagement](/prose/this-site-is-manipulative). Because it exists for its own reasons, not for reach.
+You can still make personal things. [This site](/prose/this-is-not-a-personal-website) is personal. Decisions are visible. Because it doesn't [optimize for engagement](/prose/this-site-is-manipulative). Because it exists for its own reasons, not for reach.
 
-That's all "personal" ever meant. Not ugly. Not nostalgic. Not retro. Just: someone's choices are visible, and those choices weren't made by a template.
+That's all "personal" ever meant. Someone's choices are visible, and those choices weren't made by a template.
 
 The platforms won. They'll keep winning. The audience is there and it's not coming back to the personal web. But "personal" was never about audience. It was about making something that's yours in a way that [matters to you](/prose/whats-the-purpose-of-life), regardless of who sees it.
 

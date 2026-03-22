@@ -7,7 +7,7 @@ cluster: meta-essays
 
 # This site is manipulative.
 
-Not by accident. Not as a side effect. This site was built to guide how you think. The [prose](#the-prose), the [interaction design](#the-interaction-design), the [structure](#the-structure) - all of it is put together to move you through a specific set of ideas in a specific way. [Telling you this](#telling-you-this) doesn't change that.
+Deliberately. This site was built to guide how you think. The [prose](#the-prose), the [interaction design](#the-interaction-design), the [structure](#the-structure) - all of it is put together to move you through a specific set of ideas in a specific way. [Telling you this](#telling-you-this) doesn't change that.
 
 ## The prose
 
@@ -35,7 +35,7 @@ There's no natural stopping point. Every essay links to other essays. Every "see
 
 ## The structure
 
-The essays aren't independent. They form a web where each piece assumes you'll encounter the others. Arguments that look self-contained actually depend on premises established elsewhere. By the time you've read three or four, you're inside a worldview - not because you chose to adopt it, but because the structure accumulated.
+The essays aren't independent. They form a web where each piece assumes you'll encounter the others. Arguments that look self-contained depend on premises established elsewhere. By the time you've read three or four, you're inside a worldview - not because you chose to adopt it, but because the structure accumulated.
 
 [Labels are compression.](/prose/what-are-labels-anyway) [Compression loses information.](/prose/why-are-we-compressing-things) [Information loss affects people.](/prose/whats-actually-wrong) [People are lonely.](/prose/why-are-you-lonely) [Loneliness makes change hard.](/prose/why-is-change-so-hard) [Change is hard because systems resist it.](/prose/why-is-change-so-hard) [Systems are the problem.](/prose/whats-actually-wrong) [The purpose of life is to be yourself.](/prose/whats-the-purpose-of-life) [But everything works against that.](/prose/whats-the-purpose-of-life)
 
@@ -72,8 +72,3 @@ The only escape is closing the tab. Not engaging. Not playing. [The only winning
 Maybe the only honest position is: this site is trying to change how you think. You're now aware of that. What you do with that awareness is up to you. But that sentence is also designed to feel like agency at the end of a guided path.
 
 You're still reading.
-
-## See also
-
-- [the great deceit](/prose/the-great-deceit) - the authorship layer of the manipulation
-- [this is not all](/prose/this-is-not-all) - and it knows what it's missing

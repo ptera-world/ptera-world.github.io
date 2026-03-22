@@ -26,7 +26,7 @@ think about what that means. you can't leave the thing that's hurting you withou
 
 and everyone knows this. every person who's stayed in a job that was grinding them down because they couldn't afford to lose the insurance - they know. it's not a secret. it's not a conspiracy. it's just the structure, sitting there, doing exactly what it was designed to do.
 
-## what burnout actually costs you
+## what burnout costs you
 
 burnout doesn't show up as "burnout" in a performance review. it shows up as: missed deadlines. lack of initiative. reduced output. poor collaboration. not a team player.
 
@@ -44,7 +44,7 @@ the framing tells you everything. when something is a "benefit," it's a gift fro
 
 ## the quiet part
 
-most people don't talk about this at work. not because they don't see it. because talking about it is a career risk.
+most people don't talk about this at work. talking about it is a career risk.
 
 saying "this job is burning me out" in a performance review is not a neutral statement. it's a signal. it says: this person might leave. this person might underperform. this person is a liability. the honest version - "the structure of this work is causing psychological damage" - gets translated by the system into "this person can't handle it."
 
@@ -80,7 +80,4 @@ it holds because the alternative - saying "this is violent and someone is respon
 
 it fits here.
 
-## See also
-
-- [the grind](/unfiltered/the-system-filled-every-gap-you-had) - the system fills the time and calls it success
-- [the campaign](/unfiltered/survival-shouldnt-require-a-pitch) - what happens after the benefit fails
+and when the benefit fails - when the sessions run out, when the cap is hit, when the system's version of repair isn't enough - [survival becomes a campaign](/unfiltered/survival-shouldnt-require-a-pitch).

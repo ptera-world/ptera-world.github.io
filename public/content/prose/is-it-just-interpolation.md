@@ -8,9 +8,9 @@ tags: [design, social]
 
 Yes. Language models are interpolation in probability space. They predict the next token based on patterns in training data. They don't understand. They don't experience. They don't mean anything. It's statistics all the way down.
 
-The [technical claim](#what-does-the-technical-claim-actually-say) is true. Now what? Does that [settle it](#does-that-settle-it)? A lot of people seem to think it does. And it's worth looking at why [it might not](#what-does-the-reduction-miss) - not because the claim is wrong, but because "just" is doing [a lot of work](#what-is-just-doing-there) in that sentence. And the same reduction, [applied consistently](#what-if-you-apply-it-to-yourself), dissolves everything.
+The [technical claim](#the-technical-claim) is true. Now what? Does that [settle it](#does-that-settle-it)? A lot of people seem to think it does. And it's worth looking at why [it might not](#what-the-reduction-misses) - not because the claim is wrong, but because "just" is doing [a lot of work](#the-work-just-is-doing) in that sentence. And the same reduction, [applied consistently](#what-if-you-apply-it-to-yourself), dissolves everything.
 
-## What does the technical claim actually say?
+## The technical claim
 
 Language models are trained on text. They learn statistical relationships between tokens. When they generate output, they're sampling from probability distributions shaped by those patterns. There's no understanding, no intention, no inner experience. It's math.
 
@@ -28,7 +28,7 @@ But "therefore" is doing a lot of unsupported work there. The mechanism doesn't 
 
 Naming how something works doesn't tell you what it's worth.
 
-## What does the reduction miss?
+## What the reduction misses
 
 Someone reads an essay. It gets them thinking. It articulates something they felt but couldn't say. They feel seen.
 
@@ -40,7 +40,7 @@ What changed is the story about the words. Not the words themselves. The reader 
 
 That loss is real. But it's a loss of narrative, not of content. The question is whether you need the narrative to keep the value. [Maybe you do. Maybe you don't.](/prose/the-great-deceit) "It's just interpolation" doesn't answer that question. It sidesteps it.
 
-## What is "just" doing there?
+## The work "just" is doing
 
 ["Just"](https://www.todepond.com/wikiblogarden/better-computing/just/) is the word that performs the dismissal.
 
@@ -60,9 +60,9 @@ All technically accurate. All completely useless as descriptions of what it's li
 
 Nobody talks about themselves this way. The reduction tends to get applied outward - to dismiss things that feel threatening to people. "It's just interpolation" is rarely followed by "and my thoughts are just synapses, so we're even." The reductionism is selective. And selective reductionism isn't science. It's defense.
 
-## What's actually threatening?
+## The threat underneath
 
-Strip away the technical framing, and the discomfort probably isn't about mechanisms. It's about boundaries.
+Strip away the technical framing, and the discomfort is about boundaries.
 
 If a machine can produce something that felt meaningful to you - then either the machine is more than you thought, or meaning is less than you thought. Both options are uncomfortable.
 

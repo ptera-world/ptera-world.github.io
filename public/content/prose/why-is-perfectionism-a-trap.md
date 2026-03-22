@@ -8,24 +8,24 @@ tags: [identity, design]
 
 Not lazy. Not even procrastinating, exactly. The idea is there. The rough plan is there. It just... can't start. Or you started and can't finish. Or you finished but can't share it. Because it's [not good enough yet](#is-it-ever-good-enough).
 
-Perfectionism looks like caring about quality. It might actually be [fear wearing a different outfit](#what-is-it-really). It has a [mechanism](#how-does-the-trap-work) that's almost invisible from inside. And the way out isn't [lowering your standards](#is-the-answer-lower-standards) - it's understanding what the standards are actually protecting.
+Perfectionism looks like caring about quality. It might be [fear wearing a different outfit](#fear-wearing-a-different-outfit). It has a [mechanism](#how-does-the-trap-work) that's almost invisible from inside. And the way out isn't [lowering your standards](#is-the-answer-lower-standards) - it's understanding what the standards are protecting.
 
 ## Is it ever good enough?
 
 The draft isn't ready. The code needs refactoring. The design needs one more pass. The essay needs a better opening. The project needs more features before anyone can see it.
 
-Always one more thing. The finish line moves every time you approach it. Not because the work is actually bad - you might not even be able to tell anymore. The standard has become the point. Meeting it has become impossible by design.
+Always one more thing. The finish line moves every time you approach it. You might not even be able to tell if the work is bad anymore. The standard has become the point. Meeting it has become impossible by design.
 
-There's a pattern here: if "good enough" keeps shifting, it probably wasn't about quality to begin with. Quality has a definition you can measure against. Perfectionism doesn't seem to.
+There's a pattern here: if "good enough" keeps shifting, it wasn't about quality to begin with. Quality has a definition you can measure against. Perfectionism doesn't seem to.
 
-## What is it really?
+## Fear wearing a different outfit
 
 Fear, mostly. Specifically:
 
-- **Fear of judgment** - if I put this out and it's bad, people will see that I'm bad.
-- **Fear of failure** - if it doesn't succeed, I've wasted my time and proven I can't do this.
-- **Fear of exposure** - the finished thing reveals what I'm capable of. What if that's not much?
-- **Fear of completion** - as long as it's unfinished, it has potential. Finished things get evaluated.
+- You're afraid of judgment. If you put this out and it's bad, people will see that you're bad.
+- You're afraid of failure. If it doesn't succeed, you've wasted your time and proven you can't do this.
+- You're afraid of exposure. The finished thing reveals what you're capable of. What if that's not much?
+- You're afraid of completion. As long as it's unfinished, it has potential. Finished things get evaluated.
 
 Perfectionism works as a defense mechanism. It keeps you safe from all of these by ensuring the thing never reaches the point where any of them could happen.
 
@@ -45,7 +45,7 @@ The trap has a specific structure:
 
 The mechanism is self-reinforcing. Perfectionism tends to create the failure it's trying to prevent.
 
-## What's the comparison engine?
+## The comparison engine
 
 Perfectionism doesn't operate in a vacuum. It has fuel: other people's finished work.
 
@@ -55,9 +55,9 @@ This comparison doesn't make any sense. You're comparing your process to their p
 
 Nobody shows the bad drafts. Nobody posts the version that almost made them quit. So you assume it was easy for them. That they just... did it. That the gap between their idea and their execution was small.
 
-It probably wasn't. You just can't see their struggle from where you're standing.
+It wasn't. You just can't see their struggle from where you're standing.
 
-## What's the identity layer?
+## The identity layer
 
 Perfectionism gets really sticky when it bonds to identity.
 
@@ -67,7 +67,7 @@ But "high standards" as identity means you can't lower them. Lowering them means
 
 So the standards protect themselves. Any attempt to "just ship it" feels wrong - not strategically wrong, but morally wrong. Like you're compromising something essential.
 
-What you might actually be compromising is a defense mechanism that's managed to pass itself off as a virtue.
+What you might be compromising is a defense mechanism that's managed to pass itself off as a virtue.
 
 ## Is the answer lower standards?
 
@@ -79,21 +79,23 @@ The question to ask isn't "is this good enough?" - that question has no stable a
 
 If the answer is "putting out bad work" - that's a quality standard. Keep it.
 
-If the answer is "being seen" - that's fear. And fear probably shouldn't get to make creative decisions.
+If the answer is "being seen" - that's fear. And fear shouldn't get to make creative decisions.
 
-## What helps?
+## What actually works
 
 Not "just ship it." That's like telling someone with anxiety to "just relax." True but useless.
 
-- **Make the worst version on purpose.** Write the terrible draft. Draw the ugly sketch. Build the broken thing. [Lower the bar to the floor](/prose/how-do-i-do-things) so you can step over it. It's hard to perfectionism your way through something you already declared would be bad.
-- **Show someone early.** Before it's ready. Before you're comfortable. The fear of being seen tends to get smaller each time you survive it.
-- **Set a deadline that isn't "when it's done."** External deadlines bypass the moving finish line. "It ships on Friday" is a fixed point. "When it's good enough" is a mirage.
-- **Notice the function.** When the critic says "not yet," ask: is this taste, or is this fear? Taste has specific feedback. Fear has vague dread.
-- **Separate making from evaluating.** Don't judge while you create. Make the thing. Then, separately, with distance, evaluate it. The two modes use different parts of your brain and they interfere with each other.
+One thing that works: make the worst version on purpose. Write the terrible draft, draw the ugly sketch, build the broken thing. [Lower the bar to the floor](/prose/how-do-i-do-things) so you can step over it. It's hard to perfectionism your way through something you already declared would be bad.
 
-The trap is open. You can see it. You're probably still in it.
+Show it to someone before it's ready. Before you're comfortable. The fear of being seen tends to get smaller each time you survive it. Set a deadline that isn't "when it's done" - something external, something fixed. "It ships on Friday" is a real point in time. "When it's good enough" is a mirage that moves.
 
-## See also
+The hardest part is learning to tell the difference between taste and fear. When the critic in your head says "not yet," taste has specific feedback. Fear has vague dread. They feel similar and they want opposite things.
+
+And try to separate making from evaluating - don't judge while you create. Make the thing. Then, separately, with distance, look at it. The two modes interfere with each other when they run at the same time.
+
+The trap is open. You can see it. You're still in it.
+
+## The same trap, elsewhere
 
 - [how do I do things?](/prose/how-do-i-do-things) - starting without the weight of perfection
 - [what are labels anyway?](/prose/what-are-labels-anyway) - when "high standards" becomes a cage

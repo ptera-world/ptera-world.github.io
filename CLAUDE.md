@@ -77,24 +77,23 @@ Single-page app with no framework. All source is in `src/` (~1,200 lines). Conte
 
 `CONTENT.md` at the repo root is a thematic index of all 74 essays (49 prose + 25 unfiltered), organized into 7 thematic clusters with per-essay one-line summaries, cross-collection resonance pairings, and non-obvious connections. Consult it when asked about essay themes or cross-essay relationships — do not re-read individual essays to answer questions that the index already covers.
 
-## Essay voice — prose/* files
+## Essay voice — prose/* and unfiltered/* files
 
-**Peer voice, not authoritative.** The essays speak alongside the reader, not above them.
+the essays talk alongside you, not above you. second person, working something out together. "you" is load-bearing — it's how the essays stay peer-level instead of sliding into lecture.
 
-Keep:
-- Second person ("you") — intentional, load-bearing
-- Rhetorical question headers — intentional manipulation, they force thinking
-- All cross-links, structure, "See also" sections
-- Essay length — peer doesn't mean brief
+the voice is warmth from paying attention, not from performing warmth. if something's serious it comes through on its own — you don't announce it, frame it, or build up to it. you notice things, put them next to each other, and let the reader close the gap. the sentence-level register should match the project descriptions: lowercase, direct, says the thing and stops, no effort to impress.
 
-Rules:
-- **No pretension.** Don't position the writer above the reader. No "here's the thing nobody talks about," no "here's what you don't realize"
-- **No mic-drops.** No standalone punchy sentences used for impact ("Glue.", "And yet.", "Both are true.")
-- **No fanfare.** Don't announce that something important is coming. Just say it
-- **Make connections, not conclusions.** Put two things next to each other and let the reader close the gap. Don't draw THE conclusion for them
-- **Still working it out.** The voice should feel like it's discovering, not like it has arrived. Share what we've found, what we've noticed, what keeps showing up
-- **No negative language.** Describe the situation, point at what could be different. Negative language on a public page has no positive expected value — someone in a fine headspace gets outrage, someone already not OK gets despair. The restraint is calculated compassion
-- **Project descriptions are the reference voice.** Lowercase, direct, no rhetorical performance, no effort to impress. Says the thing and stops. The essays can be longer and more structured, but the sentence-level voice should match that register
+what the voice does:
+- follows a thread. a thought starts somewhere and sometimes ends somewhere else. that's fine. structure should look unplanned — sections don't obviously build on each other.
+- stays specific. concrete details, not abstractions about abstractions. "a gray that couldn't decide if it was morning or evening" instead of "an ambiguous situation."
+- admits when it doesn't know. not as a rhetorical move ("it's hard to say") — as in, the sentence genuinely doesn't land and the essay keeps going anyway. "i'm not sure what to do with that" is fine when it's honest.
+- varies. some sentences short. some long and recursive and not entirely sure where they're going. the rhythm changes paragraph to paragraph. no template.
+
+not: glossary structure, correcting the reader, announcing intent, punchy standalone sentences, pretension, negative language. `scripts/lint-bold-labels.sh` catches the most mechanical pattern.
+
+prose/ is capitalized. unfiltered/ is lowercase, rawer, more declarative — but the same underlying voice. if the two collections sound like the same writer wearing different hats, that's a tell. they should think differently, not just capitalize differently.
+
+cross-links between essays are the connective tissue — preserve them. essay length varies; peer doesn't mean brief.
 
 ## Build tool principles — no hardcoding
 

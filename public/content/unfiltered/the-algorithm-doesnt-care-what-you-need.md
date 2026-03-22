@@ -73,9 +73,3 @@ you didn't choose the algorithm. you chose to open the app. the algorithm chose 
 and the system has more data about you than you have about yourself. it knows what you linger on, what you skip, what time of day you're most vulnerable, what emotional state makes you engage most. it knows your [scars](/unfiltered/the-wound-heals-the-flinch-doesnt) better than your therapist does - it doesn't understand them, it's just measured what they respond to.
 
 you're making decisions in a world the algorithm curated for you. your opinions, your fears, your sense of what's normal and what's threatening - all of it shaped by a feed that was shaped by a metric that was shaped by a revenue model. the person you are after a decade of algorithmic curation is not the person you would have been without it. and you can't know the difference, because you only have the one version.
-
-## See also
-
-- [the cope](/unfiltered/the-system-broke-you-then-sold-the-fix) - the scroll as lowest-energy relief
-- [the loop](/unfiltered/the-belief-feeds-on-its-own-resistance) - the belief system the algorithm accelerates
-- [the grind](/unfiltered/the-system-filled-every-gap-you-had) - the depletion that makes the feed irresistible

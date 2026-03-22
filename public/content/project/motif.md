@@ -11,11 +11,11 @@ treats mathematics as a graph of structural relationships rather than a tree of 
 
 ## key ideas
 
-- **math as graph** - fields are clusters in a structure graph, not branches of a tree. boundaries are historical artifacts, not structural necessities.
-- **layered IRs** - no single "true" representation. multiple IR layers (surface DSL → structural IR → semantic core), like a compiler pipeline for mathematics.
-- **cross-field translation** - remove artificial restrictions between disciplines. tools transfer even when formulas don't.
-- **structural motifs** - recurring patterns (symmetry, duality, optimization, composition) are the high-degree hubs in the math graph.
-- **pruned search** - the interesting manifold in idea-space is measure-zero. discovery is navigation, not enumeration.
+- math as graph — fields are clusters in a structure graph, not branches of a tree. boundaries are historical artifacts, not structural necessities.
+- layered IRs — no single "true" representation. multiple IR layers (surface DSL → structural IR → semantic core), like a compiler pipeline for mathematics.
+- cross-field translation — remove artificial restrictions between disciplines. tools transfer even when formulas don't.
+- structural motifs — recurring patterns (symmetry, duality, optimization, composition) are the high-degree hubs in the math graph.
+- pruned search — the interesting manifold in idea-space is measure-zero. discovery is navigation, not enumeration.
 
 ## architecture
 

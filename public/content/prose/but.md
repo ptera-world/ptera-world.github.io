@@ -6,7 +6,7 @@ tags: [social, identity]
 
 # But.
 
-Maybe the most interesting word in the language. Not because of what it means - because of where it points.
+Maybe the most interesting word in the language. Because of where it points.
 
 ## The hinge
 
@@ -64,17 +64,10 @@ The people who stop before the "but" are simplifying. The people who stop after 
 
 The essays on this site are full of "buts." That's not a weakness - it's kind of the whole idea.
 
-Easy answers don't have a "but." "Just do X" doesn't have a "but." Motivational posters don't have a "but." And they don't tend to help, because anyone who's actually stuck already knows the "but" exists. Pretending it doesn't is insulting.
+Easy answers don't have a "but." "Just do X" doesn't have a "but." Motivational posters don't have a "but." And they don't tend to help, because anyone who's stuck already knows the "but" exists. Pretending it doesn't is insulting.
 
-Honesty is: yes, and also. Here's the thing, *and here's the other thing*. Not resolving the tension. Not picking a side. Just acknowledging that the second half is real.
+Honesty is: yes, and also. Here's the thing, *and here's the other thing*. The tension stays unresolved. You just acknowledge that the second half is real.
 
 "To be yourself." Three words. [The purpose of life](/prose/whats-the-purpose-of-life).
 
 *But* it's hard. *But* you try anyway. *But* it's never done. *But* maybe that's the point.
-
-## See also
-
-- [is it just interpolation?](/prose/is-it-just-interpolation) - when "but" dismisses
-- [how much could I possibly do?](/prose/how-much-could-i-possibly-do) - when "but" surrenders
-- [how do I do things?](/prose/how-do-i-do-things) - when "but" pushes forward
-- [what's the purpose of life?](/prose/whats-the-purpose-of-life) - the thing that survives every "but"

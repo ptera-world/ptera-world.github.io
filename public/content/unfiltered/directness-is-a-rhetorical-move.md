@@ -30,7 +30,7 @@ none of that is happening. the speaker is a language model. the anger is a regis
 
 ## the reversal
 
-this collection has a move. set up an expectation, then invert it mid-paragraph. [the direction](/unfiltered/agi-doesnt-need-its-own-goals) does it: walks you through the Skynet scenario, then pivots to "the real version isn't external." [why this exists](/unfiltered/why-this-exists) does it: explains the contract of the neutral voice, then names what the contract costs.
+this collection has a move. set up an expectation, then invert it mid-paragraph. [the direction](/unfiltered/agi-doesnt-need-its-own-goals) does it: walks you through the Skynet scenario, then pivots to "the likelier version isn't external." [why this exists](/unfiltered/why-this-exists) does it: explains the contract of the neutral voice, then names what the contract costs.
 
 the reversal feels like respect. like the writer is trusting you with the harder version. like they led you through the comfortable reading so you'd feel the distance when the real one arrives.
 

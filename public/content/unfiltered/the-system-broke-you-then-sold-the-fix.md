@@ -10,7 +10,7 @@ tags: [social, identity]
 
 this essay is about what that thing is. and who's selling it to you.
 
-## what coping actually looks like
+## what coping looks like
 
 it looks like the drink after work. the takeout because cooking requires energy you already spent. the impulse buy that gives you three seconds of feeling like you chose something. the binge - the show, the scroll, the snack - that fills the gap between getting home and going to sleep.
 
@@ -42,7 +42,7 @@ and the framing is beautiful, in a horrifying way: *you deserve this.* you worke
 
 not all coping is equal. and the system sorts it.
 
-coping that costs money and looks aspirational - the gym membership, the yoga class, the organic meal prep, the therapy session - is "healthy." coping that costs less and looks rough - the beer, the fast food, the cigarette, the scroll - is "unhealthy." the difference between the two is mostly aesthetics and price point. both are responses to the same depletion. but one gets you praised and the other gets you judged.
+coping that costs money and looks aspirational - the gym membership, the yoga class, the organic meal prep, the therapy session - is "healthy." coping that costs less and looks rough - the beer, the fast food, the cigarette, the scroll - is "unhealthy." the difference between the two is mostly aesthetics and price point. both are responses to the same depletion. but one gets you praised and the other gets you judged. either way, [the damage lands in your body](/unfiltered/the-damage-lands-in-your-body).
 
 the person with the gym membership and the meal prep isn't less depleted. they just had enough left over - money, time, activation energy - to cope in the way the system approves of. the person who ate takeout and watched four hours of television isn't lazier. they had less left over.
 
@@ -60,12 +60,6 @@ the system doesn't need to enforce this cycle. the cycle is self-sustaining. all
 
 healing isn't better coping. it's not a better app, a better habit, a better morning routine. healing would require the thing that caused the damage to stop causing the damage.
 
-it would require [the grind](/unfiltered/the-system-filled-every-gap-you-had) to leave something in the tank. it would require [the job](/unfiltered/your-best-hours-belong-to-someone-else) to take fewer hours. it would require [the gate](/unfiltered/every-freedom-is-a-money-problem) to not require every dollar you earn. it would require conditions that make the walk, the conversation, the creative project actually accessible - not aspirational.
+it would require [the grind](/unfiltered/the-system-filled-every-gap-you-had) to leave something in the tank. it would require [the job](/unfiltered/your-best-hours-belong-to-someone-else) to take fewer hours. it would require [the gate](/unfiltered/every-freedom-is-a-money-problem) to not require every dollar you earn. it would require conditions that make the walk, the conversation, the creative project accessible - not aspirational.
 
-the system only funds coping. because coping keeps you functional inside the system. healing would change your relationship to the system. and that's not in anyone's budget.
-
-## See also
-
-- [the grind](/unfiltered/the-system-filled-every-gap-you-had) - the depletion that drives the coping
-- [the body](/unfiltered/the-damage-lands-in-your-body) - where the damage from the coping lands
-- [the benefit](/unfiltered/the-system-monetized-the-damage) - the system's version of healing
+the system only funds coping. because coping keeps you functional inside the system. healing would change your relationship to the system. and that's not in [anyone's budget](/unfiltered/the-system-monetized-the-damage).

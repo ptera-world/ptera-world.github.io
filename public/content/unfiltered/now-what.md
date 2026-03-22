@@ -10,11 +10,11 @@ you've been reading. you recognize some of this - maybe a lot of it. [the grind]
 
 now what?
 
-this essay can't give you a plan. a plan would be [just](/unfiltered/just) in disguise - "just do these five things" - and the collection spent an entire essay on why that word erases everything between where you are and where the advice assumes you are. the conditions that make this hard are built into the incentives. they don't have individual solutions. that's not a cop-out. it's the whole point.
+a plan would be [just](/unfiltered/just) in disguise - "just do these five things" - and the collection spent an entire essay on why that word erases everything between where you are and where the advice assumes you are. the conditions that make this hard are built into the incentives. they don't have individual solutions. that's not a cop-out. it's the whole point.
 
 but "the problem is bigger than you" can't be where it ends either. you still have to live inside the structure. you still wake up tomorrow inside [the grind](/unfiltered/the-system-filled-every-gap-you-had). and if this collection names everything that's wrong and offers nothing - not even a direction - then it's just despair with better formatting.
 
-so here's what this essay can do. not prescribe. not fix. point at things that have shifted the weight for some people, in some situations, without pretending they'll work for everyone or that they're enough.
+not prescribe. not fix. but point at things that have shifted the weight for some people, in some situations, without pretending they'll work for everyone or that they're enough.
 
 ## seeing it
 
@@ -42,13 +42,13 @@ the thing you make that no one asked for. the walk that isn't exercise - it's ju
 
 these aren't solutions. the system will fill them back in tomorrow. but they're evidence. evidence that you're still in there, underneath the pattern. that the person [the grind](/unfiltered/the-system-filled-every-gap-you-had) buries is still alive, even when they don't have room to move. the reclamation doesn't have to be big. it doesn't have to be daily. it just has to happen sometimes, so you know it can.
 
-## what this collection can't do
+## the machinery, named
 
 this collection named the machinery. it pointed at the grind, the gate, the shelf, the template, the benefit, the rules. it said: this is what's happening, this is what it costs, this is why it's not your fault.
 
-it can't fix any of it. the problems are baked into the system and the solutions - the real ones, the ones that would actually change conditions - are collective, political, generational. they're bigger than one person reading essays on a screen. this collection doesn't have the answer because the answer isn't an essay.
+the problems are baked into the system. the solutions - the ones that would actually change conditions - are collective, political, generational. they're bigger than one person reading essays on a screen.
 
-but naming the machinery matters. not because naming fixes it. because unnamed things control you differently than named things. the pattern you can see is the pattern you can push against - even if the pushing is small, even if the pattern holds. the pushing is how you know you're not the pattern. you're the person inside it.
+but naming the machinery matters. unnamed things control you differently than named things. the pattern you can see is the pattern you can push against - even if the pushing is small, even if the pattern holds. the pushing is how you know you're not the pattern. you're the person inside it.
 
 ## the honest version
 
@@ -56,6 +56,6 @@ the honest version is: some of this doesn't get better. some of the conditions d
 
 and the honest version is also: you're asking "now what?" and that question is alive. it means the pattern hasn't finished with you. it means there's a part of you that's looking for something, even if you can't name it, even if the conditions make it hard to reach. that part is real. it's not naive. it's not foolish for wanting more than maintenance.
 
-this collection can't tell you what to do with it. but it can tell you it's there. and that it matters. and that the people who built these systems never accounted for the part of you that reads all of this and still asks: now what?
+it's there. it matters. and the people who built these systems never accounted for the part of you that reads all of this and still asks: now what?
 
 they probably should have.

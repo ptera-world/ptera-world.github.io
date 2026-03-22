@@ -8,7 +8,7 @@ tags: [social, identity]
 
 some systems survive by being useful. some survive by being true. and some survive by making leaving feel impossible - not because the door is locked, but because everyone outside the door has been redefined as the enemy.
 
-this isn't about faith. faith is personal. this is about the mechanism - the structure some belief systems build around themselves that turns resistance into reinforcement.
+faith is personal. the mechanism is structural - the thing some belief systems build around themselves that turns resistance into reinforcement.
 
 ## the design
 
@@ -66,7 +66,7 @@ rebuilding after the loop is rebuilding from zero. the loop replaced everything 
 
 ## the mechanism, not the belief
 
-the belief might be beautiful. the faith might be real. the community might genuinely help people. none of that is what this essay is about.
+the belief might be beautiful. the faith might be real. the community might help people. none of that is what this essay is about.
 
 this is about the loop - the self-reinforcing pattern where resistance becomes reinforcement and leaving becomes proof of the system's necessity. the loop can attach to any belief system. any ideology. any community that decides its boundaries are more important than the people crossing them.
 
@@ -74,7 +74,7 @@ the question isn't whether a belief is true. the question is: does the system al
 
 if the answer is no - if the only way to stay in good standing is to never test the walls - then the system isn't protecting the truth. it's protecting itself. and the people inside it are the material it's built from.
 
-## See also
+## the pattern elsewhere
 
 - [the scar](/unfiltered/the-wound-heals-the-flinch-doesnt) - what the loop leaves behind
 - [the shelf](/unfiltered/the-parts-of-yourself-you-put-away) - the unmet needs the loop fills

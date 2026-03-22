@@ -34,7 +34,7 @@ it costs whatever the thing on it would have given you if you could hold it.
 
 the grief, processed, becomes integration. the identity, expressed, becomes wholeness. the knowledge, acted on, becomes change. the burnout, felt, becomes the signal that tells you to stop. every item on the shelf is something that, held properly, would make you more yourself. the shelf prevents that. it preserves function at the cost of self.
 
-[the purpose of life](/prose/whats-the-purpose-of-life) says: be yourself. analysis, expression, discovery. the shelf is the opposite of all three. it's anti-analysis - you know but you can't look. anti-expression - you feel but you can't show. anti-discovery - the next version of you is behind the thing you can't pick up.
+[the purpose of life](/prose/whats-the-purpose-of-life) says: be yourself. the shelf is the opposite of that. you know but you can't look. you feel but you can't show. the next version of you is behind the thing you can't pick up.
 
 and the longer something stays on the shelf, the harder it is to take down. the grief calcifies. the identity atrophies. the knowledge becomes abstract - you know it the way you know a fact, not the way you know a feeling. the shelf was supposed to be temporary. it becomes architecture. the things you put away become the shape of the space you live in.
 
@@ -54,7 +54,7 @@ from inside, you're running a background process that never stops. monitoring th
 
 "good" is the sound the shelf makes when it's holding.
 
-## See also
+---
 
 - [the grind](/unfiltered/the-system-filled-every-gap-you-had) - the structure that requires the shelf
 - [the benefit](/unfiltered/the-system-monetized-the-damage) - therapy as shelf management

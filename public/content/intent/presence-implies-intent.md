@@ -10,7 +10,7 @@ When you see someone in a video, you make an inference that's so automatic it do
 
 This is mostly reliable. Before very recently, seeing someone in a video meant they were actually there, which meant at minimum they showed up, which meant something about what they were willing to do. The inference from presence to intent was almost always correct, because producing the appearance of someone's presence without them was technically impractical. You could misquote someone in text. You could take a photo out of context. But fabricating a video of a specific person saying specific things or doing specific things - that wasn't available, and now it is.
 
-## what a deepfake actually does
+## what a deepfake does
 
 The usual framing is misinformation: a deepfake puts false content into the world. That's true, but it's also what any fabrication does. What's specific to deepfakes is that they attach the false content to a real person's face, voice, and body. The output doesn't just say something untrue. It says something untrue *as someone*.
 

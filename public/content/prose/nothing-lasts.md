@@ -34,7 +34,7 @@ It's not. Nothing is. And the grief of losing someone who's still alive is the s
 
 There's an uncomfortable thing about impermanence: it goes backwards.
 
-People remember the relationship as better than it was. The childhood as simpler. The old neighborhood as safer. The music as more meaningful. It's not lying - memory is [reconstructive, not archival](/prose/why-did-things-stop-being-personal#are-you-nostalgic-for-something-you-never-had). Every time you remember something, you rebuild it from pieces, and the pieces drift.
+People remember the relationship as better than it was. The childhood as simpler. The old neighborhood as safer. The music as more meaningful. It's not lying - memory is [reconstructive, not archival](/prose/why-did-things-stop-being-personal#nostalgia-for-something-you-never-had). Every time you remember something, you rebuild it from pieces, and the pieces drift.
 
 So the thing you're grieving - the perfect version, the golden age, the time when everything was right - may never have existed. The past changes because you change. The memory you have at thirty isn't the same memory you'll have at fifty, even if you never learn anything new about the event. The event itself is impermanent, even after it happened.
 
@@ -44,7 +44,7 @@ But it also means something else. If the past isn't fixed, then the meaning of t
 
 ## The permission to let things die
 
-Not everything needs to be saved. Not everything needs to be maintained. Not everything needs to last.
+Some things are allowed to end. Some things have already ended and just haven't been acknowledged yet.
 
 This feels wrong to say. [Preservation matters](/prose/what-do-we-keep-losing). History matters. Continuity matters. But there's a shadow side to preservation: the obligation to maintain everything forever, regardless of whether it still serves anyone, regardless of whether the cost of keeping it alive is worth what it provides.
 
@@ -80,12 +80,12 @@ Forest fires destroy everything. And then the soil, freed from the canopy, grows
 
 The question underneath all of this is: how do you care about things that won't last?
 
-Not by pretending they'll last. Not by refusing to care. Not by caring less. Those are all defenses against grief, and [defenses against grief are defenses against life](/prose/why-is-change-scary).
+The temptation is to pretend things will last, or to refuse to care, or to care less preemptively. Those are all defenses against grief, and [defenses against grief are defenses against life](/prose/why-is-change-scary).
 
 By holding lightly. Caring fully while knowing it will end. Investing in the moment without demanding that the moment become permanent. Loving the cherry blossom *while it falls*.
 
 This is impossibly hard. The instinct is to grip - to hold on, to preserve, to [freeze the thing](/prose/everything-changes#why-is-this-hard) that's passing. The tighter you grip, the more it hurts when it goes. The lighter you hold, the more you can feel what's actually there.
 
-Nothing lasts. Not the grief. Not the joy. Not the thing you're reading right now or [the person who wrote it](/prose/who-am-i). Not the moment you're in or the one that comes next.
+Nothing lasts. The grief passes. The joy passes. The thing you're reading right now and [the person who wrote it](/prose/who-am-i) will both be gone. The moment you're in is already ending.
 
 If you really lived like you knew that - not as a philosophy, but as a felt thing, in your body, every morning - what would you do differently? I don't know either.

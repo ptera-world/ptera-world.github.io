@@ -211,7 +211,23 @@ These are surface-level register differences. The underlying voice -- sentence r
 
 ---
 
-## 7. THE SMOKING GUN
+## 7. THE BOLD-LABEL LIST
+
+The corpus relies heavily on a specific list construction: `**Bold term.** Explanation sentence.` This appears 79 times across 12 essays, in both bulleted and standalone paragraph form. A variant uses a dash separator: `- **Label** - explanation`.
+
+Examples from a single essay (how-do-i-do-things):
+
+- "**Making it small.** Not 'my big project' but 'what's the smallest piece I could try right now?'"
+- "**Pick one resource and follow it.** Not five tutorials at once."
+- "**Set a timer for 15 minutes.** Do the thing until it goes off."
+
+This is a high-frequency RLHF template for structuring advice. The model has learned that bolding a term and then explaining it produces the appearance of organized, authoritative knowledge -- a textbook or reference manual voice. Human essayists writing in a peer voice don't naturally produce this structure at scale. They might bold a word for emphasis within a sentence, but the `**Term.** Definition.` pattern is a formatting convention for documentation, not for essays that are supposed to feel like thinking-out-loud.
+
+The pattern is mechanically detectable (`\*\*[^*]+\.\*\*\s` and `^- \*\*[^*.]+\*\* -`) and appears across both prose/ and unfiltered/ collections despite their supposedly different voices, further evidence of a shared generation template.
+
+---
+
+## 8. THE SMOKING GUN
 
 The essays "the great deceit," "still-ai," "if-the-ai-can-one-shot-this," and "directness-is-a-rhetorical-move" explicitly state that the content was written by an AI. More than that, "if-the-ai-can-one-shot-this" explains the mechanism: "every essay in this collection was written in one pass. a few sentences of direction from a human. a complete essay from the model. no major rewrites."
 

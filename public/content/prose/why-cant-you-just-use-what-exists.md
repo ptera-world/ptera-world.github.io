@@ -10,7 +10,7 @@ Someone already built it. It works. It's battle-tested. It has documentation, a 
 
 You're going to build it anyway.
 
-## What's the accusation?
+## The accusation
 
 "Not Invented Here syndrome." It's usually framed as a flaw. An inability to use other people's work. Ego masquerading as engineering judgment. The arrogant belief that you can do it better.
 
@@ -18,7 +18,7 @@ And sometimes it is that. Sometimes people rebuild things out of ego, or ignoran
 
 But there's another version that looks identical from the outside and is completely different on the inside. And the accusation - "why can't you just use what exists?" - can't tell them apart.
 
-## What does it actually feel like?
+## The friction
 
 It doesn't feel like ego. It feels like *friction*.
 
@@ -46,7 +46,7 @@ There's a depth of understanding that seems to come only from implementation. Yo
 
 This understanding doesn't transfer through documentation. It transfers through [contact with the problem](/prose/how-do-i-know-this-code-is-good#how-does-trust-accumulate). The problem pushes back. Your naive approach fails. You discover why the existing tool made the choices it did - not because someone told you, but because you hit the same walls.
 
-That's not wasted effort. It might be one of the more efficient ways to learn why things are the way they are. And sometimes - occasionally - you hit a wall that the existing tool also hit, and you find a different way around it. That's when rebuilding produces something genuinely new. Not better by every metric. Just different in a way that [opens paths the original closed off](/prose/why-do-i-reinvent-everything#what-if).
+That's not wasted effort. It might be one of the more efficient ways to learn why things are the way they are. And sometimes - occasionally - you hit a wall that the existing tool also hit, and you find a different way around it. That's when rebuilding produces something new. Not better by every metric. Just different in a way that [opens paths the original closed off](/prose/why-do-i-reinvent-everything#what-if).
 
 ## Is it ego?
 
@@ -56,21 +56,21 @@ Using someone else's tool means your output has their fingerprints on it, not yo
 
 Building your own means the choices are yours. Even if the result is worse by every objective measure, it's *yours* in a way that using someone else's work can never be. The shape reflects your thinking. The architecture embodies your understanding. The limitations are your limitations, not inherited ones.
 
-This sounds like ego. And maybe it partly is. But it's also the mechanism by which [new ideas enter the world](/prose/there-used-to-be-two-kinds-of-programmer#what-got-lost). A lot of genuinely new tools started as someone refusing to use what existed - they didn't think they could do better, they wanted to think differently about the problem. The personal motivation and the creative output are tangled up in the same impulse.
+This sounds like ego. And maybe it partly is. But it's also the mechanism by which [new ideas enter the world](/prose/there-used-to-be-two-kinds-of-programmer#what-got-lost). A lot of new tools started as someone refusing to use what existed - they didn't think they could do better, they wanted to think differently about the problem. The personal motivation and the creative output are tangled up in the same impulse.
 
-## When should you actually just use what exists?
+## When to use what exists
 
 Not every itch needs scratching. Sometimes the existing tool is right and you're being stubborn. Here's when to use what exists:
 
 When your goal is the output, not the understanding. If you need to get something done and the existing tool gets it done, use it. The pull to rebuild is about understanding, and if understanding isn't the goal, rebuilding is procrastination.
 
-When the problem is solved and you know it. Not "solved well enough" - actually, fully solved. If you can't articulate what would be different about your version, you don't have a different model of the problem. You just have the same model and an unwillingness to use someone else's implementation of it.
+When the problem is solved and you know it. Not "solved well enough" - fully solved. If you can't articulate what would be different about your version, you don't have a different model of the problem. You just have the same model and an unwillingness to use someone else's implementation of it.
 
 When the cost is someone else's time. Rebuilding infrastructure that a team depends on because you don't like the existing tool's abstractions is imposing your preferences on other people. Your understanding isn't worth their disruption.
 
-## When should you build anyway?
+## When to build anyway
 
-When the friction is real. When using the existing tool requires you to think about the problem in a way that produces worse results - not just unfamiliar results, genuinely worse ones. When the tool's assumptions actively prevent you from doing what you're trying to do.
+When the friction is real. When using the existing tool requires you to think about the problem in a way that produces worse results - not just unfamiliar results, worse ones. When the tool's assumptions actively prevent you from doing what you're trying to do.
 
 When the understanding matters more than the output. When you're trying to learn something deep about a domain and the only way to learn it is to [build from the ground up](/prose/why-do-i-reinvent-everything). When the point isn't the artifact but the knowledge that comes from making it.
 
@@ -79,10 +79,3 @@ When you have a question. "What if this were different?" is a valid reason to re
 The NIH instinct isn't always right. But it's not always wrong either. And the people who never feel it - who always use what exists, who never rebuild, who never ask "but what if?" - are the people who inherit every assumption without examining any of them.
 
 Sometimes the wheel needs reinventing. It's not broken. But [you don't know why it's round until you try making it square](/prose/why-do-i-reinvent-everything#how-does-popularity-become-a-ratchet).
-
-## See also
-
-- [why do i reinvent everything?](/prose/why-do-i-reinvent-everything) - the exploration that comes from rebuilding
-- [where does meaning live?](/prose/where-does-meaning-live) - encoded assumptions as invisible walls
-- [am i just pretending?](/prose/am-i-just-pretending) - fingerprints and craft
-- [there used to be two kinds of programmer](/prose/there-used-to-be-two-kinds-of-programmer) - exploring vs shipping

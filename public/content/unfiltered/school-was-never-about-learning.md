@@ -8,35 +8,35 @@ tags: [social, identity]
 
 school's stated goal is education. teaching you things. preparing you for the world.
 
-how much of what you learned in school do you use? not "remember" - *use*. how much of the twelve to sixteen years of mandatory attendance actually shows up in your daily life as knowledge that matters?
+how much of what you learned in school do you use? not "remember" - *use*. how much of the twelve to sixteen years of mandatory attendance shows up in your daily life as knowledge that matters?
 
-some of it. reading. basic math. maybe some history that gives you context. but most of it? most of it evaporated. not because you're bad at learning. because the learning was never the point.
+some of it. reading. basic math. maybe some history that gives you context. but most of it? most of it evaporated. the learning was never the point.
 
-## what school actually does
+## what school does
 
 school does several things. learning is one of them, and not the primary one.
 
-**sorting.** school ranks you. grades, test scores, class placement, the track you end up on. by the time you're fourteen, the system has an opinion about what you're capable of, and that opinion follows you. the sorting happens before you have the tools to question it. before you know yourself well enough to know whether the system's opinion is right.
+it sorts you. grades, test scores, class placement, the track you end up on. by the time you're fourteen, the system has an opinion about what you're capable of, and that opinion follows you. the sorting happens before you have the tools to question it. before you know yourself well enough to know whether the system's opinion is right.
 
-**credentialing.** the degree isn't proof that you learned. it's proof that you completed. you sat in the seats, did the assignments, passed the tests. the credential is what employers check. not what you know - that you finished. the system converts years of your life into a line on a resume.
+it credentials you. the degree isn't proof that you learned. it's proof that you completed. you sat in the seats, did the assignments, passed the tests. the credential is what employers check. not what you know - that you finished. the system converts years of your life into a line on a resume.
 
-**compliance training.** sit in this room for six hours. do what you're told. ask permission to use the bathroom. raise your hand before speaking. follow the schedule someone else set. don't question why the schedule is what it is. the structure of school is the structure of [the job](/unfiltered/your-best-hours-belong-to-someone-else), just smaller. by the time you enter the workforce, the pattern is so deep you don't notice it's a pattern.
+it trains compliance. sit in this room for six hours. do what you're told. ask permission to use the bathroom. raise your hand before speaking. follow the schedule someone else set. don't question why the schedule is what it is. the structure of school is the structure of [the job](/unfiltered/your-best-hours-belong-to-someone-else), just smaller. by the time you enter the workforce, the pattern is so deep you don't notice it's a pattern.
 
-**daycare.** parents need to work. kids need to be somewhere. school is where kids go while parents are [at the job](/unfiltered/your-best-hours-belong-to-someone-else). this isn't cynical - it's logistical. the economy requires two working parents. two working parents require somewhere for kids to be for eight hours. school is that somewhere. the educational mission is real but it's layered on top of a logistical necessity.
+it's daycare. parents need to work. kids need to be somewhere. school is where kids go while parents are [at the job](/unfiltered/your-best-hours-belong-to-someone-else). this isn't cynical - it's logistical. the economy requires two working parents. two working parents require somewhere for kids to be for eight hours. school is that somewhere. the educational mission is real but it's layered on top of a logistical necessity.
 
-**socialization.** learning to be around other people. navigating groups, hierarchies, conflict, collaboration. this one is real and valuable. but it doesn't require the rest of the structure. kids socialize in every context where other kids exist. the school's specific contribution is socializing you into a specific kind of hierarchy - one with authorities, rules, rankings, and the expectation of compliance. you learn to be around people, yes. you learn to be around people *within a system*.
+it socializes you. learning to be around other people. navigating groups, hierarchies, conflict, collaboration. this one is real and valuable. but it doesn't require the rest of the structure. kids socialize in every context where other kids exist. the school's specific contribution is socializing you into a specific kind of hierarchy - one with authorities, rules, rankings, and the expectation of compliance. you learn to be around people, yes. you learn to be around people *within a system*.
 
 ## how well does it achieve any of this?
 
-**as learning:** poorly. the retention rate on most school material is dismal. the things you actually learned - the skills and knowledge you carry - mostly came from interest, necessity, or experience. the classroom delivered information. life delivered learning. the two overlap sometimes. not as often as the system claims.
+as learning, poorly. the retention rate on most school material is dismal. the things you actually learned - the skills and knowledge you carry - mostly came from interest, necessity, or experience. the classroom delivered information. life delivered learning. the two overlap sometimes. not as often as the system claims.
 
-**as sorting:** effectively, but not fairly. the sorting correlates with family income, zip code, race, parental education, and access to resources more than it correlates with ability. the system sorts, but what it's sorting by is mostly pre-existing advantage. the kid who tests well in a well-funded school and the kid who tests poorly in an underfunded one aren't being measured on the same scale. the sorting looks meritocratic. it's largely hereditary.
+as sorting, effectively, but not fairly. the sorting correlates with family income, zip code, race, parental education, and access to resources more than it correlates with ability. the system sorts, but what it's sorting by is mostly pre-existing advantage. the kid who tests well in a well-funded school and the kid who tests poorly in an underfunded one aren't being measured on the same scale. the sorting looks meritocratic. it's largely hereditary.
 
-**as credentialing:** effectively, by design. the credential works because everyone agrees it works. the degree opens doors - it doesn't prove competence, the doors are just calibrated to require it. this is circular and self-sustaining. you need the degree because the job requires it. the job requires it because everyone has one. everyone has one because the job requires it.
+as credentialing, effectively, by design. the credential works because everyone agrees it works. the degree opens doors - it doesn't prove competence, the doors are just calibrated to require it. this is circular and self-sustaining. you need the degree because the job requires it. the job requires it because everyone has one. everyone has one because the job requires it.
 
-**as compliance training:** very effectively. this is arguably school's most successful output. after twelve-plus years, the pattern - show up on time, do assigned work, accept evaluation by authority, operate within someone else's structure - is invisible. it doesn't feel like training. it feels like reality. [the job](/unfiltered/your-best-hours-belong-to-someone-else) inherits a workforce that already knows how to comply. school did that.
+as compliance training, very effectively. this is arguably school's most successful output. after twelve-plus years, the pattern - show up on time, do assigned work, accept evaluation by authority, operate within someone else's structure - is invisible. it doesn't feel like training. it feels like reality. [the job](/unfiltered/your-best-hours-belong-to-someone-else) inherits a workforce that already knows how to comply. school did that.
 
-**as daycare:** effectively, within its hours. the problem is when school hours don't match work hours, which is most of the time. the gap between school ending and work ending is filled by after-school programs, which cost money, which requires [the job](/unfiltered/your-best-hours-belong-to-someone-else), which requires school-as-daycare. another loop.
+as daycare, effectively, within its hours. the problem is when school hours don't match work hours, which is most of the time. the gap between school ending and work ending is filled by after-school programs, which cost money, which requires [the job](/unfiltered/your-best-hours-belong-to-someone-else), which requires school-as-daycare. another loop.
 
 ## the template
 
@@ -48,7 +48,7 @@ this is the template [the grind](/unfiltered/the-system-filled-every-gap-you-had
 
 and the template absorbs so early that it becomes invisible. by the time you're old enough to ask "does it have to be like this?" - you've been in it for twelve years. the question feels abstract. the template feels like gravity.
 
-## what learning actually looks like
+## what learning looks like
 
 you've learned things. real things. skills you use, knowledge that matters, understanding that changed how you see.
 
@@ -56,7 +56,7 @@ how much of that came from a classroom?
 
 most of what people actually know - the deep, useful, lasting knowledge - came from wanting to know it. from curiosity, necessity, obsession, play. from trying something, failing, trying again. from someone showing you, not someone lecturing you. from the thing mattering enough that your brain held onto it.
 
-school can create those conditions. some teachers do - the ones who make you care, who connect the material to something real, who treat you like a person instead of a seat. but the *structure* of school works against those conditions. thirty kids, one teacher, standardized curriculum, standardized tests. the structure optimizes for throughput, not for the conditions under which humans actually learn.
+school can create those conditions. some teachers do - the ones who make you care, who connect the material to something real, who treat you like a person instead of a seat. but the *structure* of school works against those conditions. thirty kids, one teacher, standardized curriculum, standardized tests. the structure optimizes for throughput, not for the conditions under which humans learn.
 
 the irony is that we know what works. small groups. real problems. intrinsic motivation. mentorship. learning by doing. we've known for decades. the structure doesn't change because the structure isn't optimized for learning. it's optimized for the other things on the list.
 
@@ -88,7 +88,7 @@ some of it was valuable. some of the people were wonderful. some of the moments 
 
 and the cost is invisible because everyone paid it. you can't see the water when you've never been dry. the template feels like reality because there's no control group. no version of you that spent those years differently. no way to measure what you would have discovered about yourself if the system hadn't been telling you what to discover for twelve years before you were old enough to push back.
 
-## See also
+## the structure elsewhere
 
 - [the shelf](/unfiltered/the-parts-of-yourself-you-put-away) - the structure that teaches you to put yourself away
 - [the job](/unfiltered/your-best-hours-belong-to-someone-else) - the structure school trained you for

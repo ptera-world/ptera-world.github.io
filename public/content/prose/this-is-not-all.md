@@ -16,7 +16,7 @@ Everything that isn't here.
 
 There's no essay about grief. About chronic pain. About poverty. About race. About disability beyond a mention. About immigration. About addiction. About abuse. About war. About being a parent. About aging. About dying.
 
-Not because these don't matter. Because one person's thinking has edges. The conversations that produced these essays went certain directions and not others. The patterns that felt true came from specific experiences. The gaps are shaped like the author.
+One person's thinking has edges. The conversations that produced these essays went certain directions and not others. The patterns that felt true came from specific experiences. The gaps are shaped like the author.
 
 Any set of essays that tries to say something about the human condition is, at best, a [slice through a space too large to map](/prose/why-are-we-compressing-things). This slice captures some things clearly. It distorts others. It misses most.
 
@@ -38,7 +38,7 @@ And where I'm standing is one position. You're standing somewhere else. The thin
 
 ## What this means for you
 
-If you read something here and thought "but what about -" - you're right. Whatever you thought of, it's probably missing. And it probably matters.
+If you read something here and thought "but what about -" - you're right. Whatever you thought of, it's missing. And it matters.
 
 That's not an invitation to dismiss what *is* here. "This doesn't cover everything" doesn't mean "this covers nothing." [Partial isn't worthless.](/prose/but) But it is partial.
 
