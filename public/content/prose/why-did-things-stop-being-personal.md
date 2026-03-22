@@ -8,7 +8,7 @@ tags: [social, technology]
 
 There was a period - roughly 1995 to 2008 - when the internet was full of places that belonged to someone. Not "belonged" in the legal sense. Belonged in the sense that you could feel a person behind them. A GeoCities page with a visitor counter and a MIDI that autoplayed. A LiveJournal with custom CSS that broke in Firefox. A forum with inside jokes in the sidebar. A blog with a blogroll that was also a map of someone's world.
 
-These were ugly. Broken. [Unsophisticated.](#the-sophistication-trap) Completely, unmistakably *someone's*.
+These were ugly. Broken. Unsophisticated. Completely, unmistakably *someone's*.
 
 Where did they go?
 

@@ -14,7 +14,7 @@ Perfectionism looks like caring about quality. It might be [fear wearing a diffe
 
 The draft isn't ready. The code needs refactoring. The design needs one more pass. The essay needs a better opening. The project needs more features before anyone can see it.
 
-Always one more thing. The finish line moves every time you approach it. You might not even be able to tell if the work is bad anymore. The standard has become the point. Meeting it has become impossible by design.
+Always one more thing. The finish line moves every time you approach it. You might not even be able to tell if the work is bad anymore - the standard has become the point, and meeting it has become impossible by design.
 
 There's a pattern here: if "good enough" keeps shifting, it wasn't about quality to begin with. Quality has a definition you can measure against. Perfectionism doesn't seem to.
 
@@ -53,9 +53,9 @@ The polished output is right there. The published novel. The shipped app. The be
 
 This comparison doesn't make any sense. You're comparing your process to their product. Your beginning to their end. Your inside - full of doubt and rough edges - to their outside, which has been edited, refined, and curated.
 
-Nobody shows the bad drafts. Nobody posts the version that almost made them quit. So you assume it was easy for them. That they just... did it. That the gap between their idea and their execution was small.
+Nobody shows the bad drafts. Nobody posts the version that almost made them quit. So you assume it was easy for them. That the gap between their idea and their execution was small.
 
-It wasn't. You just can't see their struggle from where you're standing.
+It wasn't.
 
 ## The identity layer
 
@@ -91,7 +91,7 @@ Show it to someone before it's ready. Before you're comfortable. The fear of bei
 
 The hardest part is learning to tell the difference between taste and fear. When the critic in your head says "not yet," taste has specific feedback. Fear has vague dread. They feel similar and they want opposite things.
 
-And try to separate making from evaluating - don't judge while you create. Make the thing. Then, separately, with distance, look at it. The two modes interfere with each other when they run at the same time.
+Try to separate making from evaluating - don't judge while you create. Make the thing. Then, separately, with distance, look at it. The two modes interfere with each other when they run at the same time.
 
 The trap is open. You can see it. You're still in it.
 

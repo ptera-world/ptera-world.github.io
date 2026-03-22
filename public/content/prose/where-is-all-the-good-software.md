@@ -38,7 +38,7 @@ Good software requires programming *and* design *and* UX intuition *and* domain 
 
 FFmpeg exists because someone understood video codecs and systems programming and API design and cared enough to do it right. LuaJIT exists because someone understood compiler theory and CPU architecture and language design at a level that almost nobody does. Blender exists because a small group held 3D modeling, rendering, UI design, and artistic workflow in their heads simultaneously.
 
-That intersection is vanishingly rare. Any one skill is common. Two or three is uncommon. All of them at once, at high enough level, in the same person or the same small group - that almost never happens.
+That intersection is vanishingly rare. Any one skill is common. Two or three is uncommon. All of them at once, at high enough level, in the same person or the same small group — that almost never happens.
 
 ## Teams don't solve this
 

@@ -10,7 +10,7 @@ Everything on a computer is a format. Every file, every stream, every message be
 
 When formats work, they're invisible. Open a JPEG and see a photo. Play an MP4 and watch a video. The format did its job - it carried meaning from one program to another without you having to think about how.
 
-When formats don't work - when the file won't open, when the export is corrupted, when you need to get data from one tool to another and there's no path - that's when you realize [how much of "using a computer" is format translation](#the-format-problem).
+When formats don't work - when the file won't open, when the export is corrupted, when you need to get data from one tool to another and there's no path - that's when you realize how much of "using a computer" is format translation.
 
 ## The format problem
 

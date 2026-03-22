@@ -48,7 +48,7 @@ That loss is real. But it's a loss of narrative, not of content. The question is
 
 But interpolation across the entirety of human text, weighted by context, shaped by conversation, steered by a person with taste and intent - is that "just" anything? What's the threshold where interpolation stops being "just" and starts being something else? Nobody seems to say.
 
-"Just" is a rhetorical move. It performs certainty about a boundary that nobody has actually defined. At what point does pattern matching become understanding? At what point does recombination become creativity? Nobody knows. "Just" pretends someone does.
+"Just" is a rhetorical move. It performs certainty about a boundary that nobody has actually defined. At what point does pattern matching become understanding? At what point does recombination become creativity? Those are open questions. "Just" pretends they're closed.
 
 ## What if you apply it to yourself?
 
@@ -58,11 +58,11 @@ Your opinions are "just" electrochemical signals shaped by prior experience. You
 
 All technically accurate. All completely useless as descriptions of what it's like to think, create, feel, or love.
 
-Nobody talks about themselves this way. The reduction tends to get applied outward - to dismiss things that feel threatening to people. "It's just interpolation" is rarely followed by "and my thoughts are just synapses, so we're even." The reductionism is selective. And selective reductionism isn't science. It's defense.
+Nobody talks about themselves this way. The reduction tends to get applied outward - to dismiss things that feel threatening. "It's just interpolation" is rarely followed by "and my thoughts are just synapses, so we're even." The reductionism is selective. And selective reductionism isn't science. It's defense.
 
 ## The threat underneath
 
-Strip away the technical framing, and the discomfort is about boundaries.
+Strip away the technical framing, and the discomfort is about something harder to name.
 
 If a machine can produce something that felt meaningful to you - then either the machine is more than you thought, or meaning is less than you thought. Both options are uncomfortable.
 

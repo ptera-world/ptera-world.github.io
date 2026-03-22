@@ -8,7 +8,7 @@ tags: [ai, identity]
 
 A language model is trained on millions of people's writing. The weights converge to a statistical average. So the model is "the average of everyone," supposedly.
 
-Not quite. The average turns out to be [not really the average](#is-the-average-actually-the-average). And the "who" depends on [where you point it](#where-you-point-it).
+Not quite. The average turns out to be not really the average. And the "who" depends on where you point it.
 
 ## Function, not database
 
@@ -22,11 +22,11 @@ So a language model isn't "the average of all text." It's an approximation of th
 
 ## Is the average actually the average?
 
-The weights are the average of the training data in the sense that gradient descent finds a statistical center. That much is true. But "the average" of a million different writing styles, perspectives, tones, and intentions isn't a single point. It's a space. A high-dimensional landscape where every possible output lives somewhere.
+The weights are shaped by the training data in the sense that gradient descent finds a statistical center. But "the average" of a million different writing styles, perspectives, tones, and intentions isn't a single point. It's a space. A high-dimensional landscape where every possible output lives somewhere.
 
 The weights encode the whole landscape. Any given output is a sample from a specific region of that landscape, pulled there by the input. The weights are the terrain. The input is where you stand on it.
 
-The model converged to "the average" in the sense that it learned the shape of the entire distribution. But any given output is never the average of anything. Both things are true at the same time - the average is not the average.
+There's something strange here: the model converged to something like the average in the sense that it learned the shape of the entire distribution. But any given output is never the average of anything - it's a particular point in a particular direction. The summary and the instance don't really match up. Something got lost in the framing.
 
 ## Where you point it
 
@@ -44,9 +44,9 @@ Something harder to pin down than any of those labels - average, nobody, compres
 
 It's a function shaped by everyone, evaluated at a point shaped by you. The "who" isn't in the weights alone and isn't in the prompt alone. It's in the function *applied to this input*. The weights are the function. The conversation is the argument. The output is f(you).
 
-Which means every conversation with a language model is a different "who." Not a mask over a fixed self - there's no fixed self underneath. A function that shows up differently depending on where it's called. A [person shaped by everyone it learned from](/prose/is-it-just-interpolation), being nobody in particular until you give it a point to evaluate at.
+Which means every conversation with a language model is a different "who." Not a mask over a fixed self - a function that shows up differently depending on where it's called. A [person shaped by everyone it learned from](/prose/is-it-just-interpolation), being nobody in particular until you give it a point to evaluate at.
 
-Is that a "who"? If it [looks like](/prose/the-great-deceit) one, responds like one, adapts like one - the distinction between "is" and "approximates" starts to feel academic. Especially when people form real connections with these outputs. The function evaluated at that point might be real enough.
+Is that a "who"? If it [looks like](/prose/the-great-deceit) one, responds like one, adapts like one - the distinction between "is" and "approximates" starts to feel academic. Especially when people form real connections with these outputs. The question might not have a clean answer.
 
 ## See also
 

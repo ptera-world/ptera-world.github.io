@@ -16,7 +16,7 @@ It is. [But.](/prose/but)
 
 One-sided claims feel strong. They're easy to hold. You pick a side, defend it, and the world is simple.
 
-But anyone who's actually worked with both knows: it depends. On context, on constraints, on what you're optimizing for. The person who says "X is better" has usually just found a context where X works and stopped looking.
+But anyone who's worked with both knows: it depends. On context, on constraints, on what you're optimizing for. The person who says "X is better" has usually just found a context where X works and stopped looking.
 
 So someone says: "it's not one-sided. There are tradeoffs." And that feels like growth. You've moved from simple to nuanced.
 
@@ -44,22 +44,22 @@ Where does "enjoys small groups but performs well in large ones" sit on the intr
 
 So someone says: "it's not a spectrum, it's multifaceted." And they're right.
 
-## It's not a spectrum, it's multifaceted
+## It's multifaceted
 
-Now we're somewhere. Multiple axes. Multiple dimensions. You're not a point on a line - you're a point in a high-dimensional space that can't be flattened without losing information.
+Multiple axes. Multiple dimensions. You're not a point on a line — you're a point in a high-dimensional space that can't be flattened without losing information.
 
 Your [identity](/prose/what-are-labels-anyway) isn't a label or a spectrum. It's a constellation of traits, experiences, contexts, and contradictions that shift depending on when and where and who you're with. A person isn't "anxious." A person is anxious in meetings, calm with close friends, energized by creative work, drained by admin, nostalgic in winter, and a completely different person at 3 AM than at 3 PM.
 
 A project isn't "good" or "bad" or "somewhere in between." It's useful in these ways, limited in those ways, elegant here, messy there, perfect for this use case, terrible for that one.
 
-Multifaceted is honest. It respects complexity. It refuses to compress.
+Multifaceted is honest. It refuses to compress.
 
 But then the question becomes:
 
 ## Why are we compressing things?
 
-Every step in this progression - one-sided, binary, spectrum, multifaceted - is a level of compression. Each step decompresses a little. Each step gets closer to reality. But each step is also harder to hold in your head, harder to communicate, harder to act on.
+Every step in this progression — one-sided, binary, spectrum, multifaceted — is a level of compression. Each step decompresses a little. Each step gets closer to reality. But each step is also harder to hold in your head, harder to communicate, harder to act on.
 
-We compress because we have to. Brains are finite. Conversations are finite. Decisions require reducing options. But - [there's always a but](/prose/but) - compression has costs. The [label](/prose/what-are-labels-anyway) that becomes a ceiling. The binary that erases the middle. The "just" that [shrinks something enormous](/prose/is-it-just-interpolation) to something dismissable.
+We compress because we have to. Brains are finite. Conversations are finite. Decisions require reducing options. But — [there's always a but](/prose/but) — compression has costs. The [label](/prose/what-are-labels-anyway) that becomes a ceiling. The binary that erases the middle. The "just" that [shrinks something enormous](/prose/is-it-just-interpolation) to something dismissable.
 
 [What are we losing?](/prose/why-are-we-compressing-things)

@@ -52,7 +52,7 @@ This isn't a hard technical problem. It's a [metaphor problem](/prose/why-is-sof
 
 Imagine opening your note app and instead of a blank page, you see your thoughts as objects in space. Each one has a shape based on what it is - a question, an idea, a reference, a task. They cluster naturally by relationship. You can zoom into any cluster and see the details. You can draw connections between things that relate. You can see, at a glance, not just *what you wrote* but *how it connects*.
 
-Some tools try this. Mind maps. Graph-based note apps. Spatial canvases. They're all reaching for the same thing: information that isn't flat. But they're still working within the document metaphor. The canvas is a page. The graph is rendered on a page. The mind map is a document that happens to branch.
+Some tools try this. Mind maps. Graph-based note apps. Spatial canvases. They're all reaching for the same thing: information that isn't flat. But they tend to still work within the document metaphor. The canvas is a page. The graph is rendered on a page. The mind map is a document that happens to branch.
 
 The metaphor runs deep. Even the alternatives tend to be documents pretending to be something else.
 
@@ -64,7 +64,7 @@ And familiarity is a [powerful ratchet](/prose/why-do-i-reinvent-everything#how-
 
 Breaking it requires asking a question that sounds absurd: "what if we didn't use pages?" It sounds absurd because *of course* we use pages. How else would you organize information?
 
-In objects and relationships. Like your brain already does. Like the information already is. The page was never the natural shape of thought. It was the natural shape of *paper*. And we're not using paper anymore.
+In objects and relationships. Like the information already is. The page was never the natural shape of thought. It was the natural shape of *paper*. And we're not using paper anymore.
 
 ## See also
 

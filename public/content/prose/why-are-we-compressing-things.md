@@ -8,7 +8,7 @@ tags: [social, design, identity]
 
 Everything gets compressed. People into [labels](/prose/what-are-labels-anyway). Ideas into slogans. Experiences into metrics. Relationships into status. Software into features. Life into a [score](/prose/whats-actually-wrong).
 
-Sometimes this is necessary. Sometimes it's [lazy](#when-is-it-lazy). Sometimes it's [harmful](#when-is-it-harmful). And it's often [hard to tell which](#can-you-tell) until it's too late.
+Sometimes this is necessary. Sometimes it's lazy. Sometimes it's harmful. And it's often hard to tell which until it's too late.
 
 ## Compression is cognition
 
@@ -18,7 +18,7 @@ Compression is cognition. Categories, heuristics, stereotypes, models, summaries
 
 So compression isn't the enemy. It's the cost of being a finite mind in an infinite world.
 
-The question isn't whether to compress. It's [what you lose when you do](#what-gets-lost).
+The question isn't whether to compress. It's what you lose when you do.
 
 ## What gets lost
 
@@ -71,7 +71,7 @@ The alternative is:
 - Decompress when it matters. You don't need full fidelity all the time. But when you're making a decision that affects someone, when you're [judging yourself](/prose/what-are-labels-anyway), when something important hinges on it - take the time to look past the compression.
 - Build things that resist compression. [Software that shows complexity](/prose/why-is-software-hard) instead of hiding it. [Sims that model the mess](/prose/whats-actually-wrong) instead of flattening it. [Graphs instead of lists](/prose/its-not-that-simple). Systems that let reality be as complicated as it is.
 
-The purpose of life is to [be yourself](/prose/whats-the-purpose-of-life). Compression is the thing that keeps turning you into a summary. The resistance is staying whole.
+The compression will keep happening. That's not the problem. The problem is forgetting it's a compression at all.
 
 ## See also
 

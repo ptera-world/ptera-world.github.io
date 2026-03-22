@@ -28,7 +28,7 @@ Web apps are often worse - slower, more limited, ad-plastered. But the distribut
 
 No installation. No commitment. No leftover files. No uninstaller that doesn't fully uninstall. The web won as a distribution mechanism, not as a platform. Everything had to become a web app to take advantage of that zero-friction entry, whether or not the web was the right runtime for the job.
 
-There's something telling about "resize image online" as a search query. It's someone describing a *capability they want*, not an *app they want*. The intent is pure. The word "app" doesn't appear. "Install" doesn't appear. Just: I have this image, I want it smaller, make that happen.
+There's something telling about "resize image online" as a search query. Someone describing a *capability they want*, not an *app they want*. The intent is pure. The word "app" doesn't appear. "Install" doesn't appear. Just: I have this image, I want it smaller, make that happen.
 
 ## What if you could just try?
 
@@ -36,9 +36,9 @@ There's a tool - well, more of a concept - that collapses the gap between "I won
 
 The technology underneath - Nix, specifically `nix run` - treats programs as ephemeral. You don't "install" them in the traditional sense. You bring them into existence when you need them. The system doesn't accumulate [cruft over time](/prose/what-do-we-keep-losing). There's no registry rot, no leftover DLLs, no AppData folders from programs you forgot you had.
 
-And there's a distinction that this model makes visible: **try** is different from **install**. Right now, for most people, every app is a commitment. Download, install, give it your email, discover it's not what you wanted, uninstall (and hope). The friction of that loop means people just don't explore. They google "best app for X" and pick the first result because experimentation is too expensive.
+And there's a distinction this model makes visible: **try** is different from **install**. Right now, for most people, every app is a commitment. Download, install, give it your email, discover it's not what you wanted, uninstall (and hope). The friction of that loop means people just don't explore. They google "best app for X" and pick the first result because experimentation is too expensive.
 
-When trying is free, the whole relationship with software discovery changes. You can evaluate five tools in the time it currently takes to install one. The commitment comes after the experience, not before.
+When trying is free, the whole relationship with software discovery changes. You can evaluate five tools in the time it currently takes to install one.
 
 ## Why does this feel impossible on most systems?
 
@@ -46,7 +46,7 @@ macOS has Homebrew - good, close to frictionless. But it's still install-first, 
 
 And Nix, which gets the model right - ephemeral, reproducible, fully reversible - has a [learning curve that keeps most people out](/prose/why-is-software-hard). The concept is accessible. The implementation assumes you already think in terms of derivations and store paths and flake inputs. The gap between "this is how it should work" and "I can actually use this" is still wide.
 
-The funny thing is that Nix runs everywhere. macOS, any Linux distro, WSL. It's not a platform-specific solution - it's a *model* that happens to travel across platforms. One package manager, same commands, same guarantees, doesn't care what's underneath. That's rare. Most tooling picks a side.
+The funny thing is that Nix runs everywhere. macOS, any Linux distro, WSL. One package manager, same commands, same guarantees, doesn't care what's underneath. That's rare. Most tooling picks a side.
 
 ## Underneath the installation problem
 

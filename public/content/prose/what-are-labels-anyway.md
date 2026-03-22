@@ -8,7 +8,7 @@ tags: [social]
 
 "I'm not a math person." You probably have one of these. Something you picked up somewhere — a teacher, a bad afternoon, a personality quiz — and just kept. It didn't feel like picking something up. It felt like noticing something that was already true.
 
-That's the thing about self-labels. They disguise themselves as observations. "I'm awkward." "I'm not creative." "I'm the anxious one." These sound like self-awareness. They sound like someone who's done the work of understanding themselves. And maybe they are that. But they're also doing something else at the same time.
+That's the thing about self-labels. They disguise themselves as observations. "I'm awkward." "I'm not creative." "I'm the anxious one." These sound like self-awareness. Like someone who's done the work of understanding themselves. And maybe they are that. But they're also doing something else at the same time.
 
 ## Where do they come from?
 
@@ -34,7 +34,7 @@ Here's where it gets slippery. You can probably see how labels flatten other peo
 
 Your own labels feel earned though. You lived the experiences. You observed the patterns. Who would know better than you?
 
-You. You would also know worse than you. You're the least objective observer of yourself. You see yourself through the labels you've already applied. Confirmation bias runs deep when the subject is you. And there's comfort in labels — they're stable, they explain things, they excuse things. "I can't help it, I'm just [label]." The label becomes a refuge from the discomfort of uncertainty, from the responsibility of change. Letting go of a self-label means admitting you might have been wrong about yourself for a long time, and that the story you've been telling isn't the only one.
+You. You would also know worse than you. You're among the least objective observers of yourself — you see yourself through the labels you've already applied. Confirmation bias runs deep when the subject is you. And there's comfort in labels — they're stable, they explain things, they excuse things. "I can't help it, I'm just [label]." The label becomes a refuge from the discomfort of uncertainty, from the responsibility of change. Letting go of a self-label means admitting you might have been wrong about yourself for a long time, and that the story you've been telling isn't the only one.
 
 That's uncomfortable. It's supposed to be.
 

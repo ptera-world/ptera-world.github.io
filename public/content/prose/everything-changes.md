@@ -28,7 +28,7 @@ There's nowhere to stay, though.
 
 ## Why is this hard?
 
-Because brains are prediction machines. They build models of the world and use them to navigate it. The models need stability to work. If everything changes constantly, the model is never accurate, and the brain feels unsafe.
+Something in how we navigate the world seems to depend on models that stay put. A world where everything is constantly shifting is hard to move through - the model keeps going stale, the ground keeps moving, and there's a kind of vertigo that comes with that.
 
 So we freeze things. [Labels](/prose/what-are-labels-anyway) freeze identity. Habits freeze behavior. Beliefs freeze understanding. Institutions freeze culture. We build structures - mental, social, physical - designed to resist change. And they work, for a while, until they don't. Which is strange when you think about it, because we built them knowing they'd eventually fail. Or maybe we didn't know. Maybe every frozen thing feels permanent from the inside.
 
@@ -46,7 +46,7 @@ The [insight trap](/prose/why-is-change-so-hard) is partly about this. People wa
 
 The things you've lost - people, possibilities, versions of yourself - weren't taken from you by some external force. They changed. Or you changed. Or the context changed. And what existed in the old configuration doesn't exist in the new one.
 
-I keep writing "the old configuration" like that's a neutral way to describe someone who isn't in your life anymore. It's not neutral. You know it's not. The grief is real and it doesn't care about your framework for understanding it.
+"The old configuration" is a cold way to describe someone who isn't in your life anymore. The grief is real and it doesn't care about your framework for understanding it.
 
 But here's what sits next to that: every skill you've learned, every relationship that deepened, every time you surprised yourself - that was the same mechanism. Not "the flip side," not a consolation prize. Literally the same thing happening. The version of you that's capable of new things is not the version that existed before. Something was lost - comfort, certainty, the old self-concept - and something was gained.
 

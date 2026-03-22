@@ -6,13 +6,13 @@ tags: [design, social]
 
 # The right tool for the job.
 
-Everyone's heard this. Said it, too. "Use the right tool for the job." It sounds like practical wisdom. Sometimes [it is](#when-its-true). Mostly [it isn't](#when-its-not). And the way it's usually deployed has almost nothing to do with tools or jobs - it's about [defending territory](#whats-being-said).
+Everyone's heard this. Said it, too. "Use the right tool for the job." It sounds like practical wisdom. Sometimes [it is](#when-its-true). Mostly [it isn't](#when-its-not). And the way it's usually deployed has almost nothing to do with tools or jobs — it's about [defending territory](#whats-being-said).
 
 ## When it's true
 
 A screwdriver is better than a hammer for screws. A database is better than a spreadsheet for a million rows. A compiled language is better than a scripting language for a game engine.
 
-When the constraints are clear, the domain is well-understood, and the options are different in ways that matter - yes. The right tool for the job. Obvious. Useful. Done.
+When the constraints are clear, the domain is well-understood, and the options are different in ways that matter — yes. The right tool for the job. Obvious. Useful. Done.
 
 This accounts for maybe 5% of the times people say it.
 
@@ -35,7 +35,7 @@ What job? The person doesn't have a job yet. They're trying to learn. The advice
 - **"You're doing it wrong."** Phrased as helpful advice instead of judgment.
 - **"I don't want to engage with why you chose what you chose."** Phrased as if the conversation is already settled.
 
-It's [compression](/prose/why-are-we-compressing-things). A complex decision involving context, constraints, experience, goals, available time, existing knowledge, team dynamics, and personal preference - compressed to a platitude that pretends the decision is obvious.
+It's [compression](/prose/why-are-we-compressing-things). A complex decision involving context, constraints, experience, goals, available time, existing knowledge, team dynamics, and personal preference — compressed to a platitude that pretends the decision is obvious.
 
 ## The myth of the right tool
 
@@ -56,7 +56,7 @@ And "wrong" is usually "different." Someone built a thing in a language you woul
 
 ## The better question
 
-"The right tool for the job" tends to end the conversation. The more interesting question - the one it replaces - is: "what tradeoffs did you make, and why?"
+"The right tool for the job" tends to end the conversation. The more interesting question — the one it replaces — is: "what tradeoffs did you make, and why?"
 
 That question acknowledges complexity. It treats the other person as someone who made decisions rather than someone who failed to follow the obvious path. It opens dialogue instead of closing it.
 
@@ -66,9 +66,9 @@ But it's harder. It requires engaging. It requires admitting that you might not 
 
 ## Tools shape thinking
 
-There's a deeper layer worth looking at. "Right tool for the job" assumes the tool is neutral - a means to an end. Pick it up, do the job, put it down. That's not how tools work.
+There's a deeper layer. "Right tool for the job" assumes the tool is neutral — a means to an end. Pick it up, do the job, put it down. That's not quite how tools work.
 
-Tools shape how people think about the problem. A spreadsheet gets you thinking in grids. A relational database gets you thinking in tables. A graph database gets you thinking in relationships. A Lisp gets you thinking in transformations. The tool doesn't just solve the problem - it defines what the problem looks like.
+Tools shape how people think about the problem. A spreadsheet gets you thinking in grids. A relational database gets you thinking in tables. A graph database gets you thinking in relationships. A Lisp gets you thinking in transformations. The tool doesn't just solve the problem — it defines what the problem looks like.
 
 So "the right tool for the job" has a circularity. The job looks different depending on which tool you're holding. The "right" tool is often just the one that makes the job look like something you already know how to do.
 

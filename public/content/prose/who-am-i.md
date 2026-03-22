@@ -10,7 +10,7 @@ Most people have tried to answer this. Personality tests. Journaling. Therapy. I
 
 But did it stick? Or did it feel right for a while and then stop fitting?
 
-That might be because "who am I" isn't a question with an answer. It's [not that kind of question](#why-isnt-it-that-kind-of-question). The self isn't something you find - it's something that [keeps emerging](#how-does-the-self-keep-emerging). And the way it emerges isn't through thinking. It's through [three things](#building-a-self) that feed each other.
+That might be because "who am I" isn't a question with an answer. Not that kind of question. The self isn't something you find - it's something that keeps emerging. And the way it emerges isn't through thinking alone.
 
 ## Why isn't it that kind of question?
 

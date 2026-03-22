@@ -22,7 +22,7 @@ That space still exists. But it's smaller. And the things that fill the biggest 
 
 Budgets went up. Distribution went global. The cost of alienating anyone went up with them. A $200 million film can't afford to be weird. A AAA game can't afford to confuse. An algorithm can't afford to show you something you might not click on.
 
-So everything converged on what works. And "what works" means "what the most people will consume without friction." The most frictionless thing, which is rarely the best or the most interesting. The [system](/prose/whats-actually-wrong) optimized for engagement, and engagement selected against surprise.
+So everything converged on what works. And "what works" means "what the most people will consume without friction." The most frictionless thing is rarely the most interesting. The [system](/prose/whats-actually-wrong) optimized for engagement, and engagement selected against surprise.
 
 The MCU isn't bad. That's what makes it hard to talk about. It's competent. It hits every beat. It's just the same beat, every time. The formula works, so everything becomes the formula. Sequels, franchises, proven IP, tested to remove every edge. The economics select against [intent](/prose/what-is-art) that doesn't serve the metric.
 
@@ -44,7 +44,7 @@ It's film, games, music - it's everything.
 
 YouTube thumbnails converged on the same face. Game design converged on the same open world with quest markers. Pop music converged on the same four producers. Film converged on the same franchise structure. Content - the word itself is the [compression](/prose/why-are-we-compressing-things) - converged on whatever the algorithm rewards.
 
-Each one, individually, is rational. Each creator optimizing for reach. Each platform optimizing for retention. Each decision making sense in isolation. And the aggregate is a culture where everything is competent and nothing is special. Nobody chose blandness. The system selected for it.
+Each one, individually, is rational. Each creator optimizing for reach. Each platform optimizing for retention. Each decision making sense in isolation. The aggregate is a culture where everything is competent and nothing is special. Nobody chose blandness. The system selected for it.
 
 ## Where the special things went
 

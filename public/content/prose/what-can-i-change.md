@@ -58,13 +58,13 @@ Then figure out what those people respond to. Not what they should care about. W
 
 Look for the bottleneck. There's usually one thing that, if it moved, would unstick a bunch of other things. Sometimes it's a person, sometimes it's a policy, sometimes it's just that nobody's said the obvious thing out loud yet.
 
-And check whether you're alone. There's almost always latent support. People who noticed the same problem and assumed nobody else cared. Finding each other changes what's possible. So does knowing what's already been tried — what didn't work, and what's different now that might make it worth trying again.
+And check whether you're alone. There's almost always latent support — people who noticed the same problem and assumed nobody else cared. Finding each other changes what's possible. So does knowing what's already been tried — what didn't work, and what's different now that might make it worth trying again.
 
 Sometimes the leverage point is obvious. Sometimes it takes time to find. Sometimes you discover it by trying things and seeing what moves.
 
 ## Available moves
 
-Given what you want to change, your relationship to it, and where the leverage points are - what can you do?
+Given what you want to change, your relationship to it, and where the leverage points are — what can you do?
 
 Some options that exist:
 

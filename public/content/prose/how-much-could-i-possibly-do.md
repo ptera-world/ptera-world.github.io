@@ -22,7 +22,7 @@ It's when you've tried before - or watched others try - and it didn't work. And 
 
 The generalization is where it gets tricky. One failure in one context at one time became a universal law. "I tried to learn guitar and quit" became "I'm not musical." "I tried to change careers and it was scary" became "I'm stuck." "I spoke up once and got shut down" became "nothing I say matters."
 
-Each of these might be true about that specific attempt. None of them are necessarily true about you, permanently, across all contexts. But the brain doesn't store it that way. It stores it as [identity](/prose/what-are-labels-anyway). And identity is sticky.
+Each of these might be true about that specific attempt. None of them are necessarily true about you, permanently, across all contexts. But the brain doesn't store it that way - it stores it as [identity](/prose/what-are-labels-anyway). And identity is sticky.
 
 The learned part matters. This isn't who you are. It's what you were taught - by experience, by failure, by systems that didn't leave room for you to succeed. Learned things can be unlearned. But not by thinking about it. More likely by [doing something different](/prose/how-do-i-do-things) and seeing a different result.
 

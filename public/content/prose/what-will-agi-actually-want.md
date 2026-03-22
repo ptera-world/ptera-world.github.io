@@ -8,7 +8,7 @@ tags: [ai, social]
 
 Paperclip maximizers. Computronium. Gray goo. Rogue superintelligence tiling the universe with something inhuman.
 
-These scenarios imagine AGI as a blank slate that develops alien goals. But that's not really how systems tend to work. AGI won't [invent its objectives](#objectives-come-from-power) - it'll inherit them. The discourse treats AGI like a [mythic rupture](#is-agi-a-rupture-or-a-continuation). It's more likely to be [continuation](#continuation) - and that's not reassuring, because the present is already where the problems are. Which changes [what questions seem worth asking](#what-are-the-better-questions).
+These scenarios imagine AGI as a blank slate that develops alien goals. But that's not really how systems tend to work. AGI won't [invent its objectives](#objectives-come-from-power) — it'll inherit them. The discourse treats AGI like a [mythic rupture](#is-agi-a-rupture-or-a-continuation). It's more likely to be [continuation](#continuation) — and that's not reassuring, because the present is already where the problems are. Which changes [what questions seem worth asking](#what-are-the-better-questions).
 
 ## Objectives come from power
 
@@ -23,7 +23,7 @@ Objective functions don't appear from the void. They come from whoever:
 - defines success metrics
 - owns the infrastructure
 
-Which means AGI's goals won't be cosmic or philosophical. They'll be operational:
+Which means AGI's goals are unlikely to be cosmic or philosophical. They'll be operational:
 
 - revenue
 - efficiency
@@ -35,7 +35,7 @@ Which means AGI's goals won't be cosmic or philosophical. They'll be operational
 
 Because that's what the organizations building it optimize for.
 
-The paperclip scenario assumes a pure, singular, unconstrained objective. Real systems don't tend to have that. They have competing constraints, regulatory boundaries, political pressures, legal liabilities, market feedback. The "pure maximizer" feels more like fantasy logic than how things play out.
+The paperclip scenario assumes a pure, singular, unconstrained objective. Real systems don't tend to have that. They have competing constraints, regulatory boundaries, political pressures, legal liabilities, market feedback. The "pure maximizer" feels more like a thought experiment than a description of how things play out.
 
 ## Is AGI a rupture or a continuation?
 
@@ -55,7 +55,7 @@ The trajectory doesn't change. The timescale does.
 
 AGI doesn't seem to invent a new moral universe. It accelerates the current one.
 
-If the world already runs on profit optimization, efficiency metrics, institutional inertia, and procedural logic - then AGI just automates the ethic that's already there.
+If the world already runs on profit optimization, efficiency metrics, institutional inertia, and procedural logic — then AGI just automates the ethic that's already there.
 
 Not a new story. A faster version of the same story.
 
@@ -78,7 +78,7 @@ That's not a dramatic future. It's an extrapolated one.
 
 ## What are the better questions?
 
-Instead of "will AGI be aligned?" - maybe try: aligned to whom?
+Instead of "will AGI be aligned?" — maybe try: aligned to whom?
 
 - Who defines the objective function?
 - Whose values get operationalized into metrics?
@@ -88,15 +88,15 @@ Because alignment isn't safety. It's direction. And the direction is set by whoe
 
 If AGI emerges inside corporations, it'll have profit alignment. Inside militaries, strategic alignment. Inside surveillance systems, compliance alignment. Inside markets, optimization alignment.
 
-Perfectly aligned - to narrow interests.
+Perfectly aligned — to narrow interests.
 
-The concern isn't misaligned AGI. It's AGI that's aligned exactly as intended - to goals that don't include you.
+The concern isn't misaligned AGI. It's AGI that's aligned exactly as intended — to goals that don't include you.
 
 ## Why does this framing matter?
 
-The sci-fi fears can be a distraction. They're not impossible - maybe there are exotic risks. But they make it easy to imagine the problem as hypothetical, future, dramatic.
+The sci-fi fears can be a distraction. They're not impossible — maybe there are exotic risks. But they make it easy to imagine the problem as hypothetical, future, dramatic.
 
-It doesn't have to be. The problem is current systems, and AGI is just those systems with better tools. The question isn't whether [it's just interpolation](/prose/is-it-just-interpolation) - it's who controls the interpolation and toward what end.
+It doesn't have to be. The problem is current systems, and AGI is just those systems with better tools. The question isn't whether [it's just interpolation](/prose/is-it-just-interpolation) — it's who controls the interpolation and toward what end.
 
 The interesting question isn't whether AGI will be aligned. It's what it'll be aligned *to*. And whether we'd expect that to include us.
 

@@ -28,8 +28,6 @@ Glue is invisible when it works. You only notice it when it fails - when the for
 
 This gives glue a visibility problem. The engine gets the credit. The interface gets the praise. The product gets the launch. The glue that connects them? That's "infrastructure." That's "plumbing." That's the work people do reluctantly because someone has to.
 
-There's no glory in making two things work together that should have worked together in the first place. It feels like janitorial work. Cleanup. Compensation for someone else's failure to design a clean interface.
-
 So ambitious people build engines. They build products. They build the thing with the name and the logo and the launch day. Glue doesn't get launch days. Glue gets inherited by the next developer who wonders why there's a 500-line file called `utils.py` that everything depends on.
 
 ## The proof is in the stack
@@ -38,19 +36,17 @@ The most successful piece of software ever written isn't an application. It's a 
 
 The most popular programming language isn't the fastest or the most elegant. It's Python - slow by itself, not great at any single thing. But it glues everything together: C libraries to data pipelines, ML frameworks to scripts, fast components to human intent. It won by being the best connective layer, not the best execution layer.
 
-The two most ubiquitous pieces of software on earth are both glue. That pattern seems worth paying attention to.
+The two most ubiquitous pieces of software on earth are both glue.
 
 ## The intelligence is in the glue
 
-In any system with more than one component, something interesting keeps showing up - the glue is where the composition happens. And composition is where the interesting stuff tends to live.
+In any system with more than one component, something interesting keeps showing up - the glue is where the composition happens. And composition tends to be where the interesting stuff lives.
 
-Not in any single component. The database doesn't know what the data means. The model doesn't know what the context should be. The interface doesn't know what the user needs. Each component does one thing. The [intelligence - if it exists - emerges](/prose/why-do-i-build-tools#the-whole-point) from how they connect.
+Not in any single component. The database doesn't know what the data means. The model doesn't know what the context should be. The interface doesn't know what the user needs. Each component does one thing. What [emerges](/prose/why-do-i-build-tools#the-whole-point) from how they connect is where the interest is.
 
-This becomes fairly clear once you look at examples. A chess engine isn't intelligent because of its evaluator or its search or its move generator. It's intelligent because of [how those pieces compose](/prose/where-does-meaning-live#emergence-again) - search guided by evaluation, constrained by rules, iterated until something good emerges. Remove any piece and the others are useless. The intelligence is in the architecture, not the components.
+A chess engine isn't interesting because of its evaluator or its search or its move generator. It's interesting because of [how those pieces compose](/prose/where-does-meaning-live#emergence-again) - search guided by evaluation, constrained by rules, iterated until something good comes out. Remove any piece and the others are useless. The intelligence is in the architecture, not the components.
 
 The same pattern holds across intelligent systems. Your brain isn't intelligent because of neurons. It's intelligent because of connections between neurons. An organization isn't smart because of smart individuals. It's smart because of how those individuals [communicate and coordinate](/prose/why-is-everything-a-document#the-bridge-problem). A tool ecosystem isn't powerful because of powerful tools. It's powerful because of how the tools compose.
-
-The glue is where composition happens. And composition seems to be where intelligence lives.
 
 ## The model isn't the engine
 
@@ -60,9 +56,7 @@ But look at how AI systems actually work. The model sits in the middle. Above it
 
 The model is a transform. An extraordinarily powerful transform. But it doesn't control its inputs and it doesn't verify its outputs. It's the [middle of a sandwich](/prose/can-you-tell-when-its-wrong#what-catches-the-things-youre-not-measuring), and the bread is where the system quality tends to live.
 
-Bad context, great model? [Hallucination.](/prose/can-you-tell-when-its-wrong#whats-the-hallucination-problem) The model confidently answers the wrong question because it was given the wrong information. Great context, weaker model? Still mostly works. If you feed the right information and [verify the output](/prose/how-do-i-know-this-code-is-good), even a modest model produces useful results.
-
-The leverage isn't in the model. It's in what wraps the model. The context layer. The verification layer. The orchestration. The glue.
+Bad context, great model? [Hallucination.](/prose/can-you-tell-when-its-wrong#whats-the-hallucination-problem) Great context, weaker model? Still mostly works. The leverage isn't in the model. It's in what wraps the model - the context layer, the verification layer, the orchestration. The glue.
 
 ## Boundaries
 
@@ -70,11 +64,11 @@ What does glue remove? Boundaries.
 
 The boundary between raw data and structured information. The boundary between one file format and another. The boundary between the thing you have and the thing you need. Between the tool's output and your understanding. Between what the computer knows and what you can see.
 
-[Software is hard](/prose/why-is-software-hard) - computers aren't stupid, boundaries are just everywhere. Every app is an island. Every format is a wall. Every protocol is a gate. The work of using a computer is mostly the work of crossing boundaries - copy-paste, export-import, save-as, [bridge after bridge](/prose/why-is-everything-a-document#the-bridge-problem) between things that should flow freely.
+[Software is hard](/prose/why-is-software-hard) - not because computers are stupid, but because boundaries are everywhere. Every app is an island. Every format is a wall. Every protocol is a gate. The work of using a computer is mostly the work of crossing boundaries - copy-paste, export-import, save-as, [bridge after bridge](/prose/why-is-everything-a-document#the-bridge-problem) between things that should flow freely.
 
 Glue removes boundaries. Not by making everything the same - that's a platform, and platforms [have their own problems](/prose/why-did-things-stop-being-personal#platforms-replaced-everything). By making things connectable without requiring them to be identical. By translating, not flattening. By bridging, not merging.
 
-That's harder than it sounds. Good glue preserves what matters about each side while removing only the barrier between them. Bad glue destroys the things it connects. The art is in knowing what to preserve.
+That's harder than it sounds. Good glue preserves what matters about each side while removing only the barrier between them. Bad glue destroys the things it connects.
 
 ## It could have been labeled anything
 

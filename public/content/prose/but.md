@@ -16,7 +16,7 @@ Everything turns on "but."
 
 Everything before "but" is preamble. Everything after is what the person actually means. The first half is performance - the appearance of fairness, balance, openness. The second half is the truth.
 
-People pick up on this instinctively. When someone starts with a compliment and the "but" is coming, the chest tightens before the word lands. Everyone already knows what's next. The compliment was just the runway.
+Something in the way we process speech seems to work this way. When someone starts with a compliment and the "but" is coming, the chest tightens before the word lands. Everyone already knows what's next. The compliment was just the runway.
 
 ## The other direction
 
@@ -42,7 +42,7 @@ The dismisser's "but" always points toward negation. "That's impressive, *but* i
 
 And then there's the "but" that points forward. "This is hard. *But* I'm doing it." "I failed. *But* I learned something." "It's not done. *But* it exists."
 
-Same word. The direction is a choice - one most people don't notice they're making.
+Same word. The direction is something most people don't notice they're choosing.
 
 ## There's always a but
 

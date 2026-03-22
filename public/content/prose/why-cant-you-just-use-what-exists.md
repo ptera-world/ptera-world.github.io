@@ -56,7 +56,7 @@ Using someone else's tool means your output has their fingerprints on it, not yo
 
 Building your own means the choices are yours. Even if the result is worse by every objective measure, it's *yours* in a way that using someone else's work can never be. The shape reflects your thinking. The architecture embodies your understanding. The limitations are your limitations, not inherited ones.
 
-This sounds like ego. And maybe it partly is. But it's also the mechanism by which [new ideas enter the world](/prose/there-used-to-be-two-kinds-of-programmer#what-got-lost). A lot of new tools started as someone refusing to use what existed - they didn't think they could do better, they wanted to think differently about the problem. The personal motivation and the creative output are tangled up in the same impulse.
+This sounds like ego. And maybe it partly is. But it's also the mechanism by which [new ideas enter the world](/prose/there-used-to-be-two-kinds-of-programmer#what-got-lost). A lot of new tools started as someone refusing to use what existed - not because they thought they could do better, but because they wanted to think differently about the problem. The personal motivation and the creative output are tangled up in the same impulse.
 
 ## When to use what exists
 

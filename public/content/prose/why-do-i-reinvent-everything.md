@@ -48,7 +48,7 @@ Good software sometimes wins. But winning locks everything in. The winner's inte
 
 [Excel doesn't need to be freeform](/prose/why-is-software-hard). But it is, because VisiCalc was. Notes apps don't need to be linear documents. But they are, because paper was. Filesystems don't need to be hierarchical. But they are, because directories were easier to implement than tags in 1970.
 
-Every reinvention is a question: "what if this assumption wasn't load-bearing?" Sometimes it is. Sometimes the assumption exists for deep structural reasons and you discover those reasons the hard way. *That's also valuable.* Now you know why it's like this, instead of just accepting that it is.
+Every reinvention is a question: "what if this assumption wasn't load-bearing?" Sometimes it is. Sometimes the assumption exists for deep structural reasons and you discover those reasons the hard way. That's also valuable. Now you know why it's like this, instead of just accepting that it is.
 
 ## The things we keep losing
 

@@ -18,9 +18,9 @@ You'd think understanding the problem would be most of the solution. It really d
 
 The knowing is real. The behavior doesn't change. Why?
 
-Because the behavior isn't driven by the knowing part of your brain. It's driven by older systems — habit, comfort, fear, identity. Those systems don't update when you have an insight. They update when you have a new *experience*, repeated enough times to overwrite the old pattern.
+The behavior isn't driven by the knowing part of the brain. It's driven by older systems — habit, comfort, fear, identity. Those systems don't update when you have an insight. They update when you have a new *experience*, repeated enough times to overwrite the old pattern.
 
-Insight is necessary. But it's the beginning, not the end, and it's annoying how much distance there is between those two things.
+Insight is necessary. But it's the beginning, not the end, and there's a lot of distance between those two things.
 
 ## The insight trap
 
@@ -28,21 +28,21 @@ There's a version of self-awareness that can actually make things worse.
 
 You notice the pattern. You analyze it. You understand the childhood origin, the trigger, the defense mechanism, the secondary gain. You can narrate your own dysfunction perfectly.
 
-And then... you keep doing it. Except now you're watching yourself do it, which honestly might be worse. Aware, articulate, stuck.
+And then... you keep doing it. Except now you're watching yourself do it. Aware, articulate, stuck.
 
 This is the insight trap: understanding becomes a substitute for change. "I know why I do this" feels like progress. The behavior hasn't moved. It's a more sophisticated version of staying the same — and it's harder to spot because you feel like you're working. [Perfectionism](/prose/why-is-perfectionism-a-trap) has a similar structure, endlessly refining the understanding, never acting on it.
 
-The trap is especially tricky because it *looks* like growth. You're self-aware! You're reflective! You've done the work! The [label](/prose/what-are-labels-anyway) shifted from "I'm anxious" to "I understand my anxiety patterns" — and the anxiety is the same.
+The trap is especially tricky because it *looks* like growth. You're self-aware. You're reflective. You've done the work. The [label](/prose/what-are-labels-anyway) shifted from "I'm anxious" to "I understand my anxiety patterns" — and the anxiety is the same.
 
 ## Why doesn't knowing translate to doing?
 
 The gap between understanding and doing seems to be physical, not intellectual.
 
-Changing a pattern means doing the uncomfortable thing. Not once — repeatedly. Until the new thing feels less uncomfortable than the old thing. I think that might be the whole mechanism. I'm not sure there's more to it than that, which is sort of maddening.
+Changing a pattern means doing the uncomfortable thing. Not once — repeatedly. Until the new thing feels less uncomfortable than the old thing. That might be the whole mechanism. There might not be more to it than that, which is sort of maddening.
 
-But "doing the uncomfortable thing" is exactly what every system in your body resists. You built these patterns because they solved something — maybe badly, maybe at a cost, but they worked. Your nervous system doesn't care about your insights. It cares about what's familiar.
+But "doing the uncomfortable thing" is exactly what every system in the body resists. You built these patterns because they solved something — maybe badly, maybe at a cost, but they worked. The nervous system doesn't care about insights. It cares about what's familiar.
 
-So you're working against your own infrastructure. The part of you that wants to change is newer, smaller, and quieter than the part that wants to keep things the same.
+So you're working against your own infrastructure. The part that wants to change is newer, smaller, and quieter than the part that wants to keep things the same.
 
 ## If it's not willpower, what is it?
 
@@ -50,13 +50,13 @@ The worst framing is "I just need more discipline."
 
 Willpower is a finite resource that depletes with use. If your strategy for change requires constant effort to override your defaults, it's going to fail. Not because you're weak — because that's how willpower works. It's a sprint tool and change is a marathon.
 
-What seems to actually work — or at least what I keep coming back to — is changing the defaults. Making the new behavior easier than the old one. Restructuring your environment so the path of least resistance leads somewhere better.
+What seems to actually work — or at least what keeps coming up — is changing the defaults. Making the new behavior easier than the old one. Restructuring your environment so the path of least resistance leads somewhere better.
 
-This is why [software matters](/prose/whats-actually-wrong). Software is environment. The tools you use, the interfaces you interact with, the friction in your daily life - these shape behavior more than most decisions you make. A notification that pulls you back to scrolling is stronger than your intention to read a book. You're not weak - [design tends to win over willpower](/prose/why-is-software-hard).
+This is why [software matters](/prose/whats-actually-wrong). Software is environment. The tools you use, the interfaces you interact with, the friction in your daily life - these shape behavior more than most decisions you make. A notification that pulls you back to scrolling is stronger than your intention to read a book. [Design tends to win over willpower](/prose/why-is-software-hard).
 
 ## Patterns that protect
 
-This is the part that took me the longest to actually believe: the pattern is solving something you haven't addressed.
+This is the part that took a long time to actually believe: the pattern is solving something that hasn't been addressed.
 
 The procrastination protects against failure. The conflict avoidance protects against rejection. The overwork protects against worthlessness. The masking protects against judgment.
 
@@ -66,11 +66,11 @@ Until the hidden cost is addressed, the pattern stays. No amount of insight or w
 
 ## What seems to work
 
-This isn't advice, a pep talk, or another framework. I'm not sure what it is, actually.
+This isn't advice, a pep talk, or another framework. It's not entirely clear what it is.
 
 The scope has to be almost embarrassingly small. Not "change my life." One response, one situation, one time. [That's it](/prose/how-do-i-do-things).
 
-And willpower is mostly a trap here - the environment matters more. You don't need to decide differently if the context is different. Remove the trigger. Add friction to the old thing, remove it from the new one. The decision was never really where the leverage was.
+Willpower is mostly a trap — the environment matters more. You don't need to decide differently if the context is different. Remove the trigger. Add friction to the old thing, remove it from the new one. The decision was never really where the leverage was.
 
 You'll go back to the old pattern. Probably a lot. That's not failure — that's just what it looks like when something that took years to build starts coming apart. It doesn't dissolve in a week, no matter how clearly you see it.
 

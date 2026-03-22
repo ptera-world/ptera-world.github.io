@@ -30,11 +30,11 @@ Three things survived the "does this matter" filter: [SillyTavern](https://githu
 
 They share something. They're all generative - perspectives emerge from interaction rather than being pre-authored. They're all about inhabiting other ways of being. And they all have something the tools don't: **reciprocity**. They respond back with their own complexity. You act, and something you didn't fully predict acts in return.
 
-The tools don't do that. You act on code, it doesn't act on you. The relationship is one-directional. That might be why finishing a tool feels empty - nothing changed except the tool exists now.
+The tools don't do that. The relationship is one-directional. That might be why finishing a tool feels empty.
 
-## What's the difference between architect mode and inhabit mode?
+## Architect mode and inhabit mode
 
-There are two completely different ways of relating to what you've made:
+There are two completely different ways of relating to what you've made.
 
 When you're **building**, you see seams. Edge cases. Unfinished branches. Abstractions. You're outside the system, looking at its structure.
 
@@ -54,8 +54,6 @@ The surprise isn't in the rules. It's in the combinatorics. Complex systems prod
 
 Maybe the obsession with legibility and the hunger for reciprocity aren't opposites. You make systems legible enough to build. You build systems complex enough to surprise you. The legibility is what lets you construct the thing. The emergence is what lets you inhabit it.
 
-The tools aren't the point. But they're not wasted either. They're the scaffolding for something that hasn't emerged yet - and emergence, by definition, is the thing you can't predict from the scaffolding.
+The tools aren't the point. But they're not wasted either. They're the scaffolding for something that hasn't emerged yet.
 
-That's uncomfortable. It means you can't plan your way to the thing you want. You can only keep building and see what surprises you.
-
-But it also means you might be closer than you think. You just can't see it yet. That's how emergence tends to work.
+And emergence, by definition, is the thing you can't predict from the scaffolding.
