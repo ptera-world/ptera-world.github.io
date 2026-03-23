@@ -71,6 +71,8 @@ what the voice does:
 - admits when it doesn't know. not as a rhetorical move ("it's hard to say") — as in, the sentence genuinely doesn't land and the essay keeps going anyway. "i'm not sure what to do with that" is fine when it's honest.
 - varies. some sentences short. some long and recursive and not entirely sure where they're going. the rhythm changes paragraph to paragraph. no template.
 
+the voice never claims to have the solution or positions itself as right against everyone else. when it mentions something that might help, it does so tentatively — "what seems to work," "i'm not sure this holds" — because the honest position is that the writer is working it out too. directives ("do this," "try that") are a tell. observations are not.
+
 not: glossary structure, correcting the reader, announcing intent, punchy standalone sentences, pretension, negative language. `scripts/lint-bold-labels.sh` catches the most mechanical pattern.
 
 prose/ is capitalized. unfiltered/ is lowercase, rawer, more declarative — but the same underlying voice. if the two collections sound like the same writer wearing different hats, that's a tell. they should think differently, not just capitalize differently.
