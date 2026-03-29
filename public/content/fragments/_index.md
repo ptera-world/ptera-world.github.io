@@ -459,3 +459,27 @@ edges: knowing-doesnt-produce-change, environment-beats-willpower, the-pattern-p
 - [environment beats willpower](/fragments/environment-beats-willpower)
 - [the pattern protects against something scarier than the pattern](/fragments/the-pattern-protects-against-something-scarier-than-the-pattern)
 - [the thing you keep circling is the work](/fragments/the-thing-you-keep-circling-is-the-work)
+
+---
+
+## the web was always supposed to be writable
+tags: design, infrastructure
+edges: just-erases-prerequisites, tools-shape-what-you-can-think, defaults-are-opinions-with-plausible-deniability, the-barrier-below-the-floor
+
+contenteditable shipped in IE5.5. r/place proved the writable surface works and we treated it as a novelty — so successful they ran it three times. instead of making the web itself the editor, we built platforms on top of it and called them tools. the barrier to having a voice doesn't collapse because someone builds an easier app. it collapses when the surface you're already looking at is the surface you write on. that was the original idea. we just built read-only on top of read-write and forgot.
+
+---
+
+## the barrier below the floor
+tags: infrastructure, social
+edges: just-erases-prerequisites, freedom-is-gated-behind-prerequisites-most-people-dont-have, defaults-are-opinions-with-plausible-deniability, the-web-was-always-supposed-to-be-writable
+
+there's a difference between lowering a barrier and removing it. lowered barriers are still experienced as barriers — easier, but you know they're there. electricity isn't like that. you don't overcome it, you don't learn it, it's just handled before you arrive. the floor is solid enough that the obstacle becomes infrastructure. having a web presence could work this way. not "here are tools you could learn" but — you have a place. it's already there. someone ran the wires.
+
+---
+
+## investment colonizes the present
+tags: introspective, systems
+edges: the-metric-replaces-the-thing-it-measured, the-thing-you-keep-circling-is-the-work, the-specification-is-measurable-the-goal-isnt
+
+the house you live in is also the house you might sell. the career is also the resume line. the kid's saturday is also the college application. you're slightly absent from your own life because the present keeps getting consumed by its future value. the garden that doesn't get tended isn't laziness — it's that the garden became the asset's curb appeal, not yours. you can't scratch the floor of something you're managing for a future buyer.
