@@ -45,12 +45,14 @@ bun run src/cli.ts build --collection <id>  # build a single collection
 
 **Do the work properly.** Don't leave workarounds or hacks undocumented. When asked to analyze X, actually read X — don't synthesize from conversation.
 
-**Use subagents to protect the main context window.** For broad exploration or mechanical multi-file work, delegate to a subagent rather than running searches inline. Rules of thumb:
-- Research tasks, surveying patterns → subagent
-- Searching >5 files or >3 rounds of grep/read → subagent
-- Codebase-wide analysis → always subagent
-- Mechanical work across many files → parallel subagents
-- Single targeted lookup → inline is fine
+**All exploration goes in subagents.** Any tool call whose purpose is "find out what's here" — grep, find, broad reads, surveys, audits — runs in a subagent. Exploratory output in the main context is active context poisoning: it lingers in cache, shapes downstream reasoning, can't be unsent. The subagent returns a distilled summary; the noise stays in the subagent.
+
+Inline tool use in the main context is reserved for:
+- Reading a known file at a known path
+- Edits/writes you're committing to
+- A single targeted lookup whose result you'll act on immediately
+
+If you find yourself running a second grep to refine the first, you should have spawned a subagent.
 
 ## Conventions
 
