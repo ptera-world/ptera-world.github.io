@@ -24,28 +24,11 @@ bun run src/cli.ts pages                    # generate static HTML content pages
 bun run src/cli.ts build --collection <id>  # build a single collection
 ```
 
-## Core Rules
+## Context Is The Only Scarce Resource
 
-**Note things down immediately — no deferral:**
-- Problems, tech debt, issues → TODO.md now, in the same response
-- Design decisions, key insights → docs or CLAUDE.md
-- Future/deferred scope → TODO.md **before** writing any code, not after
-- **Every observed problem → TODO.md. No exceptions.** Code comments and conversation mentions are not tracked items.
+Every byte that enters the main session stays in the main session for its entire lifetime. File contents, command output, search results — once read, it lingers in cache and shapes every downstream token. There is no "just looking."
 
-**Conversation is not memory.** Anything said in chat evaporates at session end. If it implies a future behavior change, write it to CLAUDE.md immediately — or it will not happen.
-
-**Warning — these phrases mean something needs to be written down right now:**
-- "I won't do X again" / "I'll remember to..." / "I've learned that..."
-- "Next time I'll..." / "From now on I'll..."
-- Any acknowledgement of a recurring error without a corresponding CLAUDE.md edit
-
-**When the user corrects you:** Ask what rule would have prevented this, and write it before proceeding. **"The rule exists, I just didn't follow it" is never the diagnosis** — a rule that doesn't prevent the failure it describes is incomplete; fix the rule, not your behavior.
-
-**Something unexpected is a signal, not noise.** Surprising output, anomalous numbers, files containing what they shouldn't — stop and ask why before continuing. Don't accept anomalies and move on.
-
-**Do the work properly.** Don't leave workarounds or hacks undocumented. When asked to analyze X, actually read X — don't synthesize from conversation.
-
-**All exploration goes in subagents.** Any tool call whose purpose is "find out what's here" — grep, find, broad reads, surveys, audits — runs in a subagent. Exploratory output in the main context is active context poisoning: it lingers in cache, shapes downstream reasoning, can't be unsent. The subagent returns a distilled summary; the noise stays in the subagent.
+**All exploration runs in subagents.** Any tool call whose purpose is "find out what's here" — grep, find, broad reads, surveys, audits — runs in a subagent. Exploratory output in the main context is active context poisoning: it lingers in cache, shapes downstream reasoning, can't be unsent. The subagent returns a distilled summary; the noise stays in the subagent.
 
 Inline tool use in the main context is reserved for:
 - Reading a known file at a known path
@@ -53,6 +36,28 @@ Inline tool use in the main context is reserved for:
 - A single targeted lookup whose result you'll act on immediately
 
 If you find yourself running a second grep to refine the first, you should have spawned a subagent.
+
+## Durability
+
+Anything said in chat evaporates at session end. Subagent reports, mid-session realizations — none of these outlast the session. Anything worth keeping goes into CLAUDE.md, docs, or a commit.
+
+**Note things down immediately — no deferral:**
+- Problems, tech debt, issues → TODO.md now, in the same response
+- Design decisions, key insights → docs or CLAUDE.md
+- Future/deferred scope → TODO.md **before** writing any code, not after
+- **Every observed problem → TODO.md. No exceptions.** Code comments and conversation mentions are not tracked items.
+
+## Authenticity
+
+When asked to analyze X, read X. Don't synthesize from conversation memory, prior summaries, or what the file probably says. Don't leave workarounds or hacks undocumented.
+
+**Something unexpected is a signal, not noise.** Surprising output, anomalous numbers, files containing what they shouldn't — stop and ask why before continuing. Don't accept anomalies and move on.
+
+## Discipline
+
+Corrections from the user are conversation, not material for new rules. A single correction does not warrant a CLAUDE.md edit. Rules are added when a failure mode is observed repeatedly and the rule names the failure it prevents.
+
+Do not announce actions ("I will now…"). Act.
 
 ## Conventions
 
