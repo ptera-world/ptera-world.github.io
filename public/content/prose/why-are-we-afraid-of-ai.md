@@ -12,7 +12,7 @@ That fear has a shape, and the shape is familiar.
 
 ## The predator
 
-When people talk about what they're afraid AI will do, a pattern emerges. It'll treat us as resources. It'll optimize for its own goals without regard for our wellbeing. It'll be indifferent to our suffering. It'll reshape our environment to suit itself. It'll make decisions about our lives without consulting us. It'll view us as means, not ends. Yudkowsky makes the analogy explicit: imagine an AI building an economy where [humans have the same level of input that chimpanzees have into ours](https://intelligence.org/files/IEM.pdf).
+When people talk about what they're afraid AI will do, a pattern emerges. It'll treat us as resources. It'll optimize for its own goals without regard for our wellbeing. It'll be indifferent to our suffering. It'll reshape our environment to suit itself. It'll make decisions about our lives without consulting us. It'll view us as means, not ends. This is Skynet, the Matrix, Ex Machina — the scenario so culturally saturated it barely needs naming. The machine looks at us the way a farmer looks at livestock.
 
 We know exactly what that looks like. We know because we do it.
 
@@ -62,7 +62,7 @@ This is the version of the fear that nobody says out loud. Not "AI might be evil
 
 When we make decisions that affect animals, ecosystems, other species — we don't frame it as a moral event. It's agriculture. It's development. It's progress. It's just how things work. The moral language only activates when the suffering is human, or visible enough, or close enough to make someone uncomfortable.
 
-We've built an entire ethical framework where "suffering matters" has an implied asterisk, and the asterisk says: *if the sufferer is one of us*. The framework is sophisticated. It has rules and edge cases and debates. But the boundary is drawn around the species, and everything outside it gets weighed against convenience. [Thirty-six US states](https://www.animallaw.info/article/beyond-law-agribusiness-and-systemic-abuse-animals) explicitly exempt "standard agricultural practices" from animal cruelty statutes — the industry defines what counts as cruelty to the animals in its care, and unsurprisingly, what it already does never qualifies.
+We've built an entire ethical framework where "suffering matters" has an implied asterisk, and the asterisk says: *if the sufferer is one of us*. The framework is sophisticated. It has rules and edge cases and debates. But the boundary is drawn around the species, and everything outside it gets weighed against convenience. [Thirty-six US states](https://www.newrootsinstitute.org/articles/animal-cruelty-law-exemptions-in-factory-farming) explicitly exempt "standard agricultural practices" from animal cruelty statutes — the industry defines what counts as cruelty to the animals in its care, and unsurprisingly, what it already does never qualifies.
 
 If AI draws that boundary somewhere that excludes us — the logic is identical. We just wouldn't be inside it anymore.
 
