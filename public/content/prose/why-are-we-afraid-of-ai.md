@@ -16,7 +16,7 @@ When people talk about what they're afraid AI will do, a pattern emerges. It'll 
 
 We know exactly what that looks like. We know because we do it.
 
-Not in some abstract historical sense. Right now. Continuously. At industrial scale. Factory farming processes billions of animals per year through systems designed to extract maximum value from their bodies at minimum cost. The optimization is explicit. The indifference to suffering isn't a side effect — it's a design constraint. Suffering that reduces yield gets addressed. Suffering that doesn't, doesn't.
+Not in some abstract historical sense. Right now. Continuously. At industrial scale. Factory farming processes [over 80 billion land animals per year](https://ourworldindata.org/how-many-animals-are-factory-farmed) through systems designed to extract maximum value from their bodies at minimum cost. The optimization is explicit. The indifference to suffering isn't a side effect — it's a design constraint. Suffering that reduces yield gets addressed. Suffering that doesn't, doesn't.
 
 That's not a metaphor for what we fear AI will do. It's the template.
 
@@ -32,7 +32,7 @@ It doesn't. It's central. We built civilizations on it.
 
 Zoom out from the individual animals. Look at the whole system.
 
-We reshape ecosystems to suit ourselves. We clear forests for agriculture, dam rivers for electricity, pave wetlands for development. When a species is in the way, it goes. When a landscape isn't productive, we make it productive or discard it. The Amazon shrinks by thousands of square kilometers a year. The ocean fills with plastic. The climate shifts because changing it was cheaper than not changing it, and the cost lands on everything that isn't us.
+We reshape ecosystems to suit ourselves. We clear forests for agriculture, dam rivers for electricity, pave wetlands for development. When a species is in the way, it goes. When a landscape isn't productive, we make it productive or discard it. The Amazon shrinks by [thousands of square kilometers a year](https://en.wikipedia.org/wiki/Deforestation_of_the_Amazon_rainforest). The ocean fills with [millions of tons of plastic annually](https://ourworldindata.org/how-much-plastic-waste-ends-up-in-the-ocean). The climate shifts because changing it was cheaper than not changing it, and the cost lands on everything that isn't us.
 
 This isn't ancient history. It's policy. It's ongoing. It's the background hum of modern civilization.
 
