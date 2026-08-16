@@ -2,7 +2,7 @@
 
 ## What This Is
 
-ptera.world — a spatial graph that renders projects, essays, and fragments as an interactive, zoomable map. multiple collections (`/`, `/prose/`, `/unfiltered/`, `/intent/`, `/hubris/`) share one graph and JS bundle. zero runtime dependencies, single-page app, all TypeScript. deployed to GitHub Pages.
+ptera.world — a spatial graph that renders projects, essays, and fragments as an interactive, zoomable map. multiple collections (`/`, `/prose/`, `/unfiltered/`, `/intent/`, `/hubris/`, `/taste/`) share one graph and JS bundle. zero runtime dependencies, single-page app, all TypeScript. deployed to GitHub Pages.
 
 ## Commands
 
@@ -63,7 +63,7 @@ Architecture, build tool principles, layout/cluster system, force layout, multi-
 
 Key constraints worth knowing without reading the source:
 - **No hardcoding in build tools.** No node IDs, cluster name strings, directory-prefix checks in `src/gen-*.ts`. Use `node.tier`, `node.tags`, `node.cluster` — never string matching.
-- **Cross-collection linking is one-way:** unfiltered may link to prose. Prose must NOT link to unfiltered.
+- **Cross-collection linking is one-way:** unfiltered may link to prose. Prose must NOT link to unfiltered. taste may link freely to/from prose, intent, hubris, and default — but, like prose, must NOT link into unfiltered (unfiltered stays soft-hidden). This is a content-authoring convention, not something enforced in code.
 - **Content authors declare constraints, not coordinates.** Layout is solved by the algorithm.
 
 ## Session Handoff
