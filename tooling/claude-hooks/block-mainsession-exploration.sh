@@ -144,10 +144,20 @@ if [[ "$tool_name" == "Agent" ]]; then
         deny "$tool_name" "$COST_MSG"
     fi
 
-    if [[ "$model_val" == "fable" || "$model_val" == "opus" ]]; then
+    # Classify by substring, not exact match — this must catch full model ids
+    # (claude-opus-4-6), [1m]-suffixed forms (opus[1m]), bedrock-prefixed forms
+    # (us.anthropic.claude-opus-...), opusplan, etc. — not just bare "opus"/
+    # "fable". Any non-empty, unrecognized string (typos, other providers)
+    # denies — fail closed rather than silently letting an unknown tier slip
+    # through unchecked.
+    if [[ "$model_val" == *opus* || "$model_val" == *fable* ]]; then
         if ! printf '%s' "$rest" | grep -qF '[frontier-approved]'; then
             deny "$tool_name" "$COST_MSG"
         fi
+    elif [[ "$model_val" == *haiku* || "$model_val" == *sonnet* ]]; then
+        : # fine — non-frontier tier, no gate needed
+    else
+        deny "$tool_name" "$COST_MSG"
     fi
 fi
 
