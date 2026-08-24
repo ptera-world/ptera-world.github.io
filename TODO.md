@@ -43,6 +43,9 @@ The graph should be the primary way to experience the content. Essays are one fo
 ### Taste collection
 - [ ] **taste collection has no content yet** — scaffolded (`site-config.ts`, `public/taste/index.html`, `public/content/meta/taste.md`) but zero essays/nodes. Write the first pieces — personal, subjective takes on programs/software — in the lowercase, casual register (closer to unfiltered/ than prose/). Add a `public/content/cluster/taste-essays.md` cluster config once there's real content to derive `tagColors` from — the loader tolerates a missing cluster file (empty member sets are skipped), so there was nothing to seed with placeholder tags yet.
 
+### Intelligence collection
+- [ ] **intelligence collection has no content yet** — scaffolded (`site-config.ts`, `public/intelligence/index.html`, `public/content/meta/intelligence.md`) but zero essays/nodes. Write the first pieces on AGI once there's real content. Add a `public/content/cluster/intelligence-essays.md` cluster config once there's real content to derive `tagColors` from — the loader tolerates a missing cluster file (empty member sets are skipped), so there was nothing to seed with placeholder tags yet.
+
 ### Ongoing
 - [ ] **Adversarial AI writing audits** — continue "prove this is AI-written" audits (like TELLS.md). Lower priority if essays become secondary or move to another entrypoint, but still valuable for the essay format
 - [ ] **Tell 9** — future essays should emerge from specific, strange observations rather than addressing universal questions. A human writer notices something particular and works outward — not inward from a category

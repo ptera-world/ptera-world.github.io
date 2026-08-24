@@ -56,6 +56,11 @@ export const siteConfig = {
       metaNodeId: "meta/taste",
       contentDirs: ["meta", "taste"],
     },
+    intelligence: {
+      name: "intelligence",
+      metaNodeId: "meta/intelligence",
+      contentDirs: ["meta", "intelligence"],
+    },
   } satisfies Record<string, CollectionConfig>,
 } as const;
 
