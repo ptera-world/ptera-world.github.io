@@ -5,6 +5,10 @@ import { generateGraph } from "./gen-graph";
 
 const isProduction = Bun.argv.includes("--production");
 
+const portArgIdx = Bun.argv.indexOf("--port");
+const portArg = portArgIdx !== -1 ? Number(Bun.argv[portArgIdx + 1]) : undefined;
+const port = portArg ?? (Bun.env.PORT ? Number(Bun.env.PORT) : 3000);
+
 const dir = isProduction ? "dist" : "public";
 
 // In dev mode, generate graph for each collection at startup and cache bundles
@@ -89,7 +93,7 @@ ${html}
 }
 
 const server = Bun.serve({
-  port: 3000,
+  port,
   async fetch(req) {
     const url = new URL(req.url);
     let path = url.pathname;

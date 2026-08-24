@@ -9,7 +9,7 @@
  *   headings [dirs...]  Extract headings for search
  *   pages              Generate static HTML content pages
  *   inspect            ASCII layout visualization
- *   dev                Dev server (--production for production mode)
+ *   dev                Dev server (--production for production mode, --port <n> to override, or PORT env var)
  *
  * Options:
  *   --help             Show this help
@@ -34,7 +34,7 @@ Commands:
   headings [dirs...]  Extract headings for search
   pages              Generate static HTML content pages
   inspect            ASCII layout visualization
-  dev                Dev server (--production for production mode)
+  dev                Dev server (--production for production mode, --port <n> to override, or PORT env var)
 
 Options:
   --help             Show this help
