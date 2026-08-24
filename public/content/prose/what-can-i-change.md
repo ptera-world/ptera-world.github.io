@@ -8,7 +8,7 @@ tags: [social]
 
 "I want things to be different." Okay. What things? Different how? And what's your relationship to them?
 
-Start with [seeing clearly](#seeing-the-actual-situation) what's in front of you - what you [might want to change](#get-specific), [where you stand](#your-relationship-to-it) in relation to it, and [what moves it](#leverage-points).
+Start with seeing clearly what's in front of you - what you [might want to change](#get-specific), [where you stand](#your-relationship-to-it) in relation to it, and [what moves it](#leverage-points).
 
 ## Get specific
 
@@ -52,28 +52,28 @@ Also: what can you afford to risk? Some people can be loud. Some people need to 
 
 Every system has places where small pressure creates larger movement. Finding them is most of the work.
 
-Start with who actually decides. Not who's supposed to — who does. Whose opinion shifts the room? Whose sign-off do people wait for before moving? That's where pressure lands.
+Start with who actually decides. Not who's supposed to - who does. Whose opinion shifts the room? Whose sign-off do people wait for before moving? That's where pressure lands.
 
-Then figure out what those people respond to. Not what they should care about. What they actually care about — reputation, numbers, complaints, peer pressure, whatever it is. You work with the system you're in, not the one you wish existed.
+Then figure out what those people respond to. Not what they should care about. What they actually care about - reputation, numbers, complaints, peer pressure, whatever it is. You work with the system you're in, not the one you wish existed.
 
 Look for the bottleneck. There's usually one thing that, if it moved, would unstick a bunch of other things. Sometimes it's a person, sometimes it's a policy, sometimes it's just that nobody's said the obvious thing out loud yet.
 
-And check whether you're alone. There's almost always latent support — people who noticed the same problem and assumed nobody else cared. Finding each other changes what's possible. So does knowing what's already been tried — what didn't work, and what's different now that might make it worth trying again.
+And check whether you're alone. There's almost always latent support - people who noticed the same problem and assumed nobody else cared. Finding each other changes what's possible. So does knowing what's already been tried - what didn't work, and what's different now that might make it worth trying again.
 
 Sometimes the leverage point is obvious. Sometimes it takes time to find. Sometimes you discover it by trying things and seeing what moves.
 
 ## Available moves
 
-Given what you want to change, your relationship to it, and where the leverage points are — what can you do?
+Given what you want to change, your relationship to it, and where the leverage points are - what can you do?
 
 Some options that exist:
 
-- You can just be in the room. At the meeting, at the event, in the space where decisions happen. Being there is already information — you learn things, and people notice you showed up.
+- You can just be in the room. At the meeting, at the event, in the space where decisions happen. Being there is already information - you learn things, and people notice you showed up.
 - One-on-one conversations move more than broadcasts. Opinions travel through networks, not announcements.
 - You're not the only one who wants this. Latent support becomes real when people find each other.
 - If the thing should exist and doesn't, you can [make it](/prose/how-do-i-do-things). A rough version is enough to show it's possible.
 - Writing things down makes the invisible visible. Records matter more than people expect.
-- Someone might already be doing this work. Showing up for them — with time, money, skills, attention — is sometimes more effective than starting over.
+- Someone might already be doing this work. Showing up for them - with time, money, skills, attention - is sometimes more effective than starting over.
 - Being inside a system gives you moves that outsiders don't have. That's not selling out. That's what leverage looks like.
 - If you figured something out, sharing it lowers the barrier for the next person.
 

@@ -58,6 +58,6 @@ Is that enough? Is exploration without a destination [a purpose](/prose/whats-th
 
 Honestly? It doesn't feel like enough. The output is good and the pace is fast and none of it answers the question of *what it's for*.
 
-But the answer might not come from the building. It might come from the [living](/prose/why-do-i-build-tools#whats-the-difference-between-architect-mode-and-inhabit-mode). From using the things you built instead of building more things. From letting the emergence [surprise you](/prose/why-do-i-build-tools#but-can-you-inhabit-what-you-built).
+But the answer might not come from the building. It might come from the [living](/prose/why-do-i-build-tools#architect-mode-and-inhabit-mode). From using the things you built instead of building more things. From letting the emergence [surprise you](/prose/why-do-i-build-tools#but-can-you-inhabit-what-you-built).
 
 You can't plan your way to meaning. You can only keep going and [pay attention](/prose/everything-changes).

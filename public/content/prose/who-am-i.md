@@ -26,7 +26,7 @@ All of them. None of them. The question assumes a fixed thing to find, and you k
 
 You didn't decide to like the things you like. You encountered them and something resonated. You didn't decide your values - they formed through experience, conflict, mistake, and occasional clarity. You didn't plan your personality - it emerged from genetics, environment, choices, and things that happened to you.
 
-The self isn't architecture. It's more like — I want to say weather, but weather implies a system with readable patterns. It's more like the way a river keeps being a river while never being the same water. Except that's not right either, because a river has banks and you don't. The edges of the thing keep moving. You notice a shape sometimes, and then it's doing something else.
+The self isn't architecture. It's more like - I want to say weather, but weather implies a system with readable patterns. It's more like the way a river keeps being a river while never being the same water. Except that's not right either, because a river has banks and you don't. The edges of the thing keep moving. You notice a shape sometimes, and then it's doing something else.
 
 Which means "who am I" might not be answered by looking inward alone. Looking inward gives you your [existing labels](/prose/what-are-labels-anyway) - the stories you already tell about yourself. To find what's actually there, including the parts you haven't met yet, you need more than introspection.
 
@@ -40,7 +40,7 @@ What do you actually do when nobody's watching? Strip away what you think you sh
 
 This isn't judgment. It's observation. The anxious pattern isn't bad - it's information. The avoidance isn't weakness - it's data. The thing you keep coming back to despite telling yourself you shouldn't - that's signal.
 
-Most people skip this because honest self-observation is uncomfortable. I skip it. The gap between who you think you are and what you actually do — you'd think I'd be used to finding things there by now, but it's still not a comfortable place to stand.
+Most people skip this because honest self-observation is uncomfortable. I skip it. The gap between who you think you are and what you actually do - you'd think I'd be used to finding things there by now, but it's still not a comfortable place to stand.
 
 But observation alone just gives you your existing patterns back. You need something to observe *against*.
 
