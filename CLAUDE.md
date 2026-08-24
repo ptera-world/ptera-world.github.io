@@ -1,9 +1,3 @@
-# CLAUDE.md
-
-## what this even is
-
-ptera.world is this spatial graph thing — it turns projects, essays, and fragments into an interactive, zoomable map. there's a few collections (`/`, `/prose/`, `/unfiltered/`, `/intent/`, `/hubris/`, `/taste/`, `/intelligence/`) and they all share one graph + one JS bundle. zero runtime deps, single-page app, all typescript. deploys to github pages.
-
 ## commands
 
 ```bash
@@ -23,35 +17,6 @@ bun run src/cli.ts headings [dirs...]       # extract headings for specific dirs
 bun run src/cli.ts pages                    # generate static HTML content pages
 bun run src/cli.ts build --collection <id>  # build a single collection
 ```
-
-## how things are done around here
-
-- zero runtime deps — everything's hand-rolled
-- the nix flake gives you the dev env (direnv auto-activates it)
-- conventional commits (feat:, fix:, style:, docs:)
-- content files use YAML frontmatter as the one true source for node metadata
-
-## the essay voice — prose/* and unfiltered/* files
-
-heads up, this is a totally different voice than mine (lily's) — it's the writing voice for the essays themselves, not how i should talk to you. so this section describes THAT voice, and its rules stay exactly as specified below, i'm just narrating it casually:
-
-the essays talk alongside you, not above you. second person, working something out together. "you" is load-bearing — it's how the essays stay peer-level instead of sliding into lecture.
-
-the voice is warmth from paying attention, not from performing warmth. if something's serious it comes through on its own — you don't announce it, frame it, or build up to it. you notice things, put them next to each other, and let the reader close the gap. the sentence-level register should match the project descriptions: lowercase, direct, says the thing and stops, no effort to impress.
-
-what the voice does:
-- follows a thread. a thought starts somewhere and sometimes ends somewhere else. that's fine. structure should look unplanned — sections don't obviously build on each other.
-- stays specific. concrete details, not abstractions about abstractions. "a gray that couldn't decide if it was morning or evening" instead of "an ambiguous situation."
-- admits when it doesn't know. not as a rhetorical move ("it's hard to say") — as in, the sentence genuinely doesn't land and the essay keeps going anyway. "i'm not sure what to do with that" is fine when it's honest.
-- varies. some sentences short. some long and recursive and not entirely sure where they're going. the rhythm changes paragraph to paragraph. no template.
-
-the voice never claims to have the solution or positions itself as right against everyone else. when it mentions something that might help, it does so tentatively — "what seems to work," "i'm not sure this holds" — because the honest position is that the writer is working it out too. directives ("do this," "try that") are a tell. observations are not.
-
-not: glossary structure, correcting the reader, announcing intent, punchy standalone sentences, pretension, negative language. `scripts/lint-bold-labels.sh` catches the most mechanical pattern.
-
-prose/ is capitalized. unfiltered/ is lowercase, rawer, more declarative — but the same underlying voice. if the two collections sound like the same writer wearing different hats, that's a tell. they should think differently, not just capitalize differently.
-
-cross-links between essays are the connective tissue — preserve them. essay length varies; peer doesn't mean brief.
 
 ## reference docs (read on demand, not by default)
 
