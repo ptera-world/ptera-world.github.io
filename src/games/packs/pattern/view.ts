@@ -149,6 +149,52 @@ const BINDINGS: BindingSchema = {
   "pattern.mode": { label: "cross mode", category: "nonogram", description: "when on, a tap or left-click crosses cells out instead of filling them (right-click does the opposite)", keys: ["m"] },
 };
 
+/** A 10×10 cell sample on the board background; the same colours the board CSS uses. */
+const cellSample = (inner: string) =>
+  `<svg viewBox="0 0 10 10"><rect width="10" height="10" fill="var(--cell)" stroke="var(--border)" stroke-width="0.4"/>${inner}</svg>`;
+/** An asset's markup as it sits inside a cell sample (image URLs become <image>). */
+const assetInner = (markup: string) => {
+  const t = markup.trim();
+  return t.startsWith("<") ? t.replace(/^<svg\b/, `<svg width="10" height="10"`) : `<image href="${t}" width="10" height="10"/>`;
+};
+const clueSample = (style: string) =>
+  `<svg viewBox="0 0 10 10"><text x="5" y="5.4" text-anchor="middle" dominant-baseline="central" font-size="7" style="font-family: var(--font); ${style}">3</text></svg>`;
+const BAR = { inset: 0.8, width: 8.4 };
+const barSample = (y: number, h: number, style: string) => cellSample(`<rect x="${BAR.inset}" y="${y}" width="${BAR.width}" height="${h}" rx="0.8" style="${style}"/>`);
+const boxSample = (style: string) => cellSample(`<rect x="0.6" y="0.6" width="8.8" height="8.8" rx="0.8" style="${style}"/>`);
+
+function legendFor(look: Look): { sample: string; meaning: string }[] {
+  const filled = assetInner(look.asset("pattern.filled", ASSETS.filled));
+  const cross = assetInner(look.asset("pattern.cross", ASSETS.cross));
+  const dot = assetInner(look.asset("pattern.dot", ASSETS.dot));
+  return [
+    { sample: cellSample(filled), meaning: "filled cell: part of the picture" },
+    { sample: cellSample(cross), meaning: "crossed-out cell: you've decided it's empty (crosses don't count towards the answer)" },
+    { sample: cellSample(dot), meaning: "the same, if you picked dots for empty cells in settings" },
+    { sample: clueSample("fill: var(--text); opacity: var(--done-opacity)"), meaning: "faded clue number: your marks already account for that block" },
+    { sample: clueSample("fill: var(--danger); font-weight: 600"), meaning: "red clue: the marks in that line can't fit its numbers any more" },
+    { sample: boxSample("fill: color-mix(in srgb, var(--danger) 25%, transparent); stroke: var(--danger); stroke-width: 1"), meaning: "red cell: a mark that doesn't match the solution (only with \"show mistakes\" on, or when a hint points it out)" },
+    { sample: barSample(0, 10, "fill: var(--accent-soft)"), meaning: "tinted row and column: where your pointer or cursor is" },
+    { sample: cellSample(`<g opacity="0.5">${filled}</g>`), meaning: "half-faded marks while dragging: what letting go will do" },
+    { sample: boxSample("fill: none; stroke: var(--focus); stroke-width: 0.9"), meaning: "outlined cell: the keyboard cursor" },
+    { sample: clueSample("fill: var(--hint); font-weight: 700"), meaning: "highlighted clue number: the one a hint talks about, or the one you're pointing at" },
+    { sample: barSample(0, 10, "fill: var(--hint-soft)"), meaning: "tinted line behind a hint: the row or column it's about" },
+    { sample: barSample(0, 10, "fill: var(--danger-soft)"), meaning: "red line behind a hint: the row or column that can't fit its clue" },
+    { sample: boxSample("fill: none; stroke: var(--hint); stroke-width: 1.2"), meaning: "outlined cell in a hint: what the hint decides" },
+    { sample: boxSample("fill: none; stroke: var(--hint); stroke-width: 0.6; stroke-dasharray: 1.2 0.8"), meaning: "dashed outline in a hint: a mark the reasoning uses" },
+    { sample: barSample(1.2, 3.4, "fill: color-mix(in srgb, var(--accent) 18%, transparent); stroke: var(--accent); stroke-width: 0.7"), meaning: "upper (or left) bar in a hint: a block pushed as far left (or up) as it goes" },
+    { sample: barSample(5.4, 3.4, "fill: color-mix(in srgb, var(--hint) 18%, transparent); stroke: var(--hint); stroke-width: 0.7"), meaning: "lower (or right) bar in a hint: the same block pushed as far right (or down); where the two overlap is filled" },
+    { sample: barSample(4.3, 1.4, "fill: none; stroke: var(--text-dim); stroke-width: 0.7; stroke-dasharray: 1 0.8"), meaning: "thin dashed bar in a hint: everywhere a block could reach" },
+    { sample: barSample(1.2, 7.6, "fill: color-mix(in srgb, var(--hint) 14%, transparent); stroke: var(--hint); stroke-width: 0.7"), meaning: "full bar in a hint: the only place a block fits" },
+    { sample: cellSample(`<g opacity="0.45">${filled}</g><rect x="0.6" y="0.6" width="8.8" height="8.8" rx="0.8" style="fill: none; stroke: var(--warn); stroke-width: 1.2; stroke-dasharray: 1.5 0.8"/>`), meaning: "\"what if\" hint: the cell with the dashed warning outline is supposed, faded marks are what would follow" },
+    { sample: boxSample("fill: color-mix(in srgb, var(--hint) 18%, transparent)"), meaning: "lightly shaded cells: everywhere the pointed-at clue number's block can still go" },
+    { sample: boxSample("fill: color-mix(in srgb, var(--hint) 45%, transparent)"), meaning: "darker shaded cells: that block covers them however it sits" },
+    { sample: `<svg viewBox="0 0 10 10"><circle cx="5" cy="5" r="2" fill="var(--accent)"/></svg>`, meaning: "dot beside a clue: that line alone can decide more cells (\"show where progress is\" assist)" },
+    { sample: boxSample("fill: color-mix(in srgb, var(--accent) 35%, transparent)"), meaning: "accent-tinted cell: can be proven filled (same assist, showing cells)" },
+    { sample: boxSample("fill: color-mix(in srgb, var(--danger) 22%, transparent)"), meaning: "red-tinted cell: can be proven empty (same assist, showing cells)" },
+  ];
+}
+
 export type Board = Pick<typeof import("../../ui/board"), "labelSides" | "colName" | "rowName">;
 
 export function patternView(look: Look, board: Board): View<PatternPuzzle, PatternState, PatternAction, PatternInteraction> {
@@ -165,6 +211,10 @@ export function patternView(look: Look, board: Board): View<PatternPuzzle, Patte
       { how: "point at or tap a clue number", what: "shade where that block can still go" },
       { how: "hold a cell (touch)", what: "open the menu for that cell: fill, cross, clear, cross mode" },
     ],
+    /** Read when shown, so the samples use the current theme's graphics. */
+    get legend() {
+      return legendFor(look);
+    },
     mount(root, { session, settings }) {
       style("pattern", CSS);
       const p = session.puzzle;
