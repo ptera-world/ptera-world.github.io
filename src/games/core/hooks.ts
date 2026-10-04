@@ -92,5 +92,8 @@ export class Event<C> extends HookBase<(ctx: C) => void> {
 
 /** Remove every tap belonging to `owner` from every hook in a hook record. */
 export function untapAll(hooks: object, owner: string): void {
-  for (const h of Object.values(hooks)) if (h instanceof HookBase) h.untapOwner(owner);
+  for (const h of Object.values(hooks)) {
+    // duck-typed: hooks built by separately bundled packs are a different class identity
+    if (h && typeof (h as { untapOwner?: unknown }).untapOwner === "function") (h as HookBase<unknown>).untapOwner(owner);
+  }
 }

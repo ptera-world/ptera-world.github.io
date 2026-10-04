@@ -8,7 +8,11 @@ import * as rng from "./core/rng";
 import * as schema from "./core/schema";
 import { Session } from "./core/session";
 import { namespace } from "./core/storage";
+import * as commands from "./core/commands";
+import * as patch from "./core/patch";
+import * as techniques from "./core/techniques";
 import * as dom from "./ui/dom";
+import { fx } from "./ui/fx";
 import type { Shell } from "./ui/shell";
 
 export const api = {
@@ -19,6 +23,11 @@ export const api = {
   schema,
   storage: namespace,
   dom,
+  commands,
+  techniques,
+  patch,
+  /** Effect helpers (flash, pop, burst, shake) for mods building their own effects. */
+  fx,
   /** Set once the shell boots; null while mods are loading. */
   shell: null as Shell | null,
 };

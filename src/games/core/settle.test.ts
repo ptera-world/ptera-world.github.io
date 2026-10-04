@@ -1,12 +1,16 @@
 import { expect, test } from "bun:test";
-import { registerBuiltins } from "../puzzles";
+import { readdirSync } from "fs";
+import { api } from "../api";
 import { generate } from "./generate";
 import { Registry } from "./registry";
 import { resolve } from "./schema";
 import { Session } from "./session";
 
 const registry = new Registry();
-registerBuiltins(registry);
+for (const dir of readdirSync(new URL("../packs", import.meta.url))) {
+  const mod = (await import(`../packs/${dir}/index.ts`)) as { default: (games: typeof api) => void };
+  mod.default({ ...api, registry });
+}
 
 /** Every plugin, settled on its own against a fresh board, must be idempotent and leave no history. */
 for (const def of registry.listPuzzles()) {

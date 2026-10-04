@@ -1,46 +1,33 @@
-import { BindingsStore, keybinds, registerComponents, validateCommands, type KeybindCheatsheet, type KeybindSettings } from "keybinds";
 import { generate } from "../core/generate";
-import { Event as HookEvent, Waterfall } from "../core/hooks";
-import { listMods, saveMods, type ModEntry, type ModLoadResult } from "../core/mods";
+import { Event as HookEvent, untapAll } from "../core/hooks";
+import type { LoadedPack, ModLoadResult } from "../core/mods";
 import { PluginHost, loadPluginConfig } from "../core/plugins";
 import type { Registry } from "../core/registry";
 import { randomSeed } from "../core/rng";
 import { canonical, fromQuery, resolve, toQuery } from "../core/schema";
-import { Session, type Origin, type Snapshot } from "../core/session";
+import { Session, type Origin, type SharedHistory, type Snapshot } from "../core/session";
+import { packJson, unpackJson, type Patch } from "../core/patch";
+
+/** What a share link carries beyond the puzzle itself. */
+export type ShareLevel = "puzzle" | "state" | "history";
+
+interface Shared {
+  state?: Patch | null;
+  history?: SharedHistory;
+}
 import { namespace } from "../core/storage";
-import type { AnyPuzzleDef, BindingSchema, CommandHandler, Format, Plugin, View, ViewHandle } from "../core/types";
-import { clear, formatTime, h } from "./dom";
-import { schemaForm } from "./form";
-
-export interface ToolbarItem {
-  id: string;
-  label: string;
-  title?: string;
-  disabled?: boolean;
-  run(): void;
-}
-
-export interface PanelTab {
-  id: string;
-  label: string;
-  render(): HTMLElement;
-}
+import { TechniqueHost, findPracticePosition, hintFrom, isPartOfStep, isStepDone } from "../core/techniques";
+import type { AnyPuzzleDef, CommandDef, Format, Hint, Technique, View, ViewHandle, WidgetDef, SlotId } from "../core/types";
+import { CommandHub } from "./commands";
+import { clear, formatTime, h, style } from "./dom";
+import { arrange, loadLayout, saveLayout, type LayoutConfig } from "./layout";
+import { builtinWidgets } from "./widgets";
 
 const saves = namespace("save");
 const prefs = namespace("prefs");
 
-const SHELL_BINDINGS: BindingSchema = {
-  undo: { label: "Undo", category: "Game", keys: ["$mod+z", "u"] },
-  redo: { label: "Redo", category: "Game", keys: ["$mod+shift+z", "$mod+y", "r"] },
-  hint: { label: "Hint", category: "Game", keys: ["shift+slash"] },
-  "apply-hint": { label: "Apply hint (shows one first if none is up)", category: "Game", keys: ["shift+h"] },
-  "new-game": { label: "New game", category: "Game", keys: ["$mod+Enter"] },
-  pause: { label: "Pause / resume", category: "Game", keys: ["p"] },
-  "show-keys": { label: "Show shortcuts", category: "Help", keys: ["$mod+/"] },
-};
-
 /** Serialized text, or null if the format can't write or throws on this puzzle. */
-function trySerialize(fmt: Format<unknown>, puzzle: unknown): string | null {
+export function trySerialize(fmt: Format<unknown>, puzzle: unknown): string | null {
   if (!fmt.serialize) return null;
   try {
     return fmt.serialize(puzzle);
@@ -55,46 +42,51 @@ function originKey(def: AnyPuzzleDef, origin: Origin): string {
   if (origin.kind === "generated") {
     return `g|${origin.generatorVersion}|${canonical(def.params, resolve(def.params, origin.params))}|${origin.seed}`;
   }
+  if (origin.kind === "practice") return `p|${origin.technique}|${origin.seed}`;
   return `i|${origin.source ?? ""}`;
 }
 
+/** Practice boards save separately so they never overwrite the real game. */
+const saveKey = (def: AnyPuzzleDef, origin: Origin): string => (origin.kind === "practice" ? `${def.id}:practice` : def.id);
+
+interface MountedWidget {
+  def: WidgetDef;
+  owner: string;
+  el: HTMLElement;
+  teardown?: () => void;
+}
+
 /**
- * The page: puzzle picker, game chrome, settings, import/export, mods.
- * Owns URL sync, autosave, keybindings and the lifecycle of session + plugins + view.
+ * The page. Owns URL sync, autosave, the session lifecycle (plugins, techniques, view), the
+ * command hub, and the widget layout. Holds no puzzle-specific UI: everything around the board
+ * is a widget, everything the player can do is a command.
  */
 export class Shell {
   readonly hooks = {
-    toolbar: new Waterfall<ToolbarItem[], { shell: Shell }>("toolbar"),
-    panels: new Waterfall<PanelTab[], { shell: Shell }>("panels"),
     sessionStart: new HookEvent<{ session: Session<any, any, any, any> }>("sessionStart"),
     sessionEnd: new HookEvent<{ session: Session<any, any, any, any> }>("sessionEnd"),
+    status: new HookEvent<{ text: string }>("status"),
   };
 
   session: Session<any, any, any, any> | null = null;
   host: PluginHost | null = null;
-  private view: { def: View; handle: ViewHandle } | null = null;
-  private unbindKeys: (() => void) | null = null;
+  techniques: TechniqueHost | null = null;
+  readonly hub: CommandHub;
+  view: { def: View; handle: ViewHandle } | null = null;
   private sessionCleanup: (() => void)[] = [];
   private generating: AbortController | null = null;
   private saveTimer = 0;
+  private widgets: MountedWidget[] = [];
+  private layout: LayoutConfig = {};
   private activeTab = prefs.get("tab", "game");
+  private statusText = "";
+  private els: ReturnType<Shell["buildDom"]>;
 
-  private els!: {
-    header: HTMLElement;
-    title: HTMLElement;
-    meta: HTMLElement;
-    timer: HTMLElement;
-    board: HTMLElement;
-    status: HTMLElement;
-    toolbar: HTMLElement;
-    tabs: HTMLElement;
-    panel: HTMLElement;
-    cheatsheet: KeybindCheatsheet;
-    keySettings: KeybindSettings;
-  };
-
-  constructor(readonly root: HTMLElement, readonly registry: Registry, readonly modResults: ModLoadResult[]) {
-    registerComponents();
+  constructor(readonly root: HTMLElement, readonly registry: Registry, readonly modResults: ModLoadResult[], readonly packs: LoadedPack[] = []) {
+    this.els = this.buildDom();
+    this.hub = new CommandHub(root);
+    this.hub.addContext(() => this.context());
+    for (const w of builtinWidgets(this)) registry.widget(w);
   }
 
   async start(): Promise<void> {
@@ -107,8 +99,34 @@ export class Shell {
       } else if (!prefs.get("paused", false)) this.session.resume();
     });
     window.addEventListener("pagehide", () => this.saveNow());
+    let raf = 0;
+    window.addEventListener("resize", () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => this.relayout());
+    });
+    this.els.boardbox.addEventListener("contextmenu", (e) => {
+      if (e.defaultPrevented || !this.hub.all().some((c) => [c.menu].flat().includes("board"))) return;
+      e.preventDefault();
+      this.hub.openMenu("board", e.clientX, e.clientY);
+    });
     setInterval(() => this.tick(), 250);
+    this.hub.setSource("shell", () => this.shellCommands());
     await this.fromUrl();
+  }
+
+  // --- context ---
+
+  private context(): Record<string, unknown> {
+    const s = this.session;
+    return {
+      hasSession: !!s,
+      solved: s?.solved ?? false,
+      canUndo: s?.canUndo ?? false,
+      canRedo: s?.canRedo ?? false,
+      hint: !!s?.activeHint,
+      practice: s?.origin.kind === "practice",
+      ...this.view?.handle.context?.(),
+    };
   }
 
   // --- navigation ---
@@ -121,12 +139,28 @@ export class Shell {
       this.showIndex();
       return;
     }
+    if (q.get("tab")) this.activeTab = q.get("tab")!;
+    const practice = q.get("practice");
+    if (practice) {
+      const t = this.registry.techniquesFor(def.id).find((x) => x.id === practice);
+      if (t) {
+        await this.startPractice(def, t, q.get("seed") ?? randomSeed(), false);
+        return;
+      }
+    }
+    let shared: Shared | null = null;
+    try {
+      if (q.get("h")) shared = { history: (await unpackJson(q.get("h")!)) as SharedHistory };
+      else if (q.get("st")) shared = { state: (await unpackJson(q.get("st")!)) as Patch };
+    } catch (e) {
+      this.setStatus(`couldn't read the saved position in this link: ${e instanceof Error ? e.message : e}`);
+    }
     const data = q.get("d");
     if (data !== null) {
       const fmt = def.formats.find((f) => f.id === q.get("f")) ?? def.formats[0];
       try {
         const puzzle = fmt!.parse(data);
-        this.loadPuzzle(def, puzzle, { kind: "imported", format: fmt!.id, source: data }, false);
+        this.loadPuzzle(def, puzzle, { kind: "imported", format: fmt!.id, source: data }, false, shared);
       } catch (e) {
         this.showError(`couldn't read the puzzle in this link: ${e instanceof Error ? e.message : e}`);
       }
@@ -137,22 +171,19 @@ export class Shell {
       const params = fromQuery(def.params, q);
       const v = Number(q.get("v") ?? def.generatorVersion);
       const origin: Origin = { kind: "generated", seed, params, generatorVersion: def.generatorVersion };
-      if (this.resume(def, originKey(def, origin))) return;
-      await this.newGame(def, params, seed, false);
-      if (v !== def.generatorVersion) {
-        this.setStatus("this link was made by an older generator, so it's a different puzzle now");
-      }
+      if (!shared && this.resume(def, def.id, originKey(def, origin))) return;
+      await this.newGame(def, params, seed, false, shared);
+      if (v !== def.generatorVersion) this.setStatus("this link was made by an older generator, so it's a different puzzle now");
       return;
     }
-    if (this.resume(def, null)) return;
+    if (this.resume(def, def.id, null)) return;
     await this.newGame(def, prefs.get(`params:${def.id}`, {}), randomSeed(), false);
   }
 
-  /** Resume the autosave for def if it matches `key` (or unconditionally if key is null). */
-  private resume(def: AnyPuzzleDef, key: string | null): boolean {
-    const snap = saves.get<Snapshot | null>(def.id, null);
+  private resume(def: AnyPuzzleDef, key: string, origin: string | null): boolean {
+    const snap = saves.get<Snapshot | null>(key, null);
     if (!snap || snap.puzzleId !== def.id) return false;
-    if (key !== null && originKey(def, snap.origin) !== key) return false;
+    if (origin !== null && originKey(def, snap.origin) !== origin) return false;
     try {
       this.setSession(Session.restore(def, snap), false);
       return true;
@@ -162,21 +193,23 @@ export class Shell {
     }
   }
 
-  async newGame(def: AnyPuzzleDef, params: Record<string, unknown>, seed: string, push = true): Promise<void> {
+  private showBusy(text: string, ac: AbortController): void {
+    this.unmountView();
+    clear(this.els.boardbox);
+    this.els.boardbox.append(h("div", { class: "generating" }, h("span", null, text), h("button", { onclick: () => ac.abort() }, "cancel")));
+  }
+
+  async newGame(def: AnyPuzzleDef, params: Record<string, unknown>, seed: string, push = true, shared: Shared | null = null): Promise<void> {
     this.generating?.abort();
     const ac = new AbortController();
     this.generating = ac;
     const values = resolve(def.params, params);
     prefs.set(`params:${def.id}`, values);
-    this.ensureLayout();
-    clear(this.els.board);
-    this.els.board.append(h("div", { class: "generating" },
-      h("span", null, "generating…"),
-      h("button", { onclick: () => ac.abort() }, "cancel")));
+    this.showBusy("generating…", ac);
     try {
       const puzzle = await generate(def, values, seed, ac.signal);
       if (ac.signal.aborted) return;
-      this.loadPuzzle(def, puzzle, { kind: "generated", seed, params: values, generatorVersion: def.generatorVersion }, push);
+      this.loadPuzzle(def, puzzle, { kind: "generated", seed, params: values, generatorVersion: def.generatorVersion }, push, shared);
     } catch (e) {
       if (ac.signal.aborted) {
         if (this.session) this.mountView();
@@ -189,11 +222,51 @@ export class Shell {
     }
   }
 
-  loadPuzzle(def: AnyPuzzleDef, puzzle: unknown, origin: Origin, push = true): void {
-    this.setSession(new Session(def, puzzle, origin), push);
+  /** A board where `t` is the next easiest deduction (deterministic in seed). */
+  async startPractice(def: AnyPuzzleDef, t: Technique, seed: string, push = true): Promise<void> {
+    const origin = { kind: "practice" as const, technique: t.id, seed };
+    if (this.resume(def, `${def.id}:practice`, originKey(def, { ...origin, step: { message: "", actions: [] } }))) return;
+    this.generating?.abort();
+    const ac = new AbortController();
+    this.generating = ac;
+    this.showBusy(`finding a ${t.name}…`, ac);
+    try {
+      const pos = await findPracticePosition(def, this.registry.techniquesFor(def.id), t, seed, ac.signal);
+      if (ac.signal.aborted) return;
+      if (!pos) {
+        this.showError(`couldn't find a ${t.name} to practise in time. try again for a different board.`);
+        return;
+      }
+      this.setSession(new Session(def, pos.puzzle, { ...origin, step: pos.step }, { state: pos.state }), push);
+      this.setStatus(`find the ${t.name}`);
+    } catch (e) {
+      if (ac.signal.aborted) return;
+      console.error(e);
+      this.showError(`practice failed: ${e instanceof Error ? e.message : e}`);
+    } finally {
+      if (this.generating === ac) this.generating = null;
+    }
   }
 
-  private urlFor(session: Session<any, any, any, any>): string {
+  loadPuzzle(def: AnyPuzzleDef, puzzle: unknown, origin: Origin, push = true, shared: Shared | null = null): void {
+    this.setSession(shared ? Session.fromShared(def, puzzle, origin, shared) : new Session(def, puzzle, origin), push);
+  }
+
+  /** Link to the current puzzle, optionally carrying the current position or the whole move history. */
+  async shareUrl(level: ShareLevel): Promise<string> {
+    const s = this.session;
+    if (!s) return location.href;
+    const url = new URL(this.urlFor(s), location.href);
+    if (level === "state") {
+      const p = s.exportState();
+      if (p) url.searchParams.set("st", await packJson(p));
+    } else if (level === "history" && s.depth > 0) {
+      url.searchParams.set("h", await packJson(s.exportHistory()));
+    }
+    return url.href;
+  }
+
+  urlFor(session: Session<any, any, any, any>): string {
     const def = session.def;
     const q = new URLSearchParams({ p: def.id });
     const o = session.origin;
@@ -201,6 +274,9 @@ export class Shell {
       q.set("seed", o.seed);
       toQuery(def.params, resolve(def.params, o.params), q);
       q.set("v", String(o.generatorVersion));
+    } else if (o.kind === "practice") {
+      q.set("practice", o.technique);
+      q.set("seed", o.seed);
     } else {
       for (const fmt of def.formats) {
         const data = trySerialize(fmt, session.puzzle);
@@ -218,48 +294,35 @@ export class Shell {
   private setSession(session: Session<any, any, any, any>, push: boolean): void {
     this.teardownSession();
     this.session = session;
+    this.techniques = new TechniqueHost(this.registry, session);
     this.host = new PluginHost(this.registry, session);
+    this.hub.setScope(session.def.id);
     const url = this.urlFor(session);
     if (push) history.pushState(null, "", url);
     else history.replaceState(null, "", url);
 
-    this.ensureLayout();
+    delete this.root.dataset.mode;
     this.sessionCleanup.push(
-      session.hooks.change.tap(() => {
+      session.hooks.change.tap((ctx) => {
         this.scheduleSave();
-        this.renderToolbar();
         this.syncSolvedStatus();
+        this.hub.syncContext();
+        this.checkPractice(ctx);
       }, { owner: "shell" }),
-      session.hooks.solved.tap(({ elapsedMs }) => {
-        this.setStatus(`solved in ${formatTime(elapsedMs)}`);
-        this.root.dataset.solved = "";
+      session.hooks.solved.tap(() => {
+        this.syncSolvedStatus();
         this.saveNow();
       }, { owner: "shell" }),
+      session.hooks.refresh.tap(() => this.hub.syncContext(), { owner: "shell" }),
     );
-    if (session.solved) this.root.dataset.solved = "";
-    else delete this.root.dataset.solved;
     if (!prefs.get("paused", false) && !document.hidden) session.resume();
-    this.mountView();
+    this.root.toggleAttribute("data-paused", prefs.get("paused", false) && !session.solved);
     this.renderHeader();
-    this.renderToolbar();
-    this.renderPanel();
-    this.setStatus(session.solved ? `solved in ${formatTime(session.solvedAtMs!)}` : "");
+    this.mountView();
+    this.syncSolvedStatus();
     this.hooks.sessionStart.call({ session });
     session.checkSolved();
     this.saveNow();
-  }
-
-  /** Status line reflects the current board: a hint or solved message never outlives the state it was about. */
-  private syncSolvedStatus(): void {
-    const s = this.session;
-    if (!s) return;
-    if (s.solved) {
-      this.root.dataset.solved = "";
-      this.setStatus(`solved in ${formatTime(s.solvedAtMs!)}`);
-    } else {
-      delete this.root.dataset.solved;
-      this.setStatus("");
-    }
   }
 
   private teardownSession(): void {
@@ -267,13 +330,16 @@ export class Shell {
     if (!s) return;
     this.saveNow();
     this.hooks.sessionEnd.call({ session: s });
+    this.unmountWidgets();
     this.unmountView();
     this.host?.destroy();
+    this.techniques?.destroy();
     for (const f of this.sessionCleanup) f();
     this.sessionCleanup = [];
     s.pause();
     this.session = null;
     this.host = null;
+    this.techniques = null;
   }
 
   private chosenView(def: AnyPuzzleDef): View | undefined {
@@ -282,41 +348,52 @@ export class Shell {
     return views.find((v) => v.id === want) ?? views[views.length - 1];
   }
 
-  private viewSettings(v: View): Record<string, unknown> {
+  viewSettings(v: View): Record<string, unknown> {
     return v.settings ? resolve(v.settings, prefs.get(`viewcfg:${v.id}`, {})) : {};
   }
 
-  /** (Re)mount the chosen view for the current session. */
+  setViewSettings(v: View, values: Record<string, unknown>): void {
+    prefs.set(`viewcfg:${v.id}`, values);
+    this.mountView();
+  }
+
+  setViewChoice(id: string): void {
+    if (!this.session) return;
+    prefs.set(`view:${this.session.def.id}`, id);
+    this.mountView();
+  }
+
+  /** (Re)mount the chosen view and every widget, then lay out. */
   mountView(): void {
     const session = this.session;
     if (!session) return;
+    this.unmountWidgets();
     this.unmountView();
-    clear(this.els.board);
+    clear(this.els.boardbox);
     const v = this.chosenView(session.def);
     if (!v) {
-      this.els.board.append(h("p", { class: "error" }, `no view registered for ${session.def.id}`));
+      this.els.boardbox.append(h("p", { class: "error" }, `no view registered for ${session.def.id}`));
       return;
     }
     const mount = h("div", { class: "view", "data-view": v.id });
-    this.els.board.append(mount);
+    this.els.boardbox.append(mount);
     try {
-      const handle = v.mount(mount, {
-        session,
-        settings: this.viewSettings(v),
-        storage: namespace(`view:${v.id}`),
-      });
+      const handle = v.mount(mount, { session, settings: this.viewSettings(v), storage: namespace(`view:${v.id}`) });
       this.view = { def: v, handle };
       this.host!.attachView(handle, mount);
     } catch (e) {
       console.error(e);
-      this.els.board.append(h("p", { class: "error" }, `view failed: ${e instanceof Error ? e.message : e}`));
+      this.els.boardbox.append(h("p", { class: "error" }, `view failed: ${e instanceof Error ? e.message : e}`));
     }
-    this.bindKeys();
+    this.hub.setSource("view", () => this.view?.handle.commands ?? []);
+    this.hub.setSource("plugins", () => this.host?.commands() ?? []);
+    this.hub.setSource("techniques", () => this.techniqueCommands());
+    this.hub.setSource("widgets", () => this.widgetCommands());
+    this.hub.refresh();
+    this.mountWidgets();
   }
 
   private unmountView(): void {
-    this.unbindKeys?.();
-    this.unbindKeys = null;
     this.host?.detachView();
     if (this.view) {
       try {
@@ -328,60 +405,237 @@ export class Shell {
     this.view = null;
   }
 
-  // --- keybindings ---
+  // --- widgets & layout ---
 
-  private bindingStore(): BindingsStore<BindingSchema> | null {
-    const s = this.session;
-    if (!s) return null;
-    const schema: BindingSchema = { ...SHELL_BINDINGS };
-    for (const p of this.host!.plugins()) if (loadPluginConfig(p).enabled) Object.assign(schema, p.bindings);
-    Object.assign(schema, this.view?.def.bindings);
-    return new BindingsStore(schema, `games:keys:${s.def.id}`);
+  widgetDefs(): WidgetDef[] {
+    return this.session ? this.registry.widgetsFor(this.session.def.id, this.session.puzzle) : [];
   }
 
-  private bindKeys(): void {
-    this.unbindKeys?.();
-    const store = this.bindingStore();
-    if (!store) return;
-    const bindings = store.get();
-    // earlier sources win when two commands share a key: view, then plugins, then shell
-    const sources: Record<string, CommandHandler>[] = [
-      this.view?.handle.handlers ?? {},
-      this.host!.handlers(),
-      this.shellHandlers(),
-    ];
-    const seen = new Set<string>();
-    const commands = sources.flatMap((src) => Object.entries(src))
-      .filter(([id]) => bindings[id] && !seen.has(id) && seen.add(id))
-      .map(([id, execute]) => ({ id, ...bindings[id]!, execute }))
-      .filter((cmd) => {
-        try {
-          validateCommands([cmd]);
-          return true;
-        } catch (e) {
-          console.error(`[games] dropping keybinding "${cmd.id}"`, e);
-          return false;
-        }
-      });
-    this.unbindKeys = keybinds(commands);
-    this.els.cheatsheet.commands = commands;
-    this.els.keySettings.store = store;
-    const onChange = () => this.bindKeys();
-    store.addEventListener("change", onChange);
+  layoutConfig(): LayoutConfig {
+    return this.layout;
   }
 
-  private shellHandlers(): Record<string, CommandHandler> {
-    return {
-      undo: () => this.session?.undo(),
-      redo: () => this.session?.redo(),
-      hint: () => this.showHint(),
-      "apply-hint": () => this.applyHint(),
-      "new-game": () => this.newGameSame(),
-      pause: () => this.togglePause(),
-      "show-keys": () => {
-        this.els.cheatsheet.open = !this.els.cheatsheet.open;
-      },
+  setPlacement(id: string, slot: SlotId, order?: number): void {
+    if (!this.session) return;
+    const cur = this.layout[id];
+    this.layout = { ...this.layout, [id]: { slot, order: order ?? cur?.order ?? 50 } };
+    saveLayout(this.session.def.id, this.layout);
+    this.mountWidgets();
+  }
+
+  resetLayout(): void {
+    if (!this.session) return;
+    saveLayout(this.session.def.id, {});
+    this.mountWidgets();
+  }
+
+  widgetSettings(w: WidgetDef): Record<string, unknown> {
+    return w.settings ? resolve(w.settings, prefs.get(`widget:${w.id}`, {})) : {};
+  }
+
+  setWidgetSettings(w: WidgetDef, values: Record<string, unknown>): void {
+    prefs.set(`widget:${w.id}`, values);
+    this.mountWidgets();
+  }
+
+  private unmountWidgets(): void {
+    for (const m of this.widgets) {
+      try {
+        m.teardown?.();
+      } catch (e) {
+        console.error(e);
+      }
+      if (this.session) untapAll(this.session.hooks, m.owner);
+      if (this.view?.handle.hooks) untapAll(this.view.handle.hooks, m.owner);
+      m.el.remove();
+    }
+    this.widgets = [];
+    for (const el of [this.els.top, this.els.side, this.els.bottom, this.els.tabs, this.els.panelBody]) clear(el);
+  }
+
+  /** Mount every placed widget; panel widgets become tabs (only the active one is mounted). */
+  mountWidgets(): void {
+    const session = this.session;
+    if (!session) return;
+    this.unmountWidgets();
+    const defs = this.widgetDefs();
+    this.layout = loadLayout(session.def.id, defs);
+    const placed = defs
+      .map((d) => ({ d, p: this.layout[d.id]! }))
+      .filter((x) => x.p.slot !== "off")
+      .sort((a, b) => a.p.order - b.p.order || a.d.name.localeCompare(b.d.name));
+
+    const tabs = placed.filter((x) => x.p.slot === "panel");
+    if (!tabs.some((t) => t.d.id === this.activeTab)) this.activeTab = tabs[0]?.d.id ?? "";
+    for (const t of tabs) {
+      this.els.tabs.append(h("button", {
+        role: "tab", "aria-selected": String(t.d.id === this.activeTab), "data-widget": t.d.id,
+        onclick: () => this.openTab(t.d.id),
+      }, t.d.name));
+    }
+    for (const { d, p } of placed) {
+      if (p.slot === "panel" && d.id !== this.activeTab) continue;
+      const target = p.slot === "top" ? this.els.top : p.slot === "side" ? this.els.side : p.slot === "bottom" ? this.els.bottom : this.els.panelBody;
+      const el = h("div", { class: "widget", "data-widget": d.id });
+      target.append(el);
+      const owner = `widget:${d.id}`;
+      const m: MountedWidget = { def: d, owner, el };
+      try {
+        m.teardown = d.mount(el, {
+          session,
+          settings: this.widgetSettings(d),
+          run: (id) => this.hub.run(id),
+          commands: () => this.hub.all(),
+          view: this.view?.handle ?? null,
+          slot: p.slot,
+          owner,
+        }) ?? undefined;
+      } catch (e) {
+        console.error(`[games] widget ${d.id} failed`, e);
+        el.append(h("p", { class: "error" }, `${d.name} failed to load`));
+      }
+      this.widgets.push(m);
+    }
+    this.root.toggleAttribute("data-has-panel", tabs.length > 0);
+    this.relayout();
+  }
+
+  openTab(id: string): void {
+    this.activeTab = id;
+    prefs.set("tab", id);
+    if (this.layout[id]?.slot !== "panel") this.setPlacement(id, "panel");
+    else this.mountWidgets();
+  }
+
+  /**
+   * Size the board as large as possible: try side slot / panel beside vs below the board and
+   * keep the arrangement with the largest board. Runs on resize and when widgets or view change,
+   * never on content changes, so nothing moves while playing.
+   */
+  relayout(): void {
+    const e = this.els;
+    if (!this.session) return;
+    const stage = e.stage;
+    const hasSide = e.side.childElementCount > 0;
+    const hasPanel = this.root.hasAttribute("data-has-panel");
+    stage.dataset.side = "below";
+    stage.dataset.panel = "right";
+    const sideBelowH = hasSide ? e.side.offsetHeight : 0;
+    stage.dataset.side = "right";
+    const measures = {
+      width: this.root.clientWidth,
+      height: window.innerHeight - e.header.offsetHeight,
+      // a visible slot also costs the gap between it and the board row
+      topH: e.top.offsetHeight ? e.top.offsetHeight + 12 : 0,
+      bottomH: e.bottom.offsetHeight ? e.bottom.offsetHeight + 12 : 0,
+      sideW: hasSide ? e.side.offsetWidth : 0,
+      sideBelowH,
+      panelW: 320,
+      hasSide,
+      hasPanel,
+      aspect: this.view?.handle.aspect ?? 1,
+      gap: 12,
     };
+    const a = arrange(measures);
+    stage.dataset.side = a.side;
+    stage.dataset.panel = a.panel;
+    e.boardbox.style.width = `${Math.max(120, a.boardW)}px`;
+    e.boardbox.style.height = `${Math.max(120, a.boardH)}px`;
+  }
+
+  // --- commands ---
+
+  private shellCommands(): CommandDef[] {
+    const s = this.session;
+    const base: CommandDef[] = [
+      { id: "shell.palette", label: "commands", category: "general", keys: ["$mod+k"], captureInput: true, run: () => this.hub.openPalette() },
+      { id: "shell.shortcuts", label: "keyboard shortcuts", category: "general", keys: ["$mod+slash"], run: () => { this.hub.cheatsheet.open = !this.hub.cheatsheet.open; } },
+      { id: "shell.rebind", label: "change key bindings", category: "general", run: () => { this.hub.settings.open = true; } },
+      { id: "shell.index", label: "all puzzles", category: "general", run: () => this.goIndex() },
+    ];
+    if (!s) return base;
+    const def = s.def;
+    const progress = () => s.canUndo && !s.solved;
+    return [
+      ...base,
+      { id: "shell.undo", label: "undo", category: "game", keys: ["$mod+z", "u"], when: (c) => !!c.canUndo, run: () => s.undo() },
+      { id: "shell.redo", label: "redo", category: "game", keys: ["$mod+shift+z", "$mod+y", "r"], when: (c) => !!c.canRedo, run: () => s.redo() },
+      {
+        id: "shell.restart", label: "restart", category: "game", danger: true, when: (c) => !!c.canUndo || !!c.solved,
+        confirm: () => (s.solved ? "this board is solved. restarting clears it. restart anyway?" : "restart this board from the beginning?"),
+        run: () => s.restart(),
+      },
+      { id: "shell.hint", label: "hint", category: "game", keys: ["shift+slash"], description: "press again for more detail", when: (c) => !c.solved, run: () => this.showHint() },
+      { id: "shell.apply-hint", label: "apply hint", category: "game", keys: ["shift+h"], when: (c) => !c.solved, run: () => this.applyHint() },
+      {
+        id: "shell.reveal", label: "reveal solution", category: "game", danger: true, when: (c) => !c.solved && !!def.solve,
+        confirm: () => "show the whole solution?",
+        run: () => {
+          const sol = def.solve?.(s.puzzle);
+          if (sol) s.replaceState(sol, { kind: "system", reason: "reveal" });
+          else this.setStatus("no solution available");
+        },
+      },
+      { id: "shell.pause", label: prefs.get("paused", false) ? "resume" : "pause", category: "game", keys: ["p"], when: (c) => !c.solved, run: () => this.togglePause() },
+      {
+        id: "shell.new", label: "new game", category: "game", keys: ["$mod+Enter"],
+        confirm: () => (progress() ? "start a new game? this one's progress will be lost." : null),
+        run: () => this.newGameSame(),
+      },
+      ...(def.presets ?? []).map((p, i): CommandDef => ({
+        id: `shell.preset-${i}`, label: `new ${def.name}: ${p.label}`, category: "new game",
+        confirm: () => (progress() ? "start a new game? this one's progress will be lost." : null),
+        run: () => void this.newGame(def, { ...prefs.get(`params:${def.id}`, {}), ...p.params }, randomSeed()),
+      })),
+      ...(this.host?.plugins() ?? []).map((p): CommandDef => ({
+        id: `toggle.${p.id}`, label: p.name, category: p.category ?? "assists", description: p.description,
+        checked: () => loadPluginConfig(p).enabled,
+        run: () => {
+          this.host!.setConfig(p, { ...loadPluginConfig(p), enabled: !loadPluginConfig(p).enabled });
+          this.hub.refresh();
+        },
+      })),
+    ];
+  }
+
+  private techniqueCommands(): CommandDef[] {
+    const th = this.techniques;
+    const s = this.session;
+    if (!th || !s) return [];
+    return th.list.flatMap((t): CommandDef[] => [
+      { id: `technique.find.${t.id}`, label: `find ${t.name}`, category: "techniques", description: t.description, run: () => this.findTechnique(t) },
+      { id: `technique.apply.${t.id}`, label: `apply ${t.name}`, category: "techniques", run: () => { if (!th.apply(t)) this.setStatus(`no ${t.name} right now`); } },
+      {
+        id: `technique.auto.${t.id}`, label: `auto-apply ${t.name}`, category: "techniques",
+        checked: () => th.config(t).auto,
+        run: () => { th.setConfig(t, { ...th.config(t), auto: !th.config(t).auto }); this.hub.refresh(); },
+      },
+      { id: `technique.practice.${t.id}`, label: `practise ${t.name}`, category: "practice", run: () => void this.startPractice(s.def, t, randomSeed()) },
+    ]);
+  }
+
+  private widgetCommands(): CommandDef[] {
+    return this.widgetDefs().map((w): CommandDef => ({
+      id: `widget.${w.id}`, label: `show ${w.name}`, category: "layout", description: w.description,
+      checked: () => (this.layout[w.id]?.slot ?? w.defaultSlot) !== "off",
+      run: () => {
+        const cur = this.layout[w.id]?.slot ?? w.defaultSlot;
+        this.setPlacement(w.id, cur === "off" ? (w.defaultSlot === "off" ? "panel" : w.defaultSlot) : "off");
+        this.hub.refresh();
+      },
+    }));
+  }
+
+  findTechnique(t: Technique): void {
+    const step = this.techniques?.find(t);
+    if (!step) {
+      this.setStatus(`no ${t.name} right now`);
+      return;
+    }
+    const hint = hintFrom(t, step, 2);
+    this.session!.showHint(hint as Hint<any>);
+    this.session!.hooks.fx.call({ kind: "hint", focus: hint.focus });
+    this.setStatus(hint.message);
   }
 
   private newGameSame(): void {
@@ -390,7 +644,7 @@ export class Shell {
     void this.newGame(s.def, prefs.get(`params:${s.def.id}`, {}), randomSeed());
   }
 
-  private togglePause(): void {
+  togglePause(): void {
     const s = this.session;
     if (!s || s.solved) return;
     const paused = !prefs.get("paused", false);
@@ -398,35 +652,68 @@ export class Shell {
     if (paused) s.pause();
     else s.resume();
     this.root.toggleAttribute("data-paused", paused);
-    this.renderToolbar();
+    this.hub.refresh();
   }
 
-  /** Carry out the visible hint, or fetch one and carry it out if none is showing. */
-  private applyHint(): void {
-    const s = this.session;
-    if (!s || s.solved) return;
-    const hint = s.activeHint ?? s.showHint();
-    if (!hint) {
-      this.setStatus("no hint available");
-      return;
-    }
-    if (!hint.action) {
-      this.setStatus(hint.message);
-      return;
-    }
-    if (!s.dispatch(hint.action)) this.setStatus("that hint no longer applies");
-  }
-
-  private showHint(): void {
+  /** First press: nudge. Again: full explanation. Again: carry it out. */
+  showHint(): void {
     const s = this.session;
     if (!s) return;
+    const cur = s.activeHint;
+    if (cur?.more) {
+      s.showHint(cur.more);
+      s.hooks.fx.call({ kind: "hint", focus: cur.more.focus });
+      this.setStatus(cur.more.message);
+      return;
+    }
+    if (cur && cur.actions?.length) {
+      this.applyHint();
+      return;
+    }
     const hint = s.showHint();
     if (!hint) {
       this.setStatus("no hint available");
       return;
     }
+    s.hooks.fx.call({ kind: "hint", focus: hint.focus });
     this.setStatus(hint.message);
-    this.renderToolbar();
+  }
+
+  applyHint(): void {
+    const s = this.session;
+    if (!s || s.solved) return;
+    const hint = s.activeHint ?? s.hint();
+    if (!hint) {
+      this.setStatus("no hint available");
+      return;
+    }
+    const actions = hint.actions ?? hint.more?.actions;
+    if (!actions?.length) {
+      this.setStatus(hint.message);
+      return;
+    }
+    let changed = false;
+    s.batch(() => {
+      for (const a of actions) changed = s.dispatch(a, { source: { kind: "hint", technique: hint.technique } }) || changed;
+    });
+    if (!changed) this.setStatus("that hint no longer applies");
+  }
+
+  // --- practice ---
+
+  private checkPractice(ctx: { cause: string; source?: { kind: string }; prev: unknown; state: unknown }): void {
+    const s = this.session;
+    if (!s || s.origin.kind !== "practice" || ctx.cause !== "action" || ctx.source?.kind !== "player") return;
+    const step = s.origin.step;
+    if (isPartOfStep(s.def, s.puzzle, ctx.prev, ctx.state, step)) {
+      const done = isStepDone(s.def, s.puzzle, ctx.state, step);
+      s.hooks.fx.call({ kind: "practice", correct: true, done });
+      this.setStatus(done ? "that's it!" : "yes, keep going");
+    } else {
+      s.hooks.fx.call({ kind: "practice", correct: false, done: false });
+      queueMicrotask(() => s.undo());
+      this.setStatus("not that one. look again");
+    }
   }
 
   // --- persistence ---
@@ -438,75 +725,106 @@ export class Shell {
 
   private saveNow(): void {
     clearTimeout(this.saveTimer);
-    if (this.session) saves.set(this.session.def.id, this.session.snapshot());
+    const s = this.session;
+    if (s) saves.set(saveKey(s.def, s.origin), s.snapshot());
   }
 
-  // --- rendering ---
+  // --- chrome ---
 
-  private ensureLayout(): void {
-    if (this.els) return;
+  private buildDom() {
     clear(this.root);
-    const cheatsheet = document.createElement("keybind-cheatsheet") as KeybindCheatsheet;
-    const keySettings = document.createElement("keybind-settings") as KeybindSettings;
-    this.els = {
+    style("shell", SHELL_CSS);
+    const els = {
       header: h("header", { class: "bar" }),
       title: h("span", { class: "title" }),
       meta: h("span", { class: "meta" }),
       timer: h("span", { class: "timer", "aria-label": "elapsed time" }),
-      board: h("main", { class: "board" }),
-      status: h("div", { class: "status", "aria-live": "polite" }),
-      toolbar: h("nav", { class: "toolbar" }),
+      stage: h("div", { class: "stage", "data-panel": "right", "data-side": "right" }),
+      main: h("div", { class: "main" }),
+      top: h("div", { class: "slot slot-top" }),
+      middle: h("div", { class: "middle" }),
+      boardbox: h("div", { class: "boardbox" }),
+      side: h("div", { class: "slot slot-side" }),
+      bottom: h("div", { class: "slot slot-bottom" }),
+      panel: h("aside", { class: "panel" }),
       tabs: h("div", { class: "tabs", role: "tablist" }),
-      panel: h("div", { class: "panel-body" }),
-      cheatsheet,
-      keySettings,
+      panelBody: h("div", { class: "panel-body" }),
+      index: h("div", { class: "index-wrap" }),
     };
-    const e = this.els;
-    e.header.append(
+    els.header.append(
       h("a", { href: "/", class: "home", title: "ptera.world" }, "ptera"),
       h("a", { href: location.pathname, class: "crumb", onclick: (ev: MouseEvent) => { ev.preventDefault(); this.goIndex(); } }, "games"),
-      e.title, e.meta, h("span", { class: "spacer" }), e.timer);
-    this.root.append(
-      e.header,
-      h("div", { class: "layout" },
-        h("div", { class: "play" }, e.board, e.status, e.toolbar),
-        h("aside", { class: "panel" }, e.tabs, e.panel)),
-      cheatsheet, keySettings);
+      els.title, els.meta, h("span", { class: "spacer" }), els.timer,
+      h("button", { class: "palette-btn", title: "all commands", onclick: () => this.hub.openPalette() }, "commands"));
+    els.middle.append(els.boardbox, els.side);
+    els.main.append(els.top, els.middle, els.bottom);
+    els.panel.append(els.tabs, els.panelBody);
+    els.stage.append(els.main, els.panel);
+    this.root.append(els.header, els.stage, els.index);
+    return els;
   }
 
-  private goIndex(): void {
+  goIndex(): void {
     history.pushState(null, "", location.pathname);
     this.showIndex();
   }
 
   private showIndex(): void {
     this.teardownSession();
-    this.ensureLayout();
     this.root.dataset.mode = "index";
     this.els.title.textContent = "";
     this.els.meta.textContent = "";
     this.els.timer.textContent = "";
-    clear(this.els.toolbar);
-    this.setStatus("");
-    clear(this.els.board);
-    this.els.board.append(h("ul", { class: "index" }, this.registry.listPuzzles().map((def) =>
-      h("li", null, h("a", {
-        href: `?p=${encodeURIComponent(def.id)}`,
-        onclick: (ev: MouseEvent) => {
-          ev.preventDefault();
-          history.pushState(null, "", `?p=${encodeURIComponent(def.id)}`);
-          void this.fromUrl();
-        },
-      }, h("strong", null, def.name), def.description ? h("span", null, def.description) : null)))));
-    this.renderPanel();
+    document.title = "games · ptera.world";
+    clear(this.els.index);
+    const go = (qs: string) => (ev: MouseEvent) => {
+      ev.preventDefault();
+      history.pushState(null, "", `?${qs}`);
+      void this.fromUrl();
+    };
+    const all = this.registry.listPuzzles();
+    const tags = [...new Set(all.flatMap((d) => d.tags ?? []))].sort();
+    let active = prefs.get<string | null>("indexTag", null);
+    if (active && !tags.includes(active)) active = null;
+    const filters = h("div", { class: "index-tags", role: "group", "aria-label": "filter by tag" });
+    const list = h("ul", { class: "index" });
+    const render = () => {
+      clear(filters);
+      if (tags.length) {
+        for (const tag of [null, ...tags]) {
+          filters.append(h("button", {
+            "aria-pressed": String(tag === active),
+            onclick: () => { active = tag; prefs.set("indexTag", tag); render(); },
+          }, tag ?? "all"));
+        }
+      }
+      clear(list);
+      for (const li of items.filter((x) => !active || (x.def.tags ?? []).includes(active))) list.append(li.el);
+    };
+    const items = all.map((def) => {
+      const n = this.registry.techniquesFor(def.id).length;
+      const p = encodeURIComponent(def.id);
+      return h("li", null,
+        h("a", { href: `?p=${p}`, class: "card", onclick: go(`p=${p}`) },
+          h("strong", null, def.name),
+          def.description ? h("span", null, def.description) : null),
+        def.tags?.length ? h("span", { class: "tags" }, def.tags.join(" · ")) : null,
+        n ? h("a", { href: `?p=${p}&tab=techniques`, class: "learn", onclick: go(`p=${p}&tab=techniques`) }, `learn · ${n} techniques`) : null);
+    }).map((el, i) => ({ el, def: all[i]! }));
+    this.els.index.append(h("div", { class: "index-inner" }, filters, list));
+    render();
+    this.hub.refresh();
   }
 
   private renderHeader(): void {
     const s = this.session;
     if (!s) return;
-    delete this.root.dataset.mode;
     this.els.title.textContent = s.def.name;
     const bits: string[] = [];
+    if (s.origin.kind === "practice") {
+      const t = this.registry.techniquesFor(s.def.id).find((x) => x.id === (s.origin as { technique: string }).technique);
+      bits.push(`practice: ${t?.name ?? "technique"}`);
+    }
     const desc = s.def.describe?.(s.puzzle);
     if (desc) bits.push(desc);
     try {
@@ -521,287 +839,91 @@ export class Shell {
 
   private tick(): void {
     const s = this.session;
-    if (!s || !this.els) return;
+    if (!s) return;
     const hide = prefs.get("hideTimer", false);
     this.els.timer.textContent = hide ? "" : formatTime(s.elapsedMs()) + (s.running || s.solved ? "" : " ⏸");
   }
 
-  renderToolbar(): void {
-    const s = this.session;
-    if (!s) return;
-    const paused = prefs.get("paused", false);
-    const items: ToolbarItem[] = [
-      { id: "undo", label: "undo", disabled: !s.canUndo, run: () => s.undo() },
-      { id: "redo", label: "redo", disabled: !s.canRedo, run: () => s.redo() },
-      { id: "restart", label: "restart", disabled: !s.canUndo, run: () => s.restart() },
-      { id: "hint", label: "hint", disabled: s.solved, run: () => this.showHint() },
-      ...(s.activeHint?.action ? [{ id: "apply-hint", label: "apply hint", run: () => this.applyHint() }] : []),
-      {
-        id: "reveal", label: "reveal", disabled: s.solved || !s.def.solve, run: () => {
-          if (!confirm("reveal the solution?")) return;
-          const sol = s.def.solve?.(s.puzzle);
-          if (sol) s.replaceState(sol);
-          else this.setStatus("no solution available");
-        },
-      },
-      { id: "pause", label: paused ? "resume" : "pause", disabled: s.solved, run: () => this.togglePause() },
-      { id: "new", label: "new", run: () => this.newGameSame() },
-    ];
-    const final = this.hooks.toolbar.call(items, { shell: this });
-    clear(this.els.toolbar);
-    for (const it of final) {
-      this.els.toolbar.append(h("button", {
-        "data-id": it.id, title: it.title, disabled: it.disabled,
-        onclick: () => it.run(),
-      }, it.label));
-    }
+  get status(): string {
+    return this.statusText;
   }
 
   setStatus(text: string): void {
-    if (this.els) this.els.status.textContent = text;
+    this.statusText = text;
+    this.hooks.status.call({ text });
+  }
+
+  private syncSolvedStatus(): void {
+    const s = this.session;
+    if (!s) return;
+    if (s.solved) {
+      this.root.dataset.solved = "";
+      this.root.removeAttribute("data-paused");
+      this.setStatus(s.origin.kind === "practice" ? "solved" : `solved in ${formatTime(s.solvedAtMs!)}`);
+    } else {
+      delete this.root.dataset.solved;
+      this.setStatus("");
+    }
   }
 
   private showError(text: string): void {
-    this.ensureLayout();
-    clear(this.els.board);
-    this.els.board.append(h("p", { class: "error" }, text));
-  }
-
-  renderPanel(): void {
-    const tabs = this.hooks.panels.call(this.builtinTabs(), { shell: this });
-    if (!tabs.some((t) => t.id === this.activeTab)) this.activeTab = tabs[0]?.id ?? "";
-    clear(this.els.tabs);
-    for (const t of tabs) {
-      this.els.tabs.append(h("button", {
-        role: "tab", "aria-selected": String(t.id === this.activeTab),
-        onclick: () => {
-          this.activeTab = t.id;
-          prefs.set("tab", t.id);
-          this.renderPanel();
-        },
-      }, t.label));
-    }
-    clear(this.els.panel);
-    const active = tabs.find((t) => t.id === this.activeTab);
-    if (active) this.els.panel.append(active.render());
-  }
-
-  private builtinTabs(): PanelTab[] {
-    const tabs: PanelTab[] = [];
-    if (this.session) {
-      tabs.push(
-        { id: "game", label: "new", render: () => this.gameTab() },
-        { id: "assists", label: "settings", render: () => this.settingsTab() },
-        { id: "share", label: "share", render: () => this.shareTab() },
-      );
-    }
-    tabs.push({ id: "mods", label: "mods", render: () => this.modsTab() });
-    return tabs;
-  }
-
-  private gameTab(): HTMLElement {
-    const s = this.session!;
-    const def = s.def;
-    let params: Record<string, unknown> = prefs.get(`params:${def.id}`, {});
-    params = resolve(def.params, params);
-    const seedInput = h("input", { type: "text", placeholder: "random", spellcheck: "false", "aria-label": "seed" });
-    const start = () => void this.newGame(def, params, seedInput.value.trim() || randomSeed());
-    const presets = def.presets?.length
-      ? h("div", { class: "presets" }, def.presets.map((p) =>
-        h("button", {
-          onclick: () => void this.newGame(def, { ...params, ...p.params }, randomSeed()),
-        }, p.label)))
-      : null;
-    const seedNow = s.origin.kind === "generated" ? s.origin.seed : null;
-    return h("div", { class: "tab-game" },
-      presets,
-      schemaForm(def.params, params, (v) => {
-        params = v;
-        prefs.set(`params:${def.id}`, v);
-      }),
-      h("div", { class: "row" }, h("label", null, "seed"), seedInput),
-      h("button", { class: "primary", onclick: start }, "generate"),
-      seedNow ? h("p", { class: "dim" }, "current seed: ", h("code", null, seedNow)) : null);
-  }
-
-  private settingsTab(): HTMLElement {
-    const s = this.session!;
-    const host = this.host!;
-    const wrap = h("div", { class: "tab-settings" });
-    const byCat = new Map<string, Plugin[]>();
-    for (const p of host.plugins()) {
-      const c = p.category ?? "other";
-      if (!byCat.has(c)) byCat.set(c, []);
-      byCat.get(c)!.push(p);
-    }
-    for (const [cat, plugins] of byCat) {
-      wrap.append(h("h3", null, cat));
-      for (const p of plugins) {
-        const cfg = loadPluginConfig(p);
-        const body = p.settings ? schemaForm(p.settings, cfg.settings, (v) => {
-          host.setConfig(p, { ...loadPluginConfig(p), settings: v });
-          this.bindKeys();
-        }) : null;
-        if (body) body.hidden = !cfg.enabled;
-        wrap.append(h("div", { class: "plugin" },
-          h("label", { class: "plugin-toggle", title: p.description },
-            h("input", {
-              type: "checkbox", checked: cfg.enabled,
-              onchange: (e: Event) => {
-                const enabled = (e.target as HTMLInputElement).checked;
-                host.setConfig(p, { ...loadPluginConfig(p), enabled });
-                if (body) body.hidden = !enabled;
-                this.bindKeys();
-              },
-            }),
-            h("span", null, p.name)),
-          p.description ? h("small", null, p.description) : null,
-          body));
-      }
-    }
-
-    const views = this.registry.viewsFor(s.def.id);
-    const v = this.view?.def;
-    wrap.append(h("h3", null, "display"));
-    if (views.length > 1) {
-      wrap.append(h("div", { class: "row" }, h("label", null, "view"),
-        h("select", {
-          onchange: (e: Event) => {
-            prefs.set(`view:${s.def.id}`, (e.target as HTMLSelectElement).value);
-            this.mountView();
-            this.renderPanel();
-          },
-        }, views.map((x) => h("option", { value: x.id, selected: x.id === v?.id }, x.name)))));
-    }
-    if (v?.settings) {
-      wrap.append(schemaForm(v.settings, this.viewSettings(v), (vals) => {
-        prefs.set(`viewcfg:${v.id}`, vals);
-        this.mountView();
-      }));
-    }
-    wrap.append(
-      h("label", { class: "plugin-toggle" },
-        h("input", {
-          type: "checkbox", checked: prefs.get("hideTimer", false),
-          onchange: (e: Event) => prefs.set("hideTimer", (e.target as HTMLInputElement).checked),
-        }),
-        h("span", null, "hide timer")),
-      h("h3", null, "keys"),
-      h("div", { class: "row" },
-        h("button", { onclick: () => { this.els.cheatsheet.open = true; } }, "shortcuts"),
-        h("button", { onclick: () => { this.els.keySettings.open = true; } }, "rebind")));
-    return wrap;
-  }
-
-  private shareTab(): HTMLElement {
-    const s = this.session!;
-    const def = s.def;
-    const out = h("textarea", { rows: 4, readonly: true, spellcheck: "false", "aria-label": "export" });
-    const exportable = def.formats.filter((f) => f.serialize);
-    const fmtSelect = h("select", { "aria-label": "export format" }, exportable.map((f) => h("option", { value: f.id }, f.label)));
-    const refresh = () => {
-      const f = exportable.find((x) => x.id === fmtSelect.value);
-      out.value = f ? trySerialize(f, s.puzzle) ?? "this puzzle can't be written in that format" : "";
-    };
-    fmtSelect.addEventListener("change", refresh);
-    refresh();
-
-    const input = h("textarea", { rows: 4, spellcheck: "false", placeholder: "paste a puzzle", "aria-label": "import" });
-    const importFmt = h("select", { "aria-label": "import format" },
-      h("option", { value: "" }, "auto-detect"),
-      def.formats.map((f) => h("option", { value: f.id }, f.label)));
-    const err = h("p", { class: "error" });
-    const doImport = () => {
-      const text = input.value.trim();
-      if (!text) return;
-      const candidates = importFmt.value
-        ? def.formats.filter((f) => f.id === importFmt.value)
-        : [...def.formats.filter((f) => f.detect?.(text)), ...def.formats.filter((f) => !f.detect)];
-      const errors: string[] = [];
-      for (const f of candidates) {
-        try {
-          const puzzle = f.parse(text);
-          const source = trySerialize(f, puzzle) ?? text;
-          this.loadPuzzle(def, puzzle, { kind: "imported", format: f.id, source });
-          return;
-        } catch (e) {
-          errors.push(`${f.label}: ${e instanceof Error ? e.message : e}`);
-        }
-      }
-      err.textContent = errors.length ? errors.join("\n") : "no format recognised this";
-    };
-
-    const link = new URL(this.urlFor(s), location.href).href;
-    return h("div", { class: "tab-share" },
-      h("h3", null, "link"),
-      h("div", { class: "row" },
-        h("input", { type: "text", readonly: true, value: link, "aria-label": "share link" }),
-        h("button", { onclick: () => void navigator.clipboard?.writeText(link) }, "copy")),
-      exportable.length ? [
-        h("h3", null, "export"),
-        fmtSelect, out,
-        h("button", { onclick: () => void navigator.clipboard?.writeText(out.value) }, "copy"),
-      ] : null,
-      h("h3", null, "import"),
-      importFmt, input,
-      h("button", { class: "primary", onclick: doImport }, "load"),
-      err);
-  }
-
-  private modsTab(): HTMLElement {
-    const wrap = h("div", { class: "tab-mods" });
-    const render = () => {
-      clear(wrap);
-      const mods = listMods();
-      for (const r of this.modResults) {
-        if (r.error) wrap.append(h("p", { class: "error" }, `${r.mod.name}: ${r.error}`));
-      }
-      for (const m of mods) {
-        wrap.append(h("div", { class: "plugin" },
-          h("label", { class: "plugin-toggle" },
-            h("input", {
-              type: "checkbox", checked: m.enabled,
-              onchange: (e: Event) => {
-                m.enabled = (e.target as HTMLInputElement).checked;
-                saveMods(mods);
-              },
-            }),
-            h("span", null, m.name)),
-          h("button", {
-            onclick: () => {
-              saveMods(mods.filter((x) => x.id !== m.id));
-              render();
-            },
-          }, "remove")));
-      }
-      const name = h("input", { type: "text", placeholder: "name", "aria-label": "mod name" });
-      const src = h("textarea", {
-        rows: 6, spellcheck: "false", "aria-label": "mod url or code",
-        placeholder: "module URL, or code:\nexport default (games) => { … }",
-      });
-      wrap.append(
-        h("h3", null, "add mod"),
-        name, src,
-        h("button", {
-          class: "primary",
-          onclick: () => {
-            const text = src.value.trim();
-            if (!text) return;
-            const isUrl = /^(https?:|\/|\.\/)\S*$/.test(text);
-            if (!confirm("mods run with full access to this page. only add code you trust. add it?")) return;
-            const entry: ModEntry = {
-              id: crypto.randomUUID(),
-              name: name.value.trim() || (isUrl ? text : "inline mod"),
-              enabled: true,
-              source: isUrl ? { url: text } : { code: text },
-            };
-            saveMods([...mods, entry]);
-            render();
-          },
-        }, "add"),
-        h("button", { onclick: () => location.reload() }, "reload to apply"));
-    };
-    render();
-    return wrap;
+    this.unmountView();
+    clear(this.els.boardbox);
+    this.els.boardbox.append(h("p", { class: "error" }, text));
   }
 }
+
+const SHELL_CSS = `
+#games { display: flex; flex-direction: column; min-height: 100%; height: 100%; }
+.bar { display: flex; align-items: center; gap: 12px; padding: 8px 16px; border-bottom: 1px solid var(--border); white-space: nowrap; overflow: hidden; flex: none; }
+.bar .home { font-weight: 600; }
+.bar .crumb::before { content: "/ "; color: var(--text-dim); }
+.bar .title { font-weight: 600; }
+.bar .title:empty { display: none; }
+.bar .meta { color: var(--text-dim); font-size: 13px; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.bar .spacer { flex: 1; }
+.bar .timer { font-family: var(--mono); color: var(--text-dim); }
+.bar .palette-btn { padding: 4px 10px; font-size: 13px; }
+
+.stage { flex: 1; display: flex; min-height: 0; }
+.stage[data-panel="below"] { flex-direction: column; overflow-y: auto; }
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 12px; overflow-y: auto; }
+.stage[data-panel="below"] .main { flex: none; overflow: visible; }
+.middle { display: flex; gap: 12px; align-items: center; justify-content: center; max-width: 100%; }
+.stage[data-side="below"] .middle { flex-direction: column; }
+.boardbox { position: relative; flex: none; display: flex; align-items: center; justify-content: center; }
+.boardbox > .view { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+.slot { display: flex; flex-direction: column; gap: 10px; }
+.slot:empty { display: none; }
+.slot-top, .slot-bottom { width: 100%; align-items: center; }
+.slot-top > .widget, .slot-bottom > .widget { width: 100%; display: flex; justify-content: center; }
+.slot-side { width: 240px; flex: none; }
+.stage[data-side="below"] .slot-side { width: min(100%, 520px); }
+
+.panel { width: 320px; flex: none; border-left: 1px solid var(--border); display: flex; flex-direction: column; min-height: 0; }
+.stage[data-panel="below"] .panel { width: auto; border-left: none; border-top: 1px solid var(--border); min-height: auto; }
+#games:not([data-has-panel]) .panel { display: none; }
+.tabs { display: flex; flex-wrap: wrap; border-bottom: 1px solid var(--border); flex: none; }
+.tabs button { border: none; border-radius: 0; background: none; padding: 10px 12px; color: var(--text-dim); white-space: nowrap; }
+.tabs button[aria-selected="true"] { color: var(--text); box-shadow: inset 0 -2px var(--accent); }
+.panel-body { flex: 1; overflow-y: auto; padding: 12px 16px 24px; }
+.panel-body > .widget { display: flex; flex-direction: column; gap: 10px; }
+
+[data-paused] .boardbox .view { filter: blur(14px); pointer-events: none; }
+[data-mode="index"] .stage { display: none; }
+#games:not([data-mode="index"]) .index-wrap { display: none; }
+.index-wrap { padding: 16px; display: flex; justify-content: center; }
+.index-inner { width: 100%; max-width: 960px; display: flex; flex-direction: column; gap: 12px; }
+.index-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.index-tags:empty { display: none; }
+.index-tags button { padding: 3px 10px; font-size: 13px; border-radius: 99px; }
+.index-tags button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); }
+.index .tags { font-size: 11px; padding: 0 14px 8px; color: var(--text-dim); }
+.index { list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; width: 100%; max-width: 960px; }
+.index li { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); overflow: hidden; }
+.index .card { display: flex; flex-direction: column; gap: 4px; padding: 14px; color: var(--text); flex: 1; }
+.index .card:hover { background: var(--surface-2); text-decoration: none; }
+.index span { color: var(--text-dim); font-size: 13px; }
+.index .learn { font-size: 12px; padding: 8px 14px; border-top: 1px solid var(--border); }
+.generating { display: flex; gap: 12px; align-items: center; color: var(--text-dim); }
+`;

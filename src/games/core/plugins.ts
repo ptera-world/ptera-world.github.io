@@ -3,7 +3,7 @@ import type { Registry } from "./registry";
 import { resolve } from "./schema";
 import type { Session } from "./session";
 import { namespace } from "./storage";
-import type { CommandHandler, Plugin, PluginApi, ViewHandle } from "./types";
+import type { CommandDef, Plugin, PluginApi, ViewHandle } from "./types";
 
 const store = namespace("plugin");
 
@@ -44,13 +44,13 @@ export class PluginHost {
 
   /** Attaches enabled plugins, then settles the opening state with all of them (no undo step). */
   constructor(private registry: Registry, private session: Session<any, any, any, any>) {
-    for (const p of registry.pluginsFor(session.def.id)) this.sync(p);
+    for (const p of registry.pluginsFor(session.def.id, session.puzzle)) this.sync(p);
     this.ready = true;
     session.settle(false);
   }
 
   plugins(): Plugin[] {
-    return this.registry.pluginsFor(this.session.def.id);
+    return this.registry.pluginsFor(this.session.def.id, this.session.puzzle);
   }
 
   /** (Re)attach or detach one plugin to match its stored config. */
@@ -95,10 +95,16 @@ export class PluginHost {
     this.view = null;
   }
 
-  handlers(): Record<string, CommandHandler> {
-    const out: Record<string, CommandHandler> = {};
-    for (const a of this.active.values()) Object.assign(out, a.plugin.handlers?.(a.api));
-    return out;
+  /** Commands from every enabled plugin. */
+  commands(): CommandDef[] {
+    return [...this.active.values()].flatMap((a) => {
+      try {
+        return a.plugin.commands?.(a.api) ?? [];
+      } catch (e) {
+        console.error(`[games] plugin ${a.plugin.id} commands failed`, e);
+        return [];
+      }
+    });
   }
 
   destroy(): void {

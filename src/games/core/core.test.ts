@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { flip, solvePresses } from "../puzzles/flip/logic";
+import { flip, solvePresses } from "../packs/flip/logic";
 import { generate } from "./generate";
 import { createRng } from "./rng";
 import { canonical, defineSchema, fromQuery, resolve, toQuery } from "./schema";
@@ -105,4 +105,42 @@ test("checkSolved fires for a puzzle that opens already solved", () => {
   session.hooks.solved.tap(() => { fired = true; });
   session.checkSolved();
   expect(fired).toBe(true);
+});
+
+test("apply taps run to a fixpoint, so one assist's change can trigger another", () => {
+  // tap A: a lit cell 0 turns cell 1 on. tap B (runs after A): lit cell 1 turns cell 2 on.
+  // a single pass would light cell 2 only if B saw A's output; a second round is needed for
+  // tap A to react to B. Here: cell 2 lit → cell 3 lit, handled by A again.
+  const puzzle = flip.formats[0]!.parse("4x1:cross:0000");
+  const session = new Session(flip, puzzle, { kind: "imported" });
+  const light = (s: { lights: number[] }, c: number) => (s.lights[c] ? s : { lights: s.lights.map((v, i) => (i === c ? 1 : v)) });
+  session.hooks.apply.tap((s) => {
+    let out = s;
+    if (out.lights[0]) out = light(out, 1);
+    if (out.lights[2]) out = light(out, 3);
+    return out;
+  }, { owner: "a", priority: 1 });
+  session.hooks.apply.tap((s) => (s.lights[1] ? light(s, 2) : s), { owner: "b", priority: 2 });
+  session.dispatch({ type: "press", cell: 0 }); // toggles cells 0 and 1
+  expect(session.state.lights).toEqual([1, 1, 1, 1]);
+  expect(session.depth).toBe(1);
+});
+
+test("shared history rebuilds the exact game, independent of assists", async () => {
+  const { packJson, unpackJson, diff, apply } = await import("./patch");
+  expect(apply({ a: [1, 2, 3], b: "x" }, diff({ a: [1, 2, 3], b: "x" }, { a: [1, 9, 3], c: [1] }))).toEqual({ a: [1, 9, 3], c: [1] });
+  const puzzle = flip.formats[0]!.parse("3x3:cross:010111010");
+  const s = new Session(flip, puzzle, { kind: "imported" });
+  s.dispatch({ type: "press", cell: 0 });
+  s.dispatch({ type: "press", cell: 8 });
+  const shared = await unpackJson(await packJson(s.exportHistory())) as Parameters<typeof Session.fromShared>[3]["history"];
+  const r = Session.fromShared(flip, puzzle, { kind: "imported" }, { history: shared });
+  expect(r.state).toEqual(s.state);
+  expect(r.depth).toBe(2);
+  r.undo();
+  r.undo();
+  expect(r.state).toEqual(flip.init(puzzle));
+  const st = Session.fromShared(flip, puzzle, { kind: "imported" }, { state: s.exportState() });
+  expect(st.state).toEqual(s.state);
+  expect(st.canUndo).toBe(false);
 });

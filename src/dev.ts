@@ -2,6 +2,9 @@ import { parseMarkdown } from "./markdown";
 import { createGraph } from "./graph";
 import { siteConfig, type CollectionId } from "./site-config";
 import { generateGraph } from "./gen-graph";
+import { buildApp, type AppOutput } from "./app-build";
+
+const appCache = new Map<string, Map<string, AppOutput>>();
 
 const isProduction = Bun.argv.includes("--production");
 
@@ -101,12 +104,18 @@ const server = Bun.serve({
     for (const [id, app] of Object.entries(siteConfig.apps)) {
       if (path === `/${id}`) return Response.redirect(`/${id}/${url.search}`, 302);
       if (path === `/${id}/`) path = `/${id}/index.html`;
-      if (!isProduction && path === `/${id}/main.js`) {
-        const result = await Bun.build({ entrypoints: [app.entry], target: "browser", sourcemap: "inline" });
-        if (!result.success) return new Response(result.logs.map(String).join("\n"), { status: 500 });
-        return new Response(await result.outputs[0]!.arrayBuffer(), {
-          headers: { "Content-Type": "application/javascript" },
-        });
+      if (!isProduction && path.startsWith(`/${id}/`)) {
+        const rel = path.slice(id.length + 2);
+        // rebuilt when the entry script is requested, so a reload picks up source changes
+        if (rel === "main.js" || !appCache.has(id)) {
+          try {
+            appCache.set(id, new Map((await buildApp(app, { minify: false })).map((o) => [o.path, o])));
+          } catch (e) {
+            return new Response(String(e instanceof AggregateError ? e.errors.join("\n") : e), { status: 500 });
+          }
+        }
+        const hit = appCache.get(id)!.get(rel);
+        if (hit) return new Response(hit.body, { headers: { "Content-Type": hit.type } });
       }
     }
 

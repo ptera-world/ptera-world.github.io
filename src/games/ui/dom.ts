@@ -67,3 +67,8 @@ export function style(id: string, css: string): void {
   }
   if (el.textContent !== css) el.textContent = css;
 }
+
+/** Append children with the same null/array handling as h(). */
+export function add(el: Element, ...children: (Child | Child[])[]): void {
+  append(el, children);
+}

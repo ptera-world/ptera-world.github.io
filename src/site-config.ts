@@ -67,6 +67,7 @@ export const siteConfig = {
     games: {
       name: "games",
       entry: "src/games/main.ts",
+      packs: "src/games/packs",
     },
   } satisfies Record<string, AppConfig>,
 } as const;
@@ -75,6 +76,8 @@ export interface AppConfig {
   name: string;
   /** Bundled to /<id>/main.js. */
   entry: string;
+  /** Directory whose subdirectories (each with index.ts) are bundled as loadable packs and listed in /<id>/packs.json. */
+  packs?: string;
 }
 
 export type AppId = keyof typeof siteConfig.apps;

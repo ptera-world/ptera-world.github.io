@@ -1,14 +1,15 @@
 import { api } from "./api";
-import { loadMods } from "./core/mods";
+import { loadPacks } from "./core/mods";
 import { registry } from "./core/registry";
-import { registerBuiltins } from "./puzzles";
 import { Shell } from "./ui/shell";
+import { watchTheme } from "./ui/themes";
 
 (globalThis as { pteraGames?: typeof api }).pteraGames = api;
 
-registerBuiltins(registry);
-const modResults = await loadMods(api);
+// built-in content is a pack list served next to this script, loaded like any custom list
+const { packs, sources } = await loadPacks(api, new URL("./packs.json", import.meta.url).href);
+watchTheme(registry);
 const root = document.getElementById("games")!;
-const shell = new Shell(root, registry, modResults);
+const shell = new Shell(root, registry, sources, packs);
 api.shell = shell;
 await shell.start();
