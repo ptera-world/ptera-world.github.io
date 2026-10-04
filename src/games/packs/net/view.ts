@@ -64,7 +64,7 @@ const settings = defineSchema({
 
 /** Acting on "the tile": the cursor, which a pointer press also moves, so these work from the board menu too. */
 const bindings: BindingSchema = {
-  "net.tap-at": { label: "tap a tile", category: "net", mouse: ["click"], description: "do what the tap buttons say: turn the tile clockwise (the default), anticlockwise, or lock it" },
+  "net.tap-at": { label: "click a tile", category: "net", mouse: ["click"], description: "do what the tap buttons say: turn the tile clockwise (the default), anticlockwise, or lock it" },
   "net.rotate-ccw-at": { label: "turn anticlockwise (pointer)", category: "net", mouse: [], description: "turn the clicked tile anticlockwise. has no button by default: right-click opens the board menu, but you can bind it here" },
   "net.lock-at": { label: "lock / unlock (pointer)", category: "net", mouse: ["middleclick", "shift+click"], description: "lock or unlock the clicked tile; keep the button down and drag to lock or unlock several" },
   "net.source-at": { label: "move the source (pointer)", category: "net", mouse: ["$mod+click"], description: "make the clicked tile the source: pipes joined to it light up" },
@@ -94,6 +94,27 @@ const wrapBindings: BindingSchema = {
   "net.shift-down": { label: "scroll down", category: "net", keys: ["shift+arrowdown"], description: "slide the whole wrapping board one tile down; tiles leaving one edge come back on the other" },
   "net.recentre": { label: "centre the source", category: "net", keys: ["c"], description: "scroll the wrapping board so the source sits in the middle" },
 };
+
+/** A tile-sized sample in the board's own colours (the board's CSS classes are scoped to it, so styles are inline). */
+const tile = (bg: string, body: string, extra = "") =>
+  `<svg viewBox="-0.5 -0.5 11 11"><rect width="10" height="10" fill="var(${bg})" ${extra}/>${body}</svg>`;
+const pipe = (colour: string, d = "M5 0V10") => `<path d="${d}" stroke="var(${colour})" stroke-width="2" fill="none"/>`;
+const cap = (colour: string) => `<rect x="2.8" y="2.8" width="4.4" height="4.4" rx="0.6" fill="var(--surface)" stroke="var(${colour})" stroke-width="0.9"/>`;
+
+const legend = [
+  { sample: tile("--cell", pipe("--text-dim", "M5 0V5H10")), meaning: "a pipe that isn't joined to the source yet" },
+  { sample: tile("--cell", pipe("--accent", "M5 0V5H10")), meaning: "a pipe joined to the source. when every pipe looks like this, you're nearly there" },
+  { sample: tile("--cell", pipe("--accent", "M5 0V5") + `<rect x="3.4" y="3.4" width="3.2" height="3.2" rx="0.4" fill="var(--cell-lit)"/>`), meaning: "the source. it only decides what lights up; you can move it" },
+  { sample: tile("--cell", pipe("--text-dim", "M5 0V3") + cap("--text-dim")), meaning: "a dead end: a tile with just one pipe" },
+  { sample: tile("--border", pipe("--text-dim")), meaning: "a locked tile: it won't turn until you unlock it" },
+  { sample: tile("--cell", pipe("--text-dim", "M0 5H10") + `<path d="M0 0H10" stroke="var(--text)" stroke-width="1.1" stroke-linecap="round"/>`), meaning: "a wall: no pipe can cross it" },
+  { sample: tile("--cell", pipe("--danger", "M5 10V5H10")), meaning: "part of a loop (if \"show loops\" is on). the answer has no loops, so something here is turned wrong" },
+  { sample: tile("--cell", pipe("--warn", "M5 0V5H10")), meaning: "a loose end that doesn't meet a pipe (if \"show loose ends\" is on)" },
+  { sample: tile("--danger-soft", pipe("--text-dim")), meaning: "locked tiles that can't both be right, or that point into a wall or edge" },
+  { sample: tile("--hint-soft", pipe("--text-dim"), `stroke="var(--hint)" stroke-width="0.9"`), meaning: "what a hint is talking about. the outlined tile is the one to change" },
+  { sample: tile("--cell", `<g opacity="0.3">${pipe("--text-dim")}</g><path d="M5 0V5H10" stroke="var(--hint)" stroke-width="2" fill="none" opacity="0.85"/>`), meaning: "how a hint says to turn the tile: its current way is faded, the bright pipes show the right way" },
+  { sample: tile("--cell", "", `stroke="var(--focus)" stroke-width="0.6"`), meaning: "the keyboard cursor (only shown while you use the keyboard)" },
+];
 
 const controls = [
   { how: "tap a tile", what: "turn it clockwise. the tap buttons under the board switch this to anticlockwise or to locking" },
@@ -138,6 +159,7 @@ export function netView({ look = (_id, fallback) => fallback, labelSides = () =>
     puzzle: "net",
     settings,
     controls,
+    legend,
     mount(root, { session, settings }) {
       style("net", CSS);
       const p = session.puzzle;
