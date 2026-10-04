@@ -82,12 +82,46 @@ function graphic(src: string, size: number, cls: string): SVGGElement {
   return el;
 }
 
+/** A legend swatch drawn with the board's own classes, so it follows the theme and the board CSS. */
+function swatch(inner: string): string {
+  return `<svg class="bridges-board" viewBox="0 0 10 10">${inner}</svg>`;
+}
+
+function legend(look: Look): { sample: string; meaning: string }[] {
+  const art = look.asset(ASSETS.island.id, ASSETS.island.fallback);
+  const mark = look.asset(ASSETS.mark.id, ASSETS.mark.fallback);
+  const island = (cls: string, n: string, extra = "") =>
+    `<g class="island ${cls}" transform="translate(5 5)"><g class="shape">${art}</g><text y="0.15">${n}</text>${extra}</g>`;
+  const bridge = (n: number, cls = "") =>
+    `<g class="bridge ${cls}">${Array.from({ length: n }, (_, k) => `<line x1="0" x2="10" y1="${5 + (k - (n - 1) / 2) * GAP}" y2="${5 + (k - (n - 1) / 2) * GAP}"/>`).join("")}</g>`;
+  const markAt = (cls = "") => `<line x1="0" x2="10" y1="5" y2="5" class="guide" style="opacity:0.25"/><g class="mark ${cls}" transform="translate(5 5) scale(1.6)">${mark}</g>`;
+  return [
+    { sample: swatch(island("", "3")), meaning: "an island. its number is how many bridges it needs" },
+    { sample: swatch(bridge(1)), meaning: "a bridge" },
+    { sample: swatch(bridge(2)), meaning: "a double bridge: two bridges between the same islands, counts as two" },
+    { sample: swatch(markAt()), meaning: "a ✕ on a gap: your note that no bridge goes there" },
+    { sample: swatch(island("done", "2")), meaning: "faded island: it has all its bridges" },
+    { sample: swatch(island("error", "2")), meaning: "warning island: something's wrong here (too many bridges, no way left to get enough, or a finished group cut off from the rest)" },
+    { sample: swatch(bridge(1, "error")), meaning: "warning bridge: it closes a loop on a board that doesn't allow loops, or (with “flag wrong bridges” on) it isn't in the solution" },
+    { sample: swatch(markAt("wrong")), meaning: "warning ✕: a bridge does go there (with “flag wrong bridges” on)" },
+    { sample: swatch(island("hint", "4") + `<line x1="8.4" x2="10" y1="5" y2="5" class="focus" style="stroke-width:3"/>`), meaning: "highlighted ring and glow: what the current hint is talking about" },
+    { sample: swatch(island("", "4", `<text x="${R + 0.6}" y="${-R + 0.4}" class="badge">1</text>`)), meaning: "small number by an island: bridges it still needs (“show bridges still needed”)" },
+    { sample: swatch(island("g0", "2")), meaning: "coloured ring: islands with the same colour are already joined by bridges (“colour connected groups”)" },
+    { sample: swatch(`<line x1="0" x2="10" y1="5" y2="5" class="guide"/>`), meaning: "faint dotted line: a bridge could still go here (“show open connections”)" },
+    { sample: swatch(`<line x1="0" x2="10" y1="5" y2="5" class="preview"/>`), meaning: "dashed line while dragging: where the bridge will go when you let go" },
+    { sample: swatch(`<circle cx="5" cy="5" r="${R + 1.3}" class="cursor" style="display:inline"/>`), meaning: "ring around an island: the keyboard cursor (shows while you use the keys)" },
+  ];
+}
+
 export function makeView(look: Look, board: BoardPrefs): View<BridgesPuzzle, BridgesState, BridgesAction, BridgesInteraction> {
   const view: View<BridgesPuzzle, BridgesState, BridgesAction, BridgesInteraction> = {
     id: "bridges.svg",
     name: "board",
     puzzle: "bridges",
     settings,
+    get legend() {
+      return legend(look);
+    },
     controls: [
       { how: "drag from an island toward a neighbour", what: "add a bridge between them (again for a double bridge)" },
       { how: "click or tap the gap between two islands", what: "add a bridge there too" },
