@@ -13,6 +13,8 @@ const ANIM_MS = 130;
 /** A touch shorter than this, without moving, is a tap. */
 const TAP_MS = 450;
 const MOVE_PX = 12;
+/** The shell opens the board menu after a still hold this long and keeps the release for itself. */
+const MENU_HOLD_MS = 550;
 /** Viewbox units reserved on a side that shows edge labels. */
 const LABEL = 6;
 /** Rotation (degrees, SVG's clockwise) taking an arm drawn pointing right to direction d. */
@@ -348,13 +350,19 @@ export function netView({ look = (_id, fallback) => fallback, labelSides = () =>
       };
 
       // touch: a quick tap acts; holding still is left to the shell's board menu; moving to another tile while locking paints
-      let press: { id: number; cell: number; t0: number; x: number; y: number; moved: boolean } | null = null;
+      let press: { id: number; cell: number; t0: number; x: number; y: number; moved: boolean; timer: number } | null = null;
+      const dropPress = () => {
+        if (press) clearTimeout(press.timer);
+        press = null;
+      };
       const onPointerDown = (e: PointerEvent) => {
         const cell = cellAt(e.target);
         if (cell >= 0) setCursor(cell);
         if (e.pointerType !== "touch" || cell < 0 || press) return;
         e.preventDefault();
-        press = { id: e.pointerId, cell, t0: performance.now(), x: e.clientX, y: e.clientY, moved: false };
+        // a still hold becomes the board menu, whose release never reaches us: forget the press then
+        const timer = window.setTimeout(() => { if (press && !press.moved) press = null; }, MENU_HOLD_MS);
+        press = { id: e.pointerId, cell, t0: performance.now(), x: e.clientX, y: e.clientY, moved: false, timer };
       };
       const onPointerMove = (e: PointerEvent) => {
         if (press && e.pointerId === press.id && !press.moved && Math.hypot(e.clientX - press.x, e.clientY - press.y) > MOVE_PX) {
@@ -366,7 +374,7 @@ export function netView({ look = (_id, fallback) => fallback, labelSides = () =>
       const onPointerUp = (e: PointerEvent) => {
         if (press && e.pointerId === press.id) {
           const { cell, t0, moved } = press;
-          press = null;
+          dropPress();
           if (e.type === "pointerup" && !moved && performance.now() - t0 < TAP_MS) {
             if (tapMode() === "lock") toggleLock(cell);
             else tap(cell);
@@ -480,6 +488,7 @@ export function netView({ look = (_id, fallback) => fallback, labelSides = () =>
         destroy() {
           offs.forEach((f) => f());
           if (raf) cancelAnimationFrame(raf);
+          dropPress();
           svg.removeEventListener("pointerdown", onPointerDown);
           svg.removeEventListener("contextmenu", onContextMenu);
           window.removeEventListener("pointermove", onPointerMove);
