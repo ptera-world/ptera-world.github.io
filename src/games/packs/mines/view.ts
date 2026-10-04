@@ -377,7 +377,7 @@ export function minesView(look: Look, labelSides: () => ReadonlySet<Side>): View
       });
       return {
         aspect: vw / vh,
-        cells: { cols: p.w, rows: p.h },
+        cells: { cols: vw / SIZE, rows: vh / SIZE },
         target: () => aim,
         preview: (state) => {
           ghost = state as MinesState | null;
