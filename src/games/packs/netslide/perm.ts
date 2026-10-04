@@ -254,7 +254,7 @@ function endgame<A>(spec: PermSpec<A>, lib: Library<A>, goal: readonly number[],
   if (cells.some((c) => !sym.has(st.values[c]!))) return null;
   const base = symbols.length * T;
   if (base ** k > 2 ** 52) return null;
-  const encode = (v: number[], o: number[]) => {
+  const encode = (v: ArrayLike<number>, o: ArrayLike<number>) => {
     let code = 0;
     for (let i = k - 1; i >= 0; i--) code = code * base + v[i]! * T + o[i]!;
     return code;
@@ -266,7 +266,7 @@ function endgame<A>(spec: PermSpec<A>, lib: Library<A>, goal: readonly number[],
   const parent = new Map<number, number>([[s0, -1]]);
   const via = new Map<number, number>();
   let frontier = [s0];
-  const v = new Array<number>(k), o = new Array<number>(k), nv = new Array<number>(k), no = new Array<number>(k);
+  const v = new Int32Array(k), o = new Int32Array(k), nv = new Int32Array(k), no = new Int32Array(k);
   while (frontier.length && parent.size < ENDGAME_STATES) {
     const next: number[] = [];
     for (const code of frontier) {
