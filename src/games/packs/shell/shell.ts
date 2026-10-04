@@ -5,7 +5,7 @@ import type { Registry } from "../../core/registry";
 import { randomSeed } from "../../core/rng";
 import { canonical, fromQuery, resolve, toQuery } from "../../core/schema";
 import type { Origin, Session, SharedHistory, Snapshot } from "../../core/session";
-import { PluginHostCtor, SessionCtor, TechniqueHostCtor, cycleLabels, findPracticePosition, generate, hintFrom, isPartOfStep, isStepDone, loadPluginConfig, onBoardPrefsChange, onThemeChange } from "./engine";
+import { PluginHostCtor, SessionCtor, TechniqueHostCtor, applyStep, findStepAt, cycleLabels, findPracticePosition, generate, hintFrom, isPartOfStep, isStepDone, loadPluginConfig, onBoardPrefsChange, onThemeChange } from "./engine";
 import { packJson, unpackJson, type Patch } from "../../core/patch";
 
 /** What a share link carries beyond the puzzle itself. */
@@ -17,12 +17,13 @@ interface Shared {
 }
 import { namespace } from "../../core/storage";
 import type { TechniqueHost } from "../../core/techniques";
-import type { AnyPuzzleDef, CommandDef, Format, Hint, Technique, View, ViewHandle, WidgetDef, SlotId } from "../../core/types";
+import type { Step, AnyPuzzleDef, CommandDef, Format, Hint, Technique, View, ViewHandle, WidgetDef, SlotId } from "../../core/types";
 import { CommandHub } from "./commands";
 import { add, clear, formatTime, h, style } from "../../core/dom";
 import { arrange, loadLayout, saveLayout, type LayoutConfig } from "./layout";
 import { builtinWidgets } from "./widgets";
 import { installTooltips } from "./tooltips";
+import { popup, type SurfaceItem, type SurfaceStyle } from "./surfaces";
 import { SAVE_PREFIX, INDEX_KEY, findSession, listSessions, loadSession, newSessionId, removeSession, saveSession } from "./sessions";
 
 const prefs = namespace("prefs");
@@ -68,6 +69,7 @@ export class Shell {
     sessionStart: new HookEvent<{ session: Session<any, any, any, any> }>("sessionStart"),
     sessionEnd: new HookEvent<{ session: Session<any, any, any, any> }>("sessionEnd"),
     status: new HookEvent<{ text: string }>("status"),
+    zoom: new HookEvent<{ zoom: number }>("zoom"),
     /** The saved-games list changed (here or in another tab). */
     sessions: new HookEvent<void>("sessions"),
   };
@@ -140,7 +142,7 @@ export class Shell {
     this.els.boardbox.addEventListener("contextmenu", (e) => {
       if (e.defaultPrevented || this.view?.handle.gestures?.secondaryClick || !this.hub.all().some((c) => [c.menu].flat().includes("board"))) return;
       e.preventDefault();
-      this.hub.openMenu("board", e.clientX, e.clientY);
+      this.openBoardMenu(e.clientX, e.clientY, "mouse");
     });
     setInterval(() => this.tick(), 250);
     // keyboard-only affordances (cursors) show while the keyboard is in use; views style off [data-input]
@@ -152,6 +154,7 @@ export class Shell {
     onThemeChange(() => { if (this.session) this.mountView(); });
     onBoardPrefsChange(() => { if (this.session) this.mountView(); });
     installTooltips(this.hub);
+    this.installZoom();
     this.installLongPress();
     this.hub.setSource("shell", () => this.shellCommands());
     await this.fromUrl();
@@ -167,7 +170,7 @@ export class Shell {
       start = { x: e.clientX, y: e.clientY };
       timer = window.setTimeout(() => {
         if (!start || !this.hub.all().some((c) => [c.menu].flat().includes("board"))) return;
-        this.hub.openMenu("board", start.x, start.y);
+        this.openBoardMenu(start.x, start.y, "touch");
         start = null;
         // the finger lifting after a hold must not count as a tap (on the board or the menu backdrop)
         const swallow = (ev: Event) => { ev.preventDefault(); ev.stopPropagation(); };
@@ -373,6 +376,7 @@ export class Shell {
 
   private setSession(session: Session<any, any, any, any>, push: boolean, id: string = newSessionId()): void {
     this.teardownSession();
+    this.zoom = 1;
     this.session = session;
     this.sessionId = id;
     this.techniques = new TechniqueHostCtor(this.registry, session);
@@ -666,8 +670,89 @@ export class Shell {
     stage.dataset.side = a.side;
     stage.dataset.panel = a.panel;
     stage.toggleAttribute("data-scroll", a.scroll);
-    e.boardbox.style.width = `${Math.max(120, a.boardW)}px`;
-    e.boardbox.style.height = `${Math.max(120, a.boardH)}px`;
+    // the window onto the board keeps the fitted size; the board inside grows past it when a
+    // minimum cell size or the zoom asks for more, and the window scrolls
+    const fitW = Math.max(120, a.boardW), fitH = Math.max(120, a.boardH);
+    const cells = this.view?.handle.cells;
+    const minCell = prefs.get<number>("minCell", 18);
+    const atLeast = cells && minCell > 0 ? Math.max(1, (minCell * cells.cols) / fitW, (minCell * cells.rows) / fitH) : 1;
+    const scale = atLeast * this.zoom;
+    e.boardwrap.style.width = `${fitW}px`;
+    e.boardwrap.style.height = `${fitH}px`;
+    e.boardbox.style.width = `${Math.round(fitW * scale)}px`;
+    e.boardbox.style.height = `${Math.round(fitH * scale)}px`;
+    e.boardwrap.toggleAttribute("data-zoomed", scale > 1.001);
+  }
+
+  /** Board-tagged commands, as any surface shows them. */
+  boardItems(): SurfaceItem[] {
+    const ctx = this.hub.context();
+    return this.hub.all()
+      .filter((c) => [c.menu].flat().includes("board"))
+      .map((cmd) => ({ cmd, enabled: !cmd.when || cmd.when(ctx), keys: this.hub.keysFor(cmd.id) }));
+  }
+
+  /** Open the board menu in the player's chosen style for this input (defaults: list for mouse, radial for touch). */
+  openBoardMenu(x: number, y: number, input: "mouse" | "touch"): void {
+    const style = prefs.get<SurfaceStyle>(`menuStyle:${input}`, input === "touch" ? "radial" : "list");
+    if (style === "list") {
+      this.hub.openMenu("board", x, y);
+      return;
+    }
+    void popup(style, x, y, this.boardItems(), (id) => this.hub.run(id));
+  }
+
+  /** Board zoom on top of the fitted size (1 = fit). Not saved; resets with each game. */
+  zoom = 1;
+
+  /** Zoom by a factor, keeping the board point under (clientX, clientY) in place when given. */
+  zoomBy(factor: number, at?: { x: number; y: number }): void {
+    const next = Math.min(6, Math.max(1, this.zoom * factor));
+    if (next === this.zoom) return;
+    const sc = this.els.scroller;
+    const r = sc.getBoundingClientRect();
+    const px = at ? at.x - r.left : r.width / 2, py = at ? at.y - r.top : r.height / 2;
+    const fx = (sc.scrollLeft + px) / sc.scrollWidth, fy = (sc.scrollTop + py) / sc.scrollHeight;
+    this.zoom = next;
+    this.relayout();
+    sc.scrollLeft = fx * sc.scrollWidth - px;
+    sc.scrollTop = fy * sc.scrollHeight - py;
+    this.hooks.zoom.call({ zoom: this.zoom });
+  }
+
+  zoomFit(): void {
+    this.zoom = 1;
+    this.relayout();
+    this.hooks.zoom.call({ zoom: 1 });
+  }
+
+  /** Trackpad pinch / ctrl+wheel zooms; two fingers on touch pan and pinch; views keep one-finger gestures. */
+  private installZoom(): void {
+    const sc = this.els.scroller;
+    sc.addEventListener("wheel", (e) => {
+      if (!e.ctrlKey) return;
+      e.preventDefault();
+      this.zoomBy(Math.exp(-e.deltaY * 0.01), { x: e.clientX, y: e.clientY });
+    }, { passive: false });
+    let pinch: { d: number; x: number; y: number } | null = null;
+    const two = (e: TouchEvent) => {
+      const [a, b] = [e.touches[0]!, e.touches[1]!];
+      return { d: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY), x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2 };
+    };
+    sc.addEventListener("touchstart", (e) => {
+      if (e.touches.length === 2) { pinch = two(e); e.stopPropagation(); }
+    }, { capture: true, passive: true });
+    sc.addEventListener("touchmove", (e) => {
+      if (!pinch || e.touches.length !== 2) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const now = two(e);
+      sc.scrollLeft -= now.x - pinch.x;
+      sc.scrollTop -= now.y - pinch.y;
+      this.zoomBy(now.d / pinch.d, { x: now.x, y: now.y });
+      pinch = now;
+    }, { capture: true, passive: false });
+    sc.addEventListener("touchend", (e) => { if (e.touches.length < 2) pinch = null; }, { capture: true });
   }
 
   // --- commands ---
@@ -680,6 +765,9 @@ export class Shell {
       { id: "shell.rebind", label: "change key bindings", category: "general", run: () => { this.hub.settings.open = true; } },
       { id: "shell.howto", label: "how to play", category: "general", keys: ["f1"], description: "what this puzzle is, its rules, and how to play it", run: () => this.showHowTo() },
       { id: "shell.labels", label: "board labels", category: "view", keys: ["l"], description: "letters and numbers along the board edges, so cells named in hints (like C5) are easy to find. cycles off / top+left / all sides", run: () => cycleLabels() },
+      { id: "shell.zoom-in", label: "zoom in", category: "view", keys: ["$mod+equal", "$mod+shift+equal"], description: "make the board bigger (it scrolls when bigger than the screen). also ctrl+scroll or pinch", run: () => this.zoomBy(1.25) },
+      { id: "shell.zoom-out", label: "zoom out", category: "view", keys: ["$mod+minus"], description: "make the board smaller, down to fitting the screen", run: () => this.zoomBy(0.8) },
+      { id: "shell.zoom-fit", label: "fit board", category: "view", keys: ["$mod+0"], description: "show the whole board at once", run: () => this.zoomFit() },
       { id: "shell.zen", label: "zen mode", category: "view", keys: ["z"], description: "just the board; press again to bring everything back", checked: () => this.zen, run: () => this.toggleZen() },
       { id: "shell.index", label: "all puzzles", category: "general", run: () => this.goIndex() },
     ];
@@ -734,11 +822,54 @@ export class Shell {
     ];
   }
 
+  /** The step a technique would make, aimed at what the player points at when it can be. */
+  skillStep(t: Technique): { step: Step; aimed: boolean } | null {
+    const s = this.session;
+    if (!s) return null;
+    const target = this.view?.handle.target?.();
+    const at = findStepAt(s.def, t, s.puzzle, s.state, target);
+    if (at) return { step: at, aimed: true };
+    const any = this.techniques?.find(t);
+    return any ? { step: any, aimed: false } : null;
+  }
+
+  /** Show what a technique would do without doing it; null clears. */
+  previewSkill(t: Technique | null): void {
+    const s = this.session;
+    if (!s) return;
+    const hit = t ? this.skillStep(t) : null;
+    if (!t || !hit) {
+      if (this.previewing) s.showHint(null);
+      this.previewing = false;
+      this.view?.handle.preview?.(null);
+      if (t) this.setStatus(`no ${t.name} ${this.view?.handle.target?.() !== undefined && t.findAt ? "here" : "right now"}`);
+      return;
+    }
+    const hint = hintFrom(t, hit.step, 2);
+    this.previewing = true;
+    s.showHint(hint as Hint<any>);
+    this.view?.handle.preview?.(applyStep(s.def, s.puzzle, s.state, hit.step));
+    this.setStatus(hint.message);
+  }
+
+  private previewing = false;
+
+  /** Apply a technique where the player points (or anywhere it applies) as one undo step. */
+  applySkill(t: Technique): void {
+    const s = this.session;
+    const hit = t && this.skillStep(t);
+    this.previewSkill(null);
+    if (!s || !hit) { this.setStatus(`no ${t.name} right now`); return; }
+    const source = { kind: "technique" as const, technique: t.id, name: t.name, step: hit.step, auto: false };
+    s.batch(() => { for (const a of hit.step.actions) s.dispatch(a, { source }); });
+  }
+
   private techniqueCommands(): CommandDef[] {
     const th = this.techniques;
     const s = this.session;
     if (!th || !s) return [];
     return th.list.flatMap((t): CommandDef[] => [
+      ...(t.findAt ? [{ id: `technique.here.${t.id}`, label: `${t.name} here`, category: "techniques", menu: "board", description: `apply ${t.name} to what you are pointing at`, run: () => this.applySkill(t) } satisfies CommandDef] : []),
       { id: `technique.find.${t.id}`, label: `find ${t.name}`, category: "techniques", description: t.description, run: () => this.findTechnique(t) },
       { id: `technique.apply.${t.id}`, label: `apply ${t.name}`, category: "techniques", run: () => { if (!th.apply(t)) this.setStatus(`no ${t.name} right now`); } },
       {
@@ -913,6 +1044,8 @@ export class Shell {
       top: h("div", { class: "slot slot-top" }),
       middle: h("div", { class: "middle" }),
       boardbox: h("div", { class: "boardbox" }),
+      boardwrap: h("div", { class: "boardwrap" }),
+      scroller: h("div", { class: "board-scroller" }),
       overlay: h("div", { class: "slot slot-overlay" }),
       side: h("div", { class: "slot slot-side" }),
       bottom: h("div", { class: "slot slot-bottom" }),
@@ -929,7 +1062,9 @@ export class Shell {
       els.pauseMark, els.timer,
       h("button", { class: "howto-btn", "data-command": "shell.howto", "aria-label": "how to play", onclick: () => this.hub.run("shell.howto") }, "?"),
       h("button", { class: "palette-btn", "data-command": "shell.palette", onclick: () => this.hub.openPalette() }, "commands"));
-    els.middle.append(h("div", { class: "boardwrap" }, els.boardbox, els.overlay), els.side);
+    els.scroller.append(els.boardbox);
+    els.boardwrap.append(els.scroller, els.overlay);
+    els.middle.append(els.boardwrap, els.side);
     els.main.append(els.top, els.middle, els.bottom);
     els.panel.append(els.tabs, els.panelBody);
     els.stage.append(els.main, els.panel);
@@ -1102,6 +1237,9 @@ const SHELL_CSS = `
 .middle { display: flex; gap: 12px; align-items: flex-start; justify-content: center; max-width: 100%; }
 .stage[data-side="below"] .middle { flex-direction: column; }
 .boardwrap { position: relative; flex: none; }
+.board-scroller { position: absolute; inset: 0; overflow: hidden; display: flex; }
+.boardwrap[data-zoomed] .board-scroller { overflow: auto; overscroll-behavior: contain; }
+.board-scroller > .boardbox { margin: auto; }
 .boardbox { position: relative; flex: none; display: flex; align-items: center; justify-content: center; }
 .slot-overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 10px; }
 .slot-overlay > .widget { pointer-events: auto; }

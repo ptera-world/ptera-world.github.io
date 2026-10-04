@@ -57,6 +57,7 @@ const sudokuParams = defineSchema({
     ],
   },
   difficulty: DIFFICULTY,
+  // rotational by default: it makes the board look like the classic sudoku most people know
   symmetry: {
     type: "enum", label: "given symmetry", default: "rotational",
     options: [

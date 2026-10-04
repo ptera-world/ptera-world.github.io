@@ -11,6 +11,7 @@ import { add, clear, formatTime, h, style } from "../../core/dom";
 import { schemaForm } from "./form";
 import { SLOTS, loadLayout } from "./layout";
 import { setTipDelay, tipDelay } from "./tooltips";
+import { tiles, type SurfaceStyle } from "./surfaces";
 import type { Shell, ShareLevel } from "./shell";
 import { trySerialize } from "./shell";
 
@@ -70,6 +71,8 @@ button.danger:hover:not(:disabled) { border-color: var(--danger); background: va
 .w-howto .legend li { display: flex; align-items: center; gap: 10px; }
 .w-howto .legend .sw { width: 38px; height: 38px; flex: none; display: inline-flex; align-items: center; justify-content: center; }
 .w-howto .legend .sw svg { width: 100%; height: 100%; }
+.w-skills { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.w-skills button { font-size: 13px; padding: 5px 10px; }
 .w-note { font-size: 13px; padding: 6px 8px; border-radius: 6px; background: var(--surface-2); }
 `;
 
@@ -307,6 +310,21 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
           type: "checkbox", checked: sides.has(sd),
           onchange: (e: Event) => { const cur = labelSides(); if ((e.target as HTMLInputElement).checked) cur.add(sd); else cur.delete(sd); setLabelSides(cur); },
         }), sd)))));
+
+      brd.append(row("minimum cell size zoom small big boards scroll", h("div", { class: "w-inline" },
+        h("span", { style: "flex: 1" }, "smallest a cell may get (px); bigger boards scroll instead"),
+        h("input", { type: "number", min: 0, max: 80, step: 2, value: prefs.get("minCell", 18), "aria-label": "minimum cell size", style: "width: 5em",
+          onchange: (e: Event) => { prefs.set("minCell", Math.max(0, Number((e.target as HTMLInputElement).value) || 0)); shell.relayout(); } }))));
+
+      const surf = section("menus");
+      for (const input of ["mouse", "touch"] as const) {
+        const cur = prefs.get<SurfaceStyle>(`menuStyle:${input}`, input === "touch" ? "radial" : "list");
+        surf.append(row(`board menu style ${input} right-click hold radial tiles list`, h("div", { class: "w-inline" },
+          h("span", { style: "flex: 1" }, input === "mouse" ? "board menu on right-click" : "board menu on touch hold"),
+          h("select", { onchange: (e: Event) => prefs.set(`menuStyle:${input}`, (e.target as HTMLSelectElement).value) },
+            ([["list", "list"], ["radial", "radial"], ["tiles", "tiles"]] as const).map(([v, lab]) => h("option", { value: v, selected: v === cur }, lab))))));
+      }
+      surf.append(row("board actions buttons always visible", h("small", null, "for buttons without any menu, place the \"board actions\" widget under layout")));
 
       const beh = section("behaviour");
       const delay = tipDelay();
@@ -740,7 +758,55 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
     },
   };
 
-  return [status, toolbar, game, settings, techniques, historyW, practice, share, packs, results, opened, howto];
+  const zoomW: WidgetDef = {
+    id: "zoom", name: "zoom", description: "zoom buttons for the board (also ctrl+scroll, pinch, ctrl+plus/minus)", puzzles: "*", defaultSlot: "off", order: 40,
+    mount(el, ctx) {
+      const pct = h("span", { class: "w-dim", style: "min-width: 4ch; text-align: center" });
+      const show = () => { pct.textContent = `${Math.round(shell.zoom * 100)}%`; };
+      el.append(h("div", { class: "w-inline" },
+        h("button", { "data-command": "shell.zoom-out", "aria-label": "zoom out", onclick: () => ctx.run("shell.zoom-out") }, "−"),
+        pct,
+        h("button", { "data-command": "shell.zoom-in", "aria-label": "zoom in", onclick: () => ctx.run("shell.zoom-in") }, "+"),
+        h("button", { "data-command": "shell.zoom-fit", onclick: () => ctx.run("shell.zoom-fit") }, "fit")));
+      show();
+      return shell.hooks.zoom.tap(show);
+    },
+  };
+
+  const actions: WidgetDef = {
+    id: "board-actions", name: "board actions", description: "the board menu as buttons, always visible (no right-click or hold needed)", puzzles: "*", defaultSlot: "off", order: 35,
+    mount(el, ctx) {
+      const render = () => { clear(el); el.append(tiles(shell.boardItems(), (id) => ctx.run(id))); };
+      sessionTaps(ctx, render);
+      render();
+    },
+  };
+
+  const skills: WidgetDef = {
+    id: "skills", name: "skills", description: "techniques as buttons: point at one (or hold it) to preview what it would do, tap to do it. aimed at the cell or line you point at when the technique can be", puzzles: "*", defaultSlot: "off", order: 36,
+    mount(el) {
+      const th = shell.techniques;
+      if (!th?.list.length) return;
+      const bar = h("div", { class: "w-skills" });
+      for (const t of th.list) {
+        let held = 0;
+        const b = h("button", {
+          "data-tip": `${t.name}: ${t.description}`,
+          onpointerenter: (e: PointerEvent) => { if (e.pointerType === "mouse") shell.previewSkill(t); },
+          onpointerleave: () => { clearTimeout(held); shell.previewSkill(null); },
+          onfocus: () => shell.previewSkill(t),
+          onblur: () => shell.previewSkill(null),
+          onpointerdown: (e: PointerEvent) => { if (e.pointerType !== "mouse") held = window.setTimeout(() => { held = -1; shell.previewSkill(t); }, 350); },
+          onclick: () => { if (held === -1) { held = 0; shell.previewSkill(null); return; } clearTimeout(held); shell.applySkill(t); },
+        }, t.name);
+        bar.append(b);
+      }
+      el.append(bar);
+      return () => shell.previewSkill(null);
+    },
+  };
+
+  return [status, toolbar, game, settings, techniques, historyW, practice, share, packs, results, opened, howto, zoomW, actions, skills];
 }
 
 /** Assisted rating used by packs/mods: hardest technique still left for the player given their auto techniques. */

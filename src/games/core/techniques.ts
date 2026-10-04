@@ -45,6 +45,19 @@ export function findStep<Pz, S>(def: AnyPuzzleDef, t: Technique, puzzle: Pz, sta
   }
 }
 
+/** Safe targeted find (see Technique.findAt); null when the technique has no targeted form. */
+export function findStepAt<Pz, S>(def: AnyPuzzleDef, t: Technique, puzzle: Pz, state: S, target: unknown): Step | null {
+  if (!t.findAt || target === undefined || target === null) return null;
+  try {
+    const step = t.findAt(puzzle, state, target);
+    if (!step || step.actions.length === 0) return null;
+    return Object.is(applyStep(def, puzzle, state, step), state) ? null : step;
+  } catch (e) {
+    console.error(`[games] technique ${t.id} findAt threw`, e);
+    return null;
+  }
+}
+
 /** Easiest applicable technique among `list` (which must be sorted easiest first). */
 export function firstStep<Pz, S>(def: AnyPuzzleDef, list: readonly Technique[], puzzle: Pz, state: S): { technique: Technique; step: Step } | null {
   for (const t of list) {

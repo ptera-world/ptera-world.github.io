@@ -77,6 +77,11 @@ export interface Technique<Pz = any, S = any, A extends Action = any> {
   description: string;
   /** First instance in the state, or null. Must be pure and deterministic. */
   find(puzzle: Pz, state: S): Step<A> | null;
+  /**
+   * An instance at the given target (see ViewHandle.target), or null. Lets a technique be used as
+   * a skill aimed at one line, cell or region instead of anywhere on the board.
+   */
+  findAt?(puzzle: Pz, state: S, target: unknown): Step<A> | null;
   defaults?: { hints?: boolean; auto?: boolean };
   practice?: {
     /** Generation params used to look for practice positions (e.g. a harder difficulty). */
@@ -267,6 +272,15 @@ export interface ViewHandle {
   hooks?: object;
   /** Board width / height, used to size the board as large as the layout allows. Default 1. */
   aspect?: number;
+  /** Cells across and down, so the frontend can keep cells at least a minimum size (scrolling or zooming the board instead). */
+  cells?: { cols: number; rows: number };
+  /**
+   * What the player is pointing at (cursor cell, hovered line, selection), in the shape the
+   * puzzle's techniques accept as a target. Used to aim techniques at one place.
+   */
+  target?(): unknown;
+  /** Draw `state` as a see-through preview over the board (null clears it). Optional; frontends fall back to highlighting. */
+  preview?(state: unknown | null): void;
   /**
    * Gestures the board uses itself. The shell then never opens its board menu on them (touch
    * hold is otherwise the menu), and tells players to use the commands list instead.
