@@ -14,11 +14,11 @@ export type Glyph = "fill" | "star" | "crown";
 
 /** What a view flags, already split by how it is drawn. */
 export interface Flags {
-  /** BLACK marks drawn in the danger colour. */
+  /** BLACK marks drawn in the danger color. */
   marks: Set<number>;
-  /** Cell texts drawn in the danger colour. */
+  /** Cell texts drawn in the danger color. */
   texts: Set<number>;
-  /** Cells tinted with the soft danger colour. */
+  /** Cells tinted with the soft danger color. */
   cells: Set<number>;
 }
 
@@ -34,9 +34,9 @@ export interface ShadeViewSpec<Pz extends { w: number; h: number }> {
   fixed(p: Pz, c: number): boolean;
   /** Region per cell; thick borders are drawn between different regions. */
   regions?(p: Pz): readonly number[];
-  /** Background colour per region (a CSS colour), or null for plain cells. */
+  /** Background color per region (a CSS color), or null for plain cells. */
   tint?(p: Pz, region: number): string | null;
-  /** Text drawn in a cell, centred or in its top-left corner. */
+  /** Text drawn in a cell, centered or in its top-left corner. */
   text?(p: Pz, c: number): { text: string; corner: boolean } | null;
   /** Derived key under which a plugin stores conflicts, and how to read them. */
   flags?: { key: string; read(conflicts: unknown): Flags };
@@ -57,7 +57,7 @@ const CSS = `
 .shade-board .rim { fill: none; stroke: var(--text); stroke-width: 0.9; }
 `;
 
-/** Five-point star centred in a cell box at (x, y). */
+/** Five-point star centered in a cell box at (x, y). */
 export function starPath(x: number, y: number, r = 3.4): string {
   const pts: string[] = [];
   for (let i = 0; i < 10; i++) {
@@ -67,7 +67,7 @@ export function starPath(x: number, y: number, r = 3.4): string {
   return `M${pts.join("L")}Z`;
 }
 
-/** Crown centred in a cell box at (x, y). */
+/** Crown centered in a cell box at (x, y). */
 export function crownPath(x: number, y: number): string {
   const p = (dx: number, dy: number) => `${(x + dx).toFixed(2)},${(y + dy).toFixed(2)}`;
   return `M${p(2, 7.4)}L${p(2.2, 3.2)}L${p(3.8, 5)}L${p(5, 2.4)}L${p(6.2, 5)}L${p(7.8, 3.2)}L${p(8, 7.4)}Z`;
@@ -77,7 +77,7 @@ const settings = defineSchema({
   longPressMs: { type: "int", label: "touch hold for a dot (ms)", default: 400, min: 150, max: 1500, step: 50 },
 });
 
-/** A board of cells that are marked BLACK or DOT, with optional regions, region colours and cell texts. */
+/** A board of cells that are marked BLACK or DOT, with optional regions, region colors and cell texts. */
 export function shadeView<Pz extends { w: number; h: number }>(spec: ShadeViewSpec<Pz>, board: BoardPrefs): View<Pz, ShadeState, ShadeAction, ShadeInteraction> {
   const id = spec.puzzle, word = spec.shadeWord;
   const BINDINGS: BindingSchema = {
