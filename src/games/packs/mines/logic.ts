@@ -2,10 +2,7 @@ import type { Rng } from "../../core/rng";
 import { defineSchema, type Values } from "../../core/schema";
 import type { Format, GenerateContext, Hint, PuzzleDef, Rating } from "../../core/types";
 import { obfuscateBitmap } from "./sha1";
-import {
-  MINE, UNKNOWN, countNumbers, deduceAt, deduceCount, deduceGlobal, deducePairs, generateLayout,
-  neighbourTable, solveLayout, startKnowledge, type Deduction, type Level,
-} from "./solver";
+import { UNKNOWN, countNumbers, generateLayout, neighbourTable, solveLayout, startKnowledge, type Level } from "./solver";
 
 export const params = defineSchema({
   width: { type: "int", label: "width", default: 9, min: 4, max: 60 },
@@ -26,7 +23,7 @@ export const params = defineSchema({
   },
 });
 
-export const LEVELS: Record<string, Level> = { easy: 1, normal: 2, hard: 3 };
+const LEVELS: Record<string, Level> = { easy: 1, normal: 2, hard: 3 };
 export const LEVEL_NAMES = ["trivial", "easy", "normal", "hard"] as const;
 
 export interface MinesPuzzle {
@@ -157,80 +154,25 @@ export function visibleKnowledge(p: MinesPuzzle, s: MinesState): Int8Array {
   return K;
 }
 
-/**
- * Deductions available from opened cells, lowest level first. Mine deductions the player has
- * already flagged are folded into the knowledge and skipped, so the result is always news.
- */
-export function nextDeduction(p: MinesPuzzle, s: MinesState, maxLevel: Level = 3): Deduction | null {
-  const K = visibleKnowledge(p, s);
-  const nb = neighbourTable(p.w, p.h);
-  const total = mineCount(p);
-  for (let guard = 0; guard < K.length + 1; guard++) {
-    const found: Deduction[] = [];
-    for (let c = 0; c < K.length; c++) {
-      const d = deduceAt(K, nb, c);
-      if (d) found.push(d);
-    }
-    const g = deduceCount(K, total);
-    if (g) found.push(g);
-    if (!found.length && maxLevel >= 2) found.push(...deducePairs(K, p.w, p.h, nb));
-    if (!found.length && maxLevel >= 3) {
-      const d = deduceGlobal(K, nb, total);
-      if (d) found.push(d);
-    }
-    if (!found.length) return null;
-    const news = found.map((d) => ({ ...d, mines: d.mines.filter((c) => !s.flags[c]) }));
-    const pick = news.find((d) => d.safe.length) ?? news.find((d) => d.mines.length);
-    if (pick) return pick;
-    for (const d of found) for (const c of d.mines) K[c] = MINE;
-  }
-  return null;
+/** Flags that aren't on a mine, as a hint that removes them; null if every flag is right. */
+export function wrongFlagHint(p: MinesPuzzle, s: MinesState): Hint<MinesAction> | null {
+  const wrong = s.flags.flatMap((f, c) => (f && !p.mines[c] ? [c] : []));
+  if (!wrong.length) return null;
+  return {
+    message: wrong.length === 1 ? `the flag at ${cellName(p, wrong[0]!)} isn't on a mine` : `${wrong.length} flags aren't on mines`,
+    focus: { cells: wrong, sources: [] } satisfies MinesFocus,
+    actions: [{ type: "flag", cells: wrong, on: false }],
+  };
 }
 
-function describeDeduction(p: MinesPuzzle, d: Deduction): string {
-  const nums = numbers(p);
-  const what = d.safe.length ? "safe" : d.mines.length === 1 ? "a mine" : "mines";
-  const these = (d.safe.length || d.mines.length) === 1 ? "this cell is" : "these are";
-  if (d.level === 1 && d.sources.length === 1) {
-    const c = d.sources[0]!;
-    return d.safe.length
-      ? `the ${nums[c]} at ${cellName(p, c)} already has all its mines, so ${these} safe`
-      : `the ${nums[c]} at ${cellName(p, c)} has no other room, so ${these} ${what}`;
-  }
-  if (d.level === 1) {
-    return d.safe.length ? "every mine is accounted for, the rest is safe" : "every hidden cell left is a mine";
-  }
-  if (d.level === 2) {
-    const [a, b] = d.sources as [number, number];
-    return `comparing the ${nums[a]} at ${cellName(p, a)} with the ${nums[b]} at ${cellName(p, b)}: ${these} ${what}`;
-  }
-  return `trying every way the ${d.remaining} remaining mines can fit around here: ${these} ${what}`;
-}
-
+/** Fallback when no technique applies: the lost state, or why there's no logical move. */
 function hint(p: MinesPuzzle, s: MinesState): Hint<MinesAction> | null {
   if (s.dead >= 0) {
     return { message: "that was a mine. undo to step back", focus: { cells: [s.dead], sources: [] } satisfies MinesFocus };
   }
-  const wrong = s.flags.flatMap((f, c) => (f && !p.mines[c] ? [c] : []));
-  if (wrong.length) {
-    return {
-      message: wrong.length === 1 ? `the flag at ${cellName(p, wrong[0]!)} isn't on a mine` : `${wrong.length} flags aren't on mines`,
-      focus: { cells: wrong, sources: [] } satisfies MinesFocus,
-      actions: [{ type: "flag", cells: wrong, on: false }],
-    };
-  }
-  const d = nextDeduction(p, s);
-  if (!d) {
-    return p.start === null && !s.open.some(Boolean)
-      ? { message: "nothing is open yet, so the first click is a guess" }
-      : { message: "no safe deduction from here, this board needs a guess" };
-  }
-  const cells = d.safe.length ? d.safe : d.mines;
-  return {
-    message: describeDeduction(p, d),
-    focus: { cells, sources: d.sources } satisfies MinesFocus,
-    actions: [d.safe.length ? { type: "open", cells } : { type: "flag", cells, on: true }],
-  };
+  return p.start === null && !s.open.some(Boolean)
+    ? { message: "nothing is open yet, so the first click is a guess" }
+    : { message: "no safe deduction from here, this board needs a guess" };
 }
 
 const ratingCache = new WeakMap<MinesPuzzle, Rating>();
@@ -371,7 +313,9 @@ const gridFormat: Format<MinesPuzzle> = {
 
 export const mines: PuzzleDef<MinesPuzzle, MinesState, MinesAction, MinesInteraction, typeof params> = {
   id: "mines",
-  name: "mines",
+  name: "minesweeper",
+  aliases: ["mines", "minesweeper", "no-guess minesweeper"],
+  tags: ["classic", "numbers", "hidden information"],
   description: "clear every safe cell. numbers count the mines around them.",
   generatorVersion: 1,
   params,
@@ -386,6 +330,13 @@ export const mines: PuzzleDef<MinesPuzzle, MinesState, MinesAction, MinesInterac
   init,
   initInteraction: (p) => ({ cursor: p.start ?? Math.floor(p.h / 2) * p.w + Math.floor(p.w / 2), flagMode: false }),
   reduce,
+  isRetraction: (a) => a.type === "flag" && a.on === false,
+  rules: (p) => [
+    "open every cell that isn't a mine.",
+    "an open number shows how many of its eight neighbours are mines.",
+    `there are ${mineCount(p)} mines in total.`,
+    "opening a mine loses (undo steps back). flags are only notes for you.",
+  ],
   isSolved: (p, s) => s.dead < 0 && p.mines.every((m, c) => m || s.open[c]),
   solve: (p) => ({ open: p.mines.map((m) => (m ? 0 : 1)), flags: p.mines.slice(), dead: -1 }),
   hint,

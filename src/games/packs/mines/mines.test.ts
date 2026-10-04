@@ -3,7 +3,10 @@ import { generate } from "../../core/generate";
 import { createRng } from "../../core/rng";
 import { Session } from "../../core/session";
 import { mines, numbers, type MinesPuzzle } from "./logic";
-import { autoFlag, autoOpen } from "./plugins";
+import { Registry } from "../../core/registry";
+import { TechniqueHost, applyStep, firstStep, isPartOfStep, rateByTechniques } from "../../core/techniques";
+import { checkFlags } from "./plugins";
+import { minesTechniques } from "./techniques";
 import { obfuscateBitmap, sha1 } from "./sha1";
 import {
   MINE, UNKNOWN, countCompletions, deduceAt, deduceCount, deduceGlobal, deducePairs, neighbourTable,
@@ -96,21 +99,89 @@ test("every deduction holds in every consistent layout (brute force)", () => {
   expect(checked).toBeGreaterThan(200);
 });
 
-test("following hints clears a generated board", async () => {
+/** A session with the pack's techniques attached the way the shell does it. */
+function played(p: MinesPuzzle, auto: string[] = []) {
+  const registry = new Registry();
+  for (const t of minesTechniques) registry.technique(auto.includes(t.id) ? { ...t, defaults: { auto: true } } : t);
+  const s = new Session(mines, p, { kind: "imported" });
+  const host = new TechniqueHost(registry, s);
+  checkFlags.setup!({ session: s, settings: {}, owner: "check" });
+  return { s, host };
+}
+
+test("following hints clears a generated board; wrong flags come first", async () => {
   for (const seed of ["h1", "h2"]) {
     const p = (await generate(mines, { width: 16, height: 16, mines: 40, difficulty: "hard" }, seed, sig())) as MinesPuzzle;
-    const s = new Session(mines, p, { kind: "imported" });
+    const { s } = played(p);
     const wrongFlag = p.mines.findIndex((m, c) => !m && !s.state.open[c]);
     s.dispatch({ type: "flag", cells: [wrongFlag], on: true });
     expect(s.hint()?.actions?.[0]).toEqual({ type: "flag", cells: [wrongFlag], on: false });
     for (let i = 0; i < 2000 && !s.solved; i++) {
       const hnt = s.hint();
-      expect(hnt?.actions?.[0]).toBeDefined();
-      s.dispatch(hnt!.actions![0]!);
+      expect(hnt?.actions?.length).toBeGreaterThan(0);
+      s.batch(() => { for (const a of hnt!.actions!) s.dispatch(a); });
       expect(s.state.dead).toBe(-1);
     }
     expect(s.solved).toBe(true);
   }
+});
+
+test("techniques alone solve no-guess boards at every difficulty, and never touch a mine", async () => {
+  for (const difficulty of ["easy", "normal", "hard"]) {
+    const p = (await generate(mines, { width: 12, height: 12, mines: 26, difficulty }, "t-" + difficulty, sig())) as MinesPuzzle;
+    const r = rateByTechniques(mines, minesTechniques, p);
+    expect(r).not.toBeNull();
+    let s = mines.init(p);
+    for (let i = 0; i < 3000 && !mines.isSolved(p, s); i++) {
+      const hit = firstStep(mines, minesTechniques, p, s)!;
+      s = applyStep(mines, p, s, hit.step);
+      expect(s.dead).toBe(-1);
+      expect(s.flags.every((f, c) => !f || p.mines[c])).toBe(true);
+    }
+  }
+});
+
+test("a wrong flag is never trusted: no technique opens a mine because of it", () => {
+  // 1 at (1,0) touches mines-or-not at (0,1)/(1,1)/(2,1); flagging the wrong one must not open the mine
+  const p = mines.formats[1]!.parse("...\n.*.\n...\nS..");
+  let s = mines.init(p);
+  s = mines.reduce(p, s, { type: "open", cells: [1] });
+  s = mines.reduce(p, s, { type: "flag", cells: [3], on: true });
+  for (let i = 0; i < 50; i++) {
+    const hit = firstStep(mines, minesTechniques, p, s);
+    if (!hit) break;
+    s = applyStep(mines, p, s, hit.step);
+    expect(s.dead).toBe(-1);
+  }
+});
+
+test("auto techniques cascade inside the move that triggered them, as one undo step", () => {
+  const p = mines.formats[1]!.parse(".*..\n....\n....\n...S");
+  const { s } = played(p, ["mines.forced", "mines.satisfied"]);
+  s.dispatch({ type: "open", cells: [0] });
+  expect(s.solved).toBe(true);
+  s.undo();
+  expect(s.state.open[0]).toBe(0);
+});
+
+test("unflagging is a retraction: auto-flag doesn't put it straight back", () => {
+  const p = mines.formats[1]!.parse(".*..\n....\n....\n...S");
+  const { s } = played(p, ["mines.forced"]);
+  s.dispatch({ type: "open", cells: [0] });
+  expect(s.state.flags[1]).toBe(1);
+  s.dispatch({ type: "flag", cells: [1], on: false });
+  expect(s.state.flags[1]).toBe(0);
+});
+
+test("practice: carrying out part of a step counts, anything else doesn't", () => {
+  const p = mines.formats[1]!.parse("*...\n....\n....\n...S");
+  const s = mines.init(p);
+  const hit = firstStep(mines, minesTechniques, p, s)!;
+  expect(hit.technique.id).toBe("mines.forced");
+  const flag = mines.reduce(p, s, { type: "flag", cells: [0], on: true });
+  expect(isPartOfStep(mines, p, s, flag, hit.step)).toBe(true);
+  const other = mines.reduce(p, s, { type: "flag", cells: [2], on: true });
+  expect(isPartOfStep(mines, p, s, other, hit.step)).toBe(false);
 });
 
 test("reducer: flag, chord, death and undo", () => {
@@ -154,16 +225,4 @@ test("formats round-trip; sgt ids decode masked and unmasked", async () => {
     expect(q.start).toBe(5 * q.w + 4);
     expect(mines.formats[0]!.serialize!(q).replace(/n\d+/, "")).toBe(id);
   }
-});
-
-test("assist plugins fold into the same undo step", () => {
-  const p = mines.formats[1]!.parse(".*..\n....\n....\n...S");
-  const s = new Session(mines, p, { kind: "imported" });
-  const api = (owner: string) => ({ session: s, settings: {}, owner });
-  autoFlag.setup!(api("af"));
-  autoOpen.setup!(api("ao"));
-  s.dispatch({ type: "open", cells: [0] });
-  expect(s.solved).toBe(true);
-  s.undo();
-  expect(s.state.open[0]).toBe(0);
 });

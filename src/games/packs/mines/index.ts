@@ -1,16 +1,16 @@
 import type { GamesApi } from "../../api";
-import type { Registry } from "../../core/registry";
 import { mines } from "./logic";
 import { minesPlugins } from "./plugins";
+import { minesTechniques } from "./techniques";
 import { minesView } from "./view";
-
-export function register(registry: Registry): void {
-  registry.puzzle(mines);
-  registry.view(minesView);
-  for (const p of minesPlugins) registry.plugin(p);
-}
+import { minesWidgets } from "./widgets";
 
 /** Pack entry: loaded by URL through the same path as any third-party pack. */
 export default function pack(games: GamesApi): void {
-  register(games.registry);
+  const { registry } = games;
+  registry.puzzle(mines);
+  registry.view(minesView(games.look));
+  for (const t of minesTechniques) registry.technique(t);
+  for (const p of minesPlugins) registry.plugin(p);
+  for (const w of minesWidgets) registry.widget(w);
 }
