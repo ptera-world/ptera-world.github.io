@@ -28,7 +28,7 @@ export interface BoardPrefs {
 
 /** Room for edge labels, in board units. */
 const LABEL = 6;
-/** A touch held this long (without moving) is the board menu, not a move. */
+/** A touch held still this long is abandoned as a move; it stays below the shell's hold, which opens the board menu. */
 const LONG_PRESS_MS = 500;
 
 const CSS = `
@@ -127,7 +127,6 @@ export function makeView(look: Look, board: BoardPrefs): View<BridgesPuzzle, Bri
       { how: "click or tap the gap between two islands", what: "add a bridge there too" },
       { how: "right-click, or ctrl+click (⌘ on mac)", what: "take a bridge away. on an empty gap it puts a ✕, your note that no bridge goes there" },
       { how: "on touch: switch “tap removes” on", what: "taps and drags take away and put ✕ instead of adding" },
-      { how: "right-click empty water, or hold a finger on the board", what: "more actions" },
     ],
     mount(root, { session, settings }) {
       style("bridges", CSS);
@@ -286,6 +285,7 @@ export function makeView(look: Look, board: BoardPrefs): View<BridgesPuzzle, Bri
 
       /** Start a gesture at a client point; false if it isn't on anything. */
       const begin = (x: number, y: number, secondary: boolean): boolean => {
+        if (session.locked) return false;
         const at = toBoard(x, y);
         const target = at && hit(at[0], at[1]);
         if (!target) return false;
@@ -310,13 +310,21 @@ export function makeView(look: Look, board: BoardPrefs): View<BridgesPuzzle, Bri
         }
         setDrag({ from: press.island, edge });
       };
+      let holdTimer = 0;
+      /** A still touch turning into a hold: drop the move so lifting the finger does nothing. */
+      const abandon = () => {
+        holdTimer = 0;
+        if (!press?.touch || press.touch.far) return;
+        press = null;
+        setDrag(null);
+      };
       const finish = (ev: PointerEvent) => {
+        clearTimeout(holdTimer);
         const pr = press;
         press = null;
         const drag = session.interaction.drag;
         if (drag) setDrag(null);
         if (!pr || ev.type !== "pointerup") return;
-        if (pr.touch && !pr.touch.far && performance.now() - pr.touch.t >= LONG_PRESS_MS) return;
         if (pr.kind === "island") {
           if (drag && drag.edge >= 0) act(drag.edge, pr.secondary);
           return;
@@ -331,13 +339,12 @@ export function makeView(look: Look, board: BoardPrefs): View<BridgesPuzzle, Bri
         ev.preventDefault();
         if (!press && begin(ev.clientX, ev.clientY, false) && press) {
           (press as { touch?: unknown }).touch = { x: ev.clientX, y: ev.clientY, t: performance.now(), far: false };
+          clearTimeout(holdTimer);
+          holdTimer = window.setTimeout(abandon, LONG_PRESS_MS);
         }
       };
-      /** Right-click on an island or gap is the take-away gesture; on empty water it falls through to the board menu. */
-      const onContextMenu = (ev: MouseEvent) => {
-        const at = toBoard(ev.clientX, ev.clientY);
-        if (at && hit(at[0], at[1])) ev.preventDefault();
-      };
+      /** Right-click is the take-away gesture everywhere on the board, never the browser or board menu. */
+      const onContextMenu = (ev: MouseEvent) => ev.preventDefault();
       svg.addEventListener("pointerdown", onDown);
       svg.addEventListener("contextmenu", onContextMenu);
       window.addEventListener("pointermove", onMove);
@@ -432,12 +439,14 @@ export function makeView(look: Look, board: BoardPrefs): View<BridgesPuzzle, Bri
         },
         context: () => ({ markMode: session.interaction.mode === "mark" }),
         destroy() {
+          clearTimeout(holdTimer);
           offs.forEach((f) => f());
           window.removeEventListener("pointermove", onMove);
           window.removeEventListener("pointerup", finish);
           window.removeEventListener("pointercancel", finish);
           svg.remove();
         },
+        gestures: { secondaryClick: true },
         commands,
         hooks,
       };
