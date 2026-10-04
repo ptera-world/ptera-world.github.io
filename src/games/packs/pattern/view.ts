@@ -99,8 +99,6 @@ const CLUE_H = 6.5;
 const MARGIN = 3.5;
 /** Depth of an edge label strip (row numbers / column letters). */
 const LABEL = 5.5;
-/** Must equal the shell's board-menu hold (ui/shell HOLD_MS), which a pack can't import without the DOM. */
-const MENU_HOLD_MS = 550;
 const SVG_NS = "http://www.w3.org/2000/svg";
 
 /** An asset (SVG markup or image URL) as an element filling one cell box. */
@@ -197,7 +195,8 @@ function legendFor(look: Look): { sample: string; meaning: string }[] {
 
 export type Board = Pick<typeof import("../../ui/board"), "labelSides" | "colName" | "rowName">;
 
-export function patternView(look: Look, board: Board): View<PatternPuzzle, PatternState, PatternAction, PatternInteraction> {
+/** `menuHoldMs` is the shell's board-menu hold time (games.HOLD_MS). */
+export function patternView(look: Look, board: Board, menuHoldMs: number): View<PatternPuzzle, PatternState, PatternAction, PatternInteraction> {
   return {
     id: "pattern.svg",
     name: "grid",
@@ -505,7 +504,7 @@ export function patternView(look: Look, board: Board): View<PatternPuzzle, Patte
           }, lp);
         } else if (e.pointerType === "touch") {
           // a still hold is a menu press: drop the pending mark so letting go doesn't also paint
-          drag.timer = window.setTimeout(() => { if (drag && drag.cur === drag.start) endDrag(false); }, MENU_HOLD_MS);
+          drag.timer = window.setTimeout(() => { if (drag && drag.cur === drag.start) endDrag(false); }, menuHoldMs);
         }
         session.setInteraction((i) => ({ ...i, cursor: cell, clue: null }));
         render();

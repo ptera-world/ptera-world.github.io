@@ -9,7 +9,7 @@ import { patternWidgets } from "./widgets";
 export default function pack(games: GamesApi): void {
   const { registry } = games;
   registry.puzzle(pattern);
-  registry.view(patternView(games.look, games.board));
+  registry.view(patternView(games.look, games.board, games.HOLD_MS));
   for (const t of patternTechniques) registry.technique(t);
   for (const p of patternPlugins) registry.plugin(p);
   for (const w of patternWidgets) registry.widget(w);

@@ -341,7 +341,7 @@ export const mines: PuzzleDef<MinesPuzzle, MinesState, MinesAction, MinesInterac
     "flags are notes for you: they mark cells you think are mines and stop them being opened by accident.",
     "a number with all its flags around it can be clicked to open the rest of its neighbours.",
   ],
-  isLost: (_p, s) => s.dead >= 0,
+  isLost: (_p, s) => (s.dead >= 0 ? { focus: { cells: [s.dead], sources: [] } satisfies MinesFocus } : false),
   isSolved: (p, s) => s.dead < 0 && p.mines.every((m, c) => m || s.open[c]),
   solve: (p) => ({ open: p.mines.map((m) => (m ? 0 : 1)), flags: p.mines.slice(), dead: -1 }),
   hint,
