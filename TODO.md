@@ -51,3 +51,35 @@ The graph should be the primary way to experience the content. Essays are one fo
 - [ ] **Tell 9** — future essays should emerge from specific, strange observations rather than addressing universal questions. A human writer notices something particular and works outward — not inward from a category
 - [ ] **Remaining subtle tells (5a-g, 6a-b)** — paragraph rhythm homogeneity, metaphor uniformity, composed uncertainty, emotional register flatness, absence of disfluency, same voice across collections. 8 essays rewritten this session; ~60 remain. The voice section in CLAUDE.md now encodes the target positively. Consider handing rewrites to an agent with a curated voice rather than fighting Claude's defaults.
 - [x] **Third adversarial audit** — completed 2026-03-23. Mechanical fixes landed well (genuinely eliminated, bold labels gone, See also 82%→26%, question headers 47%→23%). Subtle tells persist in ~60 non-rewritten essays (avg 1.54/3). Section count uniformity is now the #1 structural tell (89.5% in 5-8 range, worse than before). Three new tells found (9-11): cross-link density, explanatory parenthetical, second-person confrontation close. See TELLS.md.
+
+## Games (`/games/`, `src/games/`)
+
+### Core / shell
+- [ ] **Cross-field param validation** — schemas only have `when` (visibility). Add a way for one field to constrain another (e.g. net: wrapping needs every side ≥ 3) so the form blocks impossible combos instead of failing at generate time
+- [ ] **Generation off the main thread** — generators yield between steps, but a single long solve still blocks (loopy 20×20 hard ≈ 12s, 30×30 tricky ≈ 18s). Run `generate` in a Worker; puzzle defs are already pure + deterministic
+- [ ] **Restart timing semantics** — `restart()` now zeroes the timer and clears solved; undoing a restart restores the board but not the old time. Chosen without input, revisit if wrong
+- [ ] **Linking from the main site** — `/games/` is reachable only by URL; no portal node / nav link yet
+- [ ] **Stats / best times** per puzzle + params (mines helper asked for this; would live in the shell, not a pack)
+
+### sudoku pack (also keen / towers / unequal)
+- [ ] Grids larger than 9×9 (needs letter digits)
+- [ ] More variants: sandwich, palindrome, between lines, even/odd, extra regions
+- [ ] Unique-rectangle and BUG techniques in the human solver
+- [ ] Import SudokuPad's native format and SGT game ids
+- [ ] **Verify f-puzzles import field names against a real f-puzzles link** — written from memory; "diagonal+" → anti-diagonal mapping is a guess
+- [ ] Kropki "all dots given" (negative constraint) option
+- [ ] Density setting for line clues (thermo / arrow / whisper / renban)
+- [ ] Hints that use centre marks once they're complete (currently ignored as possibly-partial notes)
+
+### mines / lightup / pattern
+- [ ] mines: "?" marks, both-button chording, mine-probability overlay for imported boards that need guessing
+- [ ] mines: optional "generate on first click" mode (conflicts with same-seed-same-board, so it'd need to be explicit)
+- [ ] lightup: puzz.link akari format, dark-cells-remaining counter, harder techniques (pair trials, "both branches agree"), keep wall symmetry when uniqueness repair adds walls
+- [ ] pattern: third difficulty tier, colour nonograms, puzz.link + webpbn formats, check-my-marks mode, safer auto-cross
+
+### net / loopy / bridges
+- [ ] net: auto-lock assist (skipped: can silently solve most of the board), live wrong-lock display, hex net
+- [ ] net: hint coordinates don't match the visual grid after a wrapped board has been scrolled
+- [ ] loopy: generation speed on big hard grids, manual inside/outside cell shading, penrose + hat tilings, "both branches agree" step in hard tier
+- [ ] **loopy: verify SGT ids for non-triangle tilings and pzprv3 import against real files** — only triangles checked against SGT's examples
+- [ ] bridges: islands without a number, long-press touch gesture, dead-end assist
