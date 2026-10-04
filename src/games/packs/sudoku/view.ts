@@ -145,21 +145,16 @@ const CONTROLS = [
 ];
 
 export function latinView(board: BoardPrefs = noLabels, puzzleId = "sudoku"): View<LatinPuzzle, GridState, GridAction, GridInteraction> {
-  // the legend depends on the puzzle (its clue types), so it describes the one last mounted
-  let shown: LatinPuzzle | null = null;
   return {
     id: `${puzzleId}.svg`,
     name: "grid",
     puzzle: puzzleId,
     settings,
     controls: CONTROLS,
-    get legend() {
-      return shown ? legendFor(shown) : [];
-    },
+    legend: legendFor,
     mount(root, { session, settings: cfg }) {
       style("sudoku", CSS);
       const p = session.puzzle;
-      shown = p;
       const n = p.n, size = n * n;
       const sides = board.labelSides();
       const clueMg = margins(p);
