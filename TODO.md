@@ -65,7 +65,7 @@ Primitives (see `src/games/core/types.ts`): Technique, CommandDef, WidgetDef, Th
 - [ ] **puzzlescript-style engine**: puzzles described as data/rules. Would be a pack that turns a description into a PuzzleDef (+ techniques from rule-level deductions); nothing in core blocks it
 - [ ] **collaboration (maybe, not mandatory)**: shared games (CRDTs such as yjs, presence/awareness). Where it would plug in: every change is an action with a source, and history already exports exact per-step patches, so a sync layer can sit on dispatch/patches without touching packs. Open questions: transport (WebRTC alone isn't enough, needs signalling/relay), and who owns game rules (auto-apply, timer, undo); a host-authoritative session with per-player permissions is the likely shape
 - [ ] **several games on screen at once**: games no longer share global state, but the shell renders one session/board. Needs the shell to own N sessions + per-board command scopes
-- [ ] **more puzzles**: rest of Simon Tatham's collection (fifteen, …), numberlink / flow. Each is a pack directory
+- [ ] **more puzzles**: numberlink / flow and beyond (all 40 of Simon Tatham’s collection are in). Each is a pack directory
 - [ ] **layout presets** beyond zen (named, shareable placements)
 - [ ] **hold-to-show keys** (e.g. labels while held): commands are press-only; needs keydown/keyup pairs in CommandDef
 - [ ] **multi-file third-party packs**: a url pack runs from its stored copy, so it can't import sibling files. Bundle step or import maps
@@ -75,11 +75,29 @@ Primitives (see `src/games/core/types.ts`): Technique, CommandDef, WidgetDef, Th
 - [ ] **shared "something completed" effect** (a line, box, cage), and hint focus that reaches margins (clues outside the grid)
 
 ### Core / shell
+- [ ] **shared pack code**: `cellName`/cell lists, "marks that agree with the unique solution", hold/drag pointer handling and the grid-logic `kit/` are copied into many packs (identical copies kept in sync by hand). Needs a way for packs to share code (a shared pack library, or growing the stateless SDK)
+- [ ] **hint focus for edges and corner points** (palisade, rect, slant draw their own; `locate` falls back to nearby cells), and for clues outside the grid
+- [ ] **generic digit pad widget** (filling and the sudoku family each bring their own)
+- [ ] **hints that point into history** ("undo 3 moves"): techniques only see the current state
+- [ ] **header repeats itself**: description and rating sit side by side and often say the same thing
+- [ ] **edge labels / outside clues stay visible when zoomed** (only nonogram's clue strips stick)
+- [ ] **aimed techniques (findAt) for sudoku, net, slitherlink, light up, hashi** and the move-based puzzles: their solvers only find the first step anywhere
+- [ ] **zoom per game**: not saved, resets each game; touch pinch can collide with a one-finger drag already in progress
+- [ ] **"use a technique here" popup has no hover preview** (the skills widget does)
 - [ ] **Cross-field param validation** — schemas only have `when` (visibility). Add a way for one field to constrain another (e.g. net: wrapping needs every side ≥ 3) so the form blocks impossible combos instead of failing at generate time
 - [ ] **Generation off the main thread** — generators yield between steps, but a single long solve still blocks (loopy 20×20 hard ≈ 12s, 30×30 tricky ≈ 18s). Run `generate` in a Worker; puzzle defs are already pure + deterministic
 - [ ] **Linking from the main site** — `/games/` is reachable only by URL; no portal node / nav link yet
 - [ ] **Stats / best times** per puzzle + params (the results strip already has the data per game)
 - [ ] **layout shift on load**: the board area moves once from where "generating…" sat (`?debugLayout` shows it)
+
+### Simon Tatham collection packs
+- [ ] untangle: crossing check uses a tolerance, so a point dropped exactly onto a line may not count as crossing (could mark solved when Tatham's wouldn't)
+- [ ] twiddle: 3×3 / 4×4 rotating blocks cut (hint engine gets stuck); netslide hints can fail on big imported boards; pegs / samegame hints can time out off the known path on big boards
+- [ ] slow generation: palisade hard 15×12 (several s), mosaic 25×25 medium/hard (~3s), filling hard 9×7 (2–3s), pearl 10×10 (~0.6s, capped at 12); palisade region size 3 rarely generates
+- [ ] guess, blackbox, untangle: no practice boards; imported untangle has no layout hint or solve; blackbox hints partial on big boards with many balls
+- [ ] mosaic "fewer clues off" mode and rect expand factor not supported; nonogram "maybe" mark not added
+- [ ] touch hold paths of the grid-logic packs not tried on a real device
+- [ ] generators follow Tatham's methods with our own seeded randomness, so seeds don't reproduce his boards (his ids do import)
 
 ### sudoku pack (also keen / towers / unequal)
 - [ ] Grids larger than 9×9 (needs letter digits)
