@@ -580,6 +580,7 @@ export function makeLoopyView(look: Look = plainLook, labels: Labels = noLabels,
       return {
         gestures: { secondaryClick: true },
         aspect: vbW / vbH,
+        cells: { cols: vbW / u, rows: vbH / u },
         locate,
         locateChange: (a, b) => {
           const x = (a as LoopyState | undefined)?.edges, y = (b as LoopyState | undefined)?.edges;
