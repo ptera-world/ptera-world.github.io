@@ -244,57 +244,61 @@ interface Spec {
   kind: Kind;
   name: string;
   description: string;
-  nudge(p: BridgesPuzzle, g: Graph, st: SolverStep): string;
+  /** Where to look, naming exactly the islands it returns (they are highlighted). */
+  nudge(p: BridgesPuzzle, g: Graph, st: SolverStep): { text: string; islands: number[] };
   requires?: readonly string[];
   practice?: Record<string, unknown>;
 }
 
 const firstIsland = (g: Graph, st: SolverStep): number => st.islands[0] ?? g.edges[st.edges[0]!]!.a;
+const ends = (g: Graph, st: SolverStep): [number, number] => {
+  const e = g.edges[st.edges[0]!]!;
+  return [e.a, e.b];
+};
+const one = (p: BridgesPuzzle, i: number, text: (name: string) => string) => ({ text: text(islandName(p, i)), islands: [i] });
+const two = (p: BridgesPuzzle, [a, b]: [number, number], text: (x: string, y: string) => string) => ({ text: text(islandName(p, a), islandName(p, b)), islands: [a, b] });
 
 const SPECS: readonly Spec[] = [
   {
     kind: "full", name: "finished island",
     description: "an island that already has all its bridges takes no more, so every other connection from it can be crossed off.",
-    nudge: (p, g, st) => `${islandName(p, firstIsland(g, st))} is done. what does that rule out?`,
+    nudge: (p, g, st) => one(p, firstIsland(g, st), (x) => `${x} is done. what does that rule out?`),
     practice: { difficulty: "easy" },
   },
   {
     kind: "all", name: "no room to spare",
     description: "add up the most bridges an island could still get on each side (limited by the max per pair, its neighbours' own numbers, and crossings). if that total is exactly its number, every side must be filled to the brim.",
-    nudge: (p, g, st) => `count how many bridges ${islandName(p, firstIsland(g, st))} has room for`,
+    nudge: (p, g, st) => one(p, firstIsland(g, st), (x) => `count how many bridges ${x} has room for`),
     practice: { difficulty: "easy" },
   },
   {
     kind: "some", name: "at least one",
     description: "if the other sides of an island can't supply its number between them, the rest has to come from this side. a 3 with only two neighbours (max 2 each) needs at least one bridge to each; a 5 with three neighbours needs at least one to every side.",
-    nudge: (p, g, st) => `${islandName(p, firstIsland(g, st))} can't get enough without some side`,
+    nudge: (p, g, st) => one(p, firstIsland(g, st), (x) => `${x} can't get enough without some side`),
     practice: { difficulty: "easy" },
   },
   {
     kind: "loop", name: "no loops", requires: ["no-loops"],
     description: "when loops aren't allowed, two islands that are already connected (by any route) can't get a bridge between them.",
-    nudge: () => "two islands here are already connected another way",
+    nudge: (p, g, st) => two(p, ends(g, st), (x, y) => `${x} and ${y} are already joined by some route`),
     practice: { difficulty: "medium", loops: false },
   },
   {
     kind: "isolation", name: "don't cut them off",
     description: "every island has to join one network. if filling a connection to the max would finish both groups it joins with nothing left over, they'd be sealed off from everything else, so that connection takes at least one less. two 1s can't join; neither can two 2s with a double bridge.",
-    nudge: (p, g, st) => `what happens if ${islandName(p, firstIsland(g, st))} joins its neighbour as much as possible?`,
+    nudge: (p, g, st) => two(p, ends(g, st), (x, y) => `what if ${x} and ${y} got as many bridges as they can take?`),
     practice: { difficulty: "medium" },
   },
   {
     kind: "cut", name: "only way out",
     description: "if every route between one part of the board and the rest has been ruled out except one connection, that connection must have a bridge.",
-    nudge: () => "one group of islands has only one way left to reach the rest",
+    nudge: (p, g, st) => two(p, ends(g, st), (x, y) => `is there any other way through than the gap between ${x} and ${y}?`),
     practice: { difficulty: "medium" },
   },
   {
     kind: "trial", name: "what if",
     description: "suppose a connection had a particular number of bridges and follow the easier rules. if that leads to something impossible (an island over or under its number, crossing bridges, a group cut off), that number is ruled out.",
-    nudge: (p, g, st) => {
-      const e = g.edges[st.edges[0]!]!;
-      return `suppose something about the connection between ${islandName(p, e.a)} and ${islandName(p, e.b)}`;
-    },
+    nudge: (p, g, st) => two(p, ends(g, st), (x, y) => `suppose you knew how many bridges join ${x} and ${y}`),
     practice: { difficulty: "hard" },
   },
 ];
@@ -317,10 +321,11 @@ function technique(spec: Spec): Technique<BridgesPuzzle, BridgesState, BridgesAc
       const focus: Focus = why
         ? { islands: [...new Set([...st.islands, ...why.islands])], edges: [...new Set([...st.edges, ...why.edges])] }
         : { islands: st.islands, edges: st.edges };
-      const nudgeFocus: Focus = { islands: st.islands.length ? st.islands.slice(0, 1) : [g.edges[st.edges[0]!]!.a, g.edges[st.edges[0]!]!.b], edges: [] };
+      const nudge = spec.nudge(p, g, st);
+      const nudgeFocus: Focus = { islands: nudge.islands, edges: [] };
       return {
         message: why ? `${why.message}. ${st.message}` : st.message,
-        nudge: spec.nudge(p, g, st),
+        nudge: nudge.text,
         focus,
         nudgeFocus,
         actions: f.actions,

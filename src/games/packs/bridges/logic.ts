@@ -19,7 +19,7 @@ export type Mode = "bridge" | "mark";
 export interface BridgesInteraction {
   /** Island index under the keyboard cursor. */
   cursor: number;
-  /** "mark": primary taps/keys remove bridges or toggle marks instead of adding. */
+  /** "mark": pointer taps and drags take away bridges / put ✕ instead of adding ("tap removes"). */
   mode: Mode;
   /** In-progress drag from an island; edge is the targeted edge or -1. */
   drag: { from: number; edge: number } | null;
@@ -176,7 +176,7 @@ export const bridges: PuzzleDef<BridgesPuzzle, BridgesState, BridgesAction, Brid
   name: "hashi",
   aliases: ["bridges", "hashiwokakero", "hashikake"],
   tags: ["logic", "grid", "numbers", "connection"],
-  description: "connect every island into one network. each number is how many bridges touch that island; bridges run straight, never cross, and at most a set number join any two islands.",
+  description: "the circles are islands. draw bridges between them so every island gets exactly as many bridges as its number, and all the islands end up joined into one network.",
   generatorVersion: 1,
   params,
   presets: [
@@ -201,10 +201,11 @@ export const bridges: PuzzleDef<BridgesPuzzle, BridgesState, BridgesAction, Brid
   },
   hint,
   rules: (p) => [
-    "each island's number is how many bridges touch it.",
-    "bridges run straight up, down, left or right between two islands, and never cross each other or another island.",
-    p.maxb === 1 ? "at most one bridge joins any two islands." : `at most ${p.maxb} bridges join any two islands.`,
-    p.loops ? "all the islands have to end up connected into one network." : "all the islands have to end up connected into one network, with no loops: only one route between any two islands.",
+    "each island's number is how many bridges touch it, counting a double bridge as two.",
+    "bridges run in a straight line, across or down, from one island to the next one along. they can't bend, cross each other, or pass over an island.",
+    p.maxb === 1 ? "only one bridge can join the same two islands." : `up to ${p.maxb} bridges can join the same two islands, drawn side by side.`,
+    p.loops ? "when you're done, you can walk from any island to any other over the bridges." : "when you're done, you can walk from any island to any other over the bridges, and there's only one way to do it: no loops.",
+    "a ✕ between two islands is your own note that no bridge goes there. it doesn't count toward anything.",
   ],
   /**
    * "loops" / "no-loops": whether the network may contain cycles. "multi": more than one bridge

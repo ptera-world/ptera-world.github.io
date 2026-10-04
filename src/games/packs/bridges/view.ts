@@ -1,6 +1,7 @@
 import { Event as HookEvent } from "../../core/hooks";
 import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
+import { colName, rowName, type Side } from "../../ui/board";
 import { s, style } from "../../ui/dom";
 import { getDeco } from "./deco";
 import { DIR_NAMES, graph, type BridgesPuzzle, type BridgesState } from "./graph";
@@ -20,9 +21,20 @@ export interface Look {
   asset(id: string, fallback: string): string;
 }
 
+/** Player's board-label preference (which edges carry column letters / row numbers). */
+export interface BoardPrefs {
+  labelSides(): Set<Side>;
+}
+
+/** Room for edge labels, in board units. */
+const LABEL = 6;
+/** A touch held this long (without moving) is the board menu, not a move. */
+const LONG_PRESS_MS = 500;
+
 const CSS = `
 .bridges-board { display: block; width: 100%; height: 100%; touch-action: none; user-select: none; -webkit-user-select: none; }
 .bridges-board .dot { fill: var(--border); }
+.bridges-board .edge-label { fill: var(--text-dim); font: 3px var(--font); text-anchor: middle; dominant-baseline: central; }
 .bridges-board .island .shape { fill: var(--surface-2); stroke: var(--text-dim); stroke-width: 0.5; transition: fill 120ms, stroke 120ms; }
 .bridges-board .island text { fill: var(--text); font: 600 4.4px var(--font); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
 .bridges-board .island .badge { fill: var(--warn); font-size: 2.8px; }
@@ -70,12 +82,19 @@ function graphic(src: string, size: number, cls: string): SVGGElement {
   return el;
 }
 
-export function makeView(look: Look): View<BridgesPuzzle, BridgesState, BridgesAction, BridgesInteraction> {
+export function makeView(look: Look, board: BoardPrefs): View<BridgesPuzzle, BridgesState, BridgesAction, BridgesInteraction> {
   const view: View<BridgesPuzzle, BridgesState, BridgesAction, BridgesInteraction> = {
     id: "bridges.svg",
     name: "board",
     puzzle: "bridges",
     settings,
+    controls: [
+      { how: "drag from an island toward a neighbour", what: "add a bridge between them (again for a double bridge)" },
+      { how: "click or tap the gap between two islands", what: "add a bridge there too" },
+      { how: "right-click, or ctrl+click (⌘ on mac)", what: "take a bridge away. on an empty gap it puts a ✕, your note that no bridge goes there" },
+      { how: "on touch: switch “tap removes” on", what: "taps and drags take away and put ✕ instead of adding" },
+      { how: "right-click empty water, or hold a finger on the board", what: "more actions" },
+    ],
     mount(root, { session, settings }) {
       style("bridges", CSS);
       const p = session.puzzle;
@@ -85,8 +104,11 @@ export function makeView(look: Look): View<BridgesPuzzle, BridgesState, BridgesA
       const islandArt = look.asset(ASSETS.island.id, ASSETS.island.fallback);
       const markArt = look.asset(ASSETS.mark.id, ASSETS.mark.fallback);
 
+      const sides = board.labelSides();
+      const pad = (side: Side) => (sides.has(side) ? LABEL : 0);
+      const vbW = p.w * S + 2 + pad("left") + pad("right"), vbH = p.h * S + 2 + pad("top") + pad("bottom");
       const svg = s("svg", {
-        viewBox: `-1 -1 ${p.w * S + 2} ${p.h * S + 2}`, class: "bridges-board",
+        viewBox: `${-1 - pad("left")} ${-1 - pad("top")} ${vbW} ${vbH}`, class: "bridges-board",
         role: "img", "aria-label": `${p.w} by ${p.h} bridges puzzle with ${p.islands.length} islands`,
       });
       const layer = () => {
@@ -96,6 +118,14 @@ export function makeView(look: Look): View<BridgesPuzzle, BridgesState, BridgesA
       };
       const dots = layer(), focusLayer = layer(), guideLayer = layer(), bridgeLayer = layer(), markLayer = layer();
       const previewLayer = layer(), islandLayer = layer(), overlay = layer();
+      for (let x = 0; x < p.w; x++) {
+        if (sides.has("top")) dots.append(s("text", { x: (x + 0.5) * S, y: -1 - LABEL / 2, class: "edge-label" }, colName(x)));
+        if (sides.has("bottom")) dots.append(s("text", { x: (x + 0.5) * S, y: p.h * S + 1 + LABEL / 2, class: "edge-label" }, colName(x)));
+      }
+      for (let y = 0; y < p.h; y++) {
+        if (sides.has("left")) dots.append(s("text", { x: -1 - LABEL / 2, y: (y + 0.5) * S, class: "edge-label" }, rowName(y)));
+        if (sides.has("right")) dots.append(s("text", { x: p.w * S + 1 + LABEL / 2, y: (y + 0.5) * S, class: "edge-label" }, rowName(y)));
+      }
       if (settings.dots) {
         for (let y = 0; y < p.h; y++) for (let x = 0; x < p.w; x++) {
           if (g.cellIsland[y * p.w + x]! < 0) dots.append(s("circle", { cx: (x + 0.5) * S, cy: (y + 0.5) * S, r: 0.35, class: "dot" }));
@@ -173,12 +203,12 @@ export function makeView(look: Look): View<BridgesPuzzle, BridgesState, BridgesA
 
       // --- input ---
 
-      /** Add (primary) or take away (secondary) on an edge; mark mode swaps them. Removals are sent as retractions. */
-      const act = (edge: number, secondary: boolean) => {
+      /** Add or take away on an edge; "tap removes" swaps pointer gestures (not keys). Removals are sent as retractions. */
+      const act = (edge: number, remove: boolean, pointerGesture = true) => {
         if (edge < 0) return;
-        const markMode = session.interaction.mode === "mark";
+        const swapped = pointerGesture && session.interaction.mode === "mark";
         const n = session.state.b[edge]!;
-        if (secondary === markMode) {
+        if (remove === swapped) {
           if (n < p.maxb) session.dispatch({ type: "set", edge, n: n + 1 });
           else if (settings.wrap) session.dispatch({ type: "set", edge, n: 0 });
         } else if (n > 0) {
@@ -215,7 +245,7 @@ export function makeView(look: Look): View<BridgesPuzzle, BridgesState, BridgesA
         return best >= 0 ? { kind: "edge", edge: best, secondary: false } : null;
       };
 
-      let press: Press | null = null;
+      let press: (Press & { touch?: { x: number; y: number; t: number; far: boolean } }) | null = null;
       const setDrag = (drag: BridgesInteraction["drag"]) => session.setInteraction((i) => (
         i.drag?.from === drag?.from && i.drag?.edge === drag?.edge ? i : { ...i, drag }
       ));
@@ -233,6 +263,7 @@ export function makeView(look: Look): View<BridgesPuzzle, BridgesState, BridgesA
         return true;
       };
       const onMove = (ev: PointerEvent) => {
+        if (press?.touch && Math.hypot(ev.clientX - press.touch.x, ev.clientY - press.touch.y) > 10) press.touch.far = true;
         if (press?.kind !== "island") return;
         const at = toBoard(ev.clientX, ev.clientY);
         if (!at) return;
@@ -251,6 +282,7 @@ export function makeView(look: Look): View<BridgesPuzzle, BridgesState, BridgesA
         const drag = session.interaction.drag;
         if (drag) setDrag(null);
         if (!pr || ev.type !== "pointerup") return;
+        if (pr.touch && !pr.touch.far && performance.now() - pr.touch.t >= LONG_PRESS_MS) return;
         if (pr.kind === "island") {
           if (drag && drag.edge >= 0) act(drag.edge, pr.secondary);
           return;
@@ -263,9 +295,15 @@ export function makeView(look: Look): View<BridgesPuzzle, BridgesState, BridgesA
       const onDown = (ev: PointerEvent) => {
         if (ev.pointerType === "mouse") return;
         ev.preventDefault();
-        if (!press) begin(ev.clientX, ev.clientY, false);
+        if (!press && begin(ev.clientX, ev.clientY, false) && press) {
+          (press as { touch?: unknown }).touch = { x: ev.clientX, y: ev.clientY, t: performance.now(), far: false };
+        }
       };
-      const onContextMenu = (ev: Event) => ev.preventDefault();
+      /** Right-click on an island or gap is the take-away gesture; on empty water it falls through to the board menu. */
+      const onContextMenu = (ev: MouseEvent) => {
+        const at = toBoard(ev.clientX, ev.clientY);
+        if (at && hit(at[0], at[1])) ev.preventDefault();
+      };
       svg.addEventListener("pointerdown", onDown);
       svg.addEventListener("contextmenu", onContextMenu);
       window.addEventListener("pointermove", onMove);
@@ -308,20 +346,20 @@ export function makeView(look: Look): View<BridgesPuzzle, BridgesState, BridgesA
 
       const commands: CommandDef[] = [
         {
-          id: "bridges.mode", label: "mark mode", category: "board", keys: ["x"],
-          description: "taps and the add keys take away bridges and cross off connections instead",
+          id: "bridges.mode", label: "tap removes", category: "board", keys: ["x"], menu: "board",
+          description: "for touch, where there's no right-click: while on, a tap or drag takes a bridge away, or puts a ✕ (no bridge here) on an empty gap. while off, taps add bridges. with a mouse, right-click does the same without switching",
           checked: () => session.interaction.mode === "mark",
           run: () => session.setInteraction((i) => ({ ...i, mode: i.mode === "mark" ? "bridge" : "mark" })),
         },
-        { id: "bridges.add-at", label: "add a bridge (drag from an island, or click a connection)", category: "board", mouse: ["click"], hidden: true, run: pointer(false) },
-        { id: "bridges.remove-at", label: "take a bridge away or cross off (drag or click)", category: "board", mouse: ["rightclick", "$mod+click"], hidden: true, run: pointer(true) },
+        { id: "bridges.add-at", label: "add a bridge", description: "drag from an island toward a neighbour, or click the gap between them", category: "board", mouse: ["click"], hidden: true, run: pointer(false) },
+        { id: "bridges.remove-at", label: "take away / ✕", description: "drag from an island or click a gap: removes a bridge, or marks an empty gap ✕ (no bridge here)", category: "board", mouse: ["rightclick", "$mod+click"], hidden: true, run: pointer(true) },
       ];
       DIR_NAMES.forEach((name, d) => {
         const [arrow, letter] = DIR_KEYS[d]!;
         commands.push(
-          { id: `bridges.move-${name}`, label: `cursor ${name}`, category: "board", keys: [arrow, letter], run: move(d) },
-          { id: `bridges.add-${name}`, label: `add bridge ${name}`, category: "board", keys: [`shift+${arrow}`, `shift+${letter}`], run: () => act(edgeFrom(d), false) },
-          { id: `bridges.remove-${name}`, label: `take away / cross off ${name}`, category: "board", keys: [`$mod+${arrow}`], run: () => act(edgeFrom(d), true) },
+          { id: `bridges.add-${name}`, label: `add bridge ${name}`, description: `keyboard: add a bridge from the ringed island to its neighbour ${name === "down" ? "below" : name === "up" ? "above" : `to the ${name}`}`, category: "keyboard", keys: [`shift+${arrow}`, `shift+${letter}`], run: () => act(edgeFrom(d), false, false) },
+          { id: `bridges.remove-${name}`, label: `take away / ✕ ${name}`, description: `keyboard: take a bridge away ${name === "down" ? "below" : name === "up" ? "above" : `to the ${name} of`} the ringed island, or mark that gap ✕ (no bridge here)`, category: "keyboard", keys: [`$mod+${arrow}`], run: () => act(edgeFrom(d), true, false) },
+          { id: `bridges.move-${name}`, label: `ring ${name}`, description: `keyboard: move the ring (the keyboard cursor) to the next island ${name === "down" ? "below" : name === "up" ? "above" : `to the ${name}`}`, category: "keyboard", keys: [arrow, letter], run: move(d) },
         );
       });
 
@@ -348,7 +386,7 @@ export function makeView(look: Look): View<BridgesPuzzle, BridgesState, BridgesA
       ];
       render();
       return {
-        aspect: (p.w * S + 2) / (p.h * S + 2),
+        aspect: vbW / vbH,
         locate(focus) {
           const f = focus as Partial<Focus> | null;
           if (!f || typeof f !== "object") return [];

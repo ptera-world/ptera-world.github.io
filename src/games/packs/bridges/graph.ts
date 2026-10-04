@@ -1,3 +1,5 @@
+import { cellName } from "../../ui/board";
+
 /**
  * Puzzle data and the derived island/edge graph shared by rules, solver, generator and views.
  */
@@ -215,10 +217,10 @@ export function isValidSolution(p: BridgesPuzzle, b: readonly number[]): boolean
   return true;
 }
 
-/** 1-based "(col, row)" for messages. */
+/** The island's cell name, as the board labels show it (e.g. "C5"). */
 export function pos(p: BridgesPuzzle, i: number): string {
   const is = p.islands[i]!;
-  return `(${is.x + 1}, ${is.y + 1})`;
+  return cellName(is.x, is.y);
 }
 
 export function islandName(p: BridgesPuzzle, i: number): string {
@@ -240,7 +242,7 @@ export function validatePuzzle(p: BridgesPuzzle): void {
     if (seen.has(c)) throw new Error("two islands in one cell");
     if (c < prev) throw new Error("islands must be in row-major order");
     if (!Number.isInteger(is.n) || is.n < 1 || is.n > 4 * p.maxb) {
-      throw new Error(`island at (${is.x + 1}, ${is.y + 1}) has ${is.n}; must be 1 to ${4 * p.maxb}`);
+      throw new Error(`the island at ${cellName(is.x, is.y)} has ${is.n}; must be 1 to ${4 * p.maxb}`);
     }
     seen.add(c);
     prev = c;

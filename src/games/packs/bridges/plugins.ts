@@ -34,6 +34,7 @@ function room(g: Graph, s: BridgesState, sums: readonly number[], i: number): nu
 const complete: BridgesPlugin = {
   id: "bridges.complete",
   name: "fade finished islands",
+  description: "islands that have all their bridges turn faint, so the ones still open stand out",
   category: "assists",
   appliesTo: APPLIES,
   enabledByDefault: true,
@@ -96,6 +97,7 @@ const loops: BridgesPlugin = {
 const counts: BridgesPlugin = {
   id: "bridges.counts",
   name: "show bridges still needed",
+  description: "a small number by each island counting how many more bridges it needs",
   category: "assists",
   appliesTo: APPLIES,
   enabledByDefault: false,
@@ -120,6 +122,7 @@ const counts: BridgesPlugin = {
 const groups: BridgesPlugin = {
   id: "bridges.groups",
   name: "colour connected groups",
+  description: "islands already joined to each other by bridges get the same coloured ring, so you can see which pieces still need linking up",
   category: "assists",
   appliesTo: APPLIES,
   enabledByDefault: false,
