@@ -63,6 +63,7 @@ Primitives (see `src/games/core/types.ts`): Technique, CommandDef, WidgetDef, Th
 
 ### Bigger ideas (designed for, not built)
 - [ ] **puzzlescript-style engine**: puzzles described as data/rules. Would be a pack that turns a description into a PuzzleDef (+ techniques from rule-level deductions); nothing in core blocks it
+- [ ] **collaboration (maybe, not mandatory)**: shared games (CRDTs such as yjs, presence/awareness). Where it would plug in: every change is an action with a source, and history already exports exact per-step patches, so a sync layer can sit on dispatch/patches without touching packs. Open questions: transport (WebRTC alone isn't enough, needs signalling/relay), and who owns game rules (auto-apply, timer, undo); a host-authoritative session with per-player permissions is the likely shape
 - [ ] **several games on screen at once**: games no longer share global state, but the shell renders one session/board. Needs the shell to own N sessions + per-board command scopes
 - [ ] **more puzzles**: rest of Simon Tatham's collection (fifteen, …), numberlink / flow. Each is a pack directory
 - [ ] **layout presets** beyond zen (named, shareable placements)
