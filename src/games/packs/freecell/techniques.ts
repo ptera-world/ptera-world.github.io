@@ -1,6 +1,6 @@
 import type { Plugin, Step, Technique } from "../../core/types";
 import { cardName, safeHomeReason } from "../../lib/cards/deck";
-import { planner } from "../../lib/cards/plan";
+import { planner } from "../../lib/plan";
 import type { CardFocus } from "../../lib/cards/table";
 import { describeMove, freecell, whereTo, fromPos, pileName, toPos, type FreecellAction, type FreecellInteraction, type FreecellPuzzle, type FreecellState } from "./logic";
 import { applyMove, clonePos, isSafeHome, safeHomeMove, solve, type Move } from "./solver";

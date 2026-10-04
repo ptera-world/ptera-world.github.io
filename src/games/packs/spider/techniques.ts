@@ -1,6 +1,6 @@
 import type { Plugin, Step, Technique } from "../../core/types";
 import { cardName, suitOf, SUIT_NAMES } from "../../lib/cards/deck";
-import { planner } from "../../lib/cards/plan";
+import { planner } from "../../lib/plan";
 import type { CardFocus } from "../../lib/cards/table";
 import { actionOf, dealPos, describeMove, fromPos, pileName, spider, toPos, whereTo, type SpiderAction, type SpiderInteraction, type SpiderPuzzle, type SpiderState } from "./logic";
 import { applyMove, clonePos, COLS, solve, STOCK, type Move } from "./solver";

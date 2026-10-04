@@ -1,6 +1,6 @@
 import type { Plugin, Step, Technique } from "../../core/types";
 import { cardName, safeHomeReason } from "../../lib/cards/deck";
-import { planner } from "../../lib/cards/plan";
+import { planner } from "../../lib/plan";
 import type { CardFocus } from "../../lib/cards/table";
 import { actionsOf, dealPos, describeMove, fromPos, klondike, pileName, rulesOf, toPos, whereTo, type KlondikeAction, type KlondikeInteraction, type KlondikePuzzle, type KlondikeState } from "./logic";
 import { applyMove, clonePos, COLS, isSafeHome, safeHomeMove, solve, STOCK, WASTE, type Move, type Pos } from "./solver";
