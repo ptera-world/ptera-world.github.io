@@ -898,7 +898,7 @@ export class Shell {
         checked: () => th.config(t).auto,
         run: () => { th.setConfig(t, { ...th.config(t), auto: !th.config(t).auto }); this.hub.refresh(); },
       },
-      { id: `technique.practice.${t.id}`, label: `practise ${t.name}`, category: "practice", run: () => void this.startPractice(s.def, t, randomSeed()) },
+      ...(t.practice === false ? [] : [{ id: `technique.practice.${t.id}`, label: `practise ${t.name}`, category: "practice", run: () => void this.startPractice(s.def, t, randomSeed()) } satisfies CommandDef]),
     ])];
   }
 

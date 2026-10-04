@@ -242,13 +242,13 @@ export async function findPracticePosition(
   for (let i = 0; i < tries; i++) {
     if (signal.aborted) return null;
     const s = `${seed}-${seeds.int(1e9).toString(36)}`;
-    const puzzle = await generate(def, target.practice?.params ?? {}, s, signal);
+    const puzzle = await generate(def, (target.practice || undefined)?.params ?? {}, s, signal);
     let state = def.init(puzzle);
     for (let guard = 0; guard < 2000; guard++) {
       const hit = firstStep(def, all, puzzle, state);
       if (!hit) break;
       if (hit.technique.id === target.id) {
-        const shown = target.practice?.prepare?.(puzzle, state) ?? state;
+        const shown = (target.practice || undefined)?.prepare?.(puzzle, state) ?? state;
         const step = findStep(def, target, puzzle, shown) ?? hit.step;
         return { puzzle, state: shown, step, seed: s };
       }

@@ -83,7 +83,8 @@ export interface Technique<Pz = any, S = any, A extends Action = any> {
    */
   findAt?(puzzle: Pz, state: S, target: unknown): Step<A> | null;
   defaults?: { hints?: boolean; auto?: boolean };
-  practice?: {
+  /** false: no practice boards for this technique (e.g. it needs a game history to arise). */
+  practice?: false | {
     /** Generation params used to look for practice positions (e.g. a harder difficulty). */
     params?: Record<string, unknown>;
     /** Turn a found position into what the player sees (e.g. fill in candidate marks). */

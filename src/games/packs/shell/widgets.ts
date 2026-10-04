@@ -381,7 +381,8 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
           ? "your auto-applied techniques solve this whole board on their own."
           : rest ? `with your auto techniques on, the hardest thing left for you is: ${rest.hardest.name}.` : "this board needs more than the listed techniques.";
       };
-      el.append(h("button", { class: "primary", title: "practise every technique in order, easiest first", onclick: () => void shell.startPractice(s.def, th.list[0]!, randomSeed()) }, "start the tutorial"));
+      const lessons = th.list.filter((t) => t.practice !== false);
+      if (lessons.length) el.append(h("button", { class: "primary", title: "practise every technique in order, easiest first", onclick: () => void shell.startPractice(s.def, lessons[0]!, randomSeed()) }, "start the tutorial"));
       el.append(note, h("div", { class: "w-inline" },
         h("h3", { style: "flex: 1; font-size: 12px; color: var(--text-dim); letter-spacing: 0.06em" }, "techniques"),
         h("button", { onclick: check, title: "mark which techniques have an instance on the board right now" }, "what applies now?")), list);
@@ -395,7 +396,7 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
           h("div", { class: "w-inline buttons" },
             h("button", { onclick: () => shell.findTechnique(t), title: "show one on the board" }, "find"),
             h("button", { onclick: () => ctx.run(`technique.apply.${t.id}`), title: "carry one out" }, "apply"),
-            h("button", { onclick: () => ctx.run(`technique.practice.${t.id}`), title: "a board where this is the next step" }, "practise"),
+            t.practice === false ? null : h("button", { onclick: () => ctx.run(`technique.practice.${t.id}`), title: "a board where this is the next step" }, "practise"),
             h("label", { class: "w-inline", title: "offer as a hint" }, h("input", { type: "checkbox", checked: cfg.hints, onchange: (e: Event) => th.setConfig(t, { ...th.config(t), hints: (e.target as HTMLInputElement).checked }) }), "hints"),
             h("label", { class: "w-inline", title: "apply automatically" }, h("input", { type: "checkbox", checked: cfg.auto, onchange: (e: Event) => { th.setConfig(t, { ...th.config(t), auto: (e.target as HTMLInputElement).checked }); assisted(); shell.hub.refresh(); } }), "auto"))));
       }
@@ -455,7 +456,7 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
       const s = ctx.session;
       if (s.origin.kind !== "practice") return;
       const origin = s.origin;
-      const all = shell.registry.techniquesFor(s.def.id);
+      const all = shell.registry.techniquesFor(s.def.id).filter((t) => t.practice !== false);
       const idx = all.findIndex((x) => x.id === origin.technique);
       const t: Technique | undefined = all[idx];
       if (!t) return;
@@ -731,7 +732,8 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
           const ways = [...shell.hub.mouseFor(c.id), ...shell.hub.keysFor(c.id)].join(", ");
           return h("li", null, h("strong", null, c.label), ways ? h("span", { class: "w-dim" }, ` · ${ways}`) : null, c.description ? h("div", { class: "w-dim" }, c.description) : null);
         })];
-        const hasTutorial = (shell.techniques?.list.length ?? 0) > 0;
+        const lessons = (shell.techniques?.list ?? []).filter((t) => t.practice !== false);
+        const hasTutorial = lessons.length > 0;
         const g = shell.view?.handle.gestures ?? {};
         const hasMenu = ctx.commands().some((c) => [c.menu].flat().includes("board"));
         const menuWays = [g.secondaryClick ? "" : "right-click the board", g.hold ? "" : "hold on it (touch)"].filter(Boolean);
@@ -751,7 +753,7 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
           legend.length ? [h("h4", null, "what you see"), h("ul", { class: "legend" }, legend)] : null,
           how.length ? [h("h4", null, "playing"), h("ul", { class: "how" }, how), h("p", { class: "w-dim" }, menuLine)] : null,
           h("div", { class: "w-inline" },
-            hasTutorial ? h("button", { class: "primary", onclick: () => { close(); void shell.startPractice(s.def, shell.techniques!.list[0]!, randomSeed()); } }, "learn by doing") : null,
+            hasTutorial ? h("button", { class: "primary", onclick: () => { close(); void shell.startPractice(s.def, lessons[0]!, randomSeed()); } }, "learn by doing") : null,
             h("button", { class: hasTutorial ? undefined : "primary", onclick: close }, "play"))));
       };
       render();
