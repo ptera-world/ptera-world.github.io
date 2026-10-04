@@ -102,7 +102,10 @@ const LEGEND: readonly { sample: string; meaning: string }[] = [
   { sample: sw(edge("var(--accent)", 2.4) + dots), meaning: "lines turn this colour once the puzzle is solved" },
 ];
 
-/** A touch held this long without moving 10px opens the shell's board menu, so it isn't also a tap. */
+/**
+ * The shell's touch hold: held this long without moving 10px, it opens the board menu and
+ * swallows the lifting finger, so the press must end here without becoming a tap.
+ */
 const MENU_HOLD_MS = 550;
 
 /** Default cross mark; its colour follows the mark's state (currentColor / inherited stroke). */
@@ -127,7 +130,6 @@ interface Gesture {
   /** Edges this drag will set. */
   edges: number[];
   longPress: number;
-  longFired: boolean;
 }
 
 function segDist(px: number, py: number, ax: number, ay: number, bx: number, by: number): number {
@@ -290,11 +292,8 @@ export function makeLoopyView(look: Look = plainLook, labels: Labels = noLabels)
 
       let hover = -1;
       let gesture: Gesture | null = null;
-      /** The mouse pointer that last went down on the board, and its button; mouse commands continue its drag. */
+      /** The mouse pointer that last went down on the board; mouse commands continue its drag. */
       let mousePointer = -1;
-      let mouseButton = -1;
-      /** A mouse command started a drag with this button (so its context menu is suppressed). */
-      let draggedButton = -1;
 
       const render = () => {
         const st = session.state;
@@ -338,7 +337,7 @@ export function makeLoopyView(look: Look = plainLook, labels: Labels = noLabels)
         while (gOver.firstChild) gOver.firstChild.remove();
         for (const e of focus.edges ?? []) gOver.append(edgeLine(e, "hint"));
         gOver.append(edgeLine(session.interaction.cursor, "cursor"));
-        if (hover >= 0 && !gesture) gOver.append(edgeLine(hover, "hover"));
+        if (hover >= 0 && !gesture && !session.locked) gOver.append(edgeLine(hover, "hover"));
         if (gesture?.dragging && gesture.value !== null) {
           const cls = gesture.value === UNKNOWN ? "preview erase" : gesture.value === CROSS ? "preview cross" : "preview";
           for (const e of gesture.edges) gOver.append(edgeLine(e, cls));
@@ -400,7 +399,7 @@ export function makeLoopyView(look: Look = plainLook, labels: Labels = noLabels)
         gesture = {
           id, mode, touch, x0: x, y0: y, cx: ev.clientX, cy: ev.clientY,
           edge0: nearestEdge(g, x, y, u * 0.5), dragging: false, value: null,
-          path: v >= 0 ? [v] : [], edges: [], longPress: 0, longFired: false,
+          path: v >= 0 ? [v] : [], edges: [], longPress: 0,
         };
         return gesture;
       };
@@ -416,15 +415,17 @@ export function makeLoopyView(look: Look = plainLook, labels: Labels = noLabels)
         if (ev.pointerType === "mouse") {
           // the mousedown that follows runs whichever command is bound to this button
           mousePointer = ev.pointerId;
-          mouseButton = ev.button;
-          draggedButton = -1;
           return;
         }
         ev.preventDefault();
         const gs = begin(ev, ev.pointerId, "line", true);
         // the board menu (opened by holding) acts on the cursor, so it must be the held edge
         if (gs.edge0 >= 0) session.setInteraction((i) => ({ ...i, cursor: gs.edge0 }));
-        gs.longPress = window.setTimeout(() => { gs.longFired = !gs.dragging; }, MENU_HOLD_MS);
+        gs.longPress = window.setTimeout(() => {
+          if (gesture !== gs || gs.dragging) return;
+          gesture = null;
+          render();
+        }, MENU_HOLD_MS);
       };
 
       /**
@@ -436,7 +437,6 @@ export function makeLoopyView(look: Look = plainLook, labels: Labels = noLabels)
         if (ev instanceof MouseEvent) {
           if (!(ev.target instanceof Node) || !svg.contains(ev.target) || gesture || mousePointer < 0) return false;
           begin(ev, mousePointer, mode, false);
-          draggedButton = mouseButton;
           return true;
         }
         toggle(session.interaction.cursor, mode);
@@ -446,7 +446,7 @@ export function makeLoopyView(look: Look = plainLook, labels: Labels = noLabels)
       const onMove = (ev: PointerEvent) => {
         const [x, y] = toLocal(ev);
         if (!gesture) {
-          if (ev.pointerType === "mouse" && cfg.hover) {
+          if (ev.pointerType === "mouse" && cfg.hover && !session.locked) {
             const e = nearestEdge(g, x, y, u * 0.5);
             if (e !== hover) {
               hover = e;
@@ -456,8 +456,10 @@ export function makeLoopyView(look: Look = plainLook, labels: Labels = noLabels)
           return;
         }
         const gs = gesture;
-        if (ev.pointerId !== gs.id || gs.longFired) return;
+        if (ev.pointerId !== gs.id) return;
         if (Math.hypot(ev.clientX - gs.cx, ev.clientY - gs.cy) > 10) clearTimeout(gs.longPress);
+        // a finished board refuses moves: no drag previews, a press still reports why
+        if (session.locked) return;
         if (!gs.dragging) {
           if (Math.hypot(x - gs.x0, y - gs.y0) < u * 0.3) return;
           gs.dragging = true;
@@ -475,7 +477,6 @@ export function makeLoopyView(look: Look = plainLook, labels: Labels = noLabels)
         if (!gs || ev.pointerId !== gs.id) return;
         gesture = null;
         clearTimeout(gs.longPress);
-        if (gs.longFired) return render();
         if (gs.dragging) {
           if (gs.value !== null && gs.edges.length) {
             session.setInteraction((i) => ({ ...i, cursor: gs.edges[gs.edges.length - 1]! }));
@@ -507,17 +508,7 @@ export function makeLoopyView(look: Look = plainLook, labels: Labels = noLabels)
           render();
         }
       });
-      // a button that drew or crossed doesn't also open a menu; otherwise the shell's board menu
-      // opens, acting on the edge under the pointer
-      svg.addEventListener("contextmenu", (ev) => {
-        if (draggedButton === 2 || gesture) {
-          ev.preventDefault();
-          return;
-        }
-        const [x, y] = toLocal(ev);
-        const e = nearestEdge(g, x, y, u * 0.5);
-        if (e >= 0) session.setInteraction((i) => ({ ...i, cursor: e }));
-      });
+      svg.addEventListener("contextmenu", (ev) => ev.preventDefault());
 
       const move = (dx: number, dy: number) => () => {
         session.setInteraction((i) => ({ ...i, cursor: step(g, i.cursor, dx, dy) }));
@@ -587,6 +578,7 @@ export function makeLoopyView(look: Look = plainLook, labels: Labels = noLabels)
       ];
       render();
       return {
+        gestures: { secondaryClick: true },
         aspect: vbW / vbH,
         locate,
         locateChange: (a, b) => {
