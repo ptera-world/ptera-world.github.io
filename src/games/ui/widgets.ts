@@ -71,7 +71,7 @@ button.danger:hover:not(:disabled) { border-color: var(--danger); background: va
 .w-howto .how { list-style: none; padding-left: 0; }
 .w-howto .legend { list-style: none; padding-left: 0; }
 .w-howto .legend li { display: flex; align-items: center; gap: 10px; }
-.w-howto .legend .sw { width: 26px; height: 26px; flex: none; display: inline-flex; align-items: center; justify-content: center; }
+.w-howto .legend .sw { width: 38px; height: 38px; flex: none; display: inline-flex; align-items: center; justify-content: center; }
 .w-howto .legend .sw svg { width: 100%; height: 100%; }
 .w-note { font-size: 13px; padding: 6px 8px; border-radius: 6px; background: var(--surface-2); }
 `;
@@ -716,7 +716,8 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
         const shortcut = shell.hub.keysFor("shell.shortcuts")[0];
         const menuLine = (hasMenu && menuWays.length ? `${menuWays.join(" or ")} for more. ` : "") + "every action is in the commands list, top right."
           + (keyCount ? ` ${keyCount} keyboard shortcuts${shortcut ? ` (${shortcut} lists them)` : ""}.` : "");
-        const legend = (shell.view?.def.legend ?? []).map((l) => {
+        const lg = shell.view?.def.legend;
+        const legend = (typeof lg === "function" ? lg(s.puzzle) : lg ?? []).map((l) => {
           const sw = h("span", { class: "sw", "aria-hidden": "true" });
           sw.innerHTML = l.sample;
           return h("li", null, sw, h("span", null, l.meaning));

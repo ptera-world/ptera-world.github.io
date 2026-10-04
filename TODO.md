@@ -54,12 +54,31 @@ The graph should be the primary way to experience the content. Essays are one fo
 
 ## Games (`/games/`, `src/games/`)
 
+Primitives (see `src/games/core/types.ts`): Technique, CommandDef, WidgetDef, Theme, packs. New behaviour should come from these, not one-off features.
+
+### Decisions waiting on you
+- [ ] **net right-click**: keep right-click = turn anticlockwise (Simon Tatham's convention; the board declares `gestures.secondaryClick` and the how-to card adapts) vs right-click = board menu (same everywhere). Currently: menu
+- [ ] **undo after solving**: the solved mark and time stay after undoing (and after unlocking + changing the board). Left as is on request
+- [ ] **restart timing**: `restart()` zeroes the timer and clears solved; undoing a restart restores the board but not the old time. Chosen without input
+
+### Bigger ideas (designed for, not built)
+- [ ] **puzzlescript-style engine**: puzzles described as data/rules. Would be a pack that turns a description into a PuzzleDef (+ techniques from rule-level deductions); nothing in core blocks it
+- [ ] **several games on screen at once**: games no longer share global state, but the shell renders one session/board. Needs the shell to own N sessions + per-board command scopes
+- [ ] **more puzzles**: rest of Simon Tatham's collection (fifteen, …), numberlink / flow. Each is a pack directory
+- [ ] **layout presets** beyond zen (named, shareable placements)
+- [ ] **hold-to-show keys** (e.g. labels while held): commands are press-only; needs keydown/keyup pairs in CommandDef
+- [ ] **multi-file third-party packs**: a url pack runs from its stored copy, so it can't import sibling files. Bundle step or import maps
+- [ ] **tag vocabulary**: tags were picked per pack without a shared list; normalise
+- [ ] **pointer gestures as commands**: mouse bindings fire on mousedown only, so drags and press/release stay inside views
+- [ ] **device-conditioned settings** (touch-only options show on desktop)
+- [ ] **shared "something completed" effect** (a line, box, cage), and hint focus that reaches margins (clues outside the grid)
+
 ### Core / shell
 - [ ] **Cross-field param validation** — schemas only have `when` (visibility). Add a way for one field to constrain another (e.g. net: wrapping needs every side ≥ 3) so the form blocks impossible combos instead of failing at generate time
 - [ ] **Generation off the main thread** — generators yield between steps, but a single long solve still blocks (loopy 20×20 hard ≈ 12s, 30×30 tricky ≈ 18s). Run `generate` in a Worker; puzzle defs are already pure + deterministic
-- [ ] **Restart timing semantics** — `restart()` now zeroes the timer and clears solved; undoing a restart restores the board but not the old time. Chosen without input, revisit if wrong
 - [ ] **Linking from the main site** — `/games/` is reachable only by URL; no portal node / nav link yet
-- [ ] **Stats / best times** per puzzle + params (mines helper asked for this; would live in the shell, not a pack)
+- [ ] **Stats / best times** per puzzle + params (the results strip already has the data per game)
+- [ ] **layout shift on load**: the board area moves once from where "generating…" sat (`?debugLayout` shows it)
 
 ### sudoku pack (also keen / towers / unequal)
 - [ ] Grids larger than 9×9 (needs letter digits)
@@ -79,7 +98,7 @@ The graph should be the primary way to experience the content. Essays are one fo
 
 ### net / loopy / bridges
 - [ ] net: auto-lock assist (skipped: can silently solve most of the board), live wrong-lock display, hex net
-- [ ] net: hint coordinates don't match the visual grid after a wrapped board has been scrolled
 - [ ] loopy: generation speed on big hard grids, manual inside/outside cell shading, penrose + hat tilings, "both branches agree" step in hard tier
 - [ ] **loopy: verify SGT ids for non-triangle tilings and pzprv3 import against real files** — only triangles checked against SGT's examples
-- [ ] bridges: islands without a number, long-press touch gesture, dead-end assist
+- [ ] bridges: islands without a number, dead-end assist
+- [ ] nonogram: keyboard way into the clue "where can this block go" hover

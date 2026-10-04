@@ -292,7 +292,7 @@ export interface View<Pz = any, S = any, A extends Action = any, I = any> {
    * What the board's colours and marks mean, for the how-to-play card. `sample` is inline SVG
    * (or HTML) drawn with the same theme tokens the board uses, so it matches the current theme.
    */
-  legend?: readonly { sample: string; meaning: string }[];
+  legend?: readonly { sample: string; meaning: string }[] | ((puzzle: Pz) => readonly { sample: string; meaning: string }[]);
   mount(root: HTMLElement, ctx: ViewContext<Pz, S, A, I>): ViewHandle;
 }
 
