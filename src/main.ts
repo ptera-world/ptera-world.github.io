@@ -10,7 +10,7 @@ import { createFocusLayout } from "./focus-layout";
 import { loadSettingsFromUrl } from "./settings";
 import { createMinimap } from "./minimap";
 import { initGroupingState, buildGroupingUI, restoreGroupingFromUrl, getTagColor, setOnGroupingChange, resetToCurrentGrouping } from "./grouping-state";
-import { siteConfig, getActiveCollection, siteUrl, type CollectionConfig } from "./site-config";
+import { siteConfig, getActiveCollection, type CollectionConfig } from "./site-config";
 import { landingEl } from "./dom";
 
 loadSettingsFromUrl();
@@ -207,7 +207,3 @@ window.addEventListener("popstate", () => {
     syncFilterPills();
   }
 });
-
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register(siteUrl("/sw.js")).catch(() => {});
-}

@@ -8,6 +8,8 @@ export interface AppOutput {
   path: string;
   body: Blob | string;
   type: string;
+  /** A loadable pack module, which the player's pack store versions on its own. */
+  pack?: boolean;
 }
 
 /**
@@ -52,7 +54,7 @@ function packBoundary(root: string, packDir: string): BunPlugin {
   };
 }
 
-async function bundle(entry: string, root: string, outName: string, opts: { minify: boolean }, plugins: BunPlugin[] = []) {
+async function bundle(entry: string, root: string, outName: string, opts: { minify: boolean }, plugins: BunPlugin[] = []): Promise<AppOutput> {
   const result = await Bun.build({
     entrypoints: [entry],
     root,
@@ -65,7 +67,7 @@ async function bundle(entry: string, root: string, outName: string, opts: { mini
   });
   if (!result.success) throw new AggregateError(result.logs, result.logs.map(String).join("\n"));
   const o = result.outputs.find((x) => x.kind === "entry-point")!;
-  return { path: outName, body: o, type: o.type } satisfies AppOutput;
+  return { path: outName, body: o, type: o.type };
 }
 
 /**
@@ -86,7 +88,7 @@ export async function buildApp(app: AppConfig, opts: { minify: boolean }): Promi
   for (const id of packIds) {
     const path = `${packsBase}/${id}/index.js`;
     try {
-      out.push(await bundle(join(packsDir, id, "index.ts"), root, path, opts, [packBoundary(root, join(packsDir, id))]));
+      out.push({ ...(await bundle(join(packsDir, id, "index.ts"), root, path, opts, [packBoundary(root, join(packsDir, id))])), pack: true });
       list.push({ id, name: id, url: `./${path}` });
     } catch (e) {
       list.push({ id, name: id, url: `./${path}`, error: String(e instanceof Error ? e.message : e).slice(0, 800) });

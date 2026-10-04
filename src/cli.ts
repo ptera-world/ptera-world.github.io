@@ -15,12 +15,13 @@
  *   --help             Show this help
  *   --collection <id>  Build only this collection (for build command)
  */
-import { mkdir, cp } from "fs/promises";
+import { mkdir, cp, rm } from "fs/promises";
 import { join } from "path";
 import { generateGraph } from "./gen-graph";
 import { generateHeadings } from "./gen-headings";
 import { generatePages } from "./gen-pages";
 import { buildApp } from "./app-build";
+import { writeServiceWorker } from "./sw/build";
 import { siteConfig, type AppConfig, type AppId, type CollectionId } from "./site-config";
 
 const args = Bun.argv.slice(2);
@@ -83,6 +84,12 @@ async function buildAll(collectionFilter?: CollectionId): Promise<void> {
     ? { [collectionFilter]: siteConfig.collections[collectionFilter] }
     : siteConfig.collections;
 
+  // A full build is the whole deploy, so nothing from an earlier build may remain in it.
+  if (!collectionFilter) await rm("dist", { recursive: true, force: true });
+
+  // Static files first; everything generated below overwrites them.
+  await cp("public", "dist", { recursive: true });
+
   // Build each collection: gen-graph → gen-headings → bundle
   for (const id of Object.keys(collections) as CollectionId[]) {
     await buildCollection(id);
@@ -99,38 +106,32 @@ async function buildAll(collectionFilter?: CollectionId): Promise<void> {
   console.log("\nGenerating content pages...");
   await generatePages();
 
-  // Copy static assets
-  console.log("\nCopying static assets...");
-  await cp("public/style.css", "dist/style.css");
-  await cp("public/favicon.svg", "dist/favicon.svg");
-  await cp("public/index.html", "dist/index.html");
-
-  // Copy collection entry points
-  for (const id of Object.keys(collections) as CollectionId[]) {
-    if (id === "default") continue;
-    const srcHtml = `public/${id}/index.html`;
-    const destDir = `dist/${id}`;
-    await mkdir(destDir, { recursive: true });
-    await cp(srcHtml, `${destDir}/index.html`);
+  if (!collectionFilter) {
+    const packs = await buildApps();
+    await writeServiceWorker("dist", packs);
   }
-
-  if (!collectionFilter) await buildApps();
 
   console.log("\nBuild complete.");
 }
 
-async function buildApps(): Promise<void> {
+/** Returns the URL keys of every pack module, which the player's pack store versions itself. */
+async function buildApps(): Promise<Set<string>> {
+  const packs = new Set<string>();
   for (const [id, app] of Object.entries(siteConfig.apps) as [AppId, AppConfig][]) {
     const outDir = `dist/${id}`;
     console.log(`\nBundling app ${app.name} → ${outDir}/...`);
     await cp(`public/${id}`, outDir, { recursive: true });
     try {
-      for (const o of await buildApp(app, { minify: true })) await Bun.write(join(outDir, o.path), o.body);
+      for (const o of await buildApp(app, { minify: true })) {
+        await Bun.write(join(outDir, o.path), o.body);
+        if (o.pack) packs.add(`/${id}/${o.path}`);
+      }
     } catch (e) {
       console.error("Bundle failed:", e);
       process.exit(1);
     }
   }
+  return packs;
 }
 
 switch (command) {

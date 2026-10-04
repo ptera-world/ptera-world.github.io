@@ -68,6 +68,7 @@ function pageHtml(
   <article>
 ${body}
   </article>
+  <script src="${siteUrl("/register-sw.js")}" defer></script>
 </body>
 </html>`;
 }
