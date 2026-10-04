@@ -394,14 +394,12 @@ export function lightupView(look: Look, board: Board): View<LightupPuzzle, Light
         "lightup.up": move(0, -1),
         "lightup.down": move(0, 1),
       }, {
-        "lightup.light": { menu: "board" },
-        "lightup.mark": { menu: "board" },
-        "lightup.clear": { menu: "board" },
         "lightup.mode": { menu: "board", checked: () => session.interaction.markMode },
       });
       return {
         gestures: { secondaryClick: true, hold: true },
         aspect: vbW / vbH,
+        cells: { cols: vbW / SIZE, rows: vbH / SIZE },
         commands,
         context: () => ({ lightupMarkMode: session.interaction.markMode }),
         locate: (focus) => {
