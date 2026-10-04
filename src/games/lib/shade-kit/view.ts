@@ -50,6 +50,7 @@ export interface ShadeViewSpec<Pz extends { w: number; h: number }, P extends st
 const CSS = `
 .shade-board .txt { fill: var(--text); font: 600 5.6px var(--font); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
 .shade-board .txt.corner { font-size: 3.4px; text-anchor: start; dominant-baseline: hanging; }
+.shade-board .txt.on { fill: var(--cell); }
 .shade-board .txt.bad { fill: var(--danger); }
 .shade-board .shade { fill: var(--text); }
 .shade-board .shade.bad { fill: var(--danger); }
@@ -120,7 +121,7 @@ export function shadeView<Pz extends { w: number; h: number }, P extends string>
           texts[c] = t.corner
             ? s("text", { x: f.cx(c) + 0.8, y: f.cy(c) + 0.7, class: "txt corner" }, t.text)
             : s("text", { x: f.cx(c) + SIZE / 2, y: f.cy(c) + SIZE / 2 + 0.3, class: "txt" }, t.text);
-          f.base.append(texts[c]!);
+          f.marks.append(texts[c]!);
         }
       }
       if (regions) {
@@ -165,6 +166,7 @@ export function shadeView<Pz extends { w: number; h: number }, P extends string>
           if (fl.cells.has(c) && !(spec.glyph === "fill" && shown[c] === BLACK)) h.append(s("rect", { x: f.cx(c), y: f.cy(c), width: SIZE, height: SIZE, class: "soft" }));
           drawMark(h, c, shown[c]!, fl.marks.has(c));
           texts[c]?.classList.toggle("bad", fl.texts.has(c));
+          texts[c]?.classList.toggle("on", spec.glyph === "fill" && shown[c] === BLACK);
         }
         while (f.ghost.firstChild) f.ghost.firstChild.remove();
         if (preview) for (let c = 0; c < n; c++) if (preview.marks[c] !== shown[c]) drawMark(f.ghost, c, preview.marks[c]!, false);
