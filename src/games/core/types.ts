@@ -60,7 +60,7 @@ export interface Step<A extends Action = Action> {
 
 /**
  * A named deduction pattern. Everything a player can do with a technique (get it as a hint,
- * auto-apply it, press it as a button, read about it, practise it, rate puzzles by it) is
+ * auto-apply it, press it as a button, read about it, practice it, rate puzzles by it) is
  * derived from this one definition.
  */
 export interface Technique<Pz = any, S = any, A extends Action = any> {
@@ -75,7 +75,7 @@ export interface Technique<Pz = any, S = any, A extends Action = any> {
   level: number;
   /** Plain-language explanation for the guide. */
   description: string;
-  /** Colour used for this technique's highlights, flashes and labels. Default: picked per technique. */
+  /** Color used for this technique's highlights, flashes and labels. Default: picked per technique. */
   color?: string;
   /** First instance in the state, or null. Must be pure and deterministic. */
   find(puzzle: Pz, state: S): Step<A> | null;
@@ -118,7 +118,7 @@ export interface CommandDef {
   checked?(): boolean;
   /** Typing into an input does not block this command. */
   captureInput?: boolean;
-  /** Loses progress: shown in the danger colour everywhere. A function is re-checked whenever it is shown. */
+  /** Loses progress: shown in the danger color everywhere. A function is re-checked whenever it is shown. */
   danger?: boolean | (() => boolean);
   /** Question to confirm first, or null to skip. Asked however the command is triggered (subject to the player's confirmation setting). */
   confirm?(): string | null;
@@ -244,7 +244,7 @@ export interface PluginUiApi<Pz, S, A extends Action, I> extends PluginApi<Pz, S
 export type Teardown = void | (() => void);
 
 /**
- * Headless behaviour layered onto a session (assists, checks, scoring, …).
+ * Headless behavior layered onto a session (assists, checks, scoring, …).
  * Re-setup (teardown then setup) happens whenever its settings change, so setup may treat
  * settings as constant.
  */
@@ -318,7 +318,7 @@ export interface View<Pz = any, S = any, A extends Action = any, I = any> {
    */
   controls?: readonly { how: string; what: string }[];
   /**
-   * What the board's colours and marks mean, for the how-to-play card. `sample` is inline SVG
+   * What the board's colors and marks mean, for the how-to-play card. `sample` is inline SVG
    * (or HTML) drawn with the same theme tokens the board uses, so it matches the current theme.
    */
   legend?: readonly { sample: string; meaning: string }[] | ((puzzle: Pz) => readonly { sample: string; meaning: string }[]);

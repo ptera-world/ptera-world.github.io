@@ -5,7 +5,7 @@ import { style } from "./dom";
 
 const prefs = namespace("prefs");
 
-/** Colour tokens a player can override directly. */
+/** Color tokens a player can override directly. */
 export const COLOR_TOKENS: readonly { id: string; label: string }[] = [
   { id: "bg", label: "background" },
   { id: "surface", label: "panels" },

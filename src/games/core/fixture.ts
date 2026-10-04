@@ -4,7 +4,7 @@ import type { PuzzleDef } from "./types";
 
 /**
  * Minimal toggle puzzle for engine tests (not content; never registered): pressing a cell
- * toggles it and its orthogonal neighbours; solved when everything is off.
+ * toggles it and its orthogonal neighbors; solved when everything is off.
  */
 
 const params = defineSchema({

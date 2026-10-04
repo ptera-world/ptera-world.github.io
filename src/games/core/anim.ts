@@ -25,7 +25,7 @@ export interface Animation extends Promise<boolean> {
 
 /**
  * Call `frame(p)` with progress 0→1 (eased) every animation frame for `ms`, ending exactly at 1.
- * Resolves true when finished, false when cancelled.
+ * Resolves true when finished, false when canceled.
  */
 export function animate(ms: number, frame: (p: number) => void, curve: Ease = ease.inOut): Animation {
   let raf = 0;
@@ -55,7 +55,7 @@ export function animate(ms: number, frame: (p: number) => void, curve: Ease = ea
 
 export const lerp = (a: number, b: number, p: number): number => a + (b - a) * p;
 
-/** Run animations one after another; stops at the first cancelled one. */
+/** Run animations one after another; stops at the first canceled one. */
 export async function sequence(steps: readonly (() => Animation | Promise<boolean>)[]): Promise<boolean> {
   for (const s of steps) if (!(await s())) return false;
   return true;

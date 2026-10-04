@@ -45,7 +45,7 @@ export function findStep<Pz, S>(def: AnyPuzzleDef, t: Technique, puzzle: Pz, sta
   }
 }
 
-/** A technique's colour: its own, else a hue spread evenly by its position among `list` (its puzzle's techniques). */
+/** A technique's color: its own, else a hue spread evenly by its position among `list` (its puzzle's techniques). */
 export function colorOf(t: Technique, list: readonly Technique[]): string {
   if (t.color) return t.color;
   const i = Math.max(0, list.findIndex((x) => x.id === t.id));
@@ -151,7 +151,7 @@ export class TechniqueHost {
   }
 
   /**
-   * Techniques applied automatically. On a practice board the practised technique and anything at
+   * Techniques applied automatically. On a practice board the practiced technique and anything at
    * least as hard never auto-apply, or the board would solve the exercise itself.
    */
   private autoList(): Technique[] {

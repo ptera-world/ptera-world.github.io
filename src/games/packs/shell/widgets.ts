@@ -258,7 +258,7 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
       if (fx.length) pluginRows(section("effects"), fx);
 
       const theme = section("theme");
-      theme.append(row("theme colours look light dark system", h("div", { class: "w-inline" }, h("span", null, "theme"),
+      theme.append(row("theme colors look light dark system", h("div", { class: "w-inline" }, h("span", null, "theme"),
         h("select", { onchange: (e: Event) => setTheme(shell.registry, (e.target as HTMLSelectElement).value) },
           h("option", { value: "system", selected: themeChoice() === "system" }, "follow system"),
           shell.registry.listThemes().map((th) => h("option", { value: th.id, selected: themeChoice() === th.id }, th.name))))));
@@ -266,7 +266,7 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
       for (const tok of COLOR_TOKENS) {
         const current = getComputedStyle(document.documentElement).getPropertyValue(`--${tok.id}`).trim();
         const toHex = (c: string) => (/^#[0-9a-f]{6}$/i.test(c) ? c : /^#[0-9a-f]{3}$/i.test(c) ? "#" + c.slice(1).replace(/(.)/g, "$1$1") : "#888888");
-        theme.append(row(`colour ${tok.label} ${tok.id} theme`, h("div", { class: "w-inline" },
+        theme.append(row(`color ${tok.label} ${tok.id} theme`, h("div", { class: "w-inline" },
           h("input", { type: "color", value: toHex(overrides[tok.id] ?? current), "aria-label": tok.label, oninput: (e: Event) => setTokenOverride(shell.registry, tok.id, (e.target as HTMLInputElement).value) }),
           h("span", { style: "flex: 1" }, tok.label),
           overrides[tok.id] ? h("button", { onclick: () => { setTokenOverride(shell.registry, tok.id, null); shell.openTab("settings"); } }, "reset") : null)));
@@ -336,7 +336,7 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
       brd.append(row("zoom browser ctrl plus minus scroll take over page zoom", toggle(prefs.get("zoomTakeover", false), "board zoom takes over ctrl +/−, ctrl+0 and ctrl+scroll", (on) => { prefs.set("zoomTakeover", on); shell.hub.refresh(); }),
         h("small", null, "off: those keep zooming the whole page, and = / − zoom the board")));
 
-      const beh = section("behaviour");
+      const beh = section("behavior");
       const holdNow = prefs.get<number>("holdShortcuts", 450);
       beh.append(row("hold ctrl cmd shortcuts cheatsheet keys", h("div", { class: "w-inline" },
         h("span", { style: "flex: 1" }, "hold ctrl (cmd on mac) to see shortcuts"),
@@ -397,7 +397,7 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
           : rest ? `with your auto techniques on, the hardest thing left for you is: ${rest.hardest.name}.` : "this board needs more than the listed techniques.";
       };
       const lessons = th.list.filter((t) => t.practice !== false);
-      if (lessons.length) el.append(h("button", { class: "primary", title: "practise every technique in order, easiest first", onclick: () => void shell.startPractice(s.def, lessons[0]!, randomSeed()) }, "start the tutorial"));
+      if (lessons.length) el.append(h("button", { class: "primary", title: "practice every technique in order, easiest first", onclick: () => void shell.startPractice(s.def, lessons[0]!, randomSeed()) }, "start the tutorial"));
       el.append(note, h("div", { class: "w-inline" },
         h("h3", { style: "flex: 1; font-size: 12px; color: var(--text-dim); letter-spacing: 0.06em" }, "techniques"),
         h("button", { onclick: check, title: "mark which techniques have an instance on the board right now" }, "what applies now?")), list);
@@ -411,7 +411,7 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
           h("div", { class: "w-inline buttons" },
             h("button", { onclick: () => shell.findTechnique(t), title: "show one on the board" }, "find"),
             h("button", { onclick: () => ctx.run(`technique.apply.${t.id}`), title: "carry one out" }, "apply"),
-            t.practice === false ? null : h("button", { onclick: () => ctx.run(`technique.practice.${t.id}`), title: "a board where this is the next step" }, "practise"),
+            t.practice === false ? null : h("button", { onclick: () => ctx.run(`technique.practice.${t.id}`), title: "a board where this is the next step" }, "practice"),
             h("label", { class: "w-inline", title: "offer as a hint" }, h("input", { type: "checkbox", checked: cfg.hints, onchange: (e: Event) => th.setConfig(t, { ...th.config(t), hints: (e.target as HTMLInputElement).checked }) }), "hints"),
             h("label", { class: "w-inline", title: "apply automatically" }, h("input", { type: "checkbox", checked: cfg.auto, onchange: (e: Event) => { th.setConfig(t, { ...th.config(t), auto: (e.target as HTMLInputElement).checked }); assisted(); shell.hub.refresh(); } }), "auto"))));
       }
@@ -494,7 +494,7 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
   };
 
   const practice: WidgetDef = {
-    id: "practice", name: "practice", description: "what to look for while practising a technique", puzzles: "*", defaultSlot: "top", order: 0,
+    id: "practice", name: "practice", description: "what to look for while practicing a technique", puzzles: "*", defaultSlot: "top", order: 0,
     mount(el, ctx) {
       const s = ctx.session;
       if (s.origin.kind !== "practice") return;
@@ -510,7 +510,7 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
       }, { owner: ctx.owner });
       el.append(h("div", { class: "w-practice" },
         h("span", { class: "w-dim" }, `lesson ${idx + 1} of ${all.length}`),
-        h("strong", null, `practise: ${t.name}`),
+        h("strong", null, `practice: ${t.name}`),
         h("p", null, t.description),
         h("div", { class: "w-inline" },
           h("button", {
@@ -566,7 +566,7 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
             errors.push(`${f.label}: ${e instanceof Error ? e.message : e}`);
           }
         }
-        err.textContent = errors.length ? errors.join("\n") : "no format recognised this";
+        err.textContent = errors.length ? errors.join("\n") : "no format recognized this";
       };
       const linkBox = h("input", { type: "text", readonly: true, "aria-label": "link to this puzzle", style: "flex: 1" });
       void shell.shareUrl("puzzle").then((u) => { linkBox.value = u; });

@@ -37,7 +37,7 @@ export const api = {
   patch,
   /** Effect helpers (flash, pop, burst, shake). */
   fx,
-  /** How themes apply: `asset("pattern.empty-mark", defaultSvg)` for themed graphics, plus the theme and colour settings. */
+  /** How themes apply: `asset("pattern.empty-mark", defaultSvg)` for themed graphics, plus the theme and color settings. */
   look: themes,
   /** Cell names for hints, and which edges the player wants labelled. */
   board,

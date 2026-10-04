@@ -324,7 +324,7 @@ export class Shell {
       const pos = await findPracticePosition(def, this.registry.techniquesFor(def.id), t, seed, ac.signal);
       if (ac.signal.aborted) return;
       if (!pos) {
-        this.showError(`couldn't find a ${t.name} to practise in time. try again for a different board.`);
+        this.showError(`couldn't find a ${t.name} to practice in time. try again for a different board.`);
         return;
       }
       this.setSession(new SessionCtor(def, pos.puzzle, { ...origin, step: pos.step }, { state: pos.state }), push);
@@ -615,7 +615,7 @@ export class Shell {
     this.relayout();
   }
 
-  /** Hint highlights take the colour of the technique the hint comes from. */
+  /** Hint highlights take the color of the technique the hint comes from. */
   private paintHintColor(): void {
     const id = this.session?.activeHint?.technique;
     const list = this.techniques?.list ?? [];
@@ -936,7 +936,7 @@ export class Shell {
         checked: () => th.config(t).auto,
         run: () => { th.setConfig(t, { ...th.config(t), auto: !th.config(t).auto }); this.hub.refresh(); },
       },
-      ...(t.practice === false ? [] : [{ id: `technique.practice.${t.id}`, label: `practise ${t.name}`, category: "practice", run: () => void this.startPractice(s.def, t, randomSeed()) } satisfies CommandDef]),
+      ...(t.practice === false ? [] : [{ id: `technique.practice.${t.id}`, label: `practice ${t.name}`, category: "practice", run: () => void this.startPractice(s.def, t, randomSeed()) } satisfies CommandDef]),
     ])];
   }
 

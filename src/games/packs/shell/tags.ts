@@ -1,4 +1,4 @@
-/** A stable colour per tag (same tag, same hue everywhere), mixed with theme tokens so it reads on any theme. */
+/** A stable color per tag (same tag, same hue everywhere), mixed with theme tokens so it reads on any theme. */
 export function tagStyle(tag: string): string {
   let h = 0;
   for (let i = 0; i < tag.length; i++) h = (h * 31 + tag.charCodeAt(i)) >>> 0;
