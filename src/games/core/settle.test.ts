@@ -5,6 +5,7 @@ import { generate } from "./generate";
 import { Registry } from "./registry";
 import { resolve } from "./schema";
 import { Session } from "./session";
+import { TechniqueHost } from "./techniques";
 
 const registry = new Registry();
 for (const dir of readdirSync(new URL("../packs", import.meta.url))) {
@@ -30,27 +31,31 @@ for (const def of registry.listPuzzles()) {
   }, 30000);
 }
 
-test("settle: naked singles present at the start get filled", async () => {
+/** A session with the sudoku naked-single technique switched to auto, attached as the shell does it. */
+function nakedAuto(): Session<any, any, any, any> {
   const def = registry.getPuzzle("sudoku")!;
-  const fill = registry.pluginsFor("sudoku").find((p) => p.id === "sudoku.fill-naked")!;
+  const naked = registry.techniquesFor("sudoku").find((t) => t.id === "sudoku.naked-single")!;
+  const reg = new Registry();
+  reg.puzzle(def);
+  reg.technique({ ...naked, defaults: { auto: true } });
   // one empty cell: a naked single from the very first moment
   const solved = "534678912672195348198342567859761423426853791713924856961537284287419635345286179";
   const puzzle = def.formats.find((f) => f.id !== "json")!.parse(`.${solved.slice(1)}`);
   const session = new Session(def, puzzle, { kind: "imported" });
-  fill.setup!({ session, settings: resolve(fill.settings!, {}), owner: fill.id });
+  new TechniqueHost(reg, session);
+  return session;
+}
+
+test("settle: naked singles present at the start get filled", () => {
+  const session = nakedAuto();
   expect(session.solved).toBe(false);
   session.settle(false);
   expect(session.solved).toBe(true);
 });
 
-test("settle: owner filter only runs that assist", async () => {
-  const def = registry.getPuzzle("sudoku")!;
-  const fill = registry.pluginsFor("sudoku").find((p) => p.id === "sudoku.fill-naked")!;
-  const solved = "534678912672195348198342567859761423426853791713924856961537284287419635345286179";
-  const puzzle = def.formats.find((f) => f.id !== "json")!.parse(`.${solved.slice(1)}`);
-  const session = new Session(def, puzzle, { kind: "imported" });
-  fill.setup!({ session, settings: resolve(fill.settings!, {}), owner: fill.id });
+test("settle: owner filter only runs that assist", () => {
+  const session = nakedAuto();
   expect(session.settle(true, "someone-else")).toBe(false);
-  expect(session.settle(true, fill.id)).toBe(true);
+  expect(session.settle(true, "techniques")).toBe(true);
   expect(session.canUndo).toBe(true);
 });

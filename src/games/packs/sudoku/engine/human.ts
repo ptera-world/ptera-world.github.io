@@ -184,75 +184,85 @@ export const nakedSingle: Technique = {
 
 // --- constraint rules ---
 
+/** First rule (easiest first) that rules something out; `accept` limits which rules (by index into m.rules) are tried. */
+export function findRuleStep(g: Grid, accept?: (rule: number) => boolean): Step | null {
+  const sorted = g.m.rules.map((r, i) => [r, i] as const).sort((a, b) => (a[0].difficulty ?? 2) - (b[0].difficulty ?? 2) || a[1] - b[1]);
+  for (const [r, i] of sorted) {
+    if (accept && !accept(i)) continue;
+    const cur = r.cells.map((c) => g.masks[c]!);
+    const next = cur.slice();
+    if (!r.propagate(next)) continue;
+    const elims: [number, number][] = [];
+    r.cells.forEach((c, k) => {
+      if (!g.vals[c] && next[k] !== cur[k]) elims.push([c, cur[k]! & ~next[k]!]);
+    });
+    if (!elims.length) continue;
+    return step(ruleLogic, {
+      difficulty: r.difficulty ?? 2,
+      place: [], eliminate: elims, cells: r.cells.slice(), areas: [r.cells.slice()],
+      message: `${r.label} rules out ${describeElims(g, elims)}`,
+      nudge: `think about what ${r.label} allows`,
+    });
+  }
+  return null;
+}
+
 export const ruleLogic: Technique = {
   id: "constraint",
   name: "constraint logic",
   difficulty: 2,
-  find(g) {
-    const sorted = g.m.rules.map((r, i) => [r, i] as const).sort((a, b) => (a[0].difficulty ?? 2) - (b[0].difficulty ?? 2) || a[1] - b[1]);
-    for (const [r] of sorted) {
-      const cur = r.cells.map((c) => g.masks[c]!);
-      const next = cur.slice();
-      if (!r.propagate(next)) continue;
-      const elims: [number, number][] = [];
-      r.cells.forEach((c, i) => {
-        if (!g.vals[c] && next[i] !== cur[i]) elims.push([c, cur[i]! & ~next[i]!]);
-      });
-      if (!elims.length) continue;
-      return step(ruleLogic, {
-        difficulty: r.difficulty ?? 2,
-        place: [], eliminate: elims, cells: r.cells.slice(), areas: [r.cells.slice()],
-        message: `${r.label} rules out ${describeElims(g, elims)}`,
-        nudge: `think about what ${r.label} allows`,
-      });
-    }
-    return null;
-  },
+  find: (g) => findRuleStep(g),
 };
 
 // --- intersections ---
+
+export type LockedKind = "pointing" | "claiming" | "locked candidates";
+
+/** First locked-candidates elimination, optionally only of one kind. */
+export function findLocked(g: Grid, only?: LockedKind): Step | null {
+  const m = g.m;
+  for (const h of scanOrder(m)) {
+    const house = m.houses[h]!;
+    const empty = emptyCells(g, house.cells);
+    let need = m.all & ~placedMask(g, house.cells);
+    while (need) {
+      const b = need & -need;
+      need ^= b;
+      const spots = empty.filter((c) => g.masks[c]! & b);
+      if (spots.length < 2) continue;
+      const targets = commonPeers(g, spots).filter((c) => !g.vals[c] && g.masks[c]! & b);
+      if (!targets.length) continue;
+      const d = lowDigit(b);
+      const other = m.houseOf[spots[0]!]!.find((o) => o !== h && spots.every((c) => m.houseOf[c]!.includes(o)));
+      const oh = other === undefined ? null : m.houses[other]!;
+      const kind: LockedKind = oh && house.kind === "box" && (oh.kind === "row" || oh.kind === "col") ? "pointing"
+        : oh && oh.kind === "box" && (house.kind === "row" || house.kind === "col") ? "claiming" : "locked candidates";
+      if (only && kind !== only) continue;
+      const where = oh ? `${d} must sit where ${house.label} meets ${oh.label}` : `every spot for ${d} sees ${list(targets.map((c) => name(g, c)))}`;
+      return step(lockedCandidates, {
+        name: kind,
+        difficulty: oh ? 2.6 : 2.8,
+        place: [], eliminate: targets.map((c) => [c, b]), cells: spots, areas: oh ? [house.cells.slice(), oh.cells.slice()] : [house.cells.slice()],
+        message: `${kind}: in ${house.label}, ${where}, so ${list(targets.map((c) => name(g, c)))} can't be ${d}`,
+        nudge: `look at where ${d} can go in ${house.label}`,
+      });
+    }
+  }
+  return null;
+}
 
 export const lockedCandidates: Technique = {
   id: "locked-candidates",
   name: "locked candidates",
   difficulty: 2.6,
-  find(g) {
-    const m = g.m;
-    for (const h of scanOrder(m)) {
-      const house = m.houses[h]!;
-      const empty = emptyCells(g, house.cells);
-      let need = m.all & ~placedMask(g, house.cells);
-      while (need) {
-        const b = need & -need;
-        need ^= b;
-        const spots = empty.filter((c) => g.masks[c]! & b);
-        if (spots.length < 2) continue;
-        const targets = commonPeers(g, spots).filter((c) => !g.vals[c] && g.masks[c]! & b);
-        if (!targets.length) continue;
-        const d = lowDigit(b);
-        const other = m.houseOf[spots[0]!]!.find((o) => o !== h && spots.every((c) => m.houseOf[c]!.includes(o)));
-        const oh = other === undefined ? null : m.houses[other]!;
-        const kind = oh && house.kind === "box" && (oh.kind === "row" || oh.kind === "col") ? "pointing"
-          : oh && oh.kind === "box" && (house.kind === "row" || house.kind === "col") ? "claiming" : "locked candidates";
-        const where = oh ? `${d} must sit where ${house.label} meets ${oh.label}` : `every spot for ${d} sees ${list(targets.map((c) => name(g, c)))}`;
-        return step(lockedCandidates, {
-          name: kind,
-          difficulty: oh ? 2.6 : 2.8,
-          place: [], eliminate: targets.map((c) => [c, b]), cells: spots, areas: oh ? [house.cells.slice(), oh.cells.slice()] : [house.cells.slice()],
-          message: `${kind}: in ${house.label}, ${where}, so ${list(targets.map((c) => name(g, c)))} can't be ${d}`,
-          nudge: `look at where ${d} can go in ${house.label}`,
-        });
-      }
-    }
-    return null;
-  },
+  find: (g) => findLocked(g),
 };
 
 // --- subsets ---
 
 const SUBSET = ["", "", "pair", "triple", "quad"];
 
-function nakedSubset(k: number, difficulty: number): Technique {
+export function nakedSubset(k: number, difficulty: number): Technique {
   const t: Technique = {
     id: `naked-${SUBSET[k]}`,
     name: `naked ${SUBSET[k]}`,
@@ -282,7 +292,7 @@ function nakedSubset(k: number, difficulty: number): Technique {
   return t;
 }
 
-function hiddenSubset(k: number, difficulty: number): Technique {
+export function hiddenSubset(k: number, difficulty: number): Technique {
   const t: Technique = {
     id: `hidden-${SUBSET[k]}`,
     name: `hidden ${SUBSET[k]}`,
@@ -319,7 +329,7 @@ function hiddenSubset(k: number, difficulty: number): Technique {
 
 const FISH = ["", "", "x-wing", "swordfish", "jellyfish"];
 
-function fish(k: number, difficulty: number): Technique {
+export function fish(k: number, difficulty: number): Technique {
   const t: Technique = {
     id: FISH[k]!,
     name: FISH[k]!,
@@ -371,12 +381,21 @@ const MAX_CHAIN = 12;
  * A chain that starts and ends on strong links proves one of its ends true, so any candidate
  * weakly linked to both ends goes. A chain returning to its start proves the start true.
  */
-export const chains: Technique = {
-  id: "chain",
-  name: "chain",
-  difficulty: 4,
-  find(g) {
-    const m = g.m, n = m.n;
+export interface ChainOptions {
+  /** "x": one digit, strong links from houses only. "xy": strong links inside two-candidate cells, weak links between cells on one digit. "any": both. */
+  links?: "x" | "xy" | "any";
+  /** Chain length bounds, counted in candidates along the chain. */
+  minLen?: number;
+  maxLen?: number;
+}
+
+/** Shortest alternating inference chain allowed by `o` that proves something. */
+export function findChain(g: Grid, o: ChainOptions = {}): Step | null {
+  const links = o.links ?? "any";
+  const minLen = Math.max(4, o.minLen ?? 4);
+  const maxLen = o.maxLen ?? MAX_CHAIN;
+  const m = g.m, n = m.n;
+  {
     const node = (c: number, d: number) => c * n + d - 1;
     const cellOf = (x: number) => Math.floor(x / n), digOf = (x: number) => (x % n) + 1;
     const live = (x: number) => !g.vals[cellOf(x)] && (g.masks[cellOf(x)]! & bit(digOf(x))) !== 0;
@@ -387,12 +406,12 @@ export const chains: Technique = {
       strong.get(a)!.add(b);
       strong.get(b)!.add(a);
     };
-    for (let c = 0; c < m.size; c++) {
+    for (let c = 0; c < m.size && links !== "x"; c++) {
       if (g.vals[c] || popcount(g.masks[c]!) !== 2) continue;
       const [d1, d2] = digits(g.masks[c]!);
       addStrong(node(c, d1!), node(c, d2!));
     }
-    for (const h of m.full) {
+    for (const h of links === "xy" ? [] : m.full) {
       const cells = m.houses[h]!.cells;
       for (let d = 1; d <= n; d++) {
         const s = cells.filter((c) => !g.vals[c] && g.masks[c]! & bit(d));
@@ -403,7 +422,7 @@ export const chains: Technique = {
     const weakOf = (x: number): number[] => {
       const c = cellOf(x), d = digOf(x);
       const out: number[] = [];
-      for (const e of digits(g.masks[c]!)) if (e !== d) out.push(node(c, e));
+      if (links === "any") for (const e of digits(g.masks[c]!)) if (e !== d) out.push(node(c, e));
       for (const p of m.peers[c]!) if (!g.vals[p] && g.masks[p]! & bit(d)) out.push(node(p, d));
       return out;
     };
@@ -424,7 +443,7 @@ export const chains: Technique = {
         const x = s >> 1, arrivedStrong = s & 1;
         const len = depth.get(s)!;
         if (best && len >= best.path.length) break;
-        if (arrivedStrong && len >= 4) {
+        if (arrivedStrong && len >= minLen) {
           const path = [];
           for (let k: number | undefined = s; k !== undefined; k = parent.get(k)) path.unshift(k >> 1);
           if (x === a) {
@@ -437,7 +456,7 @@ export const chains: Technique = {
             break;
           }
         }
-        if (len >= MAX_CHAIN) continue;
+        if (len >= maxLen) continue;
         const next = arrivedStrong ? weakOf(x) : [...(strong.get(x) ?? [])];
         for (const y of next) {
           if (y === a && !arrivedStrong) continue;
@@ -448,7 +467,7 @@ export const chains: Technique = {
           queue.push(ns);
         }
       }
-      if (best && best.path.length <= 4) break;
+      if (best && best.path.length <= minLen) break;
     }
     if (!best) return null;
     const { path, elims, place: pl } = best;
@@ -458,18 +477,25 @@ export const chains: Technique = {
     const kind = sameDigit ? "x-chain" : allCells ? (path.length === 6 ? "xy-wing" : "xy-chain") : "alternating chain";
     const text = path.map((x, i) => `${i ? (i % 2 ? " = " : " – ") : ""}${digOf(x)}@${name(g, cellOf(x))}`).join("");
     const cells = [...new Set(path.map(cellOf))];
-    const links = path.length - 1;
+    const linkCount = path.length - 1;
     const result = pl.length
       ? `assuming ${digOf(path[0]!)}@${name(g, cellOf(path[0]!))} is false proves it true, so it's ${digOf(path[0]!)}`
       : `one of the ends is true, so remove ${describeElims(g, elims)}`;
     return step(chains, {
       name: kind,
-      difficulty: 4 + 0.3 * (links - 3),
+      difficulty: 4 + 0.3 * (linkCount - 3),
       place: pl, eliminate: elims, cells, areas: [],
       message: `${kind}: ${text}; ${result}`,
       nudge: `follow a chain of either-or links starting at ${name(g, cellOf(path[0]!))}`,
     });
-  },
+  }
+}
+
+export const chains: Technique = {
+  id: "chain",
+  name: "chain",
+  difficulty: 4,
+  find: (g) => findChain(g),
 };
 
 // --- last resorts ---

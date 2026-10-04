@@ -39,6 +39,7 @@ export const towers: ConstraintType<TowersSpec> = {
   type: "towers",
   label: "skyscraper clue",
   rule: "digits are building heights; an outside clue counts the buildings visible from that side, taller ones hiding shorter ones",
+  logic: { name: "skyscraper logic", level: 2, description: "a clue of 1 means the tallest building stands right next to it. a clue equal to the grid size means they rise one by one. in general, a clue of k keeps the tallest building at least k-1 cells away from it, and the cells near a big clue can't be tall." },
   kind: "clue",
   removable: true,
   validate: (c, n) => (["top", "bottom", "left", "right"].includes(c.side) && Number.isInteger(c.index) && c.index >= 0 && c.index < n

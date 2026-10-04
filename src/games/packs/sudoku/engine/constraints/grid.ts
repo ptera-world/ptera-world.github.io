@@ -95,6 +95,7 @@ export const nonconsecutive: ConstraintType = {
   type: "nonconsecutive",
   label: "non-consecutive",
   rule: "orthogonally touching cells can't hold consecutive digits",
+  logic: { name: "non-consecutive logic", level: 2, description: "a placed digit rules out its neighbours on both sides in the four touching cells: a 5 means no 4 or 6 next to it. a cell that can only be 4 or 6 also forbids 5 around it." },
   kind: "global",
   compile: (_c, n) => ({
     rules: orthoPairs(n).map(([a, b]) => pairRule(n, a, b, "non-consecutive", (x, y) => Math.abs(x - y) !== 1, 2)),

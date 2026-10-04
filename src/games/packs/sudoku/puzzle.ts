@@ -1,8 +1,8 @@
 import type { Rng } from "../../core/rng";
 import type { Schema, Values } from "../../core/schema";
 import type { GenerateContext, Hint, Preset, PuzzleDef } from "../../core/types";
-import { bit } from "./engine/bits";
-import { findStep, grade, gridFrom, type Grade, type Step } from "./engine/human";
+import { bit, popcount } from "./engine/bits";
+import { grade, gridFrom, type Grade, type Grid } from "./engine/human";
 import { conflicts, modelOf } from "./engine/model";
 import { constraintTypes } from "./engine/registry";
 import { solve } from "./engine/solver";
@@ -19,7 +19,7 @@ export interface GridState {
   corner: number[];
   /** Colour ids 1..9 as bits. */
   colors: number[];
-  /** Candidates the player has ruled out (honoured by auto candidates and hints). */
+  /** Candidates the player has ruled out (honoured by auto candidates and techniques). */
   struck: number[];
 }
 
@@ -38,15 +38,17 @@ export interface GridInteraction {
   selection: number[];
   cursor: number;
   mode: InputMode;
+  /** Digit picked for highlighting; 0 (or absent, in older saves) follows the selected cell. */
+  highlight?: number;
 }
 
-/** Highlight data carried by hints (Hint.focus). */
+/** Highlight data carried by hints and technique steps (Hint.focus). */
 export interface HintFocus {
   cells: number[];
   areas: number[][];
   place: [number, number][];
   eliminate: [number, number][];
-  /** 0 = where to look, 1 = the pattern, 2 = the full deduction. */
+  /** 0 = where to look, 2 = the full deduction. */
   level: number;
 }
 
@@ -111,6 +113,16 @@ export function reduce(p: LatinPuzzle, s: GridState, a: GridAction): GridState {
   }
 }
 
+/** Moves that take progress back: erasing digits or marks, restoring a ruled-out candidate. */
+export function isRetraction(a: GridAction): boolean {
+  switch (a.type) {
+    case "set": return a.digit === 0;
+    case "clear": return a.layer !== "colors";
+    case "strike": return !a.on;
+    default: return false;
+  }
+}
+
 export function initState(p: LatinPuzzle): GridState {
   const z = () => Array.from({ length: p.n * p.n }, () => 0);
   return { values: p.givens.slice(), center: z(), corner: z(), colors: z(), struck: z() };
@@ -145,7 +157,61 @@ export function isSolved(p: LatinPuzzle, s: GridState): boolean {
   return s.values.every((v) => v > 0) && conflicts(modelOf(p), s.values).size === 0;
 }
 
-// --- hints ---
+/**
+ * The position techniques reason about: placed digits plus the candidates the player ruled out.
+ * A ruled-out candidate that is actually the solution is ignored, so a wrong strike never leads
+ * a technique to a wrong deduction.
+ */
+export function gridOf(p: LatinPuzzle, s: GridState): Grid {
+  const sol = solutionOf(p) ?? undefined;
+  const struck = sol ? s.struck.map((m, c) => m & ~bit(sol[c]!)) : s.struck;
+  return gridFrom(modelOf(p), s.values, sol, struck);
+}
+
+const featureCache = new WeakMap<LatinPuzzle, string[]>();
+
+/**
+ * Constraint type ids present, plus: "boxes" (box or jigsaw regions), "givens", "rules" (any
+ * clue arithmetic), "unnamed-rules" (rules from a type without its own technique), "combos" (clues worth listing combinations for), "links" (cells that see
+ * each other other than by row, column or box).
+ */
+export function featuresOf(p: LatinPuzzle): string[] {
+  let f = featureCache.get(p);
+  if (f) return f;
+  const m = modelOf(p);
+  const out = new Set(p.constraints.map((c) => c.type));
+  if (m.houses.some((h) => h.kind === "box")) out.add("boxes");
+  if (p.givens.some((v) => v)) out.add("givens");
+  if (m.rules.length) out.add("rules");
+  if (m.ruleSource.some((i) => !constraintTypes.get(p.constraints[i]!.type)?.logic)) out.add("unnamed-rules");
+  if (p.constraints.some((c) => constraintTypes.get(c.type)?.combos)) out.add("combos");
+  const basic = new Set(["row", "col", "box"]);
+  let basicPairs = 0;
+  for (let c = 0; c < m.size; c++) {
+    const seen = new Set<number>();
+    for (const h of m.houseOf[c]!) if (basic.has(m.houses[h]!.kind)) for (const x of m.houses[h]!.cells) if (x !== c) seen.add(x);
+    basicPairs += seen.size;
+  }
+  if (m.peers.reduce((a, ps) => a + ps.length, 0) > basicPairs) out.add("links");
+  f = [...out];
+  featureCache.set(p, f);
+  return f;
+}
+
+/** Rule text for each constraint type in the puzzle, once each, in order of appearance. */
+export function rulesOf(p: LatinPuzzle): string[] {
+  const seen = new Set<string>();
+  const out = [`fill every cell with a digit from 1 to ${p.n}`];
+  for (const c of p.constraints) {
+    const t = constraintTypes.get(c.type);
+    if (!t?.rule || seen.has(t.type)) continue;
+    seen.add(t.type);
+    out.push(t.rule);
+  }
+  return out;
+}
+
+// --- hints that aren't techniques ---
 
 export function mistakeHint(p: LatinPuzzle, s: GridState): Hint<GridAction> | null {
   const sol = solutionOf(p);
@@ -161,33 +227,24 @@ export function mistakeHint(p: LatinPuzzle, s: GridState): Hint<GridAction> | nu
   };
 }
 
-/** Next logical step from the player's placed digits (and their struck-out candidates, when consistent). */
-export function nextStep(p: LatinPuzzle, s: GridState): Step | null {
-  const sol = solutionOf(p) ?? undefined;
-  const struck = sol ? s.struck.map((m, c) => m & ~bit(sol[c]!)) : undefined;
-  return findStep(gridFrom(modelOf(p), s.values, sol, struck));
-}
-
-export function stepHint(step: Step, level = 2): Hint<GridAction> {
-  const focus: HintFocus = {
-    cells: level >= 1 ? step.cells : [],
-    areas: step.areas,
-    place: level >= 2 ? step.place : [],
-    eliminate: level >= 2 ? step.eliminate : [],
-    level,
+/** Last resort when no technique (with hints on) applies: give away the most constrained cell. */
+export function revealHint(p: LatinPuzzle, s: GridState): Hint<GridAction> | null {
+  const sol = solutionOf(p);
+  if (!sol) return null;
+  const g = gridOf(p, s);
+  let best = -1;
+  for (let c = 0; c < g.m.size; c++) {
+    if (g.vals[c]) continue;
+    if (best < 0 || popcount(g.masks[c]!) < popcount(g.masks[best]!)) best = c;
+  }
+  if (best < 0) return null;
+  const d = sol[best]!;
+  const focus: HintFocus = { cells: [best], areas: [], place: [[best, d]], eliminate: [], level: 2 };
+  return {
+    message: `no step found with the techniques that give hints; ${cellName(p.n, best)} is ${d}`,
+    focus,
+    actions: [{ type: "set", cells: [best], digit: d }],
   };
-  const action: GridAction | undefined = step.place.length
-    ? { type: "set", cells: [step.place[0]![0]], digit: step.place[0]![1] }
-    : step.eliminate.length ? { type: "strike", marks: step.eliminate, on: true } : undefined;
-  const message = level === 0 ? `${step.name}: ${step.nudge}` : level === 1 ? `look for a ${step.name} in the highlighted cells` : step.message;
-  return { message, focus, actions: action ? [action] : undefined };
-}
-
-export function hint(p: LatinPuzzle, s: GridState): Hint<GridAction> | null {
-  const m = mistakeHint(p, s);
-  if (m) return m;
-  const step = nextStep(p, s);
-  return step ? stepHint(step) : null;
 }
 
 // --- description ---
@@ -202,6 +259,8 @@ export interface LatinDefConfig<P extends Schema> {
   id: string;
   name: string;
   description: string;
+  aliases?: readonly string[];
+  tags?: readonly string[];
   params: P;
   presets?: readonly Preset<P>[];
   generatorVersion: number;
@@ -216,6 +275,8 @@ export function latinDef<P extends Schema>(cfg: LatinDefConfig<P>): PuzzleDef<La
     id: cfg.id,
     name: cfg.name,
     description: cfg.description,
+    aliases: cfg.aliases,
+    tags: cfg.tags,
     generatorVersion: cfg.generatorVersion,
     params: cfg.params,
     presets: cfg.presets,
@@ -224,15 +285,18 @@ export function latinDef<P extends Schema>(cfg: LatinDefConfig<P>): PuzzleDef<La
     init: initState,
     initInteraction: (p) => {
       const mid = Math.floor(p.n / 2) * p.n + Math.floor(p.n / 2);
-      return { selection: [mid], cursor: mid, mode: "digit" };
+      return { selection: [mid], cursor: mid, mode: "digit", highlight: 0 };
     },
     reduce,
     isSolved,
+    isRetraction,
     solve(p) {
       const sol = solutionOf(p);
       return sol ? { ...initState(p), values: sol.slice() } : null;
     },
-    hint,
+    hint: (p, s) => mistakeHint(p, s) ?? revealHint(p, s),
+    rules: rulesOf,
+    features: featuresOf,
     rate(p) {
       const g = gradeOf(p);
       return { label: g.band.label, score: g.score };

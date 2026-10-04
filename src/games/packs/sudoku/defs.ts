@@ -73,6 +73,8 @@ export const sudoku = latinDef({
   id: "sudoku",
   name: "sudoku",
   description: "fill the grid so every row, column and box holds each digit once. with variants.",
+  aliases: ["number place", "solo", "killer sudoku", "jigsaw sudoku", "thermo sudoku", "variant sudoku"],
+  tags: ["logic", "grid", "numbers", "latin square", "variants"],
   generatorVersion: 1,
   params: sudokuParams,
   implied: ["latin", "boxes"],
@@ -113,8 +115,10 @@ const sizeField = (def: number) => ({ type: "int", label: "size", default: def, 
 
 export const keen = latinDef({
   id: "keen",
-  name: "keen",
+  name: "calcudoku",
   description: "a latin square split into cages; each cage's digits make its number with its operation.",
+  aliases: ["kenken", "keen", "mathdoku", "kendoku"],
+  tags: ["logic", "grid", "numbers", "latin square", "arithmetic"],
   generatorVersion: 1,
   implied: ["latin", "keen"],
   params: defineSchema({
@@ -145,8 +149,10 @@ export const keen = latinDef({
 
 export const towers = latinDef({
   id: "towers",
-  name: "towers",
+  name: "skyscrapers",
   description: "a latin square of building heights; edge clues count the buildings visible from there.",
+  aliases: ["towers", "skyscraper"],
+  tags: ["logic", "grid", "numbers", "latin square", "visibility"],
   generatorVersion: 1,
   implied: ["latin", "towers"],
   params: defineSchema({ size: sizeField(5), difficulty: DIFFICULTY }),
@@ -166,8 +172,10 @@ export const towers = latinDef({
 
 export const unequal = latinDef({
   id: "unequal",
-  name: "unequal",
+  name: "futoshiki",
   description: "a latin square with inequality signs between some neighbouring cells.",
+  aliases: ["unequal", "inequality", "hutoshiki"],
+  tags: ["logic", "grid", "latin square", "inequality"],
   generatorVersion: 1,
   implied: ["latin", "unequal"],
   params: defineSchema({ size: sizeField(5), difficulty: DIFFICULTY }),

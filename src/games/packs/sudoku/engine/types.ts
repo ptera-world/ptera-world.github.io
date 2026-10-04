@@ -101,6 +101,12 @@ export interface ConstraintType<C extends ConstraintSpec = ConstraintSpec> {
   cells?(c: C, n: number): number[];
   /** Players benefit from seeing this rule's possible digit combinations (cages). */
   combos?: boolean;
+  /**
+   * How a player reasons with this type's rules, as a named solving technique (register
+   * clueTechnique(type) alongside the type). Types that compile rules but leave this out are
+   * covered by a shared "other clue logic" technique.
+   */
+  logic?: { name: string; description: string; level?: number };
   margin?(c: C, n: number): Margins;
   render?(c: C, ctx: RenderCtx): void;
 }

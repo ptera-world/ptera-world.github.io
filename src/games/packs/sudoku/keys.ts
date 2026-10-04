@@ -9,18 +9,16 @@ export const CANDIDATES = "sudoku.candidates";
 export const CONFLICTS = "sudoku.conflicts";
 /** number[]: placed digits that differ from the solution. */
 export const MISTAKES = "sudoku.mistakes";
-/** { digit: number; cells: number[] }: cells holding (or able to hold, if marked) the focused digit. */
+/** SameDigit: the highlighted digit and where it is. */
 export const SAME = "sudoku.same";
 /** number[]: cells that see the selection. */
 export const PEERS = "sudoku.peers";
-/** number[]: count of each digit placed, indexed by digit (index 0 unused). */
-export const COUNTS = "sudoku.counts";
-/** string[]: short info lines shown beside the board. */
-export const INFO = "sudoku.info";
 
 export interface SameDigit {
   digit: number;
   cells: number[];
   /** Also highlight this digit inside marks. */
   marks: boolean;
+  /** Empty cells where the digit is still a candidate, if asked for. */
+  open?: number[];
 }

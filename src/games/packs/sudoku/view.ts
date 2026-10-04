@@ -1,56 +1,37 @@
 import { Event as HookEvent } from "../../core/hooks";
 import { defineSchema } from "../../core/schema";
 import type { View } from "../../core/types";
-import { bindCommands, type BindingSchema, type CommandHandler } from "../../core/commands";
-import { clear, h, s, style } from "../../ui/dom";
-import { bit, digits } from "./engine/bits";
+import { clear, s, style } from "../../ui/dom";
+import { digits } from "./engine/bits";
 import { insetOutline } from "./engine/constraints/draw";
 import { modelOf } from "./engine/model";
 import { constraintTypes } from "./engine/registry";
 import type { Margins, RenderCtx } from "./engine/types";
-import { CANDIDATES, CONFLICTS, COUNTS, INFO, MISTAKES, PEERS, SAME, type SameDigit } from "./keys";
-import type { GridAction, GridInteraction, GridState, HintFocus, InputMode, LatinPuzzle } from "./puzzle";
+import { boardCommands } from "./commands";
+import { input, setSelection, selectSame } from "./input";
+import { CANDIDATES, CONFLICTS, MISTAKES, PEERS, SAME, type SameDigit } from "./keys";
+import type { GridAction, GridInteraction, GridState, HintFocus, LatinPuzzle } from "./puzzle";
 
 const S = 100;
-const MODES: readonly { id: InputMode; label: string }[] = [
-  { id: "digit", label: "digit" },
-  { id: "corner", label: "corner" },
-  { id: "center", label: "centre" },
-  { id: "color", label: "colour" },
+
+/** Cell colour palette (ids 1..9), as custom properties a theme can override (`--sdk-color-1` …). */
+export const PALETTE = [
+  "", "rgba(214, 214, 214, 0.45)", "rgba(120, 120, 120, 0.55)", "rgba(40, 40, 40, 0.8)",
+  "rgba(170, 230, 120, 0.4)", "rgba(240, 140, 220, 0.4)", "rgba(250, 160, 80, 0.4)",
+  "rgba(240, 90, 90, 0.4)", "rgba(250, 230, 100, 0.4)", "rgba(110, 170, 250, 0.45)",
 ];
+export const colorVar = (id: number): string => `var(--sdk-color-${id}, ${PALETTE[id]})`;
 
 const CSS = `
-.sdk { display: flex; gap: 20px; width: 100%; height: 100%; align-items: center; justify-content: center; }
-.sdk-boardwrap { flex: 1 1 auto; min-width: 0; height: 100%; display: flex; align-items: center; justify-content: center; }
 .sdk-board { width: 100%; height: 100%; max-height: 100%; touch-action: none; user-select: none; -webkit-user-select: none; display: block; }
-.sdk-side { flex: 0 0 220px; align-self: stretch; display: grid; grid-template-rows: minmax(0, 1fr) auto minmax(0, 1fr); gap: 10px; min-height: 0; }
-.sdk-controls, .sdk-extra { display: flex; flex-direction: column; gap: 10px; }
-.sdk-extra { align-self: start; max-height: 100%; min-height: 0; overflow-y: auto; }
-.sdk-modes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
-.sdk-modes button { padding: 6px 2px; font-size: 13px; }
-.sdk-modes button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); }
-.sdk-pad { display: grid; gap: 6px; }
-.sdk-pad button { position: relative; aspect-ratio: 1; font-size: 22px; padding: 0; display: flex; align-items: center; justify-content: center; }
-.sdk-pad button.done { opacity: 0.35; }
-.sdk-pad button small { position: absolute; right: 5px; bottom: 3px; font-size: 11px; color: var(--text-dim); }
-.sdk-pad .swatch { width: 60%; height: 60%; border-radius: 4px; }
-.sdk-pad[data-mode="corner"] button span { font-size: 13px; align-self: flex-start; justify-self: flex-start; position: absolute; left: 6px; top: 3px; }
-.sdk-pad[data-mode="center"] button span { font-size: 14px; }
-.sdk-actions { display: flex; gap: 6px; }
-.sdk-actions button { flex: 1; }
-.sdk-info { font-size: 13px; color: var(--text-dim); display: flex; flex-direction: column; gap: 2px; font-family: var(--mono); }
-.sdk-info:empty { display: none; }
-.sdk-rules { font-size: 13px; color: var(--text-dim); }
-.sdk-rules summary { cursor: pointer; }
-.sdk-rules ul { margin: 6px 0 0 16px; display: flex; flex-direction: column; gap: 4px; }
-
 .sdk-board .cell { fill: transparent; }
-.sdk-board .cell.peer { fill: rgba(255, 255, 255, 0.045); }
-.sdk-board .cell.same { fill: rgba(140, 204, 255, 0.16); }
-.sdk-board .cell.sel { fill: rgba(140, 204, 255, 0.28); }
-.sdk-board .cell.hint-area { fill: rgba(204, 136, 255, 0.08); }
+.sdk-board .cell.peer { fill: color-mix(in srgb, var(--text) 6%, transparent); }
+.sdk-board .cell.same { fill: color-mix(in srgb, var(--focus) 20%, transparent); }
+.sdk-board .cell.sel { fill: color-mix(in srgb, var(--focus) 32%, transparent); }
+.sdk-board .cell.hint-area { fill: color-mix(in srgb, var(--hint) 10%, transparent); }
 .sdk-board .cell.hint { fill: var(--hint-soft); }
 .sdk-board .cell.conflict { fill: var(--danger-soft); }
+.sdk-board .open { fill: none; stroke: var(--warn); stroke-width: 3; stroke-dasharray: 10 6; pointer-events: none; }
 .sdk-board .thin { stroke: var(--border); stroke-width: 1.5; fill: none; }
 .sdk-board .thick { stroke: #777; stroke-width: 4; fill: none; stroke-linecap: square; }
 .sdk-board .value { font: 600 ${S * 0.62}px var(--font); fill: var(--text); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
@@ -63,6 +44,8 @@ const CSS = `
 .sdk-board .hint-place { font: 600 ${S * 0.62}px var(--font); fill: var(--hint); text-anchor: middle; dominant-baseline: central; opacity: 0.8; pointer-events: none; }
 .sdk-board .hint-elim { font: 700 ${S * 0.24}px var(--font); fill: var(--danger); text-anchor: middle; dominant-baseline: central; text-decoration: line-through; pointer-events: none; }
 .sdk-board .sel-outline { fill: none; stroke: var(--focus); stroke-width: 5; stroke-linejoin: round; pointer-events: none; }
+.sdk-board .cursor { fill: none; stroke: var(--focus); stroke-width: 3; stroke-dasharray: 8 6; pointer-events: none; }
+[data-input="pointer"] .sdk-board .cursor { display: none; }
 .sdk-board .color { pointer-events: none; }
 .sdk-board .sdk-diagonal { stroke: var(--text-dim); stroke-width: 2; opacity: 0.45; }
 .sdk-board .sdk-cage { fill: none; stroke: var(--text); stroke-width: 1.6; stroke-dasharray: 7 5; opacity: 0.85; }
@@ -83,52 +66,12 @@ const CSS = `
 .sdk-board .sdk-outside { font: 600 ${S * 0.42}px var(--font); fill: var(--text); text-anchor: middle; dominant-baseline: central; }
 .sdk-board .sdk-lk { font-size: ${S * 0.32}px; }
 .sdk-board .sdk-lk-arrow { fill: none; stroke: var(--text); stroke-width: 2.5; stroke-linecap: round; }
-@media (max-width: 760px) {
-  .sdk { flex-direction: column; gap: 8px; height: auto; justify-content: flex-start; }
-  .sdk-boardwrap { width: 100%; height: auto; flex: 0 0 auto; }
-  .sdk-board { height: auto; max-height: 62svh; }
-  .sdk-side { flex: 0 0 auto; width: 100%; max-width: 480px; display: flex; flex-direction: column; align-self: center; }
-  .sdk-spacer { display: none; }
-  .sdk-extra { max-height: none; overflow: visible; }
-  .sdk-pad { grid-template-columns: repeat(var(--pad-cols-narrow), 1fr) !important; gap: 4px; }
-  .sdk-pad button { aspect-ratio: auto; height: 46px; font-size: 20px; }
-}
 `;
 
-/** Cell colour palette (ids 1..9). */
-export const PALETTE = [
-  "", "rgba(214, 214, 214, 0.45)", "rgba(120, 120, 120, 0.55)", "rgba(40, 40, 40, 0.8)",
-  "rgba(170, 230, 120, 0.4)", "rgba(240, 140, 220, 0.4)", "rgba(250, 160, 80, 0.4)",
-  "rgba(240, 90, 90, 0.4)", "rgba(250, 230, 100, 0.4)", "rgba(110, 170, 250, 0.45)",
-];
-
 const settings = defineSchema({
-  modifiers: { type: "bool", label: "shift / ctrl + digit write corner / centre marks", default: true },
   candidateGrid: { type: "bool", label: "show auto candidates in fixed positions", default: true },
-  pad: { type: "bool", label: "show digit pad", default: true },
-  rules: { type: "bool", label: "show rules", default: true },
+  shiftCorner: { type: "bool", label: "shift + digit writes a corner mark", default: true },
 });
-
-const bindings: BindingSchema = {
-  ...Object.fromEntries([...Array(9).keys()].map((i) => [`sudoku.d${i + 1}`, { label: `Enter ${i + 1}`, category: "Sudoku", keys: [String(i + 1)] }])),
-  "sudoku.clear": { label: "Erase", category: "Sudoku", keys: ["delete", "backspace", "0"] },
-  "sudoku.mode-digit": { label: "Digit mode", category: "Sudoku", keys: ["z"] },
-  "sudoku.mode-corner": { label: "Corner mark mode", category: "Sudoku", keys: ["x"] },
-  "sudoku.mode-center": { label: "Centre mark mode", category: "Sudoku", keys: ["c"] },
-  "sudoku.mode-color": { label: "Colour mode", category: "Sudoku", keys: ["v"] },
-  "sudoku.mode-next": { label: "Next mode", category: "Sudoku", keys: ["space"] },
-  "sudoku.up": { label: "Move up", category: "Sudoku", keys: ["arrowup", "w"] },
-  "sudoku.down": { label: "Move down", category: "Sudoku", keys: ["arrowdown", "s"] },
-  "sudoku.left": { label: "Move left", category: "Sudoku", keys: ["arrowleft", "a"] },
-  "sudoku.right": { label: "Move right", category: "Sudoku", keys: ["arrowright", "d"] },
-  "sudoku.extend-up": { label: "Extend selection up", category: "Sudoku", keys: ["shift+arrowup"] },
-  "sudoku.extend-down": { label: "Extend selection down", category: "Sudoku", keys: ["shift+arrowdown"] },
-  "sudoku.extend-left": { label: "Extend selection left", category: "Sudoku", keys: ["shift+arrowleft"] },
-  "sudoku.extend-right": { label: "Extend selection right", category: "Sudoku", keys: ["shift+arrowright"] },
-  "sudoku.select-all": { label: "Select all", category: "Sudoku", keys: ["$mod+a"] },
-  "sudoku.select-same": { label: "Select cells with the same digit", category: "Sudoku", keys: ["e"] },
-  "sudoku.deselect": { label: "Clear selection", category: "Sudoku", keys: ["escape"] },
-};
 
 export interface SudokuViewHooks {
   /** After every render; plugin ui() can draw into `layers.overlay`. */
@@ -161,24 +104,29 @@ function regionMap(p: LatinPuzzle): number[] | null {
   return any ? ids : null;
 }
 
-function rulesList(p: LatinPuzzle): string[] {
-  const seen = new Set<string>();
-  const out: string[] = [];
-  for (const c of p.constraints) {
-    const t = constraintTypes.get(c.type);
-    if (!t?.rule || seen.has(t.type)) continue;
-    seen.add(t.type);
-    out.push(t.rule);
+/** Cells a focus refers to: what it marks, else where it says to look. */
+export function focusCells(focus: unknown): number[] {
+  const f = focus as Partial<HintFocus> | null | undefined;
+  if (!f || typeof f !== "object") return [];
+  const out = new Set<number>([...(f.cells ?? []), ...(f.place ?? []).map(([c]) => c), ...(f.eliminate ?? []).map(([c]) => c)]);
+  if (!out.size) for (const a of f.areas ?? []) for (const c of a) out.add(c);
+  return [...out];
+}
+
+/** Cells whose digit, marks or colours differ between two states. */
+export function changedCells(a: GridState, b: GridState): number[] {
+  const out: number[] = [];
+  for (let c = 0; c < a.values.length; c++) {
+    if (a.values[c] !== b.values[c] || a.center[c] !== b.center[c] || a.corner[c] !== b.corner[c] || a.struck[c] !== b.struck[c] || a.colors[c] !== b.colors[c]) out.push(c);
   }
   return out;
 }
 
-export const sudokuView: View<LatinPuzzle, GridState, GridAction, GridInteraction> & { bindings: BindingSchema } = {
+export const sudokuView: View<LatinPuzzle, GridState, GridAction, GridInteraction> = {
   id: "sudoku.svg",
   name: "grid",
   puzzle: "sudoku",
   settings,
-  bindings,
   mount(root, { session, settings: cfg }) {
     style("sudoku", CSS);
     const p = session.puzzle;
@@ -199,7 +147,6 @@ export const sudokuView: View<LatinPuzzle, GridState, GridAction, GridInteractio
       return r;
     });
 
-    // grid lines
     const regions = regionMap(p);
     let thin = "", thick = "";
     for (let i = 1; i < n; i++) thin += `M${i * S} 0V${n * S}M0 ${i * S}H${n * S}`;
@@ -212,7 +159,6 @@ export const sudokuView: View<LatinPuzzle, GridState, GridAction, GridInteractio
     thick += `M0 0H${n * S}V${n * S}H0Z`;
     layers.grid.append(s("path", { d: thin, class: "thin" }), s("path", { d: thick, class: "thick" }));
 
-    // constraints
     const reserved = new Set<number>();
     const rctx: RenderCtx = {
       n, S,
@@ -248,49 +194,13 @@ export const sudokuView: View<LatinPuzzle, GridState, GridAction, GridInteractio
     });
     const markKeys: string[] = Array.from({ length: size }, () => "");
     const colorKeys: number[] = Array.from({ length: size }, () => 0);
+    const openPath = s("path", { class: "open" });
     const selOutline = s("path", { class: "sel-outline" });
-    layers.selection.append(selOutline);
-
-    // side panel
-    const side = h("div", { class: "sdk-side" });
-    const modeBar = h("div", { class: "sdk-modes", role: "group", "aria-label": "input mode" });
-    const modeButtons = MODES.map((md) => {
-      const b = h("button", { "aria-pressed": "false", onclick: () => setMode(md.id) }, md.label);
-      modeBar.append(b);
-      return b;
-    });
-    const padGrid = h("div", { class: "sdk-pad" });
-    const cols = n <= 4 ? 2 : 3;
-    padGrid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-    padGrid.style.setProperty("--pad-cols-narrow", String(n));
-    const padButtons = Array.from({ length: n }, (_, i) => {
-      const b = h("button", {
-        "aria-label": String(i + 1),
-        onpointerdown: (e: PointerEvent) => e.preventDefault(),
-        onclick: () => input(i + 1, null),
-      });
-      padGrid.append(b);
-      return b;
-    });
-    const info = h("div", { class: "sdk-info", "aria-live": "polite" });
-    const actions = h("div", { class: "sdk-actions" },
-      h("button", { onpointerdown: (e: PointerEvent) => e.preventDefault(), onclick: () => erase() }, "erase"));
-    // invariant: the pad's position never depends on the height of the info line or rules
-    const controls = h("div", { class: "sdk-controls" });
-    const extra = h("div", { class: "sdk-extra" }, info);
-    side.append(h("div", { class: "sdk-spacer" }), controls, extra);
-    if (cfg.pad) controls.append(modeBar, padGrid, actions);
-    if (cfg.rules) {
-      const rules = rulesList(p);
-      if (rules.length) extra.append(h("details", { class: "sdk-rules" }, h("summary", null, "rules"), h("ul", null, rules.map((r) => h("li", null, r)))));
-    }
-    const wrap = h("div", { class: "sdk-boardwrap" }, svg);
-    const container = h("div", { class: "sdk" }, wrap, side);
-    root.append(container);
+    const cursorRect = s("rect", { width: S - 14, height: S - 14, rx: 6, class: "cursor" });
+    layers.selection.append(openPath, selOutline, cursorRect);
+    root.append(svg);
 
     const hooks: SudokuViewHooks = { render: new HookEvent("render") };
-
-    // --- render ---
 
     const render = () => {
       const st = session.state;
@@ -303,7 +213,8 @@ export const sudokuView: View<LatinPuzzle, GridState, GridAction, GridInteractio
       const same = d[SAME] as SameDigit | undefined;
       const sameCells = new Set(same?.cells ?? []);
       const cands = d[CANDIDATES] as number[] | undefined;
-      const hint = session.activeHint?.focus as HintFocus | undefined;
+      const raw = session.activeHint?.focus as Partial<HintFocus> | undefined;
+      const hint = raw && typeof raw === "object" ? raw : undefined;
       const hintCells = new Set(hint?.cells ?? []);
       const hintArea = new Set((hint?.areas ?? []).flat());
 
@@ -330,7 +241,7 @@ export const sudokuView: View<LatinPuzzle, GridState, GridAction, GridInteractio
           const ids = digits(st.colors[c]!);
           const [x, y] = xy(c);
           ids.forEach((id, i) => g.append(s("rect", {
-            x: x + (S * i) / ids.length, y, width: S / ids.length, height: S, fill: PALETTE[id],
+            x: x + (S * i) / ids.length, y, width: S / ids.length, height: S, style: `fill: ${colorVar(id)}`,
           })));
         }
 
@@ -350,51 +261,26 @@ export const sudokuView: View<LatinPuzzle, GridState, GridAction, GridInteractio
       }
 
       clear(layers.hints);
-      if (hint) {
-        for (const [c, dg] of hint.place) {
-          const [x, y] = xy(c);
-          layers.hints.append(s("text", { x: x + S / 2, y: y + S / 2 + 2, class: "hint-place" }, String(dg)));
-        }
-        for (const [c, mask] of hint.eliminate) {
-          const [x, y] = xy(c);
-          for (const dg of digits(mask)) {
-            const [fx, fy] = candidateSlot(dg, c);
-            layers.hints.append(s("text", { x: x + fx * S, y: y + fy * S, class: "hint-elim" }, String(dg)));
-          }
+      for (const [c, dg] of hint?.place ?? []) {
+        const [x, y] = xy(c);
+        layers.hints.append(s("text", { x: x + S / 2, y: y + S / 2 + 2, class: "hint-place" }, String(dg)));
+      }
+      for (const [c, mask] of hint?.eliminate ?? []) {
+        const [x, y] = xy(c);
+        for (const dg of digits(mask)) {
+          const [fx, fy] = candidateSlot(dg, c);
+          layers.hints.append(s("text", { x: x + fx * S, y: y + fy * S, class: "hint-elim" }, String(dg)));
         }
       }
 
+      openPath.setAttribute("d", (same?.open ?? []).map((c) => {
+        const [x, y] = xy(c);
+        return `M${x + 6} ${y + 6}h${S - 12}v${S - 12}h${-(S - 12)}Z`;
+      }).join(""));
       selOutline.setAttribute("d", it.selection.length ? insetOutline(n, S, it.selection, 3) : "");
-
-      modeButtons.forEach((b, i) => b.setAttribute("aria-pressed", String(MODES[i]!.id === it.mode)));
-      padGrid.dataset.mode = it.mode;
-      const counts = d[COUNTS] as number[] | undefined;
-      padButtons.forEach((b, i) => {
-        const dg = i + 1;
-        const k = `${it.mode}|${counts ? counts[dg] : -1}`;
-        if (b.dataset.k === k) return;
-        b.dataset.k = k;
-        clear(b);
-        if (it.mode === "color") {
-          if (dg <= 9) b.append(h("span", { class: "swatch", style: `background:${PALETTE[dg]}` }));
-          b.classList.remove("done");
-          return;
-        }
-        b.append(h("span", null, String(dg)));
-        if (counts) {
-          const left = n - counts[dg]!;
-          b.classList.toggle("done", left <= 0);
-          if (left > 0) b.append(h("small", null, String(left)));
-        } else b.classList.remove("done");
-      });
-
-      const lines = (d[INFO] as string[] | undefined) ?? [];
-      const infoKey = lines.join("\n");
-      if (info.dataset.k !== infoKey) {
-        info.dataset.k = infoKey;
-        clear(info);
-        for (const l of lines) info.append(h("div", null, l));
-      }
+      const [cx, cy] = xy(it.cursor);
+      cursorRect.setAttribute("x", String(cx + 7));
+      cursorRect.setAttribute("y", String(cy + 7));
       hooks.render.call({ svg, layers, S });
     };
 
@@ -431,72 +317,9 @@ export const sudokuView: View<LatinPuzzle, GridState, GridAction, GridInteractio
       }
     }
 
-    // --- input ---
+    // --- pointer ---
 
-    const setSelection = (cells: number[], cursor?: number) => {
-      session.setInteraction((i) => ({ ...i, selection: cells, cursor: cursor ?? i.cursor }));
-    };
-
-    const setMode = (mode: InputMode) => session.setInteraction((i) => (i.mode === mode ? i : { ...i, mode }));
-
-    function shownCenter(c: number): number {
-      const cands = session.derived()[CANDIDATES] as number[] | undefined;
-      return cands ? cands[c]! : session.state.center[c]!;
-    }
-
-    function input(dg: number, override: InputMode | null): void {
-      if (dg < 1 || dg > n) return;
-      const st = session.state;
-      const it = session.interaction;
-      const mode = override ?? it.mode;
-      const sel = it.selection;
-      if (!sel.length) return;
-      if (mode === "color") {
-        if (dg > 9) return;
-        const on = !sel.every((c) => st.colors[c]! & bit(dg));
-        session.dispatch({ type: "color", cells: sel, color: dg, on });
-        return;
-      }
-      if (mode === "digit") {
-        const cells = sel.filter((c) => !p.givens[c]);
-        if (!cells.length) return;
-        const all = cells.every((c) => st.values[c] === dg);
-        session.dispatch({ type: "set", cells, digit: all ? 0 : dg });
-        return;
-      }
-      const cells = sel.filter((c) => !p.givens[c] && !st.values[c]);
-      if (!cells.length) return;
-      const has = (c: number) => ((mode === "center" ? shownCenter(c) : st.corner[c]!) & bit(dg)) !== 0;
-      session.dispatch({ type: "mark", layer: mode, cells, digit: dg, on: !cells.every(has) });
-    }
-
-    function erase(): void {
-      const st = session.state;
-      const it = session.interaction;
-      const cells = it.selection;
-      if (!cells.length) return;
-      const hasValue = cells.some((c) => !p.givens[c] && st.values[c]);
-      const hasMarks = cells.some((c) => st.center[c] || st.corner[c] || st.struck[c]);
-      const hasColor = cells.some((c) => st.colors[c]);
-      const layer = it.mode === "color" && hasColor ? "colors" : hasValue ? "values" : hasMarks ? "marks" : hasColor ? "colors" : null;
-      if (layer) session.dispatch({ type: "clear", cells, layer });
-    }
-
-    function move(dr: number, dc: number, extend: boolean): void {
-      const it = session.interaction;
-      const r = (Math.floor(it.cursor / n) + dr + n) % n, c = (it.cursor % n + dc + n) % n;
-      const next = r * n + c;
-      if (extend) setSelection(it.selection.includes(next) ? it.selection : [...it.selection, next], next);
-      else setSelection([next], next);
-    }
-
-    function selectSame(cell: number): void {
-      const v = session.state.values[cell]!;
-      if (!v) return setSelection([cell], cell);
-      setSelection([...Array(size).keys()].filter((c) => session.state.values[c] === v), cell);
-    }
-
-    const toCell = (e: PointerEvent, inner: number): number => {
+    const toCell = (e: { clientX: number; clientY: number }, inner: number): number => {
       const ctm = svg.getScreenCTM();
       if (!ctm) return -1;
       const pt = new DOMPoint(e.clientX, e.clientY).matrixTransform(ctm.inverse());
@@ -511,11 +334,16 @@ export const sudokuView: View<LatinPuzzle, GridState, GridAction, GridInteractio
     let drag: "add" | "remove" | null = null;
     let lastTap = { cell: -1, t: 0 };
     const onDown = (e: PointerEvent) => {
-      if (e.button !== 0) return;
       const cell = toCell(e, 0);
+      if (e.button === 2) {
+        // the context menu acts on the selection, so a right click outside it selects that cell first
+        if (cell >= 0 && !session.interaction.selection.includes(cell)) setSelection(session, [cell], cell);
+        return;
+      }
+      if (e.button !== 0) return;
       const multi = e.ctrlKey || e.metaKey || e.shiftKey;
       if (cell < 0) {
-        if (!multi) setSelection([]);
+        if (!multi) setSelection(session, []);
         return;
       }
       e.preventDefault();
@@ -523,20 +351,20 @@ export const sudokuView: View<LatinPuzzle, GridState, GridAction, GridInteractio
       const now = performance.now();
       if (!multi && lastTap.cell === cell && now - lastTap.t < 350) {
         lastTap = { cell: -1, t: 0 };
-        selectSame(cell);
+        selectSame(session, cell);
         return;
       }
       lastTap = { cell, t: now };
       const sel = session.interaction.selection;
       if (multi && (e.ctrlKey || e.metaKey) && sel.includes(cell)) {
         drag = "remove";
-        setSelection(sel.filter((c) => c !== cell), cell);
+        setSelection(session, sel.filter((c) => c !== cell), cell);
       } else if (multi) {
         drag = "add";
-        if (!sel.includes(cell)) setSelection([...sel, cell], cell);
+        if (!sel.includes(cell)) setSelection(session, [...sel, cell], cell);
       } else {
         drag = "add";
-        setSelection([cell], cell);
+        setSelection(session, [cell], cell);
       }
     };
     const onMove = (e: PointerEvent) => {
@@ -544,33 +372,28 @@ export const sudokuView: View<LatinPuzzle, GridState, GridAction, GridInteractio
       const cell = toCell(e, 0.12);
       if (cell < 0) return;
       const sel = session.interaction.selection;
-      if (drag === "add" && !sel.includes(cell)) setSelection([...sel, cell], cell);
-      else if (drag === "remove" && sel.includes(cell)) setSelection(sel.filter((c) => c !== cell), cell);
+      if (drag === "add" && !sel.includes(cell)) setSelection(session, [...sel, cell], cell);
+      else if (drag === "remove" && sel.includes(cell)) setSelection(session, sel.filter((c) => c !== cell), cell);
     };
     const onUp = () => {
       drag = null;
     };
+    // shift + digit arrives as a symbol ("!", "@", …) that key bindings can't name, so it is read by physical key
+    const onKey = (e: KeyboardEvent) => {
+      if (!cfg.shiftCorner || !e.shiftKey || e.ctrlKey || e.metaKey || e.altKey) return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+      const m = /^(?:Digit|Numpad)([1-9])$/.exec(e.code);
+      if (!m) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      input(session, Number(m[1]), "corner");
+    };
+    window.addEventListener("keydown", onKey, true);
     svg.addEventListener("pointerdown", onDown);
     svg.addEventListener("pointermove", onMove);
     svg.addEventListener("pointerup", onUp);
     svg.addEventListener("pointercancel", onUp);
-
-    // shift/ctrl/alt + digit: the keybinding layer can't see these (the key becomes "!" etc.), so read the physical key.
-    const onKey = (e: KeyboardEvent) => {
-      if (!cfg.modifiers) return;
-      const target = e.target as HTMLElement | null;
-      if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) return;
-      const m = /^(?:Digit|Numpad)([1-9])$/.exec(e.code);
-      if (!m) return;
-      const override: InputMode | null = e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey ? "corner"
-        : (e.ctrlKey || e.metaKey) && !e.shiftKey ? "center"
-          : e.altKey && !e.shiftKey ? "color" : null;
-      if (!override) return;
-      e.preventDefault();
-      e.stopImmediatePropagation();
-      input(Number(m[1]), override);
-    };
-    window.addEventListener("keydown", onKey, true);
 
     const offs = [
       session.hooks.change.tap(render, { owner: "view" }),
@@ -579,37 +402,20 @@ export const sudokuView: View<LatinPuzzle, GridState, GridAction, GridInteractio
     ];
     render();
 
-    const handlers: Record<string, CommandHandler> = {
-      ...Object.fromEntries([...Array(9).keys()].map((i) => [`sudoku.d${i + 1}`, () => input(i + 1, null)])),
-      "sudoku.clear": () => erase(),
-      "sudoku.mode-digit": () => setMode("digit"),
-      "sudoku.mode-corner": () => setMode("corner"),
-      "sudoku.mode-center": () => setMode("center"),
-      "sudoku.mode-color": () => setMode("color"),
-      "sudoku.mode-next": () => {
-        const i = MODES.findIndex((md) => md.id === session.interaction.mode);
-        setMode(MODES[(i + 1) % MODES.length]!.id);
-      },
-      "sudoku.up": () => move(-1, 0, false),
-      "sudoku.down": () => move(1, 0, false),
-      "sudoku.left": () => move(0, -1, false),
-      "sudoku.right": () => move(0, 1, false),
-      "sudoku.extend-up": () => move(-1, 0, true),
-      "sudoku.extend-down": () => move(1, 0, true),
-      "sudoku.extend-left": () => move(0, -1, true),
-      "sudoku.extend-right": () => move(0, 1, true),
-      "sudoku.select-all": () => setSelection([...Array(size).keys()]),
-      "sudoku.select-same": () => selectSame(session.interaction.cursor),
-      "sudoku.deselect": () => setSelection([]),
-    };
+    const rects = (cells: Iterable<number>) => [...cells].map((c) => cellRects[c]!.getBoundingClientRect());
+    const cellAt = (e: Event | undefined): number =>
+      e instanceof MouseEvent && svg.contains(e.target as Node) ? toCell(e, 0) : -1;
 
     return {
+      aspect: vb[2]! / vb[3]!,
+      locate: (focus) => rects(focusCells(focus)),
+      locateChange: (a, b) => rects(changedCells(a as GridState, b as GridState)),
       destroy() {
         offs.forEach((f) => f());
         window.removeEventListener("keydown", onKey, true);
-        container.remove();
+        svg.remove();
       },
-      commands: bindCommands(sudokuView.bindings, handlers),
+      commands: boardCommands(session, cellAt),
       hooks,
     };
   },
@@ -619,4 +425,3 @@ export const sudokuView: View<LatinPuzzle, GridState, GridAction, GridInteractio
 export function viewFor(puzzleId: string): View<LatinPuzzle, GridState, GridAction, GridInteraction> {
   return puzzleId === "sudoku" ? sudokuView : { ...sudokuView, id: `${puzzleId}.svg`, puzzle: puzzleId };
 }
-

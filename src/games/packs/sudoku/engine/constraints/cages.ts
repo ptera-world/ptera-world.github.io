@@ -47,6 +47,7 @@ export const killer: ConstraintType<KillerSpec> = {
   type: "killer",
   label: "killer cage",
   rule: "digits in a dashed cage don't repeat and sum to its clue",
+  logic: { name: "killer cage logic", level: 2, description: "list the sets of different digits that make the cage total. digits that appear in none of them are out; digits in all of them must be somewhere in the cage. small and large totals have very few combinations (3 in two cells is always 1 and 2)." },
   kind: "clue",
   combos: true,
   validate: (c, n) => validCells(c.cells, n, n) ?? (c.sum === undefined || Number.isInteger(c.sum) ? null : "sum must be a whole number"),
@@ -97,6 +98,7 @@ export const keen: ConstraintType<KeenSpec> = {
   type: "keen",
   label: "arithmetic cage",
   rule: "the digits in each cage combine with its operation to make its number (− and ÷ cages have two cells)",
+  logic: { name: "arithmetic cage logic", level: 2, description: "work out which digits can make the cage's number with its operation. a 2-cell × cage of 12 on a 6×6 is 2 and 6 or 3 and 4; anything else is out. cages in one row can't repeat a digit even when the arithmetic would allow it." },
   kind: "clue",
   combos: true,
   validate(c, n) {
@@ -159,6 +161,7 @@ export const littleKiller: ConstraintType<LittleKillerSpec> = {
   type: "littlekiller",
   label: "little killer",
   rule: "an outside clue gives the sum of the digits along its arrow's diagonal (digits may repeat)",
+  logic: { name: "little killer logic", level: 2.5, description: "the digits along the diagonal add up to the clue, and they may repeat unless two of them share a row, column or box. small totals over long diagonals pin down low digits quickly." },
   kind: "clue",
   removable: true,
   validate(s, n) {
