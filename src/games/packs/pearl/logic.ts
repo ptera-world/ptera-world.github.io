@@ -1,11 +1,12 @@
 import type { Rng } from "../../core/rng";
 import { cellList, cellName } from "../../lib/grid-kit/names";
+import { edgeList, edgeName } from "../../lib/edge-names";
 import { defineSchema, type Values } from "../../core/schema";
 import type { Format, GenerateContext, Hint, PuzzleDef } from "../../core/types";
 import { DOWN, LEFT, LINE, NO, RIGHT, UP, around, edgeGrid, opposite, pieces, stateAt, step, type EdgeGrid } from "../../lib/edges";
 import { BLACK, EMPTY, LEVEL_NAMES, WHITE, analyze, generatePuzzle, type Level, type PearlPuzzle } from "./solver";
 
-export { cellList, cellName };
+export { cellList, cellName, edgeList, edgeName };
 
 export type { PearlPuzzle } from "./solver";
 
@@ -168,19 +169,6 @@ export const gridFormat: Format<PearlPuzzle> = {
 
 // --- names, conflicts, hints ---
 
-/** "C5-D5". */
-export function edgeName(p: PearlPuzzle, e: number): string {
-  const g = edgeGrid(p.w, p.h);
-  return `${cellName(p, g.ea[e]!)}-${cellName(p, g.eb[e]!)}`;
-}
-
-export function edgeList(p: PearlPuzzle, edges: readonly number[]): string {
-  const names = edges.slice(0, 3).map((e) => edgeName(p, e));
-  const rest = edges.length - names.length;
-  if (rest > 0) return `${names.join(", ")} and ${rest} more`;
-  return names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}` : names[0] ?? "";
-}
-
 /** Focus payload understood by the pearl view. */
 export interface PearlFocus {
   /** Edges the hint changes. */
@@ -287,6 +275,7 @@ export const pearl: PuzzleDef<PearlPuzzle, PearlState, PearlAction, PearlInterac
     "on a white pearl the loop goes straight through, and turns in at least one of the cells just before and after it.",
     "a cross on an edge is your own note that the loop doesn't go that way. it doesn't count for anything.",
   ],
+  describeAction: (p, a) => `${a.value === LINE ? "line" : a.value === NO ? "cross" : "clear"} ${edgeList(p, a.edges)}`,
   isSolved,
   solve(p) {
     const a = analyze(p);

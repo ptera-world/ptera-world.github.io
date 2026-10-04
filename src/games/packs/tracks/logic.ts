@@ -1,6 +1,7 @@
 import type { Rng } from "../../core/rng";
 import { colName, rowName } from "../../core/names";
 import { cellList, cellName } from "../../lib/grid-kit/names";
+import { edgeList, edgeName } from "../../lib/edge-names";
 import { defineSchema, type Values } from "../../core/schema";
 import type { Format, GenerateContext, Hint, PuzzleDef } from "../../core/types";
 import { LINE, NO, UNK, edgeAt, edgeGrid } from "../../lib/edges";
@@ -9,7 +10,7 @@ import {
   type Level, type TracksPuzzle,
 } from "./solver";
 
-export { cellList, cellName };
+export { cellList, cellName, edgeList, edgeName };
 
 export type { TracksPuzzle } from "./solver";
 
@@ -163,18 +164,6 @@ export const sgtFormat: Format<TracksPuzzle> = {
 
 export const countName = (p: TracksPuzzle, i: number) => (i < p.w ? `column ${colName(i)}` : `row ${rowName(i - p.w)}`);
 
-export function edgeName(p: TracksPuzzle, e: number): string {
-  const g = edgeGrid(p.w, p.h);
-  return `${cellName(p, g.ea[e]!)}-${cellName(p, g.eb[e]!)}`;
-}
-
-export function edgeList(p: TracksPuzzle, edges: readonly number[]): string {
-  const names = edges.slice(0, 3).map((e) => edgeName(p, e));
-  const rest = edges.length - names.length;
-  if (rest > 0) return `${names.join(", ")} and ${rest} more`;
-  return names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}` : names[0] ?? "";
-}
-
 /** Focus payload understood by the tracks view. */
 export interface TracksFocus {
   edges: number[];
@@ -296,6 +285,9 @@ export const tracks: PuzzleDef<TracksPuzzle, TracksState, TracksAction, TracksIn
     "pieces of track shown from the start are part of it.",
     "crosses (no track across this edge) and cell marks (track here, or no track here) are your own notes. they don't count for anything.",
   ],
+  describeAction: (p, a) => (a.type === "edge"
+    ? `${a.value === LINE ? "track" : a.value === CROSS ? "cross" : "clear"} ${edgeList(p, a.edges)}`
+    : `${a.value === TRACK ? "track in" : a.value === EMPTY ? "no track in" : "clear"} ${cellList(p, a.cells)}`),
   isSolved,
   solve(p) {
     const a = analyze(p);

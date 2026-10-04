@@ -213,6 +213,10 @@ export const untangle: PuzzleDef<UntanglePuzzle, UntangleState, UntangleAction, 
   init: (p) => ({ pts: circle(p.n) }),
   initInteraction: () => ({ selected: -1 }),
   reduce,
+  describeAction: (p, a, _before, after) => {
+    const left = crossings(p, after.pts).length;
+    return `move ${a.moves.length === 1 ? "a point" : `${a.moves.length} points`}: ${left === 0 ? "no crossings" : left === 1 ? "1 crossing" : `${left} crossings`} left`;
+  },
   isSolved,
   rules: () => [
     "drag the points anywhere you like. the lines stay attached to their points.",

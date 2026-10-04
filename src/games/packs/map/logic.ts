@@ -315,6 +315,14 @@ export const map: PuzzleDef<MapPuzzle, MapState, MapAction, MapInteraction, type
     "regions colored from the start are fixed.",
     "pencil marks are your own notes of which colors a region could still have. they don't count for anything.",
   ],
+  describeAction: (p, a, _before, after) => {
+    const at = (regions: readonly number[]) => cellList(p, regions.map((r) => geometry(p).anchor[r]!));
+    switch (a.type) {
+      case "colour": return a.colour < 0 ? `clear ${at(a.regions)}` : `${at(a.regions)}: ${COLOUR_NAMES[a.colour]}`;
+      case "marks": return a.marks & ALL ? `${at(a.regions)}: maybe ${COLOUR_NAMES.filter((_, c) => a.marks & (1 << c)).join("/")}` : `clear notes on ${at(a.regions)}`;
+      case "toggle-mark": return `${after.marks[a.region]! & (1 << a.colour) ? "note" : "unnote"} ${COLOUR_NAMES[a.colour]} on ${at([a.region])}`;
+    }
+  },
   isSolved,
   solve(p) {
     const a = analyze(p);

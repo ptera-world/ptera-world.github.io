@@ -270,6 +270,7 @@ export const lightup: PuzzleDef<LightupPuzzle, LightupState, LightupAction, Ligh
     "a number on a wall is exactly how many lights touch that wall (above, below, left and right; not diagonally). walls without a number can touch any number.",
     "a no-light mark (a small dot) is your own note that a cell can't hold a light. it doesn't count for anything.",
   ],
+  describeAction: (p, a) => `${["clear", "light", "dot"][a.value] ?? "mark"} ${cellList(p, a.cells)}`,
   isSolved,
   solve(p) {
     const a = analyze(p);

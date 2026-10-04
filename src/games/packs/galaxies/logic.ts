@@ -231,6 +231,7 @@ export const galaxies: PuzzleDef<GalaxiesPuzzle, GalaxiesState, GalaxiesAction, 
     "each galaxy contains exactly one dot, at its center: turned half a turn around the dot, the galaxy lands exactly on itself.",
     "a galaxy is one connected piece. a dot on an edge or a corner belongs to all the tiles it touches.",
   ],
+  describeAction: (p, a) => (a.dot < 0 ? `unpaint ${cellList(p, a.tiles)}` : `${cellList(p, a.tiles)}: ${dotName(p, a.dot).replace(/^the /, "")}`),
   isSolved,
   solve(p) {
     const a = analyze(p);

@@ -509,6 +509,16 @@ export const filling: PuzzleDef<FillingPuzzle, FillingState, FillingAction, Fill
     "two different regions with the same number may not touch side by side, or they'd be one region.",
     "small numbers in a cell are your own notes of what it could still be.",
   ],
+  describeAction: (p, a, before, after) => {
+    const g = geometry(p);
+    const groups = new Map<string, number[]>();
+    for (const c of a.cells) {
+      const now = after.doms[c] ?? g.full, gone = (before.doms[c] ?? g.full) & ~now;
+      const key = now === g.full ? "clear" : isSingle(now) ? `: ${valueOf(now)}` : a.type === "narrow" && gone ? `: not ${valuesOf(gone).join("/")}` : `: ${valuesOf(now).join("/")}`;
+      groups.set(key, [...(groups.get(key) ?? []), c]);
+    }
+    return [...groups].map(([k, cells]) => (k === "clear" ? `clear ${cellList(p, cells)}` : `${cellList(p, cells)}${k}`)).join(", ");
+  },
   isSolved,
   solve(p) {
     const a = analyze(p);

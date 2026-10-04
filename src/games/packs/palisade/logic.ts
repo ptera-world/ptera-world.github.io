@@ -5,7 +5,8 @@ import {
   analyzeModel, bit, decides, levelNeeded, trialRule,
   type Analysis, type Constraint, type Doms, type Model, type Rule,
 } from "../../lib/grid-kit/csp";
-import { cellList, type Focus } from "../../lib/grid-kit/names";
+import { cellList, cellName, type Focus } from "../../lib/grid-kit/names";
+import { listOf } from "../../lib/edge-names";
 
 export interface PalisadePuzzle {
   w: number;
@@ -510,6 +511,10 @@ export const palisade: PuzzleDef<PalisadePuzzle, PalisadeState, PalisadeAction, 
     "every wall must separate two different regions: no stray walls inside a region.",
     "a gap mark is your own note that an edge has no wall. it doesn't count for anything.",
   ],
+  describeAction: (p, a) => {
+    const g = geometry(p);
+    return `${a.value === LINE ? "wall" : a.value === GAP ? "gap" : "clear"} ${listOf(a.edges, (e) => `${cellName(p, g.edges[e]![0])}-${cellName(p, g.edges[e]![1])}`)}`;
+  },
   isSolved,
   solve(p) {
     const a = analyze(p);

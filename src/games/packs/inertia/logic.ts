@@ -436,6 +436,11 @@ export const inertia: PuzzleDef<InertiaPuzzle, InertiaState, InertiaAction, Iner
     if (a.type !== "move") return s;
     return move(p, s, a.dir);
   },
+  describeAction: (_p, a, before, after) => {
+    const got = before.gems.reduce((n, g) => n + g, 0) - after.gems.reduce((n, g) => n + g, 0);
+    const what = after.dead ? ": hits a mine" : got > 0 && after.moves - before.moves === 1 ? `: ${got} ${got === 1 ? "gem" : "gems"}` : "";
+    return `roll ${DIR_NAMES[a.dir] ?? "?"}${what}`;
+  },
   isSolved: (_p, s) => !s.dead && !s.gems.some(Boolean),
   isLost: (_p, s) => (s.dead ? { focus: { path: [s.pos] } satisfies InertiaFocus } : false),
   rate,

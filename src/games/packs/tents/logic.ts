@@ -624,6 +624,7 @@ export const tents: PuzzleDef<TentsPuzzle, TentsState, TentsAction, TentsInterac
     "the numbers along the bottom and right say how many tents are in that column or row.",
     "grass is your own note that a cell has no tent. it doesn't count for anything.",
   ],
+  describeAction: (p, a) => `${["clear", "tent", "grass"][a.value] ?? "mark"} ${cellList(p, a.cells)}`,
   isSolved,
   solve(p) {
     const a = analyze(p);

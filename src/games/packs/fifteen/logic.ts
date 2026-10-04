@@ -202,6 +202,13 @@ export const fifteen: PuzzleDef<FifteenPuzzle, FifteenState, FifteenAction, null
     if (a.type !== "move") return s;
     return applyMove(p.w, s, a.cell);
   },
+  describeAction: (p, a, before) => {
+    const path = lineToGap(p.w, before.tiles, a.cell);
+    if (!path.length) return "slide";
+    const g = gapOf(before.tiles), first = path[0]!;
+    const dir = first === g - 1 ? "right" : first === g + 1 ? "left" : first < g ? "down" : "up";
+    return `slide ${path.map((c) => before.tiles[c]).join(", ")} ${dir}`;
+  },
   isSolved: (_p, s) => isSolvedTiles(s.tiles),
   solve: (p) => ({ tiles: p.tiles.map((_, i) => solvedTile(p.tiles.length, i)), moves: 0 }),
   rate,

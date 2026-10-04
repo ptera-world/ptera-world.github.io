@@ -1,6 +1,7 @@
 import type { Rng } from "../../core/rng";
 import { defineSchema, type Values } from "../../core/schema";
 import type { Format, Hint, PuzzleDef } from "../../core/types";
+import { cellName } from "../../lib/grid-kit/names";
 
 export const params = defineSchema({
   width: { type: "int", label: "width", default: 5, min: 2, max: 12 },
@@ -166,6 +167,7 @@ export const flip: PuzzleDef<FlipPuzzle, FlipState, FlipAction, FlipInteraction,
         return s;
     }
   },
+  describeAction: (p, a) => `press ${cellName(p, a.cell)}`,
   isSolved: (_p, s) => s.lights.every((l) => l === 0),
   solve: (p) => ({ lights: p.lights.map(() => 0) }),
   hint(p, s): Hint<FlipAction> | null {

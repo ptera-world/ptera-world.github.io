@@ -5,6 +5,7 @@ import {
   EMPTY, FILLED, Lines, UNKNOWN, analyze, cluesOf, countSolutions, generatePicture, lineCells, lineName, runs, solveLine,
   type Analysis, type Cell, type Clue, type Level,
 } from "./solver";
+import { cellList } from "../../lib/grid-kit/names";
 
 export const params = defineSchema({
   width: { type: "int", label: "width", default: 10, min: 3, max: 40 },
@@ -312,6 +313,7 @@ export const pattern: PuzzleDef<PatternPuzzle, PatternState, PatternAction, Patt
     }
     return next ? { cells: next } : s;
   },
+  describeAction: (p, a) => `${["clear", "fill", "cross out"][a.value] ?? "mark"} ${cellList(p, a.cells)}`,
   isSolved,
   solve(p) {
     const sol = info(p).solution;

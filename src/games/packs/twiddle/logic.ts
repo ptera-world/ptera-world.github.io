@@ -280,6 +280,7 @@ export const twiddle: PuzzleDef<TwiddlePuzzle, TwiddleState, TwiddleAction, Twid
     if (a.type !== "rotate" || a.x < 0 || a.y < 0 || a.x > p.w - p.n || a.y > p.h - p.n) return s;
     return { ...rotate(p, s, a), moves: s.moves + 1 };
   },
+  describeAction: (p, a) => describeTurn(p, a),
   isSolved: (p, s) => isSolvedTiles(p, s),
   solve: (p) => ({ tiles: goal(p).slice(), turns: p.turns.map(() => 0), moves: 0 }),
   rate,

@@ -1,7 +1,8 @@
 import type { Rng } from "../../core/rng";
 import type { Schema, Values } from "../../core/schema";
 import type { GenerateContext, Hint, Preset, PuzzleDef } from "../../core/types";
-import { bit, popcount } from "./engine/bits";
+import { bit, digits, popcount } from "./engine/bits";
+import { listOf } from "../../lib/edge-names";
 import { grade, gridFrom, type Grade, type Grid } from "./engine/human";
 import { conflicts, modelOf } from "./engine/model";
 import { constraintTypes } from "./engine/registry";
@@ -269,6 +270,18 @@ export interface LatinDefConfig<P extends Schema> {
   implied: readonly string[];
 }
 
+/** One move in words: "C5: 7", "center 3 in C5", "rule out 4 in C5 and D6". */
+export function describeAction(p: LatinPuzzle, a: GridAction): string {
+  const at = (cells: readonly number[]) => listOf(cells, (c) => cellName(p.n, c));
+  switch (a.type) {
+    case "set": return a.digit ? `${at(a.cells)}: ${a.digit}` : `clear ${at(a.cells)}`;
+    case "mark": return a.on ? `${a.layer} ${a.digit} in ${at(a.cells)}` : `remove ${a.layer} ${a.digit} from ${at(a.cells)}`;
+    case "color": return a.on ? `color ${a.color} on ${at(a.cells)}` : `remove color ${a.color} from ${at(a.cells)}`;
+    case "clear": return a.layer === "values" ? `clear ${at(a.cells)}` : `clear ${a.layer === "marks" ? "notes" : "colors"} in ${at(a.cells)}`;
+    case "strike": return `${a.on ? "rule out" : "bring back"} ${listOf(a.marks, ([c, m]) => `${digits(m).join("/")} in ${cellName(p.n, c)}`)}`;
+  }
+}
+
 /** A puzzle definition over the shared engine; puzzle types differ only in params and generation. */
 export function latinDef<P extends Schema>(cfg: LatinDefConfig<P>): PuzzleDef<LatinPuzzle, GridState, GridAction, GridInteraction, P> {
   return {
@@ -290,6 +303,7 @@ export function latinDef<P extends Schema>(cfg: LatinDefConfig<P>): PuzzleDef<La
     reduce,
     isSolved,
     isRetraction,
+    describeAction,
     solve(p) {
       const sol = solutionOf(p);
       return sol ? { ...initState(p), values: sol.slice() } : null;

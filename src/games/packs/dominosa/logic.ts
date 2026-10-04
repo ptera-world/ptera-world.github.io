@@ -1,5 +1,6 @@
 import type { Rng } from "../../core/rng";
 import { cellList, cellName } from "../../lib/grid-kit/names";
+import { listOf } from "../../lib/edge-names";
 import { defineSchema, type Values } from "../../core/schema";
 import type { Format, GenerateContext, Hint, PuzzleDef } from "../../core/types";
 import { dpair, geometry, type DominosaPuzzle } from "./grid";
@@ -154,12 +155,7 @@ export function placementName(p: DominosaPuzzle, q: number): string {
   return `${cellName(p, g.pa[q]!)}-${cellName(p, g.pb[q]!)}`;
 }
 
-export function placementList(p: DominosaPuzzle, qs: readonly number[]): string {
-  const names = qs.slice(0, 3).map((q) => placementName(p, q));
-  const rest = qs.length - names.length;
-  if (rest > 0) return `${names.join(", ")} and ${rest} more`;
-  return names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}` : names[0] ?? "";
-}
+export const placementList = (p: DominosaPuzzle, qs: readonly number[]): string => listOf(qs, (q) => placementName(p, q));
 
 export const dominoName = (d: number): string => dpair(d).join("-");
 
@@ -269,6 +265,7 @@ export const dominosa: PuzzleDef<DominosaPuzzle, DominosaState, DominosaAction, 
     "the numbers on the board are the numbers on the dominoes that cover them.",
     "a line between two cells is your own note that they aren't one domino. it doesn't count for anything.",
   ],
+  describeAction: (p, a) => `${a.value === DOMINO ? "domino" : a.value === LINE ? "line" : "clear"} ${placementList(p, a.placements)}`,
   isSolved,
   solve(p) {
     const a = analyze(p);

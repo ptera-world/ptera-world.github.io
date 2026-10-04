@@ -302,6 +302,10 @@ export const samegame: PuzzleDef<SamegamePuzzle, SamegameState, SamegameAction, 
     if (g.length < 2) return s;
     return { grid: collapse(p.w, p.h, s.grid, g), score: s.score + points(p.scoreSub, g.length), moves: s.moves + 1 };
   },
+  describeAction: (p, a, before) => {
+    const n = before.grid[a.cell] ? group(p.w, p.h, before.grid, a.cell).length : 0;
+    return n ? `remove ${n} ${COLOUR_NAMES[before.grid[a.cell]!]} at ${cellAt(p, a.cell)}` : `remove ${cellAt(p, a.cell)}`;
+  },
   isSolved: (_p, s) => isEmpty(s.grid),
   isLost: (p, s) => isStuck(p, s.grid),
   hint: (p, s) => (isEmpty(s.grid) || isStuck(p, s.grid) || clearFrom(p, s.grid).path

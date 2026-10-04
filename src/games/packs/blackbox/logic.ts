@@ -2,7 +2,8 @@ import type { Rng } from "../../core/rng";
 import { cellList, cellName } from "../../lib/grid-kit/names";
 import { defineSchema, type Values } from "../../core/schema";
 import type { Format, PuzzleDef } from "../../core/types";
-import { fireAt, hitCode } from "./beam";
+import { colName, rowName } from "../../core/names";
+import { fireAt, hitCode, reflectCode } from "./beam";
 import { obfuscateBitmap } from "../../lib/sha1";
 
 export { cellList, cellName };
@@ -199,6 +200,18 @@ export const blackbox: PuzzleDef<BlackboxPuzzle, BlackboxState, BlackboxAction, 
   initInteraction: (p) => ({ cursor: p.w + 2 + 1 }),
   reduce,
   isRetraction: (a) => (a.type === "ball" || a.type === "lock") && !a.value,
+  describeAction: (p, a, _before, after) => {
+    switch (a.type) {
+      case "fire": {
+        const out = after.shots[a.entry]!;
+        const what = out === hitCode(p.w, p.h) ? "hit" : out === reflectCode(p.w, p.h) || out === a.entry ? "came back" : out >= 0 ? `came out at ${entryName(p, out).replace(/^the laser /, "")}` : "";
+        return `fire ${entryName(p, a.entry).replace(/^the /, "")}${what ? `: ${what}` : ""}`;
+      }
+      case "ball": return `${a.value ? "ball" : "no ball"} ${cellList(p, a.cells)}`;
+      case "lock": return `${a.value ? "lock" : "unlock"} ${cellList(p, a.cells)}`;
+      case "check": return after.solved ? "check: right" : "check";
+    }
+  },
   isSolved: (_p, s) => s.solved,
   rules: (p) => [
     `${p.minBalls === p.maxBalls ? p.minBalls : `between ${p.minBalls} and ${p.maxBalls}`} balls are hidden in the box. fire lasers in from the edges to find them.`,
@@ -214,3 +227,12 @@ export const blackbox: PuzzleDef<BlackboxPuzzle, BlackboxState, BlackboxAction, 
   },
   describe: (p) => `${p.w}×${p.h}, ${p.minBalls === p.maxBalls ? p.minBalls : `${p.minBalls}-${p.maxBalls}`} balls`,
 };
+
+/** "the laser above column C". */
+export function entryName(p: BlackboxPuzzle, e: number): string {
+  const { w, h } = p;
+  if (e < w) return `the laser above column ${colName(e)}`;
+  if (e < w + h) return `the laser right of row ${rowName(e - w)}`;
+  if (e < 2 * w + h) return `the laser below column ${colName(w - 1 - (e - w - h))}`;
+  return `the laser left of row ${rowName(h - 1 - (e - 2 * w - h))}`;
+}

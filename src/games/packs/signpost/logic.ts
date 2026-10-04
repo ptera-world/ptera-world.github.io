@@ -310,6 +310,14 @@ export const signpost: PuzzleDef<SignpostPuzzle, SignpostState, SignpostAction, 
     `the numbers already shown are fixed. 1 is the start and ${p.w * p.h} (no arrow) is the end.`,
     "linked cells without a shown number in their chain get letters (a, a+1, a+2, …) until the chain joins a number.",
   ],
+  describeAction: (p, a) => {
+    switch (a.type) {
+      case "link": return `link ${cellName(p, a.from)} → ${cellName(p, a.to)}`;
+      case "unlink": return `unlink ${cellList(p, a.from)}`;
+      case "cut": return `cut ${cellName(p, a.cell)} loose`;
+      case "cut-chain": return `break up the chain at ${cellName(p, a.cell)}`;
+    }
+  },
   isSolved,
   solve(p) {
     const a = analyze(p);

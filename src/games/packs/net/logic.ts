@@ -3,6 +3,7 @@ import { formats } from "./formats";
 import { generate, params, tierNeeded } from "./generate";
 import { coord, isTree, rotate, turnsBetween, type NetPuzzle } from "./grid";
 import { TIER_LABEL, searchSolutions, solveLogic, type Rule } from "./solver";
+import { listOf } from "../../lib/edge-names";
 
 export interface NetState {
   /** Current mask per cell; always a rotation of the puzzle's tile there. */
@@ -154,6 +155,18 @@ export const net: PuzzleDef<NetPuzzle, NetState, NetAction, NetInteraction, type
   init: (p) => ({ tiles: p.tiles.slice(), locked: p.tiles.map(() => 0) }),
   initInteraction: (p) => ({ cursor: p.source, ox: 0, oy: 0, source: p.source, drag: null, tap: "cw" }),
   reduce,
+  describeAction: (p, a, before, after) => {
+    const turn = (k: number) => (["", "clockwise", "halfway round", "counterclockwise"][((k % 4) + 4) % 4] ?? "");
+    switch (a.type) {
+      case "rotate": return `turn ${coord(p, a.cell)} ${turn(a.turns)}`;
+      case "rotateMany": return `turn ${listOf(a.cells, (c) => coord(p, c))}`;
+      case "set": {
+        const k = turnsBetween(before.tiles[a.cell]!, a.mask);
+        return [k > 0 ? `turn ${coord(p, a.cell)} ${turn(k)}` : "", a.lock ? `lock ${coord(p, a.cell)}` : ""].filter(Boolean).join(", ") || `keep ${coord(p, a.cell)}`;
+      }
+      case "lock": return `${a.on ?? after.locked[a.cells[0]!] ? "lock" : "unlock"} ${listOf(a.cells, (c) => coord(p, c))}`;
+    }
+  },
   isSolved: (p, s) => isTree(p, s.tiles),
   solve(p) {
     const sol = analyse(p).solution;

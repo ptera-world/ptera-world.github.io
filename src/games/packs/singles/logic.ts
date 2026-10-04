@@ -568,6 +568,7 @@ export const singles: PuzzleDef<SinglesPuzzle, SinglesState, SinglesAction, Sing
     "all the cells that aren't black must form one connected area, joined side by side.",
     "a circle is your own note that a cell stays white. it doesn't count for anything.",
   ],
+  describeAction: (p, a) => `${["clear", "black out", "circle"][a.value] ?? "mark"} ${cellList(p, a.cells)}`,
   isSolved,
   solve(p) {
     const a = analyze(p);

@@ -1,7 +1,7 @@
 import type { Hint, PuzzleDef, Rating } from "../../core/types";
 import { formats } from "./formats";
 import { generate, params } from "./generate";
-import { emptyState, graph, isValidSolution, islandName, type BridgesPuzzle, type BridgesState, type Graph } from "./graph";
+import { emptyState, graph, isValidSolution, islandName, pos, type BridgesPuzzle, type BridgesState, type Graph } from "./graph";
 import { TIER_NAMES, analyze, domainFromState, isContradiction, search } from "./solver";
 import { boardProblem } from "./techniques";
 
@@ -194,6 +194,22 @@ export const bridges: PuzzleDef<BridgesPuzzle, BridgesState, BridgesAction, Brid
   initInteraction: () => ({ cursor: 0, mode: "bridge", drag: null }),
   reduce,
   isRetraction,
+  describeAction: (p, a, _before, after) => {
+    const g = graph(p);
+    const where = (e: number) => `${pos(p, g.edges[e]!.a)}-${pos(p, g.edges[e]!.b)}`;
+    const one = (a: BridgesAction): string => {
+      switch (a.type) {
+        case "set":
+        case "cycle": {
+          const n = after.b[a.edge]!;
+          return `${where(a.edge)}: ${n === 0 ? "no bridge" : n === 1 ? "1 bridge" : `${n} bridges`}`;
+        }
+        case "mark": return `${a.on ?? after.no[a.edge] === 1 ? "✕" : "clear ✕"} ${where(a.edge)}`;
+        case "many": return [...new Set(a.actions.map(one))].join(", ");
+      }
+    };
+    return one(a);
+  },
   isSolved: (p, s) => isValidSolution(p, s.b),
   solve(p) {
     const sol = analyze(p).solution;

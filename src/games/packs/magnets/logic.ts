@@ -6,7 +6,8 @@ import {
   analyzeModel, bit, decides, isSingle, isUnique, solveLevel, trialRule, valueOf,
   type Analysis, type Constraint, type Doms, type Model,
 } from "../../lib/grid-kit/csp";
-import { cellList, type Focus } from "../../lib/grid-kit/names";
+import { cellList, cellName, type Focus } from "../../lib/grid-kit/names";
+import { listOf } from "../../lib/edge-names";
 
 /** Cell signs. */
 export const BLANK = 0, PLUS = 1, MINUS = 2;
@@ -605,6 +606,21 @@ export const magnets: PuzzleDef<MagnetsPuzzle, MagnetsState, MagnetsAction, Magn
     "a lone cell that isn't part of any domino is always blank.",
     "you can also mark a domino as blank, or as a magnet you haven't turned yet; small marks show what's left when a technique rules a choice out.",
   ],
+  describeAction: (p, a) => {
+    const g = geometry(p);
+    const m = a.type === "set" ? a.mask : a.keep;
+    const pair = (d: number) => g.dominoes[d]!.map((c) => cellName(p, c)) as [string, string];
+    const word = m === FULL ? "clear" : m === bit(NEUTRAL) ? "blank" : m === MAGNET ? "magnet" : null;
+    if (word) return `${word} ${listOf(a.doms, (d) => pair(d).join("-"))}`;
+    return listOf(a.doms, (d) => {
+      const [x, y] = pair(d);
+      if (m === bit(A_PLUS)) return `${x} +, ${y} −`;
+      if (m === bit(A_MINUS)) return `${x} −, ${y} +`;
+      if (m === (bit(NEUTRAL) | bit(A_PLUS))) return `${x} not −`;
+      if (m === (bit(NEUTRAL) | bit(A_MINUS))) return `${x} not +`;
+      return `${x}-${y}`;
+    });
+  },
   isSolved,
   solve(p) {
     const a = analyze(p);

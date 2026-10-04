@@ -237,6 +237,7 @@ export const pegs: PuzzleDef<PegsPuzzle, PegsState, PegsAction, PegsInteraction,
     grid[j.to] = PEG;
     return { grid, moves: s.moves + 1 };
   },
+  describeAction: (p, a) => `${cellAt(p, a.from)} → ${cellAt(p, a.to)}`,
   isSolved: (_p, s) => pegCount(s.grid) === 1,
   isLost: (p, s) => pegCount(s.grid) > 1 && jumps(p.w, p.h, s.grid).length === 0,
   rate,

@@ -275,6 +275,17 @@ export const guess: PuzzleDef<GuessPuzzle, GuessState, GuessAction, GuessInterac
   initInteraction: () => ({ slot: 0, colour: 1 }),
   reduce,
   isRetraction: (a) => a.type === "peg" && a.colour === 0,
+  describeAction: (_p, a, _before, after) => {
+    switch (a.type) {
+      case "peg": return a.colour ? `peg ${a.index + 1}: ${COLOUR_NAMES[a.colour]}` : `clear peg ${a.index + 1}`;
+      case "row": return `guess ${a.code.map((c) => COLOUR_NAMES[c]).join(", ")}`;
+      case "hold": return `${after.holds[a.index] ? "hold" : "let go of"} peg ${a.index + 1}`;
+      case "submit": {
+        const m = after.done[after.done.length - 1];
+        return m ? `hand in: ${m.black} black, ${m.white} white` : "hand in";
+      }
+    }
+  },
   isSolved,
   isLost: (p, s) => !isSolved(p, s) && s.done.length >= p.guesses,
   rules: (p) => [

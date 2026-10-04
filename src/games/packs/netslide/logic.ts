@@ -1,9 +1,9 @@
-import { colName, rowName } from "../../core/names";
 import type { Rng } from "../../core/rng";
 import { defineSchema, type Values } from "../../core/schema";
 import type { Format, PuzzleDef, Rating } from "../../core/types";
 import { D, DIRS, L, R, U, centre, connected, degree, neighbour, normalizeBarriers, opp, type Geometry } from "./grid";
 import { nextStep, solveAll, type PermMove, type PermSpec, type PermStep } from "../../lib/perm";
+import { describeShift } from "../../lib/shift-names";
 
 export const params = defineSchema({
   width: { type: "int", label: "width", default: 4, min: 3, max: 7 },
@@ -370,11 +370,7 @@ export const gridFormat: Format<NetslidePuzzle> = {
   },
 };
 
-export function describeShift(a: NetslideAction): string {
-  const dir = a.line === "row" ? (a.by > 0 ? "right" : "left") : (a.by > 0 ? "down" : "up");
-  const times = Math.abs(a.by) === 1 ? "" : ` ${Math.abs(a.by)} places`;
-  return `${a.line === "row" ? `row ${rowName(a.index)}` : `column ${colName(a.index)}`} ${dir}${times}`;
-}
+export { describeShift };
 
 const ratingCache = new WeakMap<NetslidePuzzle, Rating | null>();
 
@@ -413,6 +409,7 @@ export const netslide: PuzzleDef<NetslidePuzzle, NetslideState, NetslideAction, 
     if (a.by % len === 0) return s;
     return { tiles: shift(p.w, p.h, s.tiles, a), moves: s.moves + 1 };
   },
+  describeAction: (_p, a) => describeShift(a),
   isSolved: (p, s) => isSolvedTiles(p, s.tiles),
   solve(p) {
     const goal = target(p);

@@ -428,6 +428,7 @@ export const slant: PuzzleDef<SlantPuzzle, SlantState, SlantAction, SlantInterac
     "a number on a corner point is how many lines touch that point.",
     "the lines may never form a closed loop.",
   ],
+  describeAction: (p, a) => (a.value === NONE ? `clear ${cellList(p, a.cells)}` : `${cellList(p, a.cells)}: ${a.value === SLASH_BACK ? "\\" : "/"}`),
   isSolved,
   solve(p) {
     const a = analyze(p);

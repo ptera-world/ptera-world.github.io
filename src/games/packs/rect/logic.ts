@@ -2,11 +2,12 @@ import type { Rng } from "../../core/rng";
 import { defineSchema, type Values } from "../../core/schema";
 import type { Format, GenerateContext, Hint, PuzzleDef } from "../../core/types";
 import { neighbours } from "../../lib/grid-kit/grid";
-import { cellList, type Focus } from "../../lib/grid-kit/names";
+import { cellList, cellName, type Focus } from "../../lib/grid-kit/names";
 import {
   chosen, countSolutions, decided, freshAlive, layout, levelNeeded, saturate,
   type Alive, type Layout,
 } from "./solver";
+import { listOf } from "../../lib/edge-names";
 
 export interface RectPuzzle {
   w: number;
@@ -425,6 +426,12 @@ export const rect: PuzzleDef<RectPuzzle, RectState, RectAction, RectInteraction,
     "draw walls along the grid lines to split the grid into rectangles (squares count).",
     "every rectangle holds exactly one number, and that number is how many cells the rectangle has.",
   ],
+  describeAction: (p, a) => {
+    const g = geometry(p);
+    const name = (e: number) => `${cellName(p, g.edges[e]![0])}-${cellName(p, g.edges[e]![1])}`;
+    const parts = [a.on.length ? `wall ${listOf(a.on, name)}` : "", a.off.length ? `rub out ${listOf(a.off, name)}` : ""];
+    return parts.filter(Boolean).join(", ");
+  },
   isSolved,
   solve(p) {
     const a = analyze(p);

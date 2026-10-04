@@ -531,6 +531,7 @@ export const unruly: PuzzleDef<UnrulyPuzzle, UnrulyState, UnrulyAction, UnrulyIn
     ...(p.unique ? ["no two rows may be the same, and no two columns may be the same."] : []),
   ],
   features: (p) => (p.unique ? ["unique-lines"] : []),
+  describeAction: (p, a) => `${["clear", "light", "dark"][a.value] ?? "mark"} ${cellList(p, a.cells)}`,
   isSolved,
   solve(p) {
     const a = analyze(p);

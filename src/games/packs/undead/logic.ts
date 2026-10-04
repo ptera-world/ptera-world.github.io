@@ -270,6 +270,15 @@ export const undead: PuzzleDef<UndeadPuzzle, UndeadState, UndeadAction, UndeadIn
     "a monster passed more than once along the same line of sight counts each time it's seen.",
     "pencil marks are your own notes of which monsters a cell could still be. they don't count for anything.",
   ],
+  describeAction: (p, a, _before, after) => {
+    const kind = (v: number) => ["empty", "ghost", "vampire", "zombie"][v] ?? "?";
+    const kinds = (m: number) => [GHOST, VAMPIRE, ZOMBIE].filter((v) => m & bit(v)).map(kind).join("/");
+    switch (a.type) {
+      case "set": return a.value ? `${cellList(p, a.cells)}: ${kind(a.value)}` : `clear ${cellList(p, a.cells)}`;
+      case "marks": return a.marks & ALL ? `${cellList(p, a.cells)}: maybe ${kinds(a.marks)}` : `clear notes in ${cellList(p, a.cells)}`;
+      case "toggle-mark": return `${after.marks[a.cell]! & bit(a.value) ? "note" : "unnote"} ${kind(a.value)} in ${cellName(p, a.cell)}`;
+    }
+  },
   isSolved,
   solve(p) {
     const a = analyze(p);

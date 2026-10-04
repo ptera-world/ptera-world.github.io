@@ -1,7 +1,6 @@
 import type { Technique } from "../../core/types";
-import { colName, rowName } from "../../core/names";
 import { fireAt } from "./beam";
-import { cellList, type BlackboxAction, type BlackboxFocus, type BlackboxPuzzle, type BlackboxState } from "./logic";
+import { cellList, entryName, type BlackboxAction, type BlackboxFocus, type BlackboxPuzzle, type BlackboxState } from "./logic";
 import { expand, families, familySize, signature, type Evidence, type Families } from "./reason";
 
 type BlackboxTechnique = Technique<BlackboxPuzzle, BlackboxState, BlackboxAction>;
@@ -53,14 +52,6 @@ export function certain(p: BlackboxPuzzle, s: BlackboxState): { balls: number[];
 }
 
 /** "the laser above column C". */
-export function entryName(p: BlackboxPuzzle, e: number): string {
-  const { w, h } = p;
-  if (e < w) return `the laser above column ${colName(e)}`;
-  if (e < w + h) return `the laser right of row ${rowName(e - w)}`;
-  if (e < 2 * w + h) return `the laser below column ${colName(w - 1 - (e - w - h))}`;
-  return `the laser left of row ${rowName(h - 1 - (e - 2 * w - h))}`;
-}
-
 const fired = (s: BlackboxState) => s.shots.flatMap((v, e) => (v !== -1 ? [e] : []));
 const total = (k: Families) => k.list.reduce((a, f) => a + familySize(f), 0);
 

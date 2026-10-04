@@ -254,6 +254,7 @@ export const flood: PuzzleDef<FloodPuzzle, FloodState, FloodAction, null, typeof
     if (a.colour === s.grid[0] || isComplete(s.grid) || s.moves >= p.limit) return s;
     return { grid: fill(p.w, p.h, s.grid, a.colour), moves: s.moves + 1 };
   },
+  describeAction: (_p, a) => `flood ${COLOUR_NAMES[a.colour] ?? "?"}`,
   isSolved: (_p, s) => isComplete(s.grid),
   isLost: (p, s) => s.moves >= p.limit && !isComplete(s.grid),
   solve(p) {

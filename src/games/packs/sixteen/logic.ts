@@ -1,8 +1,8 @@
-import { colName, rowName } from "../../core/names";
 import type { Rng } from "../../core/rng";
 import { defineSchema, type Values } from "../../core/schema";
 import type { Format, PuzzleDef, Rating } from "../../core/types";
 import { nextStep, solveAll, type PermMove, type PermSpec, type PermStep } from "../../lib/perm";
+import { describeShift } from "../../lib/shift-names";
 
 export const params = defineSchema({
   width: { type: "int", label: "width", default: 4, min: 2, max: 8 },
@@ -177,12 +177,7 @@ export const gridFormat: Format<SixteenPuzzle> = {
   },
 };
 
-/** "row 3 right" / "column B up" (twice). */
-export function describeShift(a: SixteenAction): string {
-  const dir = a.line === "row" ? (a.by > 0 ? "right" : "left") : (a.by > 0 ? "down" : "up");
-  const times = Math.abs(a.by) === 1 ? "" : ` ${Math.abs(a.by)} places`;
-  return `${a.line === "row" ? `row ${rowName(a.index)}` : `column ${colName(a.index)}`} ${dir}${times}`;
-}
+export { describeShift };
 
 const ratingCache = new WeakMap<SixteenPuzzle, Rating | null>();
 
@@ -218,6 +213,7 @@ export const sixteen: PuzzleDef<SixteenPuzzle, SixteenState, SixteenAction, Sixt
     if (a.by % len === 0 || a.index < 0 || a.index >= (a.line === "row" ? p.h : p.w)) return s;
     return { tiles: shift(p.w, p.h, s.tiles, a), moves: s.moves + 1 };
   },
+  describeAction: (_p, a) => describeShift(a),
   isSolved: (_p, s) => isSolvedTiles(s.tiles),
   solve: (p) => ({ tiles: goal(p.w * p.h).slice(), moves: 0 }),
   rate,

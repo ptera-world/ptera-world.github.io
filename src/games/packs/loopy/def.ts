@@ -7,6 +7,7 @@ import { generateClues } from "./generator";
 import { getGrid, getTiling, listTilings, type Grid } from "./grid";
 import { edgeRef } from "./names";
 import { TIERS, analyse, type Analysis } from "./solver";
+import { listOf } from "../../lib/edge-names";
 
 export type { LoopyPuzzle };
 
@@ -161,6 +162,13 @@ export const loopy: PuzzleDef<LoopyPuzzle, LoopyState, LoopyAction, LoopyInterac
     const edges = s.edges.slice();
     for (const e of todo) edges[e] = a.value;
     return { edges };
+  },
+  describeAction: (p, a) => {
+    const verb = a.value === LINE ? "line" : a.value === CROSS ? "cross" : "clear";
+    const g = gridOf(p);
+    const named = a.edges.map((e) => edgeRef(g, e));
+    if (named.some((n) => n === "this edge")) return `${verb} ${a.edges.length === 1 ? "an edge" : `${a.edges.length} edges`}`;
+    return `${verb} ${listOf(named, (n) => n.replace(/^the /, ""))}`;
   },
   isSolved: (p, s) => check(gridOf(p), p.clues, s.edges).solved,
   solve(p) {
