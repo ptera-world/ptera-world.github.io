@@ -22,7 +22,9 @@ const CSS = `
 .sdk { display: flex; gap: 20px; width: 100%; height: 100%; align-items: center; justify-content: center; }
 .sdk-boardwrap { flex: 1 1 auto; min-width: 0; height: 100%; display: flex; align-items: center; justify-content: center; }
 .sdk-board { width: 100%; height: 100%; max-height: 100%; touch-action: none; user-select: none; -webkit-user-select: none; display: block; }
-.sdk-side { flex: 0 0 220px; display: flex; flex-direction: column; gap: 10px; max-height: 100%; overflow-y: auto; }
+.sdk-side { flex: 0 0 220px; align-self: stretch; display: grid; grid-template-rows: minmax(0, 1fr) auto minmax(0, 1fr); gap: 10px; min-height: 0; }
+.sdk-controls, .sdk-extra { display: flex; flex-direction: column; gap: 10px; }
+.sdk-extra { align-self: start; max-height: 100%; min-height: 0; overflow-y: auto; }
 .sdk-modes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
 .sdk-modes button { padding: 6px 2px; font-size: 13px; }
 .sdk-modes button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); }
@@ -84,7 +86,9 @@ const CSS = `
   .sdk { flex-direction: column; gap: 8px; height: auto; justify-content: flex-start; }
   .sdk-boardwrap { width: 100%; height: auto; flex: 0 0 auto; }
   .sdk-board { height: auto; max-height: 62svh; }
-  .sdk-side { flex: 0 0 auto; width: 100%; max-width: 480px; overflow: visible; max-height: none; }
+  .sdk-side { flex: 0 0 auto; width: 100%; max-width: 480px; display: flex; flex-direction: column; align-self: center; }
+  .sdk-spacer { display: none; }
+  .sdk-extra { max-height: none; overflow: visible; }
   .sdk-pad { grid-template-columns: repeat(var(--pad-cols-narrow), 1fr) !important; gap: 4px; }
   .sdk-pad button { aspect-ratio: auto; height: 46px; font-size: 20px; }
 }
@@ -270,11 +274,14 @@ export const sudokuView: View<LatinPuzzle, GridState, GridAction, GridInteractio
     const info = h("div", { class: "sdk-info", "aria-live": "polite" });
     const actions = h("div", { class: "sdk-actions" },
       h("button", { onpointerdown: (e: PointerEvent) => e.preventDefault(), onclick: () => erase() }, "erase"));
-    if (cfg.pad) side.append(modeBar, padGrid, actions);
-    side.append(info);
+    // invariant: the pad's position never depends on the height of the info line or rules
+    const controls = h("div", { class: "sdk-controls" });
+    const extra = h("div", { class: "sdk-extra" }, info);
+    side.append(h("div", { class: "sdk-spacer" }), controls, extra);
+    if (cfg.pad) controls.append(modeBar, padGrid, actions);
     if (cfg.rules) {
       const rules = rulesList(p);
-      if (rules.length) side.append(h("details", { class: "sdk-rules" }, h("summary", null, "rules"), h("ul", null, rules.map((r) => h("li", null, r)))));
+      if (rules.length) extra.append(h("details", { class: "sdk-rules" }, h("summary", null, "rules"), h("ul", null, rules.map((r) => h("li", null, r)))));
     }
     const wrap = h("div", { class: "sdk-boardwrap" }, svg);
     const container = h("div", { class: "sdk" }, wrap, side);

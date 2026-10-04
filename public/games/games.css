@@ -101,4 +101,6 @@ code { font-family: var(--mono); }
   .play { min-height: 100svh; }
   .panel { width: auto; border-left: none; border-top: 1px solid var(--border); }
   .board { padding: 8px; }
+  /* top-anchored so content growing below the board (status, rules) never moves it */
+  .board, .view { align-items: flex-start; }
 }
