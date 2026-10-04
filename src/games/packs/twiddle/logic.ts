@@ -129,14 +129,14 @@ async function generate(v: Values<typeof params>, rng: Rng, ctx: GenerateContext
     s = solved;
     const net = new Int32Array(rw * rh);
     for (let i = 0; i < total; i++) {
-      let x: number, y: number, dir: number;
+      let x: number, y: number, dir: number, ok: boolean;
       do {
         x = rng.int(rw);
         y = rng.int(rh);
         dir = rng.bool() ? 1 : -1;
         const old = net[y * rw + x]!, next = old + dir;
-        if (rw * rh === 1 || (Math.abs(next) >= Math.abs(old) && Math.abs(next) <= 2)) break;
-      } while (true);
+        ok = rw * rh === 1 || (Math.abs(next) >= Math.abs(old) && Math.abs(next) <= 2);
+      } while (!ok);
       s = rotate(base, s, { type: "rotate", x, y, clockwise: dir < 0 });
       net[y * rw + x] = net[y * rw + x]! + dir;
       for (let dy = -n + 1; dy < n; dy++) for (let dx = -n + 1; dx < n; dx++) {
