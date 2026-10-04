@@ -9,7 +9,7 @@ import { register } from "./index";
 import { techniques } from "./techniques";
 import { loopSides, lockConflicts } from "./assists";
 import { compactFormat, gridFormat, sgtFormat } from "./formats";
-import { D, DIRS, L, R, U, isTree, neighbour, opp, rotate, type NetPuzzle } from "./grid";
+import { D, DIRS, L, R, U, coord, isTree, neighbour, opp, rotate, type NetPuzzle } from "./grid";
 import { net, type NetAction, type NetHintFocus, type NetState } from "./logic";
 import { searchSolutions, solveLogic, type Tier } from "./solver";
 
@@ -232,6 +232,51 @@ test("technique hints nudge first, then explain with a ghost of the answer", asy
   expect(f.cell).toBeGreaterThanOrEqual(0);
   expect(f.mask).toBe(net.solve!(p)!.tiles[f.cell]);
   expect(full.message).toMatch(/lock it/);
+});
+
+test("every hint shows what it talks about: named cells are highlighted, \"like this\" has a ghost", async () => {
+  const name = /\b([A-Z]+)(\d+)\b/g;
+  const cellOf = (p: NetPuzzle, m: RegExpMatchArray) => {
+    let col = 0;
+    for (const ch of m[1]!) col = col * 26 + ch.charCodeAt(0) - 64;
+    return (Number(m[2]) - 1) * p.w + col - 1;
+  };
+  for (const params of [
+    { width: 3, height: 3, difficulty: "easy" },
+    { width: 7, height: 5, wrap: true, difficulty: "hard" },
+    { width: 12, height: 9, barriers: 40, difficulty: "normal" },
+    { width: 28, height: 3, difficulty: "normal" },
+  ]) {
+    const p = await gen(params, "explain");
+    const { session } = hosted(p);
+    let likeThis = 0;
+    for (let k = 0; k < 900 && !session.solved; k++) {
+      const nudge = session.hint()!;
+      for (const h of [nudge, nudge.more ?? nudge]) {
+        const f = h.focus as NetHintFocus;
+        for (const m of h.message.matchAll(name)) {
+          const c = cellOf(p, m);
+          expect(f.cell === c || f.cells.includes(c)).toBe(true);
+        }
+        if (/like this/.test(h.message)) {
+          likeThis++;
+          expect(f.cell).toBeGreaterThanOrEqual(0);
+          expect(f.mask).toBeDefined();
+          expect(session.state.tiles[f.cell]).not.toBe(f.mask);
+        }
+      }
+      session.batch(() => { for (const a of (nudge.actions ?? nudge.more!.actions)!) session.dispatch(a); });
+    }
+    expect(session.solved).toBe(true);
+    expect(likeThis).toBeGreaterThan(0);
+  }
+});
+
+test("cells are named by column letter and row number", () => {
+  const p = sgtFormat.parse("2x2:9c22");
+  expect(coord(p, 0)).toBe("A1");
+  expect(coord(p, 3)).toBe("B2");
+  expect(coord({ w: 30, h: 2, wrap: false }, 30 + 27)).toBe("AB2");
 });
 
 test("unlocking is a retraction; locking and turning aren't", () => {

@@ -29,7 +29,11 @@ export interface NetInteraction {
   source: number;
   /** Lock-painting drag in progress. */
   drag: { on: boolean; cells: number[] } | null;
+  /** What a tap or plain click on a tile does. Missing in games saved before it existed: treat as "cw". */
+  tap?: TapMode;
 }
+
+export type TapMode = "cw" | "ccw" | "lock";
 
 export interface NetHintFocus {
   /** The tile the hint is about; -1 when the hint only points at an area. */
@@ -134,7 +138,7 @@ export const net: PuzzleDef<NetPuzzle, NetState, NetAction, NetInteraction, type
   name: "pipes",
   aliases: ["net", "netwalk", "network", "knetwalk", "freenet"],
   tags: ["logic", "grid", "rotation", "connection"],
-  description: "turn the tiles so every pipe joins up into one network, with no loops and no loose ends.",
+  description: "every square holds a piece of pipe. turn the pieces so all the pipes join up into one single network, with no pipe ends left open and no loops.",
   generatorVersion: 1,
   params,
   presets: [
@@ -148,7 +152,7 @@ export const net: PuzzleDef<NetPuzzle, NetState, NetAction, NetInteraction, type
   generate,
   formats,
   init: (p) => ({ tiles: p.tiles.slice(), locked: p.tiles.map(() => 0) }),
-  initInteraction: (p) => ({ cursor: p.source, ox: 0, oy: 0, source: p.source, drag: null }),
+  initInteraction: (p) => ({ cursor: p.source, ox: 0, oy: 0, source: p.source, drag: null, tap: "cw" }),
   reduce,
   isSolved: (p, s) => isTree(p, s.tiles),
   solve(p) {
@@ -158,10 +162,13 @@ export const net: PuzzleDef<NetPuzzle, NetState, NetAction, NetInteraction, type
   hint,
   isRetraction: (a) => a.type === "lock" && a.on === false,
   rules: (p) => [
-    "turn the tiles. every pipe end has to meet a pipe end on the next tile.",
-    "everything joins up into one network, with no loops.",
+    "you can only turn tiles, never move them. each tile has a fixed piece: a dead end, a straight, a bend, a T or a cross.",
+    "every pipe end has to meet a pipe end on the tile next to it.",
+    "all the tiles join up into one network, and there are no loops in it.",
     ...(p.barriers.some((b) => b) ? ["pipes can't cross the thick walls."] : []),
     p.wrap ? "the edges wrap round: a pipe off one side comes back on the opposite side." : "pipes can't point off the edge of the board.",
+    "the small filled square marks the source: pipes joined to it light up, so you can see what's connected so far. it doesn't change the answer.",
+    "lock a tile once you're sure of it, so it can't be turned by accident. locked tiles are shaded.",
   ],
   features: (p) => [...(p.wrap ? ["wrap"] : []), ...(p.barriers.some((b) => b) ? ["walls"] : [])],
   rate,

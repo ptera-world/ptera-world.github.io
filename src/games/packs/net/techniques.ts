@@ -7,7 +7,7 @@ interface Info {
   name: string;
   description: string;
   /** Why the tile at `at` can't turn the other ways. */
-  because: (at: string) => string;
+  because: (at: string, p: NetPuzzle) => string;
   /** Where to look, without the answer. */
   nudge: string;
   practice: Record<string, unknown>;
@@ -17,7 +17,10 @@ const INFO: Record<Rule, Info> = {
   local: {
     name: "only fit",
     description: "a pipe can't point off the board, into a wall, or at a tile that can never point back, and it has to point at a tile that always points back. when only one way round is left, that's the way. locked tiles count as known.",
-    because: (at) => `every other way, ${at} points a pipe at a wall or edge, or doesn't meet its neighbours`,
+    because: (at, p) => {
+      const blocked = [...(p.wrap ? [] : ["the edge"]), ...(p.barriers.some((b) => b) ? ["a wall"] : [])];
+      return `every other way, ${at} ${blocked.length ? `points a pipe into ${blocked.join(" or ")}, or ` : ""}doesn't match the tiles next to it`;
+    },
     nudge: "a tile in the highlighted area only fits one way",
     practice: { width: 5, height: 5, difficulty: "easy" },
   },
@@ -76,8 +79,8 @@ export function stepFor(p: NetPuzzle, s: NetState, rule: Rule): CoreStep<NetActi
   const already = s.tiles[d.cell] === d.mask;
   const act = already ? `${at} is already right, lock it` : `turn ${at} like this and lock it`;
   let message: string;
-  if (main.rule === rule) message = `${act}: ${info.because("it")}`;
-  else if (ruleCells.length) message = `${info.because(ruleCells.map((c) => coord(p, c)).join(" and "))}, which leaves ${at} only one way to fit. ${act}`;
+  if (main.rule === rule) message = `${act}: ${info.because("it", p)}`;
+  else if (ruleCells.length) message = `${info.because(ruleCells.map((c) => coord(p, c)).join(" and "), p)}, which leaves ${at} only one way to fit. ${act}`;
   else message = `${act}: once ${info.name} rules a few ways out nearby, it only fits one way`;
   return {
     message,

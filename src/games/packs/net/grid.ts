@@ -3,6 +3,8 @@
  * (anticlockwise order, same encoding as Simon Tatham's net).
  */
 
+import { cellName } from "../../ui/board";
+
 export const R = 1, U = 2, L = 4, D = 8;
 export const DIRS = [R, U, L, D] as const;
 
@@ -122,7 +124,8 @@ export function normalizeBarriers(g: Geometry, barriers: number[]): number[] {
   return out;
 }
 
-export const coord = (p: Geometry, i: number): string => `(${(i % p.w) + 1}, ${Math.floor(i / p.w) + 1})`;
+/** Board-wide cell name ("C5": column letter, row number, from the top-left of the unscrolled board). */
+export const coord = (p: Geometry, i: number): string => cellName(i % p.w, Math.floor(i / p.w));
 
 /** Default source: the middle cell (rounded down), as in sgt. */
 export const centre = (g: Geometry): number => Math.floor(g.h / 2) * g.w + Math.floor(g.w / 2);
