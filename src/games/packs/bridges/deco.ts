@@ -3,7 +3,7 @@ import type { Derived } from "../../core/session";
 /**
  * Derived-annotation channel between bridges plugins and views. Plugins add CSS classes and
  * labels; views apply them. Known classes styled by the built-in view:
- *   island: done, error, g0..g7 (group colours)
+ *   island: done, error, g0..g7 (group colors)
  *   edge:   error, wrong, guide
  * Mods may add their own classes and ship matching CSS.
  */

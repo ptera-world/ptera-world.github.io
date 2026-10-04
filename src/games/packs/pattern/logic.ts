@@ -297,7 +297,7 @@ export const pattern: PuzzleDef<PatternPuzzle, PatternState, PatternAction, Patt
     "fill in cells so every row and column matches its clue.",
     "a clue lists the lengths of the blocks of filled cells in that line, in order: left to right for rows, top to bottom for columns.",
     "blocks are separated by at least one empty cell. a 0 means the line is empty.",
-    "cross out cells you know are empty, to keep track. crosses don't count towards the answer.",
+    "cross out cells you know are empty, to keep track. crosses don't count toward the answer.",
   ],
   reduce(p, s, a) {
     if (a.type !== "set") return s;

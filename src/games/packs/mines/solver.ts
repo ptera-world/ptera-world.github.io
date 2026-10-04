@@ -27,7 +27,7 @@ export interface Deduction {
 
 const nbCache = new Map<string, number[][]>();
 
-/** 8-neighbourhood of every cell, row-major. Shared and must not be mutated. */
+/** 8-neighborhood of every cell, row-major. Shared and must not be mutated. */
 export function neighbourTable(w: number, h: number): number[][] {
   const key = `${w}x${h}`;
   let t = nbCache.get(key);

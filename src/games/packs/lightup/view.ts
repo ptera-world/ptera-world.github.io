@@ -87,7 +87,7 @@ function assetMarkup(markup: string): string {
   return t.startsWith("<") ? t.replace(/^<svg\b/, `<svg width="${SIZE}" height="${SIZE}"`) : `<image href="${t}" width="${SIZE}" height="${SIZE}"/>`;
 }
 
-/** Every colour and mark the board draws, with the same tokens and the current theme's assets. */
+/** Every color and mark the board draws, with the same tokens and the current theme's assets. */
 function legend(look: Look): { sample: string; meaning: string }[] {
   const bulb = assetMarkup(look.asset("lightup.bulb", ASSETS.bulb));
   const dot = assetMarkup(look.asset("lightup.dot", ASSETS.dot));

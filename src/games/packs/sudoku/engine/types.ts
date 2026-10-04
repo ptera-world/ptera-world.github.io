@@ -70,7 +70,7 @@ export interface RenderCtx {
   S: number;
   layer: { under: SVGGElement; over: SVGGElement; outside: SVGGElement };
   svg: <K extends keyof SVGElementTagNameMap>(tag: K, attrs?: Record<string, unknown> | null, ...children: (Node | string | number | null | undefined | false)[]) => SVGElementTagNameMap[K];
-  /** Centre of a cell, or of an off-grid position given as (row, col). */
+  /** Center of a cell, or of an off-grid position given as (row, col). */
   center(cell: number): [number, number];
   at(row: number, col: number): [number, number];
   /** Keep the cell's top-left corner free of corner marks (a clue label sits there). */

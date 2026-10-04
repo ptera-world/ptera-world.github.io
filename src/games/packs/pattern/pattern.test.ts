@@ -233,7 +233,7 @@ test("finished lines get crossed automatically inside the same undo step", () =>
   expect(session.state.cells[1]).toBe(UNKNOWN);
 });
 
-test("every technique can be practised", async () => {
+test("every technique can be practiced", async () => {
   for (const t of patternTechniques) {
     for (const seed of ["a", "b", "c", "d"]) {
       const t0 = performance.now();

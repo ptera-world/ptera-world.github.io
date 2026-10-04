@@ -11,8 +11,8 @@ const LOOK = "sudoku: highlight";
 const MODE_HELP: Record<string, string> = {
   digit: "digits and the pad write the answer into the selected cells",
   corner: "digits and the pad write small corner marks: where a digit could go (e.g. the two spots for a 5 in a box)",
-  center: "digits and the pad write small centre marks: which digits a cell could still be",
-  color: "digits and the pad paint the selected cells, to track ideas; colours don't affect the answer",
+  center: "digits and the pad write small center marks: which digits a cell could still be",
+  color: "digits and the pad paint the selected cells, to track ideas; colors don't affect the answer",
 };
 
 /**
@@ -38,12 +38,12 @@ export function boardCommands(session: LatinSession, cellAt: (e: Event | undefin
     })),
     {
       id: "sudoku.clear", label: "erase", category: INPUT, keys: ["delete", "backspace", "0"], menu: "board",
-      description: "clear the selected cells: your digits first, then marks, then colours (colours first in colour mode); givens stay",
+      description: "clear the selected cells: your digits first, then marks, then colors (colors first in color mode); givens stay",
       run: () => erase(session),
     },
     ...upTo(n).map((d): CommandDef => ({
       id: `sudoku.d${d}`, label: `enter ${d}`, category: INPUT, keys: [String(d)],
-      description: `put ${d} in the selected cells (as a digit, mark or colour, depending on the input mode); again to take it out`,
+      description: `put ${d} in the selected cells (as a digit, mark or color, depending on the input mode); again to take it out`,
       run: () => input(session, d),
     })),
     ...upTo(n).map((d): CommandDef => ({
@@ -52,18 +52,18 @@ export function boardCommands(session: LatinSession, cellAt: (e: Event | undefin
       run: () => input(session, d, "corner"),
     })),
     ...upTo(n).map((d): CommandDef => ({
-      id: `sudoku.center-${d}`, label: `centre mark ${d}`, category: MARKS, keys: [`$mod+${d}`], hidden: true,
+      id: `sudoku.centre-${d}`, label: `center mark ${d}`, category: MARKS, keys: [`$mod+${d}`], hidden: true,
       description: `toggle a small ${d} in the middle of the selected cells, whatever the input mode`,
       run: () => input(session, d, "center"),
     })),
     ...upTo(9).map((d): CommandDef => ({
-      id: `sudoku.color-${d}`, label: `colour ${d}`, category: MARKS, keys: [`alt+${d}`], hidden: true,
-      description: `toggle colour ${d} on the selected cells, whatever the input mode`,
+      id: `sudoku.colour-${d}`, label: `color ${d}`, category: MARKS, keys: [`alt+${d}`], hidden: true,
+      description: `toggle color ${d} on the selected cells, whatever the input mode`,
       run: () => input(session, d, "color"),
     })),
     {
       id: "sudoku.mode-next", label: "next input mode", category: INPUT, keys: ["space"],
-      description: "cycle digit → corner → centre → colour",
+      description: "cycle digit → corner → center → color",
       run: () => {
         const i = MODES.findIndex((m) => m.id === session.interaction.mode);
         setMode(session, MODES[(i + 1) % MODES.length]!.id);
@@ -71,12 +71,12 @@ export function boardCommands(session: LatinSession, cellAt: (e: Event | undefin
     },
     {
       id: "sudoku.fill-candidates", label: "fill in candidates", category: MARKS, menu: "board",
-      description: `write every digit that could still go in each empty cell as centre marks, in ${whole}`,
+      description: `write every digit that could still go in each empty cell as center marks, in ${whole}`,
       run: () => fillCandidates(session),
     },
     {
-      id: "sudoku.clear-colors", label: "clear colours", category: MARKS, menu: "board",
-      description: `remove colours from ${whole}`,
+      id: "sudoku.clear-colors", label: "clear colors", category: MARKS, menu: "board",
+      description: `remove colors from ${whole}`,
       run: () => {
         const sel = session.interaction.selection;
         session.dispatch({ type: "clear", cells: sel.length > 1 ? sel : [...Array(size).keys()], layer: "colors" });

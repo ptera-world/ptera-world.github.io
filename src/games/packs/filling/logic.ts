@@ -361,8 +361,8 @@ function rate(p: FillingPuzzle): { label: string; score: number } {
 
 /**
  * A random filled board after tatham's: cells start alone, and any region touching a region of
- * its own size merges with its smallest neighbour that keeps it within the largest number;
- * leftover 1s are merged into neighbours where that keeps every region legal. Null if stuck.
+ * its own size merges with its smallest neighbor that keeps it within the largest number;
+ * leftover 1s are merged into neighbors where that keeps every region legal. Null if stuck.
  */
 export function makeBoard(w: number, h: number, rng: Rng): number[] | null {
   const n = w * h, top = maxNumber(w, h);
@@ -398,7 +398,7 @@ export function makeBoard(w: number, h: number, rng: Rng): number[] | null {
   let board = Array.from({ length: n }, (_, c) => size[find(c)]!);
   const geo: Geometry = { w, h, n, top, full: fullMask(top), nbrs };
   const legal = (b: number[]) => groups(geo, (x) => b[x]!).list.every((gr) => gr.cells.length === gr.value);
-  // a 1 joins a neighbouring region when the grown region keeps the board legal
+  // a 1 joins a neighboring region when the grown region keeps the board legal
   for (let changed = true; changed;) {
     changed = false;
     for (let c = 0; c < n && !changed; c++) {

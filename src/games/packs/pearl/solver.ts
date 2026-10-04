@@ -171,7 +171,7 @@ const whiteTurnRule: Rule = (p, g, k, emit) => {
   return res;
 };
 
-/** True if a white pearl's neighbour n (reached going direction d) could still turn there. */
+/** True if a white pearl's neighbor n (reached going direction d) could still turn there. */
 function canTurn(g: EdgeGrid, k: Knowledge, n: number, d: number): boolean {
   if (n < 0 || stateAt(g, k, n, d) === LINE) return false;
   return stateAt(g, k, n, (d + 1) % 4) !== NO || stateAt(g, k, n, (d + 3) % 4) !== NO;
@@ -394,13 +394,13 @@ export function analyze(p: PearlPuzzle): Analysis {
 // --- generation ---
 
 /**
- * A random loop through cell centres: the outline between an inside and an outside colouring of
- * the (w-1)×(h-1) squares between centres (beyond the board counts as outside). Both colourings
- * grow from a seed one square at a time, always keeping each colour one connected piece that
+ * A random loop through cell centers: the outline between an inside and an outside coloring of
+ * the (w-1)×(h-1) squares between centers (beyond the board counts as outside). Both colorings
+ * grow from a seed one square at a time, always keeping each color one connected piece that
  * never meets itself only at a corner, so the outline is a single loop that never touches itself.
- * Each step colours the square that leaves the most places for black pearls along the two
- * outlines so far, then the one with the fewest neighbours of its colour; afterwards squares
- * touching just one square of the other colour are flipped across, and then a tenth of the
+ * Each step colors the square that leaves the most places for black pearls along the two
+ * outlines so far, then the one with the fewest neighbors of its color; afterward squares
+ * touching just one square of the other color are flipped across, and then a tenth of the
  * flippable ones at random. 1 per loop edge.
  */
 export function randomLoop(w: number, h: number, rng: Rng): number[] {
@@ -426,14 +426,14 @@ export function randomLoop(w: number, h: number, rng: Rng): number[] {
     }
     return flips === 2;
   };
-  /** Bits (up 1, right 2, down 4, left 8) of the outline of colour s through centre (x, y). */
+  /** Bits (up 1, right 2, down 4, left 8) of the outline of color s through center (x, y). */
   const arms = (x: number, y: number, s: number) => {
     const nw = at(x - 1, y - 1) === s, ne = at(x, y - 1) === s, sw = at(x - 1, y) === s, se = at(x, y) === s;
     return (nw !== ne ? 1 : 0) | (ne !== se ? 2 : 0) | (sw !== se ? 4 : 0) | (nw !== sw ? 8 : 0);
   };
   const straightV = (x: number, y: number, s: number) => x >= 0 && y >= 0 && x < w && y < h && arms(x, y, s) === 5;
   const straightH = (x: number, y: number, s: number) => x >= 0 && y >= 0 && x < w && y < h && arms(x, y, s) === 10;
-  /** Black-pearl sites on the outline of colour s among centres with x0 <= x < x1, y0 <= y < y1. */
+  /** Black-pearl sites on the outline of color s among centers with x0 <= x < x1, y0 <= y < y1. */
   const blackSites = (s: number, x0 = 0, y0 = 0, x1 = w, y1 = h) => {
     let n = 0;
     for (let y = Math.max(0, y0); y < Math.min(h, y1); y++) {

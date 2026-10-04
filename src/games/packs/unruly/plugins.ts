@@ -5,11 +5,11 @@ import { CONFLICTS_KEY } from "./view";
 export const conflicts = conflictsPlugin<UnrulyPuzzle, UnrulyState>({
   id: "unruly.conflicts",
   puzzle: "unruly",
-  description: "marks rule breaks in red: three of a colour in a row, lines with more than half of one colour, and (with all lines different) two lines that are the same",
+  description: "marks rule breaks in red: three of a color in a row, lines with more than half of one color, and (with all lines different) two lines that are the same",
   key: CONFLICTS_KEY,
   kinds: [
     { id: "runs", label: "three in a row" },
-    { id: "counts", label: "too many of one colour in a line" },
+    { id: "counts", label: "too many of one color in a line" },
     { id: "repeats", label: "two lines the same" },
   ],
   find: (p, s) => findConflicts(p, s.marks),

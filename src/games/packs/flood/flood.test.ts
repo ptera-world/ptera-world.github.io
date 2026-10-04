@@ -44,7 +44,7 @@ test("techniques alone finish within the limit, even with no spare moves", async
   }
 });
 
-test("wiping out a colour really removes it", async () => {
+test("wiping out a color really removes it", async () => {
   const p = await gen({ width: 8, height: 8, colours: 4 }, "w");
   let s = flood.init(p);
   for (let i = 0; i < 40 && !flood.isSolved(p, s); i++) {

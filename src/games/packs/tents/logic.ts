@@ -63,9 +63,9 @@ export interface Geometry {
   h: number;
   n: number;
   trees: number[];
-  /** Orthogonal neighbours. */
+  /** Orthogonal neighbors. */
   nbrs: number[][];
-  /** All eight neighbours. */
+  /** All eight neighbors. */
   ring: number[][];
   /** Rows then columns. */
   lines: number[][];
@@ -144,7 +144,7 @@ export function matchable(g: Geometry, must: readonly number[], may: readonly nu
     }
     return false;
   };
-  // cover the required cells first; augmenting from trees afterwards never uncovers them
+  // cover the required cells first; augmenting from trees afterward never uncovers them
   for (const c of must) if (!augmentFromCell(c, new Set())) return false;
   for (const t of g.trees) if (!tentOf.has(t) && !augmentFromTree(t, new Set())) return false;
   return true;
@@ -520,7 +520,7 @@ function placeTents(g: Geometry, count: number, rng: Rng): number[] | null {
   return out.length === count ? out : null;
 }
 
-/** A tree for every tent: a random matching of tents to distinct orthogonal neighbours; null if there's none. */
+/** A tree for every tent: a random matching of tents to distinct orthogonal neighbors; null if there's none. */
 function placeTrees(w: number, h: number, tents: number[], rng: Rng): number[] | null {
   const isTent = new Set(tents);
   const treeOf = new Map<number, number>(), tentOf = new Map<number, number>();

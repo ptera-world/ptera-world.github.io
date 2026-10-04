@@ -478,7 +478,7 @@ export function dominoLayout(w: number, h: number, rng: Rng): number[] {
       pair[j] = i;
     }
   }
-  // augment from cells of one checkerboard colour
+  // augment from cells of one checkerboard color
   const black = (i: number) => ((i % w) + Math.floor(i / w)) % 2 === 0;
   const augment = (i: number, seen: Uint8Array): boolean => {
     for (const j of nbrs(i)) {

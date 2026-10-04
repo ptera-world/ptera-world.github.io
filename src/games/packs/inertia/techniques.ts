@@ -19,7 +19,7 @@ export const nextGem: InertiaTechnique = {
     const what = r.gems.length === 1 ? `the gem at ${cellAt(p, target)}` : `${r.gems.length} gems`;
     return {
       message: n === 1
-        ? `roll ${DIR_NAMES[d]}: it picks up ${what}, and every other gem can still be reached afterwards.`
+        ? `roll ${DIR_NAMES[d]}: it picks up ${what}, and every other gem can still be reached afterward.`
         : `roll ${DIR_NAMES[d]}: ${n} rolls reach ${what}, never stopping anywhere that cuts a gem off.`,
       nudge: `head for the gem at ${cellAt(p, target)}`,
       focus: { path: r.paths[0], gems: r.gems } satisfies InertiaFocus,

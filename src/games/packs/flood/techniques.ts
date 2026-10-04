@@ -5,7 +5,7 @@ type FloodTechnique = Technique<FloodPuzzle, FloodState, FloodAction>;
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
-/** Cells a fill of `colour` adds to the flooded area. */
+/** Cells a fill of `color` adds to the flooded area. */
 function gained(p: FloodPuzzle, grid: readonly number[], colour: number): number[] {
   const before = region(p.w, p.h, grid);
   const after = region(p.w, p.h, fill(p.w, p.h, grid, colour));
@@ -18,10 +18,10 @@ function playable(p: FloodPuzzle, s: FloodState): boolean {
 
 export const clearColour: FloodTechnique = {
   id: "flood.clear-colour",
-  name: "wipe out a colour",
+  name: "wipe out a color",
   puzzles: ["flood"],
   level: 1,
-  description: "if every cell of some colour left on the board touches your area (or joins it through others of that colour), flooding with it takes that colour off the board for good: one fewer colour to come back for.",
+  description: "if every cell of some color left on the board touches your area (or joins it through others of that color), flooding with it takes that color off the board for good: one fewer color to come back for.",
   find(p, s) {
     if (!playable(p, s)) return null;
     let best: { colour: number; got: number[] } | null = null;
@@ -37,7 +37,7 @@ export const clearColour: FloodTechnique = {
     const name = COLOUR_NAMES[best.colour]!;
     return {
       message: `flood ${name}: every ${name} cell left joins your area (${plural(best.got.length, "cell", "cells")}), so ${name} is gone from the board for good.`,
-      nudge: `one colour can be wiped out completely right now`,
+      nudge: `one color can be wiped out completely right now`,
       focus: { gained: best.got } satisfies FloodFocus,
       actions: [{ type: "fill", colour: best.colour }],
     };
@@ -62,7 +62,7 @@ export const lookahead: FloodTechnique = {
       message: finishes
         ? `flood ${name}: that finishes the board.`
         : `flood ${name} (${plural(got.length, "cell joins", "cells join")}): of every three-fill sequence, starting with ${name} brings the farthest cells closest. the method finishes in ${plural(left, "fill", "fills")} from here.`,
-      nudge: "look for the colour that opens up the most of the board, a few moves ahead",
+      nudge: "look for the color that opens up the most of the board, a few moves ahead",
       focus: { gained: got } satisfies FloodFocus,
       actions: [{ type: "fill", colour: c }],
     };

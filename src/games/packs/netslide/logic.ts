@@ -30,7 +30,7 @@ export interface NetslideState {
   moves: number;
 }
 
-/** Slide a row (positive = right) or column (positive = down) round. The centre row and column never move. */
+/** Slide a row (positive = right) or column (positive = down) round. The center row and column never move. */
 export type NetslideAction = { type: "shift"; line: "row" | "col"; index: number; by: number };
 
 export interface NetslideFocus {
@@ -62,7 +62,7 @@ export const isSolvedTiles = (p: NetslidePuzzle, tiles: readonly number[]): bool
 
 // --- generation ---
 
-/** A random spanning tree grown from the centre with no four-way crossings. */
+/** A random spanning tree grown from the center with no four-way crossings. */
 function growTree(g: Geometry, rng: Rng): number[] {
   const n = g.w * g.h;
   const tiles = Array.from({ length: n }, () => 0);
@@ -139,7 +139,7 @@ function generate(v: Values<typeof params>, rng: Rng): NetslidePuzzle {
 
 const NODE_BUDGET = 400_000;
 
-/** Some finished arrangement of the board's own tiles (the centre stays put), or null if none is found. */
+/** Some finished arrangement of the board's own tiles (the center stays put), or null if none is found. */
 export function findArrangement(p: NetslidePuzzle): number[] | null {
   const n = p.w * p.h;
   const c0 = centre(p);
@@ -169,7 +169,7 @@ export function findArrangement(p: NetslidePuzzle): number[] | null {
     return true;
   };
   if (!fits(c0, out[c0]!)) return null;
-  /** Every empty neighbour of i can still take some remaining tile. */
+  /** Every empty neighbor of i can still take some remaining tile. */
   const forward = (i: number): boolean => {
     for (const d of DIRS) {
       const j = neighbour(p, i, d);
@@ -392,7 +392,7 @@ export const netslide: PuzzleDef<NetslidePuzzle, NetslideState, NetslideAction, 
   name: "netslide",
   aliases: ["netslide", "sliding net", "pipes"],
   tags: ["sliding", "moves", "network"],
-  description: "slide rows and columns of pipe pieces round until every piece joins up into one network with the centre.",
+  description: "slide rows and columns of pipe pieces round until every piece joins up into one network with the center.",
   generatorVersion: 1,
   params,
   presets: [
@@ -422,8 +422,8 @@ export const netslide: PuzzleDef<NetslidePuzzle, NetslideState, NetslideAction, 
   hint: (p) => (target(p) ? null : { message: "no finished arrangement of these pieces turned up, so there's no hint for this board" }),
   rules: (p) => [
     "a move slides one whole row or column along by one; the piece pushed off one end comes back on at the other.",
-    "the middle row and the middle column can't slide, so the centre piece never moves.",
-    `connect every piece into one network with the centre: pipe ends must meet, and can't cross the thick walls${p.wrap ? "" : " or the board's edge"}.`,
+    "the middle row and the middle column can't slide, so the center piece never moves.",
+    `connect every piece into one network with the center: pipe ends must meet, and can't cross the thick walls${p.wrap ? "" : " or the board's edge"}.`,
     ...(p.wrap ? ["pipes may run off one edge and come back on the opposite one."] : []),
   ],
   describe: (p) => `${p.w}×${p.h}${p.wrap ? " wrapping" : ""}`,

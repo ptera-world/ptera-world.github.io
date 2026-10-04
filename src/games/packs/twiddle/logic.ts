@@ -21,7 +21,7 @@ export interface TwiddlePuzzle {
   orientable: boolean;
   /** Row-major numbers, 1-based. */
   tiles: number[];
-  /** Quarter turns anticlockwise from upright, per cell (all 0 unless orientable). */
+  /** Quarter turns counterclockwise from upright, per cell (all 0 unless orientable). */
   turns: number[];
 }
 
@@ -243,7 +243,7 @@ export const blockName = (p: Pick<TwiddlePuzzle, "w" | "n">, x: number, y: numbe
   `the block ${cellName(x, y)}–${cellName(x + p.n - 1, y + p.n - 1)}`;
 
 export function describeTurn(p: Pick<TwiddlePuzzle, "w" | "n">, a: TwiddleAction): string {
-  return `turn ${blockName(p, a.x, a.y)} ${a.clockwise ? "clockwise" : "anticlockwise"}`;
+  return `turn ${blockName(p, a.x, a.y)} ${a.clockwise ? "clockwise" : "counterclockwise"}`;
 }
 
 const ratingCache = new WeakMap<TwiddlePuzzle, Rating | null>();

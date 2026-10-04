@@ -52,7 +52,7 @@ function writeDesc(p: NetPuzzle): string {
 
 const SGT_RE = /^(\d+)(?:x(\d+))?([^:]*):([0-9a-fA-Fhv]+)$/;
 
-/** Simon Tatham's Portable Puzzle Collection game id, e.g. `5x5w:a3c...`. The source is not part of it (sgt starts at the centre). */
+/** Simon Tatham's Portable Puzzle Collection game id, e.g. `5x5w:a3c...`. The source is not part of it (sgt starts at the center). */
 export const sgtFormat: Format<NetPuzzle> = {
   id: "sgt",
   label: "sgt game id (WxH[w]:tiles)",

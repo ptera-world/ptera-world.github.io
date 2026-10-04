@@ -153,8 +153,8 @@ export const noLoop = technique({
 });
 
 export const neighbours = technique({
-  id: "tracks.neighbours", name: "dragged-in neighbour", level: 6, practice: { params: MEDIUM },
-  description: "a cell whose only other open sides are blocked would, if it had track, have to carry it into its neighbour along the row or column. if that line has only one track cell left, the cell can't have track; if it has only one empty cell left, the neighbour must have track.",
+  id: "tracks.neighbours", name: "dragged-in neighbor", level: 6, practice: { params: MEDIUM },
+  description: "a cell whose only other open sides are blocked would, if it had track, have to carry it into its neighbor along the row or column. if that line has only one track cell left, the cell can't have track; if it has only one empty cell left, the neighbor must have track.",
 }, (p, s, t) => {
   const hit = first(p, s, ["neighbours"], t);
   if (!hit) return null;

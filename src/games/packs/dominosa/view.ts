@@ -180,7 +180,7 @@ export function dominosaView(board: Board): View<DominosaPuzzle, DominosaState, 
         cursor.setAttribute("height", String(ky % 2 ? half : SIZE - 0.6));
       };
 
-      /** The placement whose edge is nearest the pointer inside its cell, and the cell under it, and whether the pointer is near that cell's centre. */
+      /** The placement whose edge is nearest the pointer inside its cell, and the cell under it, and whether the pointer is near that cell's center. */
       const pointAt = (e: PointerEvent): { q: number; cell: number; centre: boolean } => {
         const mtx = svg.getScreenCTM();
         if (!mtx) return { q: -1, cell: -1, centre: false };

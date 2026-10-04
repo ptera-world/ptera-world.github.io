@@ -161,7 +161,7 @@ export function cycleEdges(g: Graph, b: readonly number[]): number[] {
 }
 
 /**
- * Bridges (cut edges) of an undirected multigraph given as adjacency lists of [neighbour, edgeId].
+ * Bridges (cut edges) of an undirected multigraph given as adjacency lists of [neighbor, edgeId].
  * Parallel edges are never cuts.
  */
 export function cutEdges(n: number, adj: readonly (readonly [number, number])[][]): number[] {

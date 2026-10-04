@@ -9,7 +9,7 @@ export interface Search {
 
 const BUDGET = 60_000;
 
-/** A colour with exactly one tile left can never be removed. */
+/** A color with exactly one tile left can never be removed. */
 export function loneColour(grid: readonly number[]): number {
   const counts = new Map<number, number>();
   for (const c of grid) if (c) counts.set(c, (counts.get(c) ?? 0) + 1);
@@ -17,7 +17,7 @@ export function loneColour(grid: readonly number[]): number {
   return 0;
 }
 
-/** Tiles with no same-coloured neighbour; fewer is better for move ordering. */
+/** Tiles with no same-colored neighbor; fewer is better for move ordering. */
 function isolated(w: number, h: number, grid: readonly number[]): number {
   let n = 0;
   for (let p = 0; p < grid.length; p++) {

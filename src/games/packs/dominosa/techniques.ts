@@ -93,7 +93,7 @@ export const onlyPlace = technique({
   id: "dominosa.only-place",
   name: "only place for a domino",
   level: 1,
-  description: "a domino that has just one pair of neighbouring cells left showing its two numbers goes there.",
+  description: "a domino that has just one pair of neighboring cells left showing its two numbers goes there.",
   practice: { params: EASY },
 }, (p, s, target) => {
   const hit = first(p, s, ["domino-one"], target);
@@ -109,7 +109,7 @@ export const onlyNeighbour = technique({
   id: "dominosa.only-neighbour",
   name: "only one partner",
   level: 2,
-  description: "a cell that can only pair with one of its neighbours (the others are taken, lined off, or would repeat a domino) is a domino with that neighbour.",
+  description: "a cell that can only pair with one of its neighbors (the others are taken, lined off, or would repeat a domino) is a domino with that neighbor.",
   practice: { params: EASY },
 }, (p, s, target) => {
   const hit = first(p, s, ["cell-one"], target);
@@ -120,7 +120,7 @@ export const onlyNeighbour = technique({
   const y = g.pa[q] === x ? g.pb[q]! : g.pa[q]!;
   return step(hit.raw, hit.placements,
     `${cellName(p, x)} can only pair with ${cellName(p, y)}, so ${outcome(p, hit.placements, YES)}`,
-    `which neighbour can ${cellName(p, x)} still pair with?`, { placements: [], because: [x] }, [x, y]);
+    `which neighbor can ${cellName(p, x)} still pair with?`, { placements: [], because: [x] }, [x, y]);
 });
 
 export const oneDomino = technique({

@@ -83,7 +83,7 @@ const num = (fill: string, extra = "") => `<text x="10" y="11" font-size="13" fo
 const cell = (fill: string) => `<rect x="2" y="2" width="16" height="16" fill="${fill}" stroke="var(--border)" stroke-width="0.6"/>`;
 const cross = (stroke: string) => `${edge("var(--border)", 0.6)}<path d="M8 8L12 12M8 12L12 8" stroke="${stroke}" stroke-width="1.2" stroke-linecap="round"/>`;
 
-/** Every colour and mark the board can show, for the how-to-play card. */
+/** Every color and mark the board can show, for the how-to-play card. */
 const LEGEND: readonly { sample: string; meaning: string }[] = [
   { sample: sw(edge("var(--border)", 0.6) + dots), meaning: "an undecided edge between two dots" },
   { sample: sw(edge("var(--text)", 2.4) + dots), meaning: "a line you drew: part of the loop" },
@@ -95,16 +95,16 @@ const LEGEND: readonly { sample: string; meaning: string }[] = [
   { sample: sw(dot("var(--warn)")), meaning: "an orange dot is where a line stops for now (a loose end)" },
   { sample: sw(edge("var(--warn)", 2.4) + dots), meaning: "orange lines form a loop that closed too early, leaving other lines out" },
   { sample: sw(edge("var(--danger)", 2.4) + dots), meaning: "a red line or cross disagrees with the answer (when \"show mistakes\" is on)" },
-  { sample: sw(`<line x1="3" y1="10" x2="10" y2="10" stroke="var(--loopy-seg0, #e8a46a)" stroke-width="2.4" stroke-linecap="round"/><line x1="10" y1="10" x2="17" y2="10" stroke="var(--loopy-seg1, #7ab8e8)" stroke-width="2.4" stroke-linecap="round"/>`), meaning: "each separate piece of line in its own colour (when that check is on)" },
+  { sample: sw(`<line x1="3" y1="10" x2="10" y2="10" stroke="var(--loopy-seg0, #e8a46a)" stroke-width="2.4" stroke-linecap="round"/><line x1="10" y1="10" x2="17" y2="10" stroke="var(--loopy-seg1, #7ab8e8)" stroke-width="2.4" stroke-linecap="round"/>`), meaning: "each separate piece of line in its own color (when that check is on)" },
   { sample: sw(cell("var(--accent-soft)")), meaning: "shaded inside the loop, worked out from your lines and crosses (when shading is on)" },
   { sample: sw(cell("var(--surface-2)")), meaning: "shaded outside the loop (when outside shading is on)" },
   { sample: sw(cell("var(--hint-soft)") + edge("var(--hint)", 2.4, 'stroke-dasharray="2 1.6"')), meaning: "what the current hint is talking about" },
   { sample: sw(edge("var(--focus)", 4, 'opacity="0.55"')), meaning: "the keyboard cursor (only while you use the keyboard)" },
-  { sample: sw(edge("var(--accent)", 2.4) + dots), meaning: "lines turn this colour once the puzzle is solved" },
+  { sample: sw(edge("var(--accent)", 2.4) + dots), meaning: "lines turn this color once the puzzle is solved" },
 ];
 
 
-/** Default cross mark; its colour follows the mark's state (currentColor / inherited stroke). */
+/** Default cross mark; its color follows the mark's state (currentColor / inherited stroke). */
 const CROSS_MARK = `<path d="M-1 -1L1 1M-1 1L1 -1" fill="none" stroke-width="0.5" stroke-linecap="round"/>`;
 
 let mounts = 0;
@@ -234,7 +234,7 @@ export function makeLoopyView(look: Look = plainLook, labels: Labels = noLabels,
       const gFaces = s("g"), gEdges = s("g"), gX = s("g"), gDots = s("g"), gClues = s("g"), gOver = s("g"), gLabels = s("g");
       svg.append(s("defs", null, mark), gFaces, gEdges, gX, gDots, gClues, gOver, gLabels);
       if (g.cells && sides.size) {
-        // a column's label sits at the mean x of its cells' centres; a row's at the mean y
+        // a column's label sits at the mean x of its cells' centers; a row's at the mean y
         const colX = new Map<number, number[]>(), rowY = new Map<number, number[]>();
         g.cells.forEach(([c, r], f) => {
           (colX.get(c) ?? colX.set(c, []).get(c)!).push(g.fcx[f]!);

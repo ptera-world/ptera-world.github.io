@@ -86,7 +86,7 @@ export const joined: PalisadeTechnique = technique<PalisadePuzzle, PalisadeState
   level: 4,
   kinds: ["region-joined"],
   description: "two cells already joined into one region another way can't have a wall between them: every wall has to separate two regions.",
-  explain: (p, _s, d, vars) => step(p, d, vars, `${cellList(p, d.because)} are already in the same region`, `which neighbours are already in the same region?`, { cells: [], because: [] }),
+  explain: (p, _s, d, vars) => step(p, d, vars, `${cellList(p, d.because)} are already in the same region`, `which neighbors are already in the same region?`, { cells: [], because: [] }),
   practice: { params: NORMAL },
 });
 
@@ -121,7 +121,7 @@ export const exit: PalisadeTechnique = technique<PalisadePuzzle, PalisadeState, 
   name: "only way to grow",
   level: 7,
   kinds: ["region-exit"],
-  description: "a piece that's too small to be a region on its own, and can only grow into one neighbouring piece, joins it: no walls between them.",
+  description: "a piece that's too small to be a region on its own, and can only grow into one neighboring piece, joins it: no walls between them.",
   explain: (p, _s, d, vars) => step(p, d, vars, `the piece through ${cellList(p, d.because)} has ${(d.data as { size: number }).size} of ${p.k} cells and only one piece to grow into`, `which piece has only one way to grow?`, { cells: [], because: [] }),
   practice: { params: NORMAL },
 });

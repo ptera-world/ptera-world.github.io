@@ -149,7 +149,7 @@ export const whiteNoRoom = technique({
   id: "pearl.white-no-room",
   name: "white pearl with no room to turn",
   level: 7,
-  description: "if going one way through a white pearl would leave neither neighbour able to turn, the loop must cross it the other way.",
+  description: "if going one way through a white pearl would leave neither neighbor able to turn, the loop must cross it the other way.",
   practice: { params: EASY },
 }, (p, s, target) => {
   const hit = first(p, s, ["white-needs-turn"], target);

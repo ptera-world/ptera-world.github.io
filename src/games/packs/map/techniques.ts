@@ -11,7 +11,7 @@ export type MapTarget = { region: number };
 const knowledgeCache = new WeakMap<MapState, Knowledge | null>();
 
 /**
- * What the board establishes: colours and pencil marks, each counted only when it agrees with the
+ * What the board establishes: colors and pencil marks, each counted only when it agrees with the
  * unique solution (all of them when there isn't one). Null when the counted ones clash.
  */
 export function knowledge(p: MapPuzzle, s: MapState): Knowledge | null {
@@ -37,7 +37,7 @@ export function knowledge(p: MapPuzzle, s: MapState): Knowledge | null {
 
 const single = (m: number): number => (m === 1 ? 0 : m === 2 ? 1 : m === 4 ? 2 : m === 8 ? 3 : -1);
 
-/** Colours the board would show for a region before this step: its pencil marks, or every colour no coloured neighbour uses. */
+/** Colors the board would show for a region before this step: its pencil marks, or every color no colored neighbor uses. */
 function shown(p: MapPuzzle, s: MapState, r: number): number {
   let dom = s.marks[r] || ALL;
   for (const o of geometry(p).adj[r]!) if (s.colours[o]! >= 0) dom &= ~(1 << s.colours[o]!);
@@ -96,17 +96,17 @@ const HARD = { width: 12, height: 10, regions: 20, difficulty: "hard" };
 
 export const onlyColour = technique({
   id: "map.only-colour",
-  name: "one colour left",
+  name: "one color left",
   level: 1,
-  description: "a region whose neighbours (and your pencil marks) leave it just one colour has that colour.",
+  description: "a region whose neighbors (and your pencil marks) leave it just one color has that color.",
   practice: { params: EASY },
 }, (p, s, target) => {
   const hit = first(p, s, ["only-colour"], target);
   if (!hit) return null;
   const r = hit.raw.regions[0]!;
   return {
-    message: `${outcome(p, s, hit.raw, hit.regions)}: it's the only colour left once its neighbours are counted`,
-    nudge: `which colours can ${regionName(p, r)} still take?`,
+    message: `${outcome(p, s, hit.raw, hit.regions)}: it's the only color left once its neighbors are counted`,
+    nudge: `which colors can ${regionName(p, r)} still take?`,
     focus: { regions: hit.regions, because: hit.raw.because } satisfies MapFocus,
     nudgeFocus: { regions: [], because: [r] } satisfies MapFocus,
     actions: hit.actions,
@@ -115,9 +115,9 @@ export const onlyColour = technique({
 
 export const pair = technique({
   id: "map.pair",
-  name: "pair of neighbours",
+  name: "pair of neighbors",
   level: 2,
-  description: "two neighbouring regions that can only be the same two colours must use both of them, one each. any region touching both of them can't be either colour.",
+  description: "two neighboring regions that can only be the same two colors must use both of them, one each. any region touching both of them can't be either color.",
   practice: { params: MEDIUM },
 }, (p, s, target) => {
   const hit = first(p, s, ["pair"], target);
@@ -134,16 +134,16 @@ export const pair = technique({
 
 export const trial = technique({
   id: "map.trial",
-  name: "try a colour",
+  name: "try a color",
   level: 3,
-  description: "pretend a region has a colour and follow the easier techniques from there. if some region ends up with no colour left, the first region can't have that colour.",
+  description: "pretend a region has a color and follow the easier techniques from there. if some region ends up with no color left, the first region can't have that color.",
   practice: { params: HARD },
 }, (p, s, target) => {
   const hit = first(p, s, ["trial"], target);
   if (!hit) return null;
   const r = hit.raw.regions[0]!;
   return {
-    message: `if ${regionName(p, r)} were ${COLOUR_NAMES[hit.raw.colour!]}, the easier techniques would leave some region with no colour, so ${outcome(p, s, hit.raw, hit.regions)}`,
+    message: `if ${regionName(p, r)} were ${COLOUR_NAMES[hit.raw.colour!]}, the easier techniques would leave some region with no color, so ${outcome(p, s, hit.raw, hit.regions)}`,
     nudge: `try ${COLOUR_NAMES[hit.raw.colour!]} on ${regionName(p, r)}`,
     focus: { regions: hit.regions, because: [] } satisfies MapFocus,
     nudgeFocus: { regions: [], because: [r] } satisfies MapFocus,

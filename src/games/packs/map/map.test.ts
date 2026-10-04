@@ -70,7 +70,7 @@ function played(p: MapPuzzle, auto: string[] = []) {
   return s;
 }
 
-test("following hints solves every difficulty; wrong colours come first", async () => {
+test("following hints solves every difficulty; wrong colors come first", async () => {
   for (const difficulty of ["easy", "medium", "hard"]) {
     const p = await gen({ ...MID, difficulty }, `h-${difficulty}`);
     const s = played(p);

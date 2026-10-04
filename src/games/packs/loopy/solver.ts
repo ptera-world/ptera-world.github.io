@@ -496,7 +496,7 @@ export function parityGroup(b: Board, first: boolean): Deduction | boolean | nul
     if (c < 0 || !b.fUnk[f]) continue;
     const es = g.fe[f]!.filter((e) => b.e[e] === UNKNOWN);
     const d = consider(es, b.fLine[f]! - c, true, () => ({
-      message: `shade the cells around ${clueRef(g, c, f)} as inside or outside the loop: the neighbours already tied together mean`,
+      message: `shade the cells around ${clueRef(g, c, f)} as inside or outside the loop: the neighbors already tied together mean`,
       faces: [f],
     }));
     if (b.conflict) return first ? null : false;

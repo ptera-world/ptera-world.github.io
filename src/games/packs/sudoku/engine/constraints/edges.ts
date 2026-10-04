@@ -6,7 +6,7 @@ import { midpoint } from "./draw";
 export interface EdgeSpec extends ConstraintSpec { a: number; b: number }
 
 const validEdge = (c: EdgeSpec, n: number): string | null =>
-  [c.a, c.b].every((x) => Number.isInteger(x) && x >= 0 && x < n * n) && isOrthoAdjacent(n, c.a, c.b) ? null : "cells must be orthogonal neighbours";
+  [c.a, c.b].every((x) => Number.isInteger(x) && x >= 0 && x < n * n) && isOrthoAdjacent(n, c.a, c.b) ? null : "cells must be orthogonal neighbors";
 
 export interface KropkiSpec extends EdgeSpec { color: "white" | "black" }
 
@@ -18,10 +18,10 @@ export const kropki: ConstraintType<KropkiSpec> = {
   type: "kropki",
   label: "kropki dot",
   rule: "a white dot joins consecutive digits; a black dot joins digits where one is double the other",
-  logic: { name: "kropki logic", level: 2, description: "a white dot needs neighbours that differ by one; a black dot needs one digit double the other. on a black dot only digits with a half or double in range can sit (so no 5, 7 or 9 on a 9×9), and every placed digit narrows its dotted neighbours." },
+  logic: { name: "kropki logic", level: 2, description: "a white dot needs neighbors that differ by one; a black dot needs one digit double the other. on a black dot only digits with a half or double in range can sit (so no 5, 7 or 9 on a 9×9), and every placed digit narrows its dotted neighbors." },
   kind: "clue",
   removable: true,
-  validate: (c, n) => validEdge(c, n) ?? (c.color === "white" || c.color === "black" ? null : "colour must be white or black"),
+  validate: (c, n) => validEdge(c, n) ?? (c.color === "white" || c.color === "black" ? null : "color must be white or black"),
   compile: (c, n) => ({ rules: [pairRule(n, c.a, c.b, `the ${c.color} dot between ${cellSpan(n, [c.a, c.b])}`, kropkiOk(c.color), 2)] }),
   clues(sol, n, rng) {
     const out: KropkiSpec[] = [];

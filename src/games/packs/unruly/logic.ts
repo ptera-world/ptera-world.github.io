@@ -8,7 +8,7 @@ import {
 } from "../../lib/grid-kit/csp";
 import { cellList, type Focus } from "../../lib/grid-kit/names";
 
-/** Cell colours as model values: ZERO is the light colour, ONE the dark one. */
+/** Cell colors as model values: ZERO is the light color, ONE the dark one. */
 export const ZERO = 0, ONE = 1;
 const Z = bit(ZERO), O = bit(ONE), ANY = Z | O;
 
@@ -21,7 +21,7 @@ export interface UnrulyPuzzle {
   unique: boolean;
 }
 
-/** Per-cell mark on open cells: NONE, or the colour + 1. */
+/** Per-cell mark on open cells: NONE, or the color + 1. */
 export const NONE = 0, LIGHT = 1, DARK = 2;
 export type Mark = typeof NONE | typeof LIGHT | typeof DARK;
 export const markOf = (colour: number): Mark => (colour === ONE ? DARK : LIGHT);
@@ -49,8 +49,8 @@ export const params = defineSchema({
     type: "enum", label: "difficulty", default: "easy",
     options: [
       { value: "trivial", label: "trivial", description: "no three in a row, and lines with one cell left" },
-      { value: "easy", label: "easy", description: "also lines that have all of one colour" },
-      { value: "normal", label: "normal", description: "also where a line's last cell of a colour has to go" },
+      { value: "easy", label: "easy", description: "also lines that have all of one color" },
+      { value: "normal", label: "normal", description: "also where a line's last cell of a color has to go" },
       { value: "hard", label: "hard", description: "also trying a cell both ways" },
     ],
   },
@@ -116,7 +116,7 @@ export function model(p: UnrulyPuzzle): Model {
         },
       });
     }
-    // half of each colour
+    // half of each color
     const half = line.length / 2;
     constraints.push({
       vars: line,
@@ -129,7 +129,7 @@ export function model(p: UnrulyPuzzle): Model {
           const other = 1 - c;
           emit({ kind: open.length === 1 ? "last-cell" : "count-full", level: open.length === 1 ? 0 : 1, vars: open, keep: bit(other), because: [], data: { line: li, colour: c } });
         }
-        // one short of a colour: a window of three with none of it and two open cells must take the last one
+        // one short of a color: a window of three with none of it and two open cells must take the last one
         for (const c of [ZERO, ONE]) {
           const open = line.filter((v) => k[v] === ANY);
           const have = line.filter((v) => k[v] === bit(c)).length;
@@ -219,7 +219,7 @@ export function readMarks(p: UnrulyPuzzle, s: UnrulyState): Doms {
 
 // --- state ---
 
-/** Colour per cell, givens included; -1 where nothing is placed. */
+/** Color per cell, givens included; -1 where nothing is placed. */
 export function colours(p: UnrulyPuzzle, marks: readonly number[]): number[] {
   return p.cells.map((v, c) => (v >= 0 ? v : marks[c] ? colourOf(marks[c]!) : -1));
 }
@@ -236,9 +236,9 @@ export function reduce(p: UnrulyPuzzle, s: UnrulyState, a: UnrulyAction): Unruly
 }
 
 export interface UnrulyConflicts extends Record<string, number[]> {
-  /** Cells in a run of three or more of one colour. */
+  /** Cells in a run of three or more of one color. */
   runs: number[];
-  /** Cells of a colour that a line has more than half of. */
+  /** Cells of a color that a line has more than half of. */
   counts: number[];
   /** Filled lines identical to another (unique mode). */
   repeats: number[];
@@ -377,7 +377,7 @@ export function wrongMarksHint(p: UnrulyPuzzle, s: UnrulyState): Hint<UnrulyActi
   const wrong = s.marks.flatMap((m, c) => (m !== NONE && p.cells[c] === -1 && colourOf(m) !== sol[c] ? [c] : []));
   if (!wrong.length) return null;
   return {
-    message: `${wrong.length === 1 ? "the colour on" : "the colours on"} ${cellList(p, wrong)} ${wrong.length === 1 ? "is" : "are"} wrong`,
+    message: `${wrong.length === 1 ? "the color on" : "the colors on"} ${cellList(p, wrong)} ${wrong.length === 1 ? "is" : "are"} wrong`,
     focus: { cells: wrong, because: [] } satisfies Focus,
     actions: [{ type: "set", cells: wrong, value: NONE }],
   };
@@ -385,8 +385,8 @@ export function wrongMarksHint(p: UnrulyPuzzle, s: UnrulyState): Hint<UnrulyActi
 
 export function hint(p: UnrulyPuzzle, s: UnrulyState): Hint<UnrulyAction> | null {
   const c = findConflicts(p, s.marks);
-  if (c.runs.length) return { message: `${cellList(p, c.runs)} make three of a colour in a row`, focus: { cells: c.runs, because: [] } satisfies Focus };
-  if (c.counts.length) return { message: `${cellList(p, c.counts)} give a line more than half of one colour`, focus: { cells: c.counts, because: [] } satisfies Focus };
+  if (c.runs.length) return { message: `${cellList(p, c.runs)} make three of a color in a row`, focus: { cells: c.runs, because: [] } satisfies Focus };
+  if (c.counts.length) return { message: `${cellList(p, c.counts)} give a line more than half of one color`, focus: { cells: c.counts, because: [] } satisfies Focus };
   if (c.repeats.length) return { message: `two lines are the same`, focus: { cells: c.repeats, because: [] } satisfies Focus };
   const a = analyze(p);
   if (a.count === 0) return { message: "this puzzle has no solution" };
@@ -404,7 +404,7 @@ function rate(p: UnrulyPuzzle): { label: string; score: number } {
 
 // --- generation ---
 
-/** Every row of width w with half of each colour and no three the same in a row. */
+/** Every row of width w with half of each color and no three the same in a row. */
 function validRows(w: number): number[][] {
   const out: number[][] = [];
   const row: number[] = [];
@@ -429,7 +429,7 @@ function validRows(w: number): number[][] {
 
 /**
  * A random filled grid, row by row: each row is a random valid row that keeps every column free
- * of three in a row and within half of each colour. Null if a dead end is hit (callers retry).
+ * of three in a row and within half of each color. Null if a dead end is hit (callers retry).
  */
 function randomGrid(w: number, h: number, unique: boolean, rows: number[][], rng: Rng): number[] | null {
   const grid: number[][] = [];
@@ -505,7 +505,7 @@ export const unruly: PuzzleDef<UnrulyPuzzle, UnrulyState, UnrulyAction, UnrulyIn
   name: "unruly",
   aliases: ["takuzu", "binairo", "binary puzzle", "tohu wa vohu", "0hh1", "zernike"],
   tags: ["logic", "grid", "shading"],
-  description: "fill every cell light or dark. no three of the same colour in a row or column, and every row and column is half light, half dark.",
+  description: "fill every cell light or dark. no three of the same color in a row or column, and every row and column is half light, half dark.",
   generatorVersion: 1,
   params,
   presets: [
@@ -526,7 +526,7 @@ export const unruly: PuzzleDef<UnrulyPuzzle, UnrulyState, UnrulyAction, UnrulyIn
   isRetraction: (a) => a.value === NONE,
   rules: (p) => [
     "fill every empty cell with a light or a dark piece. the pieces already on the board stay as they are.",
-    "no row or column may have three of the same colour next to each other.",
+    "no row or column may have three of the same color next to each other.",
     "every row and every column has as many light pieces as dark ones.",
     ...(p.unique ? ["no two rows may be the same, and no two columns may be the same."] : []),
   ],

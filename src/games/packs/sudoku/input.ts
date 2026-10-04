@@ -11,11 +11,11 @@ export type LatinSession = Session<LatinPuzzle, GridState, GridAction, GridInter
 export const MODES: readonly { id: InputMode; label: string; key: string }[] = [
   { id: "digit", label: "digit", key: "z" },
   { id: "corner", label: "corner", key: "x" },
-  { id: "center", label: "centre", key: "c" },
-  { id: "color", label: "colour", key: "v" },
+  { id: "center", label: "center", key: "c" },
+  { id: "color", label: "color", key: "v" },
 ];
 
-/** Centre marks as the player sees them: computed candidates when shown, else their own marks. */
+/** Center marks as the player sees them: computed candidates when shown, else their own marks. */
 function shownCenter(session: LatinSession, c: number): number {
   const cands = session.derived()[CANDIDATES] as number[] | undefined;
   return cands ? cands[c]! : session.state.center[c]!;
@@ -45,7 +45,7 @@ export function input(session: LatinSession, dg: number, mode: InputMode = sessi
   session.dispatch({ type: "mark", layer: mode, cells, digit: dg, on: !cells.every(has) });
 }
 
-/** Erase the most visible layer in the selection: colours in colour mode, else digits, then marks, then colours. */
+/** Erase the most visible layer in the selection: colors in color mode, else digits, then marks, then colors. */
 export function erase(session: LatinSession): void {
   const p = session.puzzle;
   const st = session.state;
@@ -59,7 +59,7 @@ export function erase(session: LatinSession): void {
   if (layer) session.dispatch({ type: "clear", cells, layer });
 }
 
-/** Write every remaining candidate as centre marks, in the selection (or every empty cell when one cell or none is selected). */
+/** Write every remaining candidate as center marks, in the selection (or every empty cell when one cell or none is selected). */
 export function fillCandidates(session: LatinSession): void {
   const p = session.puzzle;
   const st = session.state;

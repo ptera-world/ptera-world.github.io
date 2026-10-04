@@ -8,7 +8,7 @@ const cross = (a: V3, b: V3): V3 => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[
 const scale = (a: V3, k: number): V3 => [a[0] * k, a[1] * k, a[2] * k];
 const norm = (a: V3): V3 => scale(a, 1 / Math.hypot(...a));
 
-/** Frame (three orthonormal axes) from three points: along p→q, then towards r. */
+/** Frame (three orthonormal axes) from three points: along p→q, then toward r. */
 function frame(p: V3, q: V3, r: V3): [V3, V3, V3] {
   const e1 = norm(sub(q, p));
   const t = sub(r, p);

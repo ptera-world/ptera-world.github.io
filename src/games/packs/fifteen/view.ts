@@ -43,7 +43,7 @@ export const fifteenView: View<FifteenPuzzle, FifteenState, FifteenAction, null>
   puzzle: "fifteen",
   settings,
   controls: [
-    { how: "click or tap a tile in the gap's row or column", what: "slide it (and any tiles between) towards the gap" },
+    { how: "click or tap a tile in the gap's row or column", what: "slide it (and any tiles between) toward the gap" },
   ],
   legend: [
     { sample: swatch(tileSample("var(--cell)")), meaning: "a tile" },

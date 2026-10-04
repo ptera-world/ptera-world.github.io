@@ -55,7 +55,7 @@ test("rating and practice", async () => {
   }
 });
 
-test("the centre row and column don't slide", async () => {
+test("the center row and column don't slide", async () => {
   const p = await gen({ width: 3, height: 3 }, "c");
   const s = netslide.init(p);
   expect(netslide.reduce(p, s, { type: "shift", line: "row", index: 1, by: 1 })).toBe(s);

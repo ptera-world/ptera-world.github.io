@@ -2,7 +2,7 @@ import type { Rng } from "../../core/rng";
 import type { GenerateContext } from "../../core/types";
 
 export interface Dot {
-  /** Position in doubled coordinates: tile (x, y) has its centre at (2x+1, 2y+1); 1 ≤ x ≤ 2w-1, 1 ≤ y ≤ 2h-1. */
+  /** Position in doubled coordinates: tile (x, y) has its center at (2x+1, 2y+1); 1 ≤ x ≤ 2w-1, 1 ≤ y ≤ 2h-1. */
   x: number;
   y: number;
   /** Shown black; its galaxy is shaded once finished. */

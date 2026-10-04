@@ -36,7 +36,7 @@ export interface PegsState {
   moves: number;
 }
 
-/** Jump the peg at `from` over its neighbour into the hole at `to`, two cells away in a straight line. */
+/** Jump the peg at `from` over its neighbor into the hole at `to`, two cells away in a straight line. */
 export type PegsAction = { type: "jump"; from: number; to: number };
 
 export interface PegsFocus {
@@ -81,7 +81,7 @@ const SYMMETRIES: ((x: number, y: number) => [number, number])[] = [
   (x, y) => [6 - x, y], (x, y) => [x, 6 - y], (x, y) => [y, x], (x, y) => [6 - y, 6 - x],
 ];
 
-/** Starting holes that leave the French board solvable, by class: two from a corner peg, two from centre, one from centre. */
+/** Starting holes that leave the French board solvable, by class: two from a corner peg, two from center, one from center. */
 const OCTAGON_HOLES: [number, number][][] = [
   [[4, 0], [2, 0], [4, 6], [2, 6], [0, 4], [0, 2], [6, 4], [6, 2]],
   [[5, 3], [1, 3], [3, 5], [3, 1]],

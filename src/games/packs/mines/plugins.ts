@@ -49,7 +49,7 @@ export const showDeducible: MinesPlugin = {
 export const autoChord: MinesPlugin = {
   id: "mines.auto-chord",
   name: "open around finished numbers by themselves",
-  description: "once a number touches as many flags as it shows, its other hidden neighbours open without clicking it. a wrong flag sets off a mine this way, just like clicking the number would",
+  description: "once a number touches as many flags as it shows, its other hidden neighbors open without clicking it. a wrong flag sets off a mine this way, just like clicking the number would",
   category: "assists",
   appliesTo: ["mines"],
   enabledByDefault: false,

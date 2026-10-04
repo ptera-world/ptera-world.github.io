@@ -15,7 +15,7 @@ import type { GridAction, GridInteraction, GridState, HintFocus, LatinPuzzle } f
 
 const S = 100;
 
-/** Cell colour palette (ids 1..9), as custom properties a theme can override (`--sdk-color-1` …). */
+/** Cell color palette (ids 1..9), as custom properties a theme can override (`--sdk-color-1` …). */
 export const PALETTE = [
   "", "rgba(214, 214, 214, 0.45)", "rgba(120, 120, 120, 0.55)", "rgba(40, 40, 40, 0.8)",
   "rgba(170, 230, 120, 0.4)", "rgba(240, 140, 220, 0.4)", "rgba(250, 160, 80, 0.4)",
@@ -115,7 +115,7 @@ export function focusCells(focus: unknown): number[] {
   return [...out];
 }
 
-/** Cells whose digit, marks or colours differ between two states. */
+/** Cells whose digit, marks or colors differ between two states. */
 export function changedCells(a: GridState, b: GridState): number[] {
   const out: number[] = [];
   for (let c = 0; c < a.values.length; c++) {
@@ -139,7 +139,7 @@ const LABEL_BAND = 0.45;
 const CONTROLS = [
   { how: "click or tap a cell", what: "select it" },
   { how: "drag across cells, or shift-click", what: "select several (ctrl-click a selected cell to drop it)" },
-  { how: "type a digit, or tap it on the pad", what: "write it in the selected cells: as the answer, a corner or centre mark, or a colour, depending on the input mode" },
+  { how: "type a digit, or tap it on the pad", what: "write it in the selected cells: as the answer, a corner or center mark, or a color, depending on the input mode" },
   { how: "double-click a cell", what: "select every cell with the same digit" },
   { how: "shift + a digit key", what: "write a corner mark, whatever the input mode" },
 ];

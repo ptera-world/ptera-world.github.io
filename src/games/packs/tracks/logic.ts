@@ -17,7 +17,7 @@ export const params = defineSchema({
     type: "enum", label: "difficulty", default: "medium",
     options: [
       { value: "easy", label: "easy", description: "each cell's two ends, the row and column counts, and no loops" },
-      { value: "medium", label: "medium", description: "also a track that would drag its neighbour in and break a count" },
+      { value: "medium", label: "medium", description: "also a track that would drag its neighbor in and break a count" },
       { value: "hard", label: "hard", description: "also trying a cell or an edge and seeing it fail" },
     ],
   },

@@ -270,7 +270,7 @@ export const pearl: PuzzleDef<PearlPuzzle, PearlState, PearlAction, PearlInterac
   name: "pearl",
   aliases: ["masyu", "pearls", "shinju"],
   tags: ["logic", "grid", "loop", "nikoli"],
-  description: "draw one loop through the centres of cells, passing through every pearl. it must turn on black pearls and go straight through white ones.",
+  description: "draw one loop through the centers of cells, passing through every pearl. it must turn on black pearls and go straight through white ones.",
   generatorVersion: 1,
   params,
   presets: [
@@ -288,7 +288,7 @@ export const pearl: PuzzleDef<PearlPuzzle, PearlState, PearlAction, PearlInterac
   reduce,
   isRetraction: (a) => a.value === NONE,
   rules: () => [
-    "draw a single closed loop through the centres of cells, moving between side-by-side cells. it never crosses or touches itself.",
+    "draw a single closed loop through the centers of cells, moving between side-by-side cells. it never crosses or touches itself.",
     "the loop passes through every pearl. it doesn't have to visit every cell.",
     "on a black pearl the loop turns, and goes straight through the next cell on both sides.",
     "on a white pearl the loop goes straight through, and turns in at least one of the cells just before and after it.",

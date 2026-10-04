@@ -20,7 +20,7 @@ test("generation is deterministic per (params, seed) and follows the rules", asy
   }
 });
 
-test("marks count right place, then right colour elsewhere", () => {
+test("marks count right place, then right color elsewhere", () => {
   expect(mark([1, 2, 3, 4], [1, 2, 3, 4], 6)).toEqual({ black: 4, white: 0 });
   expect(mark([1, 1, 2, 2], [2, 2, 1, 1], 6)).toEqual({ black: 0, white: 4 });
   expect(mark([1, 1, 1, 1], [1, 2, 3, 4], 6)).toEqual({ black: 1, white: 0 });

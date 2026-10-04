@@ -50,7 +50,7 @@ const tileSample = (fill: string) =>
   `<rect x="0.2" y="0.2" width="9.6" height="9.6" rx="1" fill="${fill}" stroke="var(--border)" stroke-width="0.25"/><text x="5" y="5.3" fill="var(--text)" font-size="4.4" font-weight="600" font-family="var(--font)" text-anchor="middle" dominant-baseline="central">7</text>`;
 const box = (extra: string) => `<rect x="0.5" y="0.5" width="9" height="9" rx="1" fill="none" stroke="var(--hint)" ${extra}/>`;
 
-/** Arrow triangle pointing `dir` (0 right, 1 down, 2 left, 3 up) centred on (cx, cy). */
+/** Arrow triangle pointing `dir` (0 right, 1 down, 2 left, 3 up) centerd on (cx, cy). */
 function tri(cx: number, cy: number, dir: number): string {
   const pts = [[1.6, 0], [-1.2, -1.8], [-1.2, 1.8]].map(([x, y]) => {
     const a = (dir * Math.PI) / 2;

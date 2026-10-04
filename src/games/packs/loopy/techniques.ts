@@ -141,7 +141,7 @@ export const techniques: LoopyTechnique[] = [
   }),
   def({
     id: "window-pair", name: "two numbers together", level: 22,
-    description: "like a number and its corners, but with two neighbouring numbers at once: try every way to fill in the edges of both that fits both counts and every dot between them. an edge that comes out the same every time is decided.",
+    description: "like a number and its corners, but with two neighboring numbers at once: try every way to fill in the edges of both that fits both counts and every dot between them. an edge that comes out the same every time is decided.",
     find: windowFind("pair"),
     practice: { params: TRICKY },
   }),

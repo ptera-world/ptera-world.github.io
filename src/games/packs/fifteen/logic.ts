@@ -25,7 +25,7 @@ export interface FifteenState {
   moves: number;
 }
 
-/** Slide the tiles between `cell` and the gap one step towards the gap. `cell` must share a row or column with it. */
+/** Slide the tiles between `cell` and the gap one step toward the gap. `cell` must share a row or column with it. */
 export type FifteenAction = { type: "move"; cell: number };
 
 /** Hint focus understood by the view: cells to press, the group's home cells, and the group's tiles. */
@@ -53,7 +53,7 @@ function permParity(tiles: readonly number[]): number {
   return parity;
 }
 
-/** Every move swaps the gap with a neighbour, so arrangement parity and gap distance parity stay matched. */
+/** Every move swaps the gap with a neighbor, so arrangement parity and gap distance parity stay matched. */
 export function isSolvable(w: number, h: number, tiles: readonly number[]): boolean {
   const g = gapOf(tiles);
   const dist = (w - 1 - (g % w)) + (h - 1 - Math.floor(g / w));

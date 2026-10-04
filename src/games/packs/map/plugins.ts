@@ -9,13 +9,13 @@ type MapPlugin = Plugin<MapPuzzle, MapState, MapAction, MapInteraction>;
 export const conflicts: MapPlugin = {
   id: "map.conflicts",
   name: "show conflicts",
-  description: "marks rule breaks you can see without knowing the answer in red: neighbouring regions with the same colour, and regions whose neighbours use all four colours",
+  description: "marks rule breaks you can see without knowing the answer in red: neighboring regions with the same color, and regions whose neighbors use all four colors",
   category: "assists",
   appliesTo: ["map"],
   enabledByDefault: true,
   settings: defineSchema({
-    clashes: { type: "bool", label: "neighbours with the same colour", default: true },
-    stuck: { type: "bool", label: "regions with no colour left", default: true },
+    clashes: { type: "bool", label: "neighbors with the same color", default: true },
+    stuck: { type: "bool", label: "regions with no color left", default: true },
   }),
   setup({ session, settings, owner }) {
     const shown = (s: MapState): Conflicts => {
@@ -32,11 +32,11 @@ export const conflicts: MapPlugin = {
   },
 };
 
-/** Runs ahead of technique hints (priority 100), so a wrong colour is pointed out before any move. */
+/** Runs ahead of technique hints (priority 100), so a wrong color is pointed out before any move. */
 export const checkMarks: MapPlugin = {
   id: "map.check-marks",
-  name: "hints check your colours first",
-  description: "asking for a hint points out colours and pencil marks that don't match the solution before suggesting anything else",
+  name: "hints check your colors first",
+  description: "asking for a hint points out colors and pencil marks that don't match the solution before suggesting anything else",
   category: "assists",
   appliesTo: ["map"],
   enabledByDefault: true,

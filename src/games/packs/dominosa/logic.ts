@@ -272,7 +272,7 @@ export const dominosa: PuzzleDef<DominosaPuzzle, DominosaState, DominosaAction, 
   isRetraction: (a) => a.value === NONE,
   rules: (p) => [
     `the board holds one of every domino from 0-0 to ${p.n}-${p.n}: every pair of numbers, each exactly once (a domino reads the same both ways round).`,
-    "each domino covers two neighbouring cells (side by side or one above the other), and every cell is covered by exactly one domino.",
+    "each domino covers two neighboring cells (side by side or one above the other), and every cell is covered by exactly one domino.",
     "the numbers on the board are the numbers on the dominoes that cover them.",
     "a line between two cells is your own note that they aren't one domino. it doesn't count for anything.",
   ],

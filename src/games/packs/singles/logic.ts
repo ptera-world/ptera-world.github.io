@@ -42,7 +42,7 @@ export const params = defineSchema({
   difficulty: {
     type: "enum", label: "difficulty", default: "easy",
     options: [
-      { value: "easy", label: "easy", description: "repeats, neighbours of blacks, and cells with one way out" },
+      { value: "easy", label: "easy", description: "repeats, neighbors of blacks, and cells with one way out" },
       { value: "tricky", label: "tricky", description: "also blacks that would cut the white area in two" },
       { value: "hard", label: "hard", description: "also trying a cell both ways" },
     ],
@@ -117,7 +117,7 @@ function cutCells(g: Geometry, k: Doms): number[] {
   const open = (c: number) => k[c] !== B;
   for (let root = 0; root < g.n; root++) {
     if (disc[root] !== -1 || !open(root)) continue;
-    // iterative DFS: stack of [cell, parent, next neighbour index]
+    // iterative DFS: stack of [cell, parent, next neighbor index]
     const stack: [number, number, number][] = [[root, -1, 0]];
     disc[root] = low[root] = time++;
     let rootKids = 0;
@@ -233,7 +233,7 @@ export function model(p: SinglesPuzzle): Model {
         return true;
       },
     });
-    // a white cell joins the others through a not-black neighbour (every solution has two or more whites)
+    // a white cell joins the others through a not-black neighbor (every solution has two or more whites)
     constraints.push({
       vars: [c, ...around],
       run(k, emit) {

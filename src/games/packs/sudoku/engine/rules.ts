@@ -20,7 +20,7 @@ const MEMO_LIMIT = 4096;
 /**
  * A rule from a predicate: propagation (generalized arc consistency by support search),
  * conflict checks and enumeration all come from `accept`/`feasible`. The fastest way to add a
- * constraint type; hand-written propagators are an optimisation, not a requirement.
+ * constraint type; hand-written propagators are an optimization, not a requirement.
  */
 export function predicateRule(n: number, cells: readonly number[], o: PredicateOptions): Rule {
   const k = cells.length;

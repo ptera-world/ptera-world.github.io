@@ -45,7 +45,7 @@ export const inertiaView: View<InertiaPuzzle, InertiaState, InertiaAction, Inert
   puzzle: "inertia",
   settings,
   controls: [
-    { how: "click or tap anywhere", what: "roll the ball towards that point (straight or diagonal, whichever of the eight directions is closest)" },
+    { how: "click or tap anywhere", what: "roll the ball toward that point (straight or diagonal, whichever of the eight directions is closest)" },
   ],
   legend: [
     { sample: swatch(BALL_SVG("var(--accent)")), meaning: "the ball" },

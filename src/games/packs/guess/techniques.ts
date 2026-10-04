@@ -7,7 +7,7 @@ import {
 type GuessTechnique = Technique<GuessPuzzle, GuessState, GuessAction>;
 
 const ordinal = (i: number) => ["first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth"][i] ?? `${i + 1}th`;
-const colourName = (c: number) => COLOUR_NAMES[c] ?? `colour ${c}`;
+const colourName = (c: number) => COLOUR_NAMES[c] ?? `color ${c}`;
 const describeCode = (code: readonly number[]) => code.map(colourName).join(", ");
 const reasoning = (p: GuessPuzzle, s: GuessState) => !isOver(p, s) && codeCount(p) <= REASON_LIMIT;
 const allRows = (s: GuessState) => s.done.map((_, i) => i);
@@ -17,7 +17,7 @@ export const knownPeg: GuessTechnique = {
   name: "known peg",
   puzzles: ["guess"],
   level: 1,
-  description: "go through every code that fits all the marks so far. if they all have the same colour in some position, that peg is settled.",
+  description: "go through every code that fits all the marks so far. if they all have the same color in some position, that peg is settled.",
   find: (p, s) => knownPegStep(p, s),
   findAt: (p, s, target) => knownPegStep(p, s, (target as { slot: number }).slot),
 };

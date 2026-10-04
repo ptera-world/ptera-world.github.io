@@ -4,11 +4,11 @@ import type { Format, PuzzleDef } from "../../core/types";
 import { obfuscateBitmap } from "../../lib/sha1";
 
 export const params = defineSchema({
-  colours: { type: "int", label: "colours", default: 6, min: 2, max: 10 },
+  colours: { type: "int", label: "colors", default: 6, min: 2, max: 10 },
   pegs: { type: "int", label: "pegs per guess", default: 4, min: 2, max: 5 },
   guesses: { type: "int", label: "guesses", default: 10, min: 1, max: 20 },
   blanks: { type: "bool", label: "allow blank pegs in guesses", default: false, description: "a blank never counts, so it can help you learn about the other pegs" },
-  duplicates: { type: "bool", label: "allow repeated colours", default: true, description: "the code (and your guesses) may use a colour more than once" },
+  duplicates: { type: "bool", label: "allow repeated colors", default: true, description: "the code (and your guesses) may use a color more than once" },
 });
 
 export interface GuessPuzzle {
@@ -17,24 +17,24 @@ export interface GuessPuzzle {
   guesses: number;
   blanks: boolean;
   duplicates: boolean;
-  /** The hidden code, colours 1..colours. */
+  /** The hidden code, colors 1..colors. */
   code: number[];
 }
 
 export interface Marked {
   code: number[];
-  /** Pegs of the right colour in the right place. */
+  /** Pegs of the right color in the right place. */
   black: number;
-  /** Further pegs of a right colour in the wrong place. */
+  /** Further pegs of a right color in the wrong place. */
   white: number;
 }
 
 export interface GuessState {
   /** Guesses already marked, oldest first. */
   done: Marked[];
-  /** The guess being built: colour per peg, 0 for empty (or blank). */
+  /** The guess being built: color per peg, 0 for empty (or blank). */
   row: number[];
-  /** Pegs whose colour carries over to the next guess. */
+  /** Pegs whose color carries over to the next guess. */
   holds: boolean[];
 }
 
@@ -48,7 +48,7 @@ export type GuessAction =
 export interface GuessInteraction {
   /** Selected peg position in the current guess. */
   slot: number;
-  /** Selected colour in the tray. */
+  /** Selected color in the tray. */
   colour: number;
 }
 
@@ -207,10 +207,10 @@ function decodeParams(text: string): Omit<GuessPuzzle, "code"> {
     else if (k === "b" || k === "B") out.blanks = k === "b";
     else if (k === "m" || k === "M") out.duplicates = k === "m";
   }
-  if (!(out.colours >= 2 && out.colours <= 10)) throw new Error("colours must be between 2 and 10");
+  if (!(out.colours >= 2 && out.colours <= 10)) throw new Error("colors must be between 2 and 10");
   if (!(out.pegs >= 2 && out.pegs <= 10)) throw new Error("pegs must be between 2 and 10");
   if (!(out.guesses >= 1)) throw new Error("there must be at least one guess");
-  if (!out.duplicates && out.pegs > out.colours) throw new Error("without repeated colours there must be at least as many colours as pegs");
+  if (!out.duplicates && out.pegs > out.colours) throw new Error("without repeated colors there must be at least as many colors as pegs");
   return out;
 }
 
@@ -260,14 +260,14 @@ export const guess: PuzzleDef<GuessPuzzle, GuessState, GuessAction, GuessInterac
   name: "guess",
   aliases: ["mastermind", "bulls and cows", "codebreaker", "master mind"],
   tags: ["deduction", "code"],
-  description: "work out the hidden row of coloured pegs. after each guess you learn how many pegs are the right colour in the right place, and how many more are a right colour in the wrong place.",
+  description: "work out the hidden row of colored pegs. after each guess you learn how many pegs are the right color in the right place, and how many more are a right color in the wrong place.",
   generatorVersion: 1,
   params,
   presets: [
-    { label: "mastermind (6 colours, 4 pegs)", params: {} },
-    { label: "easy (4 colours, 3 pegs)", params: { colours: 4, pegs: 3, guesses: 8 } },
-    { label: "no repeats (8 colours, 4 pegs)", params: { colours: 8, pegs: 4, duplicates: false } },
-    { label: "super (8 colours, 5 pegs)", params: { colours: 8, pegs: 5, guesses: 12 } },
+    { label: "mastermind (6 colors, 4 pegs)", params: {} },
+    { label: "easy (4 colors, 3 pegs)", params: { colours: 4, pegs: 3, guesses: 8 } },
+    { label: "no repeats (8 colors, 4 pegs)", params: { colours: 8, pegs: 4, duplicates: false } },
+    { label: "super (8 colors, 5 pegs)", params: { colours: 8, pegs: 5, guesses: 12 } },
   ],
   generate,
   formats: [sgtFormat],
@@ -278,14 +278,14 @@ export const guess: PuzzleDef<GuessPuzzle, GuessState, GuessAction, GuessInterac
   isSolved,
   isLost: (p, s) => !isSolved(p, s) && s.done.length >= p.guesses,
   rules: (p) => [
-    `a code of ${p.pegs} pegs is hidden, each one of ${p.colours} colours${p.duplicates ? " (colours can repeat)" : " (no colour twice)"}.`,
-    `you have ${p.guesses} guesses. each guess is marked with a black peg for every peg of the right colour in the right place, and a white peg for every other peg of a colour the code has but somewhere else.`,
+    `a code of ${p.pegs} pegs is hidden, each one of ${p.colours} colors${p.duplicates ? " (colors can repeat)" : " (no color twice)"}.`,
+    `you have ${p.guesses} guesses. each guess is marked with a black peg for every peg of the right color in the right place, and a white peg for every other peg of a color the code has but somewhere else.`,
     "the marks don't say which pegs they belong to.",
     ...(p.blanks ? ["you can leave pegs blank in a guess; blanks never count."] : []),
-    "a held peg keeps its colour in your next guess.",
+    "a held peg keeps its color in your next guess.",
   ],
   solve: (p) => ({ done: [{ code: p.code.slice(), black: p.pegs, white: 0 }], row: p.code.map(() => 0), holds: p.code.map(() => false) }),
-  describe: (p) => `${p.colours} colours, ${p.pegs} pegs`,
+  describe: (p) => `${p.colours} colors, ${p.pegs} pegs`,
   rate: (p) => {
     const n = codeCount(p);
     return { label: `${n} possible codes`, score: Math.log2(n) / p.guesses };

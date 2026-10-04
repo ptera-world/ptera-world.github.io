@@ -39,7 +39,7 @@ export function polyline(ctx: RenderCtx, cells: readonly number[]): string {
   }).join("");
 }
 
-/** Midpoint between two cells' centres. */
+/** Midpoint between two cells' centers. */
 export function midpoint(ctx: RenderCtx, a: number, b: number): [number, number] {
   const [ax, ay] = ctx.center(a), [bx, by] = ctx.center(b);
   return [(ax + bx) / 2, (ay + by) / 2];

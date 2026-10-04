@@ -11,7 +11,7 @@ export const KEYS = {
   strayLoop: "loopy.strayLoop",
   /** number[] dots where a line stops. */
   ends: "loopy.ends",
-  /** number[] per edge: segment colour index, -1 for none. */
+  /** number[] per edge: segment color index, -1 for none. */
   segments: "loopy.segments",
   /** number[] per face: 0 unknown, 1 inside, 2 outside. */
   sides: "loopy.sides",

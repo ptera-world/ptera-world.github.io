@@ -29,13 +29,13 @@ function regionHouses(n: number, ids: readonly number[], name: (id: number, cell
 const VERT = [[], ["middle"], ["top", "bottom"], ["top", "middle", "bottom"]];
 const HORZ = [[], ["middle"], ["left", "right"], ["left", "middle", "right"]];
 
-/** "the top-left box", "the centre box", … where the boxes form at most 3×3; else by a corner cell. */
+/** "the top-left box", "the center box", … where the boxes form at most 3×3; else by a corner cell. */
 function boxName(n: number, w: number, h: number): (id: number, cells: number[]) => string {
   const across = n / w, down = n / h;
   return (id, cells) => {
     const v = VERT[down]?.[Math.floor(id / across)], hz = HORZ[across]?.[id % across];
     if (v === undefined || hz === undefined) return `the box at ${cellName(n, cells[0]!)}`;
-    const where = v === "middle" && hz === "middle" ? "centre" : v === "middle" ? hz : hz === "middle" ? v : `${v}-${hz}`;
+    const where = v === "middle" && hz === "middle" ? "center" : v === "middle" ? hz : hz === "middle" ? v : `${v}-${hz}`;
     return `the ${where} box`;
   };
 }
@@ -112,7 +112,7 @@ export const nonconsecutive: ConstraintType = {
   type: "nonconsecutive",
   label: "non-consecutive",
   rule: "orthogonally touching cells can't hold consecutive digits",
-  logic: { name: "non-consecutive logic", level: 2, description: "a placed digit rules out its neighbours on both sides in the four touching cells: a 5 means no 4 or 6 next to it. a cell that can only be 4 or 6 also forbids 5 around it." },
+  logic: { name: "non-consecutive logic", level: 2, description: "a placed digit rules out its neighbors on both sides in the four touching cells: a 5 means no 4 or 6 next to it. a cell that can only be 4 or 6 also forbids 5 around it." },
   kind: "global",
   compile: (_c, n) => ({
     rules: orthoPairs(n).map(([a, b]) => pairRule(n, a, b, `the non-consecutive rule between ${cellSpan(n, [a, b])}`, (x, y) => Math.abs(x - y) !== 1, 2)),

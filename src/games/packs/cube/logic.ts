@@ -37,7 +37,7 @@ export interface CubeState {
   moves: number;
 }
 
-/** Roll the solid onto a neighbouring square. */
+/** Roll the solid onto a neighboring square. */
 export type CubeAction = { type: "roll"; to: number };
 
 export interface CubeFocus {
@@ -195,8 +195,8 @@ export const cube: PuzzleDef<CubePuzzle, CubeState, CubeAction, null, typeof par
   isSolved: (_p, s) => isComplete(s.faces),
   rate,
   rules: (p) => [
-    `the ${SOLID_NAMES[p.solid]} rolls over one edge at a time onto a neighbouring square.`,
-    "whenever it lands, the face underneath and the square swap colours: a blue square is picked up by a plain face, and a blue face set down on a plain square stays behind.",
+    `the ${SOLID_NAMES[p.solid]} rolls over one edge at a time onto a neighboring square.`,
+    "whenever it lands, the face underneath and the square swap colors: a blue square is picked up by a plain face, and a blue face set down on a plain square stays behind.",
     `make all ${SOLIDS[p.solid].faces.length} faces blue.`,
   ],
   describe: (p) => (SOLIDS[p.solid].order === 4 ? `${SOLID_NAMES[p.solid]}, ${p.d1}×${p.d2}` : `${SOLID_NAMES[p.solid]}, ${p.d1}·${p.d2} hexagon`),

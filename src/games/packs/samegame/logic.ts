@@ -9,7 +9,7 @@ export const MAX_COLOURS = 9;
 export const params = defineSchema({
   width: { type: "int", label: "width", default: 5, min: 2, max: 20 },
   height: { type: "int", label: "height", default: 5, min: 2, max: 15 },
-  colours: { type: "int", label: "colours", default: 3, min: 3, max: MAX_COLOURS },
+  colours: { type: "int", label: "colors", default: 3, min: 3, max: MAX_COLOURS },
   scoring: {
     type: "enum", label: "scoring", default: "2",
     options: [
@@ -26,7 +26,7 @@ export interface SamegamePuzzle {
   colours: number;
   /** Subtracted from a group's size before squaring for its score. */
   scoreSub: number;
-  /** Row-major colours 1…colours; 0 = empty. Row 0 is the top. */
+  /** Row-major colors 1…colors; 0 = empty. Row 0 is the top. */
   grid: number[];
   /** Cells to click, in order, that clear the board (generated boards). */
   solution?: number[];
@@ -38,7 +38,7 @@ export interface SamegameState {
   moves: number;
 }
 
-/** Remove the group containing `cell` (two or more joined tiles of one colour). */
+/** Remove the group containing `cell` (two or more joined tiles of one color). */
 export type SamegameAction = { type: "remove"; cell: number };
 
 export interface SamegameFocus {
@@ -51,7 +51,7 @@ export interface SamegameInteraction {
 
 export const cellAt = (p: { w: number }, c: number) => cellName(c % p.w, Math.floor(c / p.w));
 
-/** The joined same-colour group containing `cell` (empty for an empty cell). */
+/** The joined same-color group containing `cell` (empty for an empty cell). */
 export function group(w: number, h: number, grid: readonly number[], cell: number): number[] {
   const col = grid[cell];
   if (!col) return [];
@@ -149,7 +149,7 @@ function apply(cols: Columns, ins: Insertion, colour: number): Columns {
   return next;
 }
 
-/** Colours touching the inserted slots from outside (in the layout after insertion). */
+/** Colors touching the inserted slots from outside (in the layout after insertion). */
 function neighbourColours(cols: Columns, slots: [number, number][]): Set<number> {
   const inside = new Set(slots.map(([c, r]) => `${c},${r}`));
   const out = new Set<number>();
@@ -164,7 +164,7 @@ function neighbourColours(cols: Columns, slots: [number, number][]): Set<number>
   return out;
 }
 
-/** Free space can still be filled: odd leftovers need a neighbour to share a sideways pair with. */
+/** Free space can still be filled: odd leftovers need a neighbor to share a sideways pair with. */
 function fillable(w: number, h: number, cols: Columns): boolean {
   const free = Array.from({ length: w }, (_, i) => h - (cols[i]?.length ?? 0));
   for (let i = 0; i < w; i++) {
@@ -228,14 +228,14 @@ async function generate(v: Values<typeof params>, rng: Rng, ctx: GenerateContext
 function checked(w: number, h: number, colours: number, scoreSub: number, grid: number[]): SamegamePuzzle {
   if (!(w >= 1 && h >= 1 && w <= 60 && h <= 60 && w * h >= 2)) throw new Error("size out of range");
   if (grid.length !== w * h) throw new Error(`expected ${w * h} cells, got ${grid.length}`);
-  if (grid.some((c) => !Number.isInteger(c) || c < 0 || c > colours)) throw new Error(`colours run from 1 to ${colours} (0 for an empty cell)`);
-  if (colours > MAX_COLOURS) throw new Error(`at most ${MAX_COLOURS} colours`);
+  if (grid.some((c) => !Number.isInteger(c) || c < 0 || c > colours)) throw new Error(`colors run from 1 to ${colours} (0 for an empty cell)`);
+  if (colours > MAX_COLOURS) throw new Error(`at most ${MAX_COLOURS} colors`);
   return { w, h, colours, scoreSub, grid: collapse(w, h, grid, []) };
 }
 
 const SGT_RE = /^(\d+)(?:x(\d+))?(?:c(\d+))?(?:s(\d+))?(r?):([\d,\s]+)$/;
 
-/** Simon Tatham's Same Game id: `WxHcNsN[r]:` then every cell's colour (1…N, 0 empty), comma-separated. */
+/** Simon Tatham's Same Game id: `WxHcNsN[r]:` then every cell's color (1…N, 0 empty), comma-separated. */
 export const sgtFormat: Format<SamegamePuzzle> = {
   id: "sgt",
   label: "sgt game id (WxHcNsN:n,n,…)",
@@ -270,7 +270,7 @@ export const gridFormat: Format<SamegamePuzzle> = {
   },
 };
 
-export const COLOUR_NAMES = ["", "red", "blue", "green", "yellow", "purple", "orange", "cyan", "pink", "grey"] as const;
+export const COLOUR_NAMES = ["", "red", "blue", "green", "yellow", "purple", "orange", "cyan", "pink", "gray"] as const;
 
 function rate(p: SamegamePuzzle): Rating {
   const n = groups(p.w, p.h, p.grid).length;
@@ -281,16 +281,16 @@ export const samegame: PuzzleDef<SamegamePuzzle, SamegameState, SamegameAction, 
   id: "samegame",
   name: "same game",
   aliases: ["samegame", "same game", "jawbreaker", "clickomania", "chain shot"],
-  tags: ["colours", "moves", "gravity"],
-  description: "clear the board by removing groups of joined tiles of one colour. tiles above fall down, and empty columns close up to the left.",
+  tags: ["colors", "moves", "gravity"],
+  description: "clear the board by removing groups of joined tiles of one color. tiles above fall down, and empty columns close up to the left.",
   generatorVersion: 1,
   params,
   presets: [
-    { label: "5×5, 3 colours", params: { width: 5, height: 5, colours: 3 } },
-    { label: "10×5, 3 colours", params: { width: 10, height: 5, colours: 3 } },
-    { label: "15×10, 3 colours", params: { width: 15, height: 10, colours: 3 } },
-    { label: "15×10, 4 colours", params: { width: 15, height: 10, colours: 4 } },
-    { label: "20×15, 4 colours", params: { width: 20, height: 15, colours: 4 } },
+    { label: "5×5, 3 colors", params: { width: 5, height: 5, colours: 3 } },
+    { label: "10×5, 3 colors", params: { width: 10, height: 5, colours: 3 } },
+    { label: "15×10, 3 colors", params: { width: 15, height: 10, colours: 3 } },
+    { label: "15×10, 4 colors", params: { width: 15, height: 10, colours: 4 } },
+    { label: "20×15, 4 colors", params: { width: 20, height: 15, colours: 4 } },
   ],
   generate,
   formats: [sgtFormat, gridFormat],
@@ -309,10 +309,10 @@ export const samegame: PuzzleDef<SamegamePuzzle, SamegameState, SamegameAction, 
     : { message: "the search for a clearing order ran out of time from here, so there's no suggestion. undoing a move or two may help." }),
   rate,
   rules: (p) => [
-    "click a group of two or more joined tiles of the same colour (joined across edges) to remove it.",
+    "click a group of two or more joined tiles of the same color (joined across edges) to remove it.",
     "tiles above fall into the gap; a column that empties closes up to the left.",
     `removing n tiles at once scores (n − ${p.scoreSub})².`,
     "clear the whole board. the game ends when no group of two is left.",
   ],
-  describe: (p) => `${p.w}×${p.h}, ${p.colours} colours`,
+  describe: (p) => `${p.w}×${p.h}, ${p.colours} colors`,
 };

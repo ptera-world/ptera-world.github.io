@@ -13,7 +13,7 @@ function blocked(g: Graph, s: BridgesState, e: number): boolean {
   return s.no[e] === 1 || g.cross[e]!.some((c) => s.b[c]! > 0);
 }
 
-/** Most bridges island i could still end up with, given marks, crossings and neighbours' counts. */
+/** Most bridges island i could still end up with, given marks, crossings and neighbors' counts. */
 function room(g: Graph, s: BridgesState, sums: readonly number[], i: number): number {
   const p = g.puzzle;
   let total = 0;
@@ -121,13 +121,13 @@ const counts: BridgesPlugin = {
 
 const groups: BridgesPlugin = {
   id: "bridges.groups",
-  name: "colour connected groups",
-  description: "islands already joined to each other by bridges get the same coloured ring, so you can see which pieces still need linking up",
+  name: "color connected groups",
+  description: "islands already joined to each other by bridges get the same colored ring, so you can see which pieces still need linking up",
   category: "assists",
   appliesTo: APPLIES,
   enabledByDefault: false,
   settings: defineSchema({
-    singles: { type: "bool", label: "colour lone islands too", default: false },
+    singles: { type: "bool", label: "color lone islands too", default: false },
   }),
   setup({ session, settings, owner }) {
     session.hooks.derive.tap((d, { puzzle, state }) => {

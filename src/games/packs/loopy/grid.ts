@@ -211,7 +211,7 @@ export function edgeBetween(g: Grid, a: number, b: number): number {
 }
 
 /**
- * Face permutation for a half-turn about the grid's centre, or null if the grid isn't
+ * Face permutation for a half-turn about the grid's center, or null if the grid isn't
  * half-turn symmetric.
  */
 export function halfTurn(g: Grid): Int32Array | null {

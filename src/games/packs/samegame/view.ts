@@ -7,7 +7,7 @@ import { COLOUR_NAMES, group, type SamegameAction, type SamegameFocus, type Same
 const SIZE = 10;
 const INSET = 0.6;
 
-/** Tile colours by colour number 1…9; a theme can override any with --samegame-1 … --samegame-9. */
+/** Tile colors by color number 1…9; a theme can override any with --samegame-1 … --samegame-9. */
 export const PALETTE = ["", "#d9443f", "#3b6fd6", "#3fa34d", "#e8c62c", "#8b4fc7", "#ef8a2b", "#3fc1c9", "#ef7fb6", "#8f8f8f"] as const;
 const colourVar = (c: number) => `var(--samegame-${c}, ${PALETTE[c]})`;
 
@@ -34,7 +34,7 @@ const settings = defineSchema({
     ],
     description: "with two clicks, the first only highlights the group",
   },
-  numbers: { type: "bool", label: "show a number on each colour", default: false, description: "for telling colours apart without relying on hue" },
+  numbers: { type: "bool", label: "show a number on each color", default: false, description: "for telling colors apart without relying on hue" },
 });
 
 const BINDINGS: BindingSchema = {
@@ -51,7 +51,7 @@ function legend(p: SamegamePuzzle) {
   return [
     ...Array.from({ length: p.colours }, (_, i) => ({
       sample: swatch(`<rect x="${INSET}" y="${INSET}" width="${SIZE - 2 * INSET}" height="${SIZE - 2 * INSET}" rx="1.4" fill="${colourVar(i + 1)}"/>`),
-      meaning: `colour ${i + 1}, ${COLOUR_NAMES[i + 1]}`,
+      meaning: `color ${i + 1}, ${COLOUR_NAMES[i + 1]}`,
     })),
     { sample: swatch(`<rect x="${INSET}" y="${INSET}" width="${SIZE - 2 * INSET}" height="${SIZE - 2 * INSET}" rx="1.4" fill="${colourVar(1)}"/><rect x="0.4" y="0.4" width="9.2" height="9.2" rx="1.6" fill="none" stroke="var(--text)" stroke-width="0.9"/>`), meaning: "the group a click would remove" },
     { sample: swatch(`<rect x="${INSET}" y="${INSET}" width="${SIZE - 2 * INSET}" height="${SIZE - 2 * INSET}" rx="1.4" fill="${colourVar(2)}"/><rect x="0.4" y="0.4" width="9.2" height="9.2" rx="1.6" fill="none" stroke="var(--hint)" stroke-width="0.9"/>`), meaning: "hint: the group to remove" },

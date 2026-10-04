@@ -86,7 +86,7 @@ export const sgtFormat: Format<LoopyPuzzle> = {
     const tiling = matches.find((t) => (t.sgtDesc ?? null) === (desc ?? null));
     if (!tiling) {
       if (!matches.length) throw new Error(`sgt grid type ${type} isn't supported here yet`);
-      throw new Error(`unrecognised grid description "${desc ?? ""}" for grid type ${type}`);
+      throw new Error(`unrecognized grid description "${desc ?? ""}" for grid type ${type}`);
     }
     return checked(tiling.id, w, h, decodeRle(m[5]!));
   },

@@ -4,8 +4,8 @@ import { DIRS, degree, isTree, link, opp, orientations, type NetPuzzle } from ".
  * Deduction rules, in the order the solver prefers them. Every rule only removes orientations
  * that no valid solution can use, so a puzzle the solver fully determines has exactly one solution.
  *
- * - local: a side must stay shut if it faces the board edge, a barrier, or a neighbour that can't
- *   connect back; it must be open if the neighbour is certain to connect.
+ * - local: a side must stay shut if it faces the board edge, a barrier, or a neighbor that can't
+ *   connect back; it must be open if the neighbor is certain to connect.
  * - deadend: two dead-end tiles can't point at each other (they'd form a closed pair).
  * - loop: an orientation can't join a tile to the same group twice (a solution is a tree).
  * - island: an orientation can't seal off a group smaller than the board, i.e. join groups such
@@ -233,7 +233,7 @@ class Solver {
     const root = Int32Array.from({ length: n }, (_, i) => find(i));
     // certain sides as of the group map; sides that become certain mid-pass are treated as unknown
     const known = this.andM.slice();
-    // frontier[r]: cells of group r with a side that might still open towards another group
+    // frontier[r]: cells of group r with a side that might still open toward another group
     const frontier = new Map<number, number[]>();
     for (let x = 0; x < n; x++) {
       const loose = this.orM[x]! & ~this.andM[x]!;

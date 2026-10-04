@@ -335,11 +335,11 @@ export const mines: PuzzleDef<MinesPuzzle, MinesState, MinesAction, MinesInterac
   isRetraction: (a) => a.type === "flag" && a.on === false,
   rules: (p) => [
     "open every cell that isn't a mine.",
-    "an open number shows how many of its eight neighbours are mines.",
+    "an open number shows how many of its eight neighbors are mines.",
     `there are ${mineCount(p)} mines in total.`,
     "opening a mine loses the game (undo steps back).",
     "flags are notes for you: they mark cells you think are mines and stop them being opened by accident.",
-    "a number with all its flags around it can be clicked to open the rest of its neighbours.",
+    "a number with all its flags around it can be clicked to open the rest of its neighbors.",
   ],
   isLost: (_p, s) => (s.dead >= 0 ? { focus: { cells: [s.dead], sources: [] } satisfies MinesFocus } : false),
   isSolved: (p, s) => s.dead < 0 && p.mines.every((m, c) => m || s.open[c]),

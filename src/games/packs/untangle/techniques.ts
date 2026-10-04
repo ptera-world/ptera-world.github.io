@@ -55,7 +55,7 @@ function technique(def: Omit<UntangleTechnique, "find" | "findAt" | "puzzles">, 
 
 export const toNeighbours = technique({
   id: "untangle.to-neighbours",
-  name: "move to its neighbours",
+  name: "move to its neighbors",
   level: 1,
   description: "a point usually belongs among the points it's joined to. moving it to the middle of them often clears its crossings.",
 }, (p, s, only) => {
@@ -63,7 +63,7 @@ export const toNeighbours = technique({
   return m && step(m.v, m.to, `moving the highlighted point to the middle of the points it's joined to clears ${plural(m.gain)}`, "one point is far from the points it's joined to");
 });
 
-/** Spots tried for a point: a grid over the board plus the middle of its neighbours. */
+/** Spots tried for a point: a grid over the board plus the middle of its neighbors. */
 const GRID = 15;
 
 export const bestSpot = technique({

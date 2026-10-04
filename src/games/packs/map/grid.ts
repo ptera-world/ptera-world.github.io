@@ -10,7 +10,7 @@ export interface MapPuzzle {
   n: number;
   /** Region per cell, row-major, numbered by first appearance in reading order. */
   map: number[];
-  /** Colour shown from the start per region, 0..3, or -1. */
+  /** Color shown from the start per region, 0..3, or -1. */
   given: number[];
 }
 
@@ -91,7 +91,7 @@ export function randomMap(w: number, h: number, n: number, rng: Rng): number[] {
   return map;
 }
 
-/** A proper four-colouring of the region graph, chosen at random, or null if the search gives up. */
+/** A proper four-coloring of the region graph, chosen at random, or null if the search gives up. */
 export function randomColouring(g: Geometry, rng: Rng): number[] | null {
   const col = Array.from({ length: g.n }, () => -1);
   const order = rng.shuffle(Array.from({ length: g.n }, (_, i) => i)).sort((a, b) => g.adj[b]!.length - g.adj[a]!.length);

@@ -98,12 +98,12 @@ export function squares(solid: SolidId, d1: number, d2: number): Square[] {
 
 export const area = (solid: SolidId, d1: number, d2: number): number => (SOLIDS[solid].order === 4 ? d1 * d2 : d1 * d1 + d2 * d2 + 4 * d1 * d2);
 
-/** Squares sharing an edge: for each, the neighbour and which corners of each square coincide. */
+/** Squares sharing an edge: for each, the neighbor and which corners of each square coincide. */
 export interface Link {
   to: number;
   /** Corner indices in this square of the shared edge. */
   mine: [number, number];
-  /** The same two corners, as indices in the neighbour. */
+  /** The same two corners, as indices in the neighbor. */
   theirs: [number, number];
 }
 
@@ -141,7 +141,7 @@ export function faceOf(solid: Solid, key: readonly number[]): number {
 
 /**
  * The key after rolling across `link` from a square with `key`: the shared edge keeps its two
- * vertices, and the neighbour's other corners take the rest of the face on the far side of that
+ * vertices, and the neighbor's other corners take the rest of the face on the far side of that
  * edge, matched by adjacency round the face.
  */
 export function rollKey(solid: Solid, sqs: Square[], key: readonly number[], link: Link): number[] {

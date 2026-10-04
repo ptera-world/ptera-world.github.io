@@ -104,7 +104,7 @@ export const cubeView: View<CubePuzzle, CubeState, CubeAction, null> = {
     };
     svg.addEventListener("pointerdown", onDown);
 
-    /** The neighbour lying most nearly in direction (dx, dy), if any is within 60°. */
+    /** The neighbor lying most nearly in direction (dx, dy), if any is within 60°. */
     const toward = (dx: number, dy: number) => () => {
       const here = a.squares[session.state.square]!;
       let best = -1, bestCos = 0.5;

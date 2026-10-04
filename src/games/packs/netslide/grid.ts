@@ -43,7 +43,7 @@ export function normalizeBarriers(g: Geometry, barriers: readonly number[]): num
   return out;
 }
 
-/** Cells joined to the centre through matching pipe ends that no barrier blocks. */
+/** Cells joined to the center through matching pipe ends that no barrier blocks. */
 export function connected(g: Geometry, barriers: readonly number[], tiles: readonly number[]): Uint8Array {
   const on = new Uint8Array(tiles.length);
   const start = centre(g);

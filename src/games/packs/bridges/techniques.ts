@@ -267,13 +267,13 @@ const SPECS: readonly Spec[] = [
   },
   {
     kind: "all", name: "no room to spare",
-    description: "add up the most bridges an island could still get on each side (limited by the max per pair, its neighbours' own numbers, and crossings). if that total is exactly its number, every side must be filled to the brim.",
+    description: "add up the most bridges an island could still get on each side (limited by the max per pair, its neighbors' own numbers, and crossings). if that total is exactly its number, every side must be filled to the brim.",
     nudge: (p, g, st) => one(p, firstIsland(g, st), (x) => `count how many bridges ${x} has room for`),
     practice: { difficulty: "easy" },
   },
   {
     kind: "some", name: "at least one",
-    description: "if the other sides of an island can't supply its number between them, the rest has to come from this side. a 3 with only two neighbours (max 2 each) needs at least one bridge to each; a 5 with three neighbours needs at least one to every side.",
+    description: "if the other sides of an island can't supply its number between them, the rest has to come from this side. a 3 with only two neighbors (max 2 each) needs at least one bridge to each; a 5 with three neighbors needs at least one to every side.",
     nudge: (p, g, st) => one(p, firstIsland(g, st), (x) => `${x} can't get enough without some side`),
     practice: { difficulty: "easy" },
   },

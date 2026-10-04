@@ -17,7 +17,7 @@ export interface GenOptions {
 
 /**
  * Random region of faces whose boundary is one simple loop. Grows from one face, only adding
- * faces whose neighbour ring holds exactly one run of inside faces, which keeps both the
+ * faces whose neighbor ring holds exactly one run of inside faces, which keeps both the
  * inside and the outside connected and never makes a dot with four lines.
  */
 export function growLoop(g: Grid, rng: Rng, fill: number, wiggle: number): Uint8Array {

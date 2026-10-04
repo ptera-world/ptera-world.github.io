@@ -77,7 +77,7 @@ const pad: LatinWidget = {
     const n = session.puzzle.n;
     const wide = slot === "top" || slot === "bottom";
     const modeButtons = MODES.map((m) => h("button", { "aria-pressed": "false", onpointerdown: keep, onclick: () => run(`sudoku.mode-${m.id}`) }, m.label));
-    // n buttons in every mode (colour mode offers the first n colours), so switching modes never resizes the pad
+    // n buttons in every mode (color mode offers the first n colors), so switching modes never resizes the pad
     const digitButtons = Array.from({ length: n }, (_, i) =>
       h("button", { "aria-label": String(i + 1), onpointerdown: keep, onclick: () => run(`sudoku.${session.interaction.mode === "color" ? "color-" : "d"}${i + 1}`) }));
     const grid = h("div", { class: "sdk-digits", style: `--cols: ${wide ? n : n <= 4 ? 2 : 3}; --n: ${n}` }, digitButtons);

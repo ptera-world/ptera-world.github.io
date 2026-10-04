@@ -1,6 +1,6 @@
 /**
  * Net geometry. Tile and barrier masks use bit k for direction k: R=1, U=2, L=4, D=8
- * (anticlockwise order, same encoding as Simon Tatham's net).
+ * (counterclockwise order, same encoding as Simon Tatham's net).
  */
 
 import { cellName } from "../../core/names";

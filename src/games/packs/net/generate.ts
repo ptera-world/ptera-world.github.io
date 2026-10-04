@@ -15,7 +15,7 @@ export const params = defineSchema({
   difficulty: {
     type: "enum", label: "difficulty", default: "normal",
     options: [
-      { value: "easy", label: "easy", description: "each tile follows from its neighbours and the walls" },
+      { value: "easy", label: "easy", description: "each tile follows from its neighbors and the walls" },
       { value: "normal", label: "normal", description: "also needs loop and closed-off-group reasoning" },
       { value: "hard", label: "hard", description: "also needs 'what if' reasoning one step deep" },
     ],

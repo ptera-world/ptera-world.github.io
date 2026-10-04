@@ -381,7 +381,7 @@ export const mosaic: PuzzleDef<MosaicPuzzle, MosaicState, MosaicAction, MosaicIn
   isRetraction: (a) => a.value === NONE,
   rules: () => [
     "black out some of the cells, numbered or not.",
-    "each number is how many black cells there are in the 3×3 block centred on it, counting its own cell. at the edges the block is smaller.",
+    "each number is how many black cells there are in the 3×3 block centerd on it, counting its own cell. at the edges the block is smaller.",
     "a dot is your own note that a cell stays white. it doesn't count for anything.",
   ],
   isSolved,

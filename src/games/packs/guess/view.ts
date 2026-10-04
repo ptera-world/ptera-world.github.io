@@ -42,7 +42,7 @@ const CSS = `
 `;
 
 const settings = defineSchema({
-  numbers: { type: "bool", label: "number the colours on the pegs", default: false },
+  numbers: { type: "bool", label: "number the colors on the pegs", default: false },
 });
 
 const P = 10;
@@ -51,17 +51,17 @@ const TRAY = 12;
 const GAP = 3;
 
 const BINDINGS: BindingSchema = {
-  "guess.place": { label: "place colour", category: "guess", keys: ["space"], description: "put the selected colour in the selected position of your guess (again to take it out)" },
+  "guess.place": { label: "place color", category: "guess", keys: ["space"], description: "put the selected color in the selected position of your guess (again to take it out)" },
   "guess.submit": { label: "mark guess", category: "guess", keys: ["Enter"], description: "hand in the guess to be marked" },
   "guess.clear": { label: "clear peg", category: "guess", keys: ["Backspace", "Delete", "d"], description: "take the peg out of the selected position" },
-  "guess.hold": { label: "hold peg", category: "guess", keys: ["h"], description: "keep the selected peg's colour for your next guess, or stop keeping it" },
-  "guess.prev-colour": { label: "previous colour", category: "guess", keys: ["ArrowUp", "w"] },
-  "guess.next-colour": { label: "next colour", category: "guess", keys: ["ArrowDown", "s"] },
+  "guess.hold": { label: "hold peg", category: "guess", keys: ["h"], description: "keep the selected peg's color for your next guess, or stop keeping it" },
+  "guess.prev-colour": { label: "previous color", category: "guess", keys: ["ArrowUp", "w"] },
+  "guess.next-colour": { label: "next color", category: "guess", keys: ["ArrowDown", "s"] },
   "guess.left": { label: "previous position", category: "guess", keys: ["ArrowLeft", "a"] },
   "guess.right": { label: "next position", category: "guess", keys: ["ArrowRight"] },
 };
 
-/** Digit keys put that colour straight into the selected position (0 is colour 10). */
+/** Digit keys put that color straight into the selected position (0 is color 10). */
 const DIGIT_BINDINGS: BindingSchema = Object.fromEntries(Array.from({ length: 10 }, (_, i) => [
   `guess.colour-${i + 1}`, { label: `place ${COLOUR_NAMES[i + 1]}`, category: "guess", keys: [String((i + 1) % 10)], hidden: true },
 ]));
@@ -70,12 +70,12 @@ function legend(): { sample: string; meaning: string }[] {
   const svg = (body: string, w = 10) => `<svg viewBox="-0.5 -0.5 ${w + 1} 11">${body}</svg>`;
   const peg = (c: number, cx = 5) => `<circle cx="${cx}" cy="5" r="${R}" fill="${FILLS[c]}" stroke="var(--text)" stroke-opacity="0.45" stroke-width="0.35"/>`;
   return [
-    { sample: svg(peg(1) + peg(4, 15), 20), meaning: "pegs: the tray on the left holds every colour" },
-    { sample: svg(`<circle cx="5" cy="5" r="1.5" fill="var(--text)" stroke="var(--text)"/>`), meaning: "a black mark: one peg is the right colour in the right place" },
-    { sample: svg(`<circle cx="5" cy="5" r="1.5" fill="var(--bg)" stroke="var(--text)" stroke-width="0.4"/>`), meaning: "a white mark: one more peg is a right colour, but in the wrong place" },
+    { sample: svg(peg(1) + peg(4, 15), 20), meaning: "pegs: the tray on the left holds every color" },
+    { sample: svg(`<circle cx="5" cy="5" r="1.5" fill="var(--text)" stroke="var(--text)"/>`), meaning: "a black mark: one peg is the right color in the right place" },
+    { sample: svg(`<circle cx="5" cy="5" r="1.5" fill="var(--bg)" stroke="var(--text)" stroke-width="0.4"/>`), meaning: "a white mark: one more peg is a right color, but in the wrong place" },
     { sample: svg(peg(3) + `<circle cx="5" cy="5" r="${R + 1}" fill="none" stroke="var(--text)" stroke-width="0.6" stroke-dasharray="1 0.7"/>`), meaning: "a held peg: it stays for your next guess" },
     { sample: svg(`<rect x="1" y="1" width="8" height="8" rx="2" fill="color-mix(in srgb, var(--accent) 25%, transparent)" stroke="var(--accent)" stroke-width="0.5"/>`), meaning: "mark: click here when your guess is complete" },
-    { sample: svg(peg(2) + `<circle cx="5" cy="5" r="${R}" fill="none" stroke="var(--focus)" stroke-width="0.9"/>`), meaning: "the selected colour" },
+    { sample: svg(peg(2) + `<circle cx="5" cy="5" r="${R}" fill="none" stroke="var(--focus)" stroke-width="0.9"/>`), meaning: "the selected color" },
     { sample: svg(peg(5) + `<rect x="0.5" y="0.5" width="9" height="9" rx="1" fill="none" stroke="var(--hint)" stroke-width="0.8"/>`), meaning: "hint: a peg it sets" },
     { sample: svg(`<rect x="0.5" y="0.5" width="9" height="9" rx="1" fill="none" stroke="var(--hint)" stroke-width="0.5" stroke-dasharray="1.2 0.8"/>`), meaning: "hint: the guesses behind it" },
   ];
@@ -88,8 +88,8 @@ export function guessView(): View<GuessPuzzle, GuessState, GuessAction, GuessInt
     puzzle: "guess",
     settings,
     controls: [
-      { how: "click or tap a colour in the tray, then a position in your guess", what: "put that colour there (again to take it out)" },
-      { how: "drag a peg from the tray or an earlier guess onto your guess", what: "put that colour there; drag a peg off your guess to remove it" },
+      { how: "click or tap a color in the tray, then a position in your guess", what: "put that color there (again to take it out)" },
+      { how: "drag a peg from the tray or an earlier guess onto your guess", what: "put that color there; drag a peg off your guess to remove it" },
       { how: "right-click a peg in your guess, or hold it on a touch screen", what: "hold it: it stays for your next guess" },
       { how: "click the box at the end of your guess", what: "hand it in to be marked" },
     ],
@@ -103,7 +103,7 @@ export function guessView(): View<GuessPuzzle, GuessState, GuessAction, GuessInt
       const scoreX = boardX + p.pegs * P + 2;
       const width = scoreX + scoreCols * 4 + 6;
       const height = rowsN * P + 1;
-      const svg = s("svg", { viewBox: `0 0 ${width} ${height}`, class: "guess-board", role: "grid", "aria-label": `guess, ${p.pegs} pegs, ${p.colours} colours` });
+      const svg = s("svg", { viewBox: `0 0 ${width} ${height}`, class: "guess-board", role: "grid", "aria-label": `guess, ${p.pegs} pegs, ${p.colours} colors` });
       const rowsL = s("g"), trayL = s("g"), pegsL = s("g"), over = s("g");
       const cursor = s("rect", { width: P - 0.6, height: P - 0.6, rx: 2, class: "cursor" });
       svg.append(rowsL, trayL, pegsL, over, cursor);

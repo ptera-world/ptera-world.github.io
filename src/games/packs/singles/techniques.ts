@@ -112,10 +112,10 @@ export const wayOut: SinglesTechnique = technique<SinglesPuzzle, SinglesState, S
   name: "only way out",
   level: 5,
   kinds: ["way-out"],
-  description: "a white cell has to connect to the other white cells. if all its neighbours but one are black, that last one stays white.",
+  description: "a white cell has to connect to the other white cells. if all its neighbors but one are black, that last one stays white.",
   explain(p, _s, d, vars) {
     const a = d.because[0]!;
-    return step(p, d, vars, `${cellName(p, a)} stays white and ${cellName(p, vars[0]!)} is its only neighbour that isn't black`, `how does ${cellName(p, a)} connect to the other white cells?`, { cells: [], because: [a] });
+    return step(p, d, vars, `${cellName(p, a)} stays white and ${cellName(p, vars[0]!)} is its only neighbor that isn't black`, `how does ${cellName(p, a)} connect to the other white cells?`, { cells: [], because: [a] });
   },
   practice: { params: EASY },
 });

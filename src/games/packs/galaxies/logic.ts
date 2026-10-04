@@ -96,7 +96,7 @@ function checkDots(w: number, h: number, dots: Dot[]): GalaxiesPuzzle {
 
 /**
  * Simon Tatham's Galaxies game id: `WxH[dX]:desc`. Dots go on the (2w-1)×(2h-1) inner points of the
- * doubled grid (tile centres, edges and corners), row by row: a–y / A–Y is a dot (white / black)
+ * doubled grid (tile centers, edges and corners), row by row: a–y / A–Y is a dot (white / black)
  * after 0–24 empty points, z is 25 empty points.
  */
 export const sgtFormat: Format<GalaxiesPuzzle> = {
@@ -216,7 +216,7 @@ export const galaxies: PuzzleDef<GalaxiesPuzzle, GalaxiesState, GalaxiesAction, 
   name: "galaxies",
   aliases: ["tentai show", "spiral galaxies", "tentaisho"],
   tags: ["logic", "grid", "regions", "symmetry", "nikoli"],
-  description: "split the board into galaxies: each one has exactly one dot, at its centre, and looks the same turned upside down around that dot.",
+  description: "split the board into galaxies: each one has exactly one dot, at its center, and looks the same turned upside down around that dot.",
   generatorVersion: 1,
   params,
   presets: [
@@ -235,7 +235,7 @@ export const galaxies: PuzzleDef<GalaxiesPuzzle, GalaxiesState, GalaxiesAction, 
   isRetraction: (a) => a.dot < 0,
   rules: () => [
     "split the board into galaxies along the grid lines. every tile belongs to exactly one galaxy.",
-    "each galaxy contains exactly one dot, at its centre: turned half a turn around the dot, the galaxy lands exactly on itself.",
+    "each galaxy contains exactly one dot, at its center: turned half a turn around the dot, the galaxy lands exactly on itself.",
     "a galaxy is one connected piece. a dot on an edge or a corner belongs to all the tiles it touches.",
   ],
   isSolved,

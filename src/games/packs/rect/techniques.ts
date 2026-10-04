@@ -114,7 +114,7 @@ function uncrossable(p: RectPuzzle, s: RectState, target?: number): Step<RectAct
   const more = fresh.length > 1 ? `, and ${fresh.length - 1} more pair${fresh.length > 2 ? "s" : ""} like them` : "";
   return {
     message: `no rectangle can hold both ${cellName(p, a)} and ${cellName(p, b)}${more}, so there's a wall between each`,
-    nudge: `which neighbours can never share a rectangle?`,
+    nudge: `which neighbors can never share a rectangle?`,
     focus: { cells: edgeCells(p, fresh), because: [], edges: fresh } satisfies RectFocus,
     nudgeFocus: { cells: [], because: [] } satisfies Focus,
     actions: [{ type: "edges", on: fresh, off: [] }],
@@ -126,7 +126,7 @@ export const edge: RectTechnique = {
   name: "no rectangle fits across",
   puzzles: ["rect"],
   level: 1,
-  description: "two neighbouring cells that no number's rectangle could ever hold together (two numbers side by side, say, or cells out of every rectangle's reach together) have a wall between them.",
+  description: "two neighboring cells that no number's rectangle could ever hold together (two numbers side by side, say, or cells out of every rectangle's reach together) have a wall between them.",
   find: (p, s) => uncrossable(p, s),
   findAt: (p, s, target) => (typeof target === "number" ? uncrossable(p, s, target) : null),
   practice: { params: { width: 7, height: 7, difficulty: "normal" } },

@@ -3,8 +3,8 @@ import type { GenerateContext } from "../../core/types";
 import { ALL, geometry, randomColouring, randomMap, renumber, type Geometry, type MapPuzzle } from "./grid";
 
 /**
- * What is known per region: the colour it has been given (-1 if none) and the colours still
- * possible. Giving a region a colour takes that colour away from its neighbours.
+ * What is known per region: the color it has been given (-1 if none) and the colors still
+ * possible. Giving a region a color takes that color away from its neighbors.
  */
 export interface Knowledge {
   col: Int8Array;
@@ -12,7 +12,7 @@ export interface Knowledge {
 }
 
 export const LEVEL_NAMES = ["easy", "medium", "hard"] as const;
-/** 0 easy: regions with one colour left. 1 medium: + neighbouring pairs sharing two colours. 2 hard: + one-colour trials. */
+/** 0 easy: regions with one color left. 1 medium: + neighboring pairs sharing two colors. 2 hard: + one-color trials. */
 export type Level = 0 | 1 | 2;
 
 export type StepKind = "only-colour" | "pair" | "trial";
@@ -21,11 +21,11 @@ export interface Step {
   kind: StepKind;
   level: Level;
   regions: number[];
-  /** Colour bits removed from each of `regions`. */
+  /** Color bits removed from each of `regions`. */
   remove: number;
-  /** Regions whose colours forced the step (the pair, or the trialled region). */
+  /** Regions whose colors forced the step (the pair, or the trialed region). */
   because: number[];
-  /** Colour placed (only-colour) or tried (trial). */
+  /** Color placed (only-color) or tried (trial). */
   colour?: number;
 }
 
@@ -43,7 +43,7 @@ export function freshKnowledge(g: Geometry): Knowledge {
 
 export const copyKnowledge = (k: Knowledge): Knowledge => ({ col: k.col.slice(), dom: k.dom.slice() });
 
-/** Gives region r colour c. False on contradiction. */
+/** Gives region r color c. False on contradiction. */
 export function assign(g: Geometry, k: Knowledge, r: number, c: number): boolean {
   if (k.col[r] === c) return true;
   if (k.col[r] !== -1 || !(k.dom[r]! & (1 << c))) return false;
@@ -169,7 +169,7 @@ export function scanSteps(g: Geometry, k: Knowledge, kinds: readonly StepKind[],
   return null;
 }
 
-/** Knowledge with the puzzle's given colours placed; null if they clash. */
+/** Knowledge with the puzzle's given colors placed; null if they clash. */
 export function startKnowledge(p: MapPuzzle): Knowledge | null {
   const g = geometry(p);
   const k = freshKnowledge(g);
@@ -214,7 +214,7 @@ export function countSolutions(g: Geometry, start: Knowledge, limit = 2): { coun
 export interface Analysis {
   count: 0 | 1 | 2;
   level: Level | null;
-  /** Colour per region in the (first) solution. */
+  /** Color per region in the (first) solution. */
   solution: number[] | null;
 }
 
@@ -249,7 +249,7 @@ const EXACT_ATTEMPTS = 400;
 const MAX_ATTEMPTS = 1000;
 
 /**
- * Deterministic in (o, rng). Colours are removed from a full colouring while the map stays
+ * Deterministic in (o, rng). Colors are removed from a full coloring while the map stays
  * solvable at o.level (so the solution is unique); it needs exactly o.level when such a map turns
  * up within EXACT_ATTEMPTS maps, otherwise the hardest found is returned.
  */

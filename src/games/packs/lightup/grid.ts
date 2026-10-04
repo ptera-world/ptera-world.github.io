@@ -23,7 +23,7 @@ export interface Geometry {
   sees: number[][];
   /** For any cell: orthogonally adjacent open cells. */
   adj: number[][];
-  /** For any cell: all orthogonal neighbours. */
+  /** For any cell: all orthogonal neighbors. */
   nbrs: number[][];
   /** seeMask[a * n + b] = 1 iff a and b are distinct open cells that see each other. */
   seeMask: Uint8Array;

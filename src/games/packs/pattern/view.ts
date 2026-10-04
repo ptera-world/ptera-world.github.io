@@ -148,7 +148,7 @@ const BINDINGS: BindingSchema = {
   "pattern.mode": { label: "cross mode", category: "nonogram", description: "when on, a tap or left-click crosses cells out instead of filling them (right-click does the opposite)", keys: ["m"] },
 };
 
-/** A 10×10 cell sample on the board background; the same colours the board CSS uses. */
+/** A 10×10 cell sample on the board background; the same colors the board CSS uses. */
 const cellSample = (inner: string) =>
   `<svg viewBox="0 0 10 10"><rect width="10" height="10" fill="var(--cell)" stroke="var(--border)" stroke-width="0.4"/>${inner}</svg>`;
 /** An asset's markup as it sits inside a cell sample (image URLs become <image>). */
@@ -168,7 +168,7 @@ function legendFor(look: Look): { sample: string; meaning: string }[] {
   const dot = assetInner(look.asset("pattern.dot", ASSETS.dot));
   return [
     { sample: cellSample(filled), meaning: "filled cell: part of the picture" },
-    { sample: cellSample(cross), meaning: "crossed-out cell: you've decided it's empty (crosses don't count towards the answer)" },
+    { sample: cellSample(cross), meaning: "crossed-out cell: you've decided it's empty (crosses don't count toward the answer)" },
     { sample: cellSample(dot), meaning: "the same, if you picked dots for empty cells in settings" },
     { sample: clueSample("fill: var(--text); opacity: var(--done-opacity)"), meaning: "faded clue number: your marks already account for that block" },
     { sample: clueSample("fill: var(--danger); font-weight: 600"), meaning: "red clue: the marks in that line can't fit its numbers any more" },

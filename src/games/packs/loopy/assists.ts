@@ -65,7 +65,7 @@ const loopStatus: LoopyPlugin = {
   settings: defineSchema({
     stray: { type: "bool", label: "flag loops closed too early", default: true },
     ends: { type: "bool", label: "mark loose ends", default: true },
-    segments: { type: "bool", label: "colour each separate piece of line", default: false },
+    segments: { type: "bool", label: "color each separate piece of line", default: false },
   }),
   setup({ session, settings, owner }) {
     session.hooks.derive.tap((d, { puzzle, state }) => {

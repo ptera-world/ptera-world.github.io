@@ -22,7 +22,7 @@ const CELL_STATES: { when?: (f: readonly string[]) => boolean; entry: LegendEntr
   { entry: { sample: cell(value(5, "entered")), meaning: "a digit you entered" } },
   { entry: { sample: cell(value(5, "conflict"), "conflict"), meaning: "a clash: this digit breaks a rule (repeats, or a clue doesn't add up)" } },
   { entry: { sample: cell(`<text x="20" y="20" class="corner-mark">1</text><text x="80" y="20" class="corner-mark">4</text>`), meaning: "corner marks: your notes on where a digit could go" } },
-  { entry: { sample: cell(`<text x="50" y="51" class="center-mark">27</text>`), meaning: "centre marks: your notes on what a cell could be" } },
+  { entry: { sample: cell(`<text x="50" y="51" class="center-mark">27</text>`), meaning: "center marks: your notes on what a cell could be" } },
   { entry: { sample: cell(`<text x="22" y="22" class="cand">1</text><text x="50" y="22" class="cand">2</text><text x="78" y="50" class="cand">6</text>`), meaning: "candidates in fixed spots: what auto candidates says a cell can still be" } },
   { entry: { sample: cell(`<path d="M3 3h94v94h-94Z" class="sel-outline"/>`, "sel"), meaning: "the selected cells (outlined); what you type goes here" } },
   { entry: { sample: cell("", "peer"), meaning: "faint shading: cells that share a row, column or box with the selection" } },
@@ -32,7 +32,7 @@ const CELL_STATES: { when?: (f: readonly string[]) => boolean; entry: LegendEntr
   { entry: { sample: cell("", "hint"), meaning: "purple: the cells a hint is talking about (lighter purple: the area to look in)" } },
   { entry: { sample: cell(`<text x="50" y="52" class="hint-place">8</text>`), meaning: "a faint purple digit: what the hint places (press hint again to apply it)" } },
   { entry: { sample: cell(`<text x="50" y="50" class="hint-elim">4</text>`), meaning: "a red struck-out digit: a candidate the hint rules out" } },
-  { entry: { sample: cell(`<rect x="0" y="0" width="50" height="100" style="fill: var(--sdk-color-5, rgba(240, 140, 220, 0.4))"/><rect x="50" y="0" width="50" height="100" style="fill: var(--sdk-color-4, rgba(170, 230, 120, 0.4))"/>`), meaning: "colours: your own colouring, to track ideas; they don't affect the answer" } },
+  { entry: { sample: cell(`<rect x="0" y="0" width="50" height="100" style="fill: var(--sdk-color-5, rgba(240, 140, 220, 0.4))"/><rect x="50" y="0" width="50" height="100" style="fill: var(--sdk-color-4, rgba(170, 230, 120, 0.4))"/>`), meaning: "colors: your own coloring, to track ideas; they don't affect the answer" } },
 ];
 
 /** A small board instance of each clue type, drawn by the type's own renderer, with what it means. */
@@ -44,7 +44,7 @@ const CLUES: Record<string, { spec: ConstraintSpec; meaning: string; view?: [x: 
   kropki: { spec: { type: "kropki", a: 0, b: 1, color: "white" }, view: [0.5, 0, 1, 1], meaning: "white dot: the two digits are one apart (a black dot: one is double the other)" },
   xv: { spec: { type: "xv", a: 0, b: 1, sum: 10 }, view: [0.5, 0, 1, 1], meaning: "X: the two digits add up to 10 (V: they add up to 5)" },
   unequal: { spec: { type: "unequal", a: 0, b: 1 }, view: [0.5, 0, 1, 1], meaning: "the sign points at the smaller digit" },
-  whispers: { spec: { type: "whispers", cells: [0, 4, 8] }, meaning: "green line: neighbouring digits on it are far apart (at least 5 on a 9×9)" },
+  whispers: { spec: { type: "whispers", cells: [0, 4, 8] }, meaning: "green line: neighboring digits on it are far apart (at least 5 on a 9×9)" },
   renban: { spec: { type: "renban", cells: [6, 4, 2] }, meaning: "purple line: its digits are a run with no gaps, in any order" },
   littlekiller: { spec: { type: "littlekiller", r: -1, c: -1, dr: 1, dc: 1, sum: 15 }, view: [-1, -1, 2, 2], meaning: "number outside with an arrow: the digits along that diagonal add up to it" },
   towers: { spec: { type: "towers", side: "top", index: 0, count: 2 }, view: [-0.5, -1, 2, 2], meaning: "number outside: how many buildings you see looking in from there" },

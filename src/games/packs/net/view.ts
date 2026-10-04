@@ -19,9 +19,9 @@ const LABEL = 6;
 /** Rotation (degrees, SVG's clockwise) taking an arm drawn pointing right to direction d. */
 const ARM_ANGLE: Record<number, number> = { [R]: 0, [D]: 90, [L]: 180, [U]: 270 };
 
-/** Themeable graphics, all drawn in a SIZE×SIZE tile; colours come from the view's CSS unless the markup sets its own. */
+/** Themeable graphics, all drawn in a SIZE×SIZE tile; colors come from the view's CSS unless the markup sets its own. */
 export const ASSETS = {
-  /** One pipe arm from the centre to the right edge (rotated for the other sides). */
+  /** One pipe arm from the center to the right edge (rotated for the other sides). */
   arm: ["net.arm", `<line x1="${MID}" y1="${MID}" x2="${SIZE}" y2="${MID}"/>`],
   /** Junction drawn where two or more arms meet. */
   hub: ["net.hub", `<rect x="${MID - 1}" y="${MID - 1}" width="2" height="2"/>`],
@@ -65,8 +65,8 @@ const settings = defineSchema({
 
 /** Acting on "the tile": the cursor, which a pointer press also moves, so these work from the board menu too. */
 const bindings: BindingSchema = {
-  "net.tap-at": { label: "click a tile", category: "net", mouse: ["click"], description: "do what the tap buttons say: turn the tile clockwise (the default), anticlockwise, or lock it" },
-  "net.rotate-ccw-at": { label: "turn anticlockwise (pointer)", category: "net", mouse: ["rightclick"], description: "turn the clicked tile anticlockwise" },
+  "net.tap-at": { label: "click a tile", category: "net", mouse: ["click"], description: "do what the tap buttons say: turn the tile clockwise (the default), counterclockwise, or lock it" },
+  "net.rotate-ccw-at": { label: "turn counterclockwise (pointer)", category: "net", mouse: ["rightclick"], description: "turn the clicked tile counterclockwise" },
   "net.lock-at": { label: "lock / unlock (pointer)", category: "net", mouse: ["middleclick", "shift+click"], description: "lock or unlock the clicked tile; keep the button down and drag to lock or unlock several" },
   "net.source-at": { label: "move the source (pointer)", category: "net", mouse: ["$mod+click"], description: "make the clicked tile the source: pipes joined to it light up" },
   "net.left": { label: "cursor left", category: "net", keys: ["arrowleft"], description: "move the keyboard cursor one tile left" },
@@ -74,13 +74,13 @@ const bindings: BindingSchema = {
   "net.up": { label: "cursor up", category: "net", keys: ["arrowup"], description: "move the keyboard cursor one tile up" },
   "net.down": { label: "cursor down", category: "net", keys: ["arrowdown"], description: "move the keyboard cursor one tile down" },
   "net.rotate-cw": { label: "turn clockwise", category: "net", keys: ["d", "enter"], description: "turn the tile a quarter turn clockwise" },
-  "net.rotate-ccw": { label: "turn anticlockwise", category: "net", keys: ["a"], description: "turn the tile a quarter turn anticlockwise" },
+  "net.rotate-ccw": { label: "turn counterclockwise", category: "net", keys: ["a"], description: "turn the tile a quarter turn counterclockwise" },
   "net.rotate-half": { label: "turn halfway", category: "net", keys: ["f"], description: "turn the tile round by half a turn" },
   "net.lock": { label: "lock / unlock", category: "net", keys: ["s", "space"], description: "lock the tile so it can't be turned by accident, or unlock it. locked tiles are shaded" },
   "net.source": { label: "move the source here", category: "net", keys: ["x"], description: "make this tile the source: pipes joined to it light up. only a viewing aid, it doesn't change the answer" },
   "net.jumble": { label: "jumble unlocked tiles", category: "net", keys: ["j"], description: "turn every tile you haven't locked to a random way round. a quick way to throw away guesses and keep only what you've locked" },
   "net.tap-cw": { label: "tap turns clockwise", category: "net", description: "a tap or click on a tile turns it clockwise" },
-  "net.tap-ccw": { label: "tap turns anticlockwise", category: "net", description: "a tap or click on a tile turns it anticlockwise" },
+  "net.tap-ccw": { label: "tap turns counterclockwise", category: "net", description: "a tap or click on a tile turns it counterclockwise" },
   "net.tap-lock": { label: "tap locks", category: "net", description: "a tap or click on a tile locks or unlocks it; drag across tiles to lock or unlock them all" },
 };
 
@@ -93,10 +93,10 @@ const wrapBindings: BindingSchema = {
   "net.shift-right": { label: "scroll right", category: "net", keys: ["shift+arrowright"], description: "slide the whole wrapping board one tile right; tiles leaving one edge come back on the other" },
   "net.shift-up": { label: "scroll up", category: "net", keys: ["shift+arrowup"], description: "slide the whole wrapping board one tile up; tiles leaving one edge come back on the other" },
   "net.shift-down": { label: "scroll down", category: "net", keys: ["shift+arrowdown"], description: "slide the whole wrapping board one tile down; tiles leaving one edge come back on the other" },
-  "net.recentre": { label: "centre the source", category: "net", keys: ["c"], description: "scroll the wrapping board so the source sits in the middle" },
+  "net.recentre": { label: "center the source", category: "net", keys: ["c"], description: "scroll the wrapping board so the source sits in the middle" },
 };
 
-/** A tile-sized sample in the board's own colours (the board's CSS classes are scoped to it, so styles are inline). */
+/** A tile-sized sample in the board's own colors (the board's CSS classes are scoped to it, so styles are inline). */
 const tile = (bg: string, body: string, extra = "") =>
   `<svg viewBox="-0.5 -0.5 11 11"><rect width="10" height="10" fill="var(${bg})" ${extra}/>${body}</svg>`;
 const pipe = (colour: string, d = "M5 0V10") => `<path d="${d}" stroke="var(${colour})" stroke-width="2" fill="none"/>`;
@@ -118,8 +118,8 @@ const legend = [
 ];
 
 const controls = [
-  { how: "tap a tile", what: "turn it clockwise. the tap buttons under the board switch this to anticlockwise or to locking" },
-  { how: "right-click a tile", what: "turn it anticlockwise" },
+  { how: "tap a tile", what: "turn it clockwise. the tap buttons under the board switch this to counterclockwise or to locking" },
+  { how: "right-click a tile", what: "turn it counterclockwise" },
   { how: "with tap set to lock, drag across tiles", what: "lock (or unlock) every tile you pass over" },
   { how: "touch and hold a tile", what: "a menu of everything you can do to that tile" },
 ];
@@ -383,7 +383,7 @@ export function netView({ look = (_id, fallback) => fallback, labelSides = () =>
         }
         finishPaint();
       };
-      // right-click is the board's own gesture (turn anticlockwise), never the browser or board menu
+      // right-click is the board's own gesture (turn counterclockwise), never the browser or board menu
       const onContextMenu = (e: Event) => e.preventDefault();
       svg.addEventListener("pointerdown", onPointerDown);
       svg.addEventListener("contextmenu", onContextMenu);

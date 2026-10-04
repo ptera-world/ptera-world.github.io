@@ -9,7 +9,7 @@ export const keepClearable: SamegameTechnique = {
   name: "keep it clearable",
   puzzles: ["samegame"],
   level: 1,
-  description: "some removals leave a board that can still be cleared and some don't (a colour left with one lone tile is stuck for good). this searches ahead for a whole clearing order and suggests its first removal.",
+  description: "some removals leave a board that can still be cleared and some don't (a color left with one lone tile is stuck for good). this searches ahead for a whole clearing order and suggests its first removal.",
   find(p, s) {
     if (isEmpty(s.grid)) return null;
     const path = clearFrom(p, s.grid).path;

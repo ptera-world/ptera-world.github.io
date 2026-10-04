@@ -11,7 +11,7 @@ const S = 10;
 const R = 3.4;
 const GAP = 1.4;
 
-/** Themeable graphics, drawn centred on the island / mark in board units (a cell is 10 wide). */
+/** Themeable graphics, drawn centerd on the island / mark in board units (a cell is 10 wide). */
 export const ASSETS = {
   island: { id: "bridges.island", fallback: `<circle r="${R}"/>` },
   mark: { id: "bridges.mark", fallback: `<path d="M-1 -1L1 1M-1 1L1 -1"/>` },
@@ -74,7 +74,7 @@ type Press =
   | { kind: "island"; island: number; secondary: boolean }
   | { kind: "edge"; edge: number; secondary: boolean };
 
-/** Graphic markup or an image URL, as a group centred on the origin. */
+/** Graphic markup or an image URL, as a group centerd on the origin. */
 function graphic(src: string, size: number, cls: string): SVGGElement {
   const el = s("g", { class: cls });
   if (src.trimStart().startsWith("<")) el.innerHTML = src;
@@ -106,7 +106,7 @@ function legend(look: Look): { sample: string; meaning: string }[] {
     { sample: swatch(markAt("wrong")), meaning: "warning ✕: a bridge does go there (with “flag wrong bridges” on)" },
     { sample: swatch(island("hint", "4") + `<line x1="8.4" x2="10" y1="5" y2="5" class="focus" style="stroke-width:3"/>`), meaning: "highlighted ring and glow: what the current hint is talking about" },
     { sample: swatch(island("", "4", `<text x="${R + 0.6}" y="${-R + 0.4}" class="badge">1</text>`)), meaning: "small number by an island: bridges it still needs (“show bridges still needed”)" },
-    { sample: swatch(island("g0", "2")), meaning: "coloured ring: islands with the same colour are already joined by bridges (“colour connected groups”)" },
+    { sample: swatch(island("g0", "2")), meaning: "colored ring: islands with the same color are already joined by bridges (“color connected groups”)" },
     { sample: swatch(`<line x1="0" x2="10" y1="5" y2="5" class="guide"/>`), meaning: "faint dotted line: a bridge could still go here (“show open connections”)" },
     { sample: swatch(`<line x1="0" x2="10" y1="5" y2="5" class="preview"/>`), meaning: "dashed line while dragging: where the bridge will go when you let go" },
     { sample: swatch(`<circle cx="5" cy="5" r="${R + 1.3}" class="cursor" style="display:inline"/>`), meaning: "ring around an island: the keyboard cursor (shows while you use the keys)" },
@@ -123,7 +123,7 @@ export function makeView(look: Look, board: BoardPrefs, holdMs: number): View<Br
       return legend(look);
     },
     controls: [
-      { how: "drag from an island toward a neighbour", what: "add a bridge between them (again for a double bridge)" },
+      { how: "drag from an island toward a neighbor", what: "add a bridge between them (again for a double bridge)" },
       { how: "click or tap the gap between two islands", what: "add a bridge there too" },
       { how: "right-click, or ctrl+click (⌘ on mac)", what: "take a bridge away. on an empty gap it puts a ✕, your note that no bridge goes there" },
       { how: "on touch: switch “tap removes” on", what: "taps and drags take away and put ✕ instead of adding" },
@@ -392,13 +392,13 @@ export function makeView(look: Look, board: BoardPrefs, holdMs: number): View<Br
           checked: () => session.interaction.mode === "mark",
           run: () => session.setInteraction((i) => ({ ...i, mode: i.mode === "mark" ? "bridge" : "mark" })),
         },
-        { id: "bridges.add-at", label: "add a bridge", description: "drag from an island toward a neighbour, or click the gap between them", category: "board", mouse: ["click"], hidden: true, run: pointer(false) },
+        { id: "bridges.add-at", label: "add a bridge", description: "drag from an island toward a neighbor, or click the gap between them", category: "board", mouse: ["click"], hidden: true, run: pointer(false) },
         { id: "bridges.remove-at", label: "take away / ✕", description: "drag from an island or click a gap: removes a bridge, or marks an empty gap ✕ (no bridge here)", category: "board", mouse: ["rightclick", "$mod+click"], hidden: true, run: pointer(true) },
       ];
       DIR_NAMES.forEach((name, d) => {
         const [arrow, letter] = DIR_KEYS[d]!;
         commands.push(
-          { id: `bridges.add-${name}`, label: `add bridge ${name}`, description: `keyboard: add a bridge from the ringed island to its neighbour ${name === "down" ? "below" : name === "up" ? "above" : `to the ${name}`}`, category: "keyboard", keys: [`shift+${arrow}`, `shift+${letter}`], run: () => act(edgeFrom(d), false, false) },
+          { id: `bridges.add-${name}`, label: `add bridge ${name}`, description: `keyboard: add a bridge from the ringed island to its neighbor ${name === "down" ? "below" : name === "up" ? "above" : `to the ${name}`}`, category: "keyboard", keys: [`shift+${arrow}`, `shift+${letter}`], run: () => act(edgeFrom(d), false, false) },
           { id: `bridges.remove-${name}`, label: `take away / ✕ ${name}`, description: `keyboard: take a bridge away ${name === "down" ? "below" : name === "up" ? "above" : `to the ${name} of`} the ringed island, or mark that gap ✕ (no bridge here)`, category: "keyboard", keys: [`$mod+${arrow}`], run: () => act(edgeFrom(d), true, false) },
           { id: `bridges.move-${name}`, label: `ring ${name}`, description: `keyboard: move the ring (the keyboard cursor) to the next island ${name === "down" ? "below" : name === "up" ? "above" : `to the ${name}`}`, category: "keyboard", keys: [arrow, letter], run: move(d) },
         );

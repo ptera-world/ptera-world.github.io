@@ -151,7 +151,7 @@ export const keen = latinDef({
 export const towers = latinDef({
   id: "towers",
   name: "skyscrapers",
-  description: "each cell is a building from 1 to the grid size storeys tall, and no row or column repeats a height. a number outside the grid says how many buildings you'd see looking in from there: taller buildings hide shorter ones behind them.",
+  description: "each cell is a building from 1 to the grid size stories tall, and no row or column repeats a height. a number outside the grid says how many buildings you'd see looking in from there: taller buildings hide shorter ones behind them.",
   aliases: ["towers", "skyscraper"],
   tags: ["logic", "grid", "numbers", "latin square", "visibility"],
   generatorVersion: 1,

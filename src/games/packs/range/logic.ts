@@ -43,7 +43,7 @@ export const params = defineSchema({
   difficulty: {
     type: "enum", label: "difficulty", default: "normal",
     options: [
-      { value: "easy", label: "easy", description: "neighbours of blacks, and what each number can and can't see" },
+      { value: "easy", label: "easy", description: "neighbors of blacks, and what each number can and can't see" },
       { value: "normal", label: "normal", description: "also blacks that would cut the white area in two" },
       { value: "hard", label: "hard", description: "also trying a cell both ways" },
     ],

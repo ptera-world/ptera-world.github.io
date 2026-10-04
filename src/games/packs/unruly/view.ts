@@ -48,8 +48,8 @@ function legend(): { sample: string; meaning: string }[] {
     { sample: sample(sampleCell() + dark()), meaning: "a dark piece" },
     { sample: sample(sampleCell() + light()), meaning: "a light piece" },
     { sample: sample(given + dark()), meaning: "a piece that came with the puzzle (shaded cell): it can't be changed" },
-    { sample: sample(sampleCell() + dark("var(--danger)")), meaning: "part of three of a colour in a row" },
-    { sample: sample(sampleCell() + `<rect width="10" height="10" fill="var(--danger-soft)"/>` + light()), meaning: "a line with too many of one colour, or two lines that are the same" },
+    { sample: sample(sampleCell() + dark("var(--danger)")), meaning: "part of three of a color in a row" },
+    { sample: sample(sampleCell() + `<rect width="10" height="10" fill="var(--danger-soft)"/>` + light()), meaning: "a line with too many of one color, or two lines that are the same" },
     ...focusLegend("the cell it fills", "the pieces it comes from", "the line it's about"),
   ];
 }

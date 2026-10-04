@@ -83,7 +83,7 @@ export const forcedFlags: MinesTechnique = {
   name: "no room to spare",
   puzzles: ["mines"],
   level: 1,
-  description: "a number that has exactly as many hidden neighbours as mines it still needs: every one of those hidden neighbours is a mine. flag them.",
+  description: "a number that has exactly as many hidden neighbors as mines it still needs: every one of those hidden neighbors is a mine. flag them.",
   find: (p, s) => forcedStep(p, singles(p, s, "mines")[0]),
   findAt: (p, s, t) => forcedStep(p, singles(p, s, "mines").find((d) => touches(d, t))),
 };
@@ -95,7 +95,7 @@ function forcedStep(p: MinesPuzzle, d: Deduction | undefined): Step<MinesAction>
   const need = d.mines.length;
   const at = cellName(p, c);
   return {
-    message: `the ${v} at ${at} needs ${need} more ${plural(need, "mine", "mines")} and has exactly ${need} hidden ${plural(need, "neighbour", "neighbours")}, so ${outcome(d)}`,
+    message: `the ${v} at ${at} needs ${need} more ${plural(need, "mine", "mines")} and has exactly ${need} hidden ${plural(need, "neighbor", "neighbors")}, so ${outcome(d)}`,
     nudge: `look at the ${v} at ${at}`,
     focus: focusOf(d),
     nudgeFocus: { cells: [], sources: [c] } satisfies MinesFocus,
@@ -108,7 +108,7 @@ export const satisfied: MinesTechnique = {
   name: "satisfied number",
   puzzles: ["mines"],
   level: 2,
-  description: "a number already touching as many flags as it shows has all its mines, so its other hidden neighbours are safe. opening them all at once is what clicking an open number (chording) does.",
+  description: "a number already touching as many flags as it shows has all its mines, so its other hidden neighbors are safe. opening them all at once is what clicking an open number (chording) does.",
   find: (p, s) => satisfiedStep(p, singles(p, s, "safe")[0]),
   findAt: (p, s, t) => satisfiedStep(p, singles(p, s, "safe").find((d) => touches(d, t))),
 };
@@ -155,7 +155,7 @@ export const overlap: MinesTechnique = {
   name: "overlapping numbers",
   puzzles: ["mines"],
   level: 4,
-  description: "two nearby numbers that share some hidden neighbours. the shared cells can hold only so many of either number's mines, which settles the cells only one of them touches (the classic 1-1 and 1-2 patterns).",
+  description: "two nearby numbers that share some hidden neighbors. the shared cells can hold only so many of either number's mines, which settles the cells only one of them touches (the classic 1-1 and 1-2 patterns).",
   find: (p, s) => overlapStep(p, pairDeductions(p, s)[0]),
   findAt: (p, s, t) => overlapStep(p, pairDeductions(p, s).find((d) => touches(d, t))),
   practice: { params: { difficulty: "normal" } },

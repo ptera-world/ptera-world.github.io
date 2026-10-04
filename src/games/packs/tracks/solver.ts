@@ -31,7 +31,7 @@ export interface Knowledge {
 }
 
 export const LEVEL_NAMES = ["easy", "medium", "hard"] as const;
-/** 0 easy: each cell's two ends, row and column counts, no loops. 1 medium: + a track that would drag its neighbour in. 2 hard: + one-cell or one-edge trials. */
+/** 0 easy: each cell's two ends, row and column counts, no loops. 1 medium: + a track that would drag its neighbor in. 2 hard: + one-cell or one-edge trials. */
 export type Level = 0 | 1 | 2;
 
 export type StepKind = "no-room" | "through" | "count-full" | "count-needs" | "loop" | "neighbours" | "trial";
@@ -514,7 +514,7 @@ const EXACT_ATTEMPTS = 80;
 const MAX_ATTEMPTS = 1000;
 
 /**
- * Deterministic in (o, rng). A random track gets its counts (none of them 0, no two neighbouring
+ * Deterministic in (o, rng). A random track gets its counts (none of them 0, no two neighboring
  * counts both 1, no 1 where the track enters or leaves); pieces of it are shown until the puzzle
  * is solvable at o.level (so unique), then each dropped again if it can be. It needs exactly
  * o.level when such a board turns up within EXACT_ATTEMPTS boards, otherwise the hardest found is

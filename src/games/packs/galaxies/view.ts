@@ -27,7 +27,7 @@ const CSS = `
 `;
 
 const settings = defineSchema({
-  tint: { type: "bool", label: "colour each galaxy", default: true },
+  tint: { type: "bool", label: "color each galaxy", default: true },
 });
 
 const SIZE = 10;
@@ -48,7 +48,7 @@ const BINDINGS: BindingSchema = {
 export type Side = "top" | "right" | "bottom" | "left";
 export type Board = { labelSides(): Set<Side>; colName(col: number): string; rowName(row: number): string };
 
-/** A soft fill per galaxy, spread round the colour wheel. */
+/** A soft fill per galaxy, spread round the color wheel. */
 const tintFor = (d: number, black: boolean) => (black
   ? "color-mix(in srgb, var(--text) 70%, var(--cell))"
   : `color-mix(in srgb, hsl(${Math.round((d * 137.5) % 360)} 65% 55%) 24%, var(--cell))`);
@@ -58,8 +58,8 @@ function legend(): { sample: string; meaning: string }[] {
   const tile = (x = 0, fill = "var(--cell)") => `<rect x="${x}" width="10" height="10" fill="${fill}" stroke="var(--border)" stroke-width="0.2"/>`;
   const dot = (cx: number, black = false) => `<circle cx="${cx}" cy="5" r="${DOT_R}" fill="${black ? "var(--text)" : "var(--cell)"}" stroke="var(--text)" stroke-width="0.5"/>`;
   return [
-    { sample: svg(tile() + dot(5)), meaning: "a dot: the centre of a galaxy (it can also sit on an edge or a corner)" },
-    { sample: svg(tile(0, tintFor(1, false)) + tile(10, tintFor(1, false)) + dot(10), 20), meaning: "tiles you've put in a galaxy, coloured by galaxy" },
+    { sample: svg(tile() + dot(5)), meaning: "a dot: the center of a galaxy (it can also sit on an edge or a corner)" },
+    { sample: svg(tile(0, tintFor(1, false)) + tile(10, tintFor(1, false)) + dot(10), 20), meaning: "tiles you've put in a galaxy, colored by galaxy" },
     { sample: svg(tile(0, tintFor(1, false)) + tile(10, tintFor(4, false)) + `<line x1="10" y1="0" x2="10" y2="10" stroke="var(--text)" stroke-width="0.8"/>`, 20), meaning: "a wall: where two galaxies meet" },
     { sample: svg(tile(0, tintFor(0, true)) + dot(5, true)), meaning: "a black dot: its galaxy is shaded dark" },
     { sample: svg(tile(0, "var(--danger-soft)")), meaning: "a tile whose mirror image through its dot is missing, or that isn't joined to its dot" },

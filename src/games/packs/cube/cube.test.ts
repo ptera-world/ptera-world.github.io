@@ -61,7 +61,7 @@ test("rolling there and back restores the solid", async () => {
   }
 });
 
-test("colours swap on landing", async () => {
+test("colors swap on landing", async () => {
   const p = sgtFormat.parse("c3x3:FC0,8");
   let s = cube.init(p);
   s = cube.reduce(p, s, { type: "roll", to: 5 });

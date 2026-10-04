@@ -5,11 +5,11 @@ import type { NetInteraction } from "./logic";
 const button = (id: string, label: string, run: (id: string) => boolean) =>
   h("button", { "data-command": id, onclick: () => run(id) }, label);
 
-/** What a tap or plain click on a tile does; the only way to turn anticlockwise or lock on a touch screen without the menu. */
+/** What a tap or plain click on a tile does; the only way to turn counterclockwise or lock on a touch screen without the menu. */
 export const tapModes: WidgetDef = {
   id: "net.tap",
   name: "tap does",
-  description: "choose what tapping or clicking a tile does: turn it clockwise, anticlockwise, or lock it",
+  description: "choose what tapping or clicking a tile does: turn it clockwise, counterclockwise, or lock it",
   puzzles: ["net"],
   defaultSlot: "bottom",
   order: 25,
@@ -43,6 +43,6 @@ export const scrollPad: WidgetDef = {
       button("net.shift-up", "↑", ctx.run),
       button("net.shift-down", "↓", ctx.run),
       button("net.shift-right", "→", ctx.run),
-      button("net.recentre", "centre", ctx.run)));
+      button("net.recentre", "center", ctx.run)));
   },
 };

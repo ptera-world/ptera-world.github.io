@@ -58,8 +58,8 @@ export const thermo: ConstraintType<LineSpec> = {
 export const whispers: ConstraintType<LineSpec> = {
   type: "whispers",
   label: "whisper line",
-  rule: "neighbouring digits on a green line differ by at least half the grid size, rounded up (5 on 9×9)",
-  logic: { name: "whisper logic", level: 2, description: "neighbours on a green line are far apart, so the middle digit (5 on a 9×9) can never sit on one. a low digit forces high neighbours and the other way round, so the line usually alternates low and high." },
+  rule: "neighboring digits on a green line differ by at least half the grid size, rounded up (5 on 9×9)",
+  logic: { name: "whisper logic", level: 2, description: "neighbors on a green line are far apart, so the middle digit (5 on a 9×9) can never sit on one. a low digit forces high neighbors and the other way round, so the line usually alternates low and high." },
   kind: "clue",
   removable: true,
   validate: (c, n) => validPath(c.cells, n, 2),

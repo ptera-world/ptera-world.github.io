@@ -7,7 +7,7 @@ export const MAX_COLOURS = 10;
 export const params = defineSchema({
   width: { type: "int", label: "width", default: 12, min: 2, max: 30 },
   height: { type: "int", label: "height", default: 12, min: 2, max: 30 },
-  colours: { type: "int", label: "colours", default: 6, min: 3, max: MAX_COLOURS },
+  colours: { type: "int", label: "colors", default: 6, min: 3, max: MAX_COLOURS },
   leniency: { type: "int", label: "spare moves", default: 5, min: 0, max: 30, description: "moves allowed beyond what the built-in solver needs" },
 });
 
@@ -15,7 +15,7 @@ export interface FloodPuzzle {
   w: number;
   h: number;
   colours: number;
-  /** Colour per cell, row-major, 0-based. The flood starts from the top-left cell. */
+  /** Color per cell, row-major, 0-based. The flood starts from the top-left cell. */
   grid: number[];
   /** Most moves allowed. */
   limit: number;
@@ -26,13 +26,13 @@ export interface FloodState {
   moves: number;
 }
 
-/** Flood the top-left area with a colour. */
+/** Flood the top-left area with a color. */
 export type FloodAction = { type: "fill"; colour: number };
 
 export interface FloodFocus {
   /** Cells the hinted fill would join to the flooded area. */
   gained?: number[];
-  /** Cells of the colour the hint is about. */
+  /** Cells of the color the hint is about. */
   cells?: number[];
 }
 
@@ -52,7 +52,7 @@ export function fill(w: number, h: number, grid: readonly number[], colour: numb
   return out;
 }
 
-/** Cells joined to the top-left cell through its own colour. */
+/** Cells joined to the top-left cell through its own color. */
 export function region(w: number, h: number, grid: readonly number[]): Uint8Array {
   const on = new Uint8Array(grid.length);
   on[0] = 1;
@@ -74,7 +74,7 @@ interface Score { dist: number; number: number; control: number }
 
 /**
  * Fills needed to reach every cell, measured from the flooded area: crossing into a different
- * colour costs one step. Returns the farthest distance, how many cells lie at it, and the
+ * color costs one step. Returns the farthest distance, how many cells lie at it, and the
  * flooded area's size.
  */
 function search(w: number, h: number, grid: readonly number[]): Score {
@@ -173,10 +173,10 @@ export const sgtFormat: Format<FloodPuzzle> = {
     if (!(w >= 1 && h >= 1 && w * h >= 2 && w <= 60 && h <= 60)) throw new Error("size out of range");
     const body = m[4]!;
     if (body.length !== w * h) throw new Error(`expected ${w * h} cells, got ${body.length}`);
-    if (/[A-Z]/.test(body)) throw new Error(`colours run from 0 to ${MAX_COLOURS - 1}`);
+    if (/[A-Z]/.test(body)) throw new Error(`colors run from 0 to ${MAX_COLOURS - 1}`);
     const grid = [...body].map(Number);
     const colours = Math.max(m[3] ? Number(m[3]) : 0, Math.max(...grid) + 1, 3);
-    if (colours > MAX_COLOURS) throw new Error(`at most ${MAX_COLOURS} colours`);
+    if (colours > MAX_COLOURS) throw new Error(`at most ${MAX_COLOURS} colors`);
     return { w, h, colours, grid, limit: Number(m[5]) };
   },
   serialize: (p) => `${p.w}x${p.h}c${p.colours}:${p.grid.join("")},${p.limit}`,
@@ -184,7 +184,7 @@ export const sgtFormat: Format<FloodPuzzle> = {
 
 /**
  * ```
- * flood limit=20 colours=6
+ * flood limit=20 colors=6
  * 012345
  * 543210
  * ```
@@ -198,7 +198,7 @@ export const gridFormat: Format<FloodPuzzle> = {
     const lines = text.trim().split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
     const head = lines[0] ?? "";
     const limit = /\blimit=(\d+)/.exec(head);
-    if (!/^flood\b/.test(head) || !limit) throw new Error("first line should look like: flood limit=20 [colours=6]");
+    if (!/^flood\b/.test(head) || !limit) throw new Error("first line should look like: flood limit=20 [colors=6]");
     const rows = lines.slice(1);
     const h = rows.length, w = rows[0]?.length ?? 0;
     if (rows.some((r) => r.length !== w || !/^\d+$/.test(r))) throw new Error("rows must be digits, all the same length");
@@ -206,13 +206,13 @@ export const gridFormat: Format<FloodPuzzle> = {
     const grid = rows.join("").split("").map(Number);
     const given = /\bcolours=(\d+)/.exec(head);
     const colours = Math.max(given ? Number(given[1]) : 0, Math.max(...grid) + 1, 3);
-    if (colours > MAX_COLOURS) throw new Error(`at most ${MAX_COLOURS} colours`);
+    if (colours > MAX_COLOURS) throw new Error(`at most ${MAX_COLOURS} colors`);
     return { w, h, colours, grid, limit: Number(limit[1]) };
   },
   serialize(p) {
     const rows: string[] = [];
     for (let y = 0; y < p.h; y++) rows.push(p.grid.slice(y * p.w, y * p.w + p.w).join(""));
-    return [`flood limit=${p.limit} colours=${p.colours}`, ...rows].join("\n");
+    return [`flood limit=${p.limit} colors=${p.colours}`, ...rows].join("\n");
   },
 };
 
@@ -234,8 +234,8 @@ export const flood: PuzzleDef<FloodPuzzle, FloodState, FloodAction, null, typeof
   id: "flood",
   name: "flood",
   aliases: ["flood it", "flood-it", "floodit"],
-  tags: ["colours", "moves", "flood fill"],
-  description: "turn the whole grid one colour. each move repaints the area grown from the top-left corner, which then swallows every touching cell of that colour.",
+  tags: ["colors", "moves", "flood fill"],
+  description: "turn the whole grid one color. each move repaints the area grown from the top-left corner, which then swallows every touching cell of that color.",
   generatorVersion: 1,
   params,
   presets: [
@@ -243,8 +243,8 @@ export const flood: PuzzleDef<FloodPuzzle, FloodState, FloodAction, null, typeof
     { label: "12×12 medium", params: { width: 12, height: 12, colours: 6, leniency: 2 } },
     { label: "12×12 hard", params: { width: 12, height: 12, colours: 6, leniency: 0 } },
     { label: "16×16 medium", params: { width: 16, height: 16, colours: 6, leniency: 2 } },
-    { label: "12×12, 3 colours", params: { width: 12, height: 12, colours: 3, leniency: 0 } },
-    { label: "12×12, 4 colours", params: { width: 12, height: 12, colours: 4, leniency: 0 } },
+    { label: "12×12, 3 colors", params: { width: 12, height: 12, colours: 3, leniency: 0 } },
+    { label: "12×12, 4 colors", params: { width: 12, height: 12, colours: 4, leniency: 0 } },
   ],
   generate,
   formats: [sgtFormat, gridFormat],
@@ -264,9 +264,9 @@ export const flood: PuzzleDef<FloodPuzzle, FloodState, FloodAction, null, typeof
   },
   rate,
   rules: (p) => [
-    "the flooded area is the top-left cell plus every cell joined to it (across edges) through the same colour.",
-    "a move picks a colour: the whole flooded area becomes that colour, so it grows into every touching cell of it.",
-    `make the whole grid one colour within ${p.limit} moves.`,
+    "the flooded area is the top-left cell plus every cell joined to it (across edges) through the same color.",
+    "a move picks a color: the whole flooded area becomes that color, so it grows into every touching cell of it.",
+    `make the whole grid one color within ${p.limit} moves.`,
   ],
-  describe: (p) => `${p.w}×${p.h} · ${p.colours} colours · ${p.limit} moves`,
+  describe: (p) => `${p.w}×${p.h} · ${p.colours} colors · ${p.limit} moves`,
 };

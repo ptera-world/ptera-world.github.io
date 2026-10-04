@@ -14,21 +14,21 @@ export const params = defineSchema({
   difficulty: {
     type: "enum", label: "difficulty", default: "medium",
     options: [
-      { value: "easy", label: "easy", description: "regions with only one colour left" },
-      { value: "medium", label: "medium", description: "also two neighbouring regions sharing the same two colours" },
-      { value: "hard", label: "hard", description: "also trying a colour and seeing it fail" },
+      { value: "easy", label: "easy", description: "regions with only one color left" },
+      { value: "medium", label: "medium", description: "also two neighboring regions sharing the same two colors" },
+      { value: "hard", label: "hard", description: "also trying a color and seeing it fail" },
     ],
   },
 });
 
 export interface MapState {
-  /** Colour per region, -1 for none; givens included. */
+  /** Color per region, -1 for none; givens included. */
   colours: number[];
-  /** Pencil marks per region: colour bits, 0 for none. */
+  /** Pencil marks per region: color bits, 0 for none. */
   marks: number[];
 }
 
-/** Clearing a colour and toggling a pencil mark are the player's own edits, so they count as retractions. */
+/** Clearing a color and toggling a pencil mark are the player's own edits, so they count as retractions. */
 export type MapAction =
   | { type: "colour"; regions: number[]; colour: number }
   | { type: "marks"; regions: number[]; marks: number }
@@ -37,7 +37,7 @@ export type MapAction =
 export interface MapInteraction {
   /** Keyboard cursor cell. */
   cursor: number;
-  /** Typed colours go in as pencil marks. */
+  /** Typed colors go in as pencil marks. */
   pencil: boolean;
 }
 
@@ -106,9 +106,9 @@ function edgeCells(w: number, h: number, i: number): [number, number] {
 }
 
 /**
- * Simon Tatham's Map game id: `WxHnN[dX]:edges,colours`. Edges are run lengths (a–y, alternating
+ * Simon Tatham's Map game id: `WxHnN[dX]:edges,colors`. Edges are run lengths (a–y, alternating
  * between no-edge and edge, starting with no-edge plus one notional extra; z = 25 without
- * switching). Colours per region: 0–3, or a–z for runs of 1–26 uncoloured regions.
+ * switching). Colors per region: 0–3, or a–z for runs of 1–26 uncolored regions.
  */
 export const sgtFormat: Format<MapPuzzle> = {
   id: "sgt",
@@ -116,7 +116,7 @@ export const sgtFormat: Format<MapPuzzle> = {
   detect: (t) => SGT_RE.test(t.trim()),
   parse(t) {
     const m = SGT_RE.exec(t.trim());
-    if (!m) throw new Error("expected WxHnN:edges,colours");
+    if (!m) throw new Error("expected WxHnN:edges,colors");
     const w = Number(m[1]), h = m[2] ? Number(m[2]) : w;
     if (!(w >= 2 && h >= 2 && w <= 100 && h <= 100)) throw new Error("size must be between 2×2 and 100×100");
     const wh = w * h;
@@ -151,7 +151,7 @@ export const sgtFormat: Format<MapPuzzle> = {
       if (ch >= "0" && ch <= "3") given.push(Number(ch));
       else for (let i = 0; i <= ch.charCodeAt(0) - 97; i++) given.push(-1);
     }
-    if (given.length !== n) throw new Error(`expected colours for ${n} regions, got ${given.length}`);
+    if (given.length !== n) throw new Error(`expected colors for ${n} regions, got ${given.length}`);
     return { w, h, n, map, given };
   },
   serialize(p) {
@@ -223,9 +223,9 @@ export interface MapFocus {
 
 /** Rule breaks visible without knowing the answer. */
 export interface Conflicts {
-  /** Coloured regions that share a colour with a neighbour. */
+  /** Colored regions that share a color with a neighbor. */
   clashes: number[];
-  /** Uncoloured regions whose neighbours already use all four colours. */
+  /** Uncolored regions whose neighbors already use all four colors. */
   stuck: number[];
 }
 
@@ -244,7 +244,7 @@ export function findConflicts(p: MapPuzzle, s: MapState): Conflicts {
   return { clashes, stuck };
 }
 
-/** Colours and pencil marks that disagree with the unique solution, as a hint that clears them. */
+/** Colors and pencil marks that disagree with the unique solution, as a hint that clears them. */
 export function wrongMarksHint(p: MapPuzzle, s: MapState): Hint<MapAction> | null {
   const a = analyze(p);
   if (a.count !== 1 || !a.solution) return null;
@@ -257,8 +257,8 @@ export function wrongMarksHint(p: MapPuzzle, s: MapState): Hint<MapAction> | nul
   }
   if (!wrongCol.length && !wrongMarks.length) return null;
   const parts: string[] = [];
-  if (wrongCol.length) parts.push(`the ${wrongCol.length === 1 ? "colour" : "colours"} on ${regionList(p, wrongCol)} ${wrongCol.length === 1 ? "is" : "are"} wrong`);
-  if (wrongMarks.length) parts.push(`the pencil marks on ${regionList(p, wrongMarks)} leave out the right colour`);
+  if (wrongCol.length) parts.push(`the ${wrongCol.length === 1 ? "color" : "colors"} on ${regionList(p, wrongCol)} ${wrongCol.length === 1 ? "is" : "are"} wrong`);
+  if (wrongMarks.length) parts.push(`the pencil marks on ${regionList(p, wrongMarks)} leave out the right color`);
   const actions: MapAction[] = [];
   if (wrongCol.length) actions.push({ type: "colour", regions: wrongCol, colour: -1 });
   if (wrongMarks.length) actions.push({ type: "marks", regions: wrongMarks, marks: 0 });
@@ -267,8 +267,8 @@ export function wrongMarksHint(p: MapPuzzle, s: MapState): Hint<MapAction> | nul
 
 export function hint(p: MapPuzzle, s: MapState): Hint<MapAction> | null {
   const c = findConflicts(p, s);
-  if (c.clashes.length) return { message: `${regionList(p, c.clashes)} ${c.clashes.length === 1 ? "has" : "have"} the same colour as a neighbour`, focus: { regions: c.clashes, because: [] } satisfies MapFocus };
-  if (c.stuck.length) return { message: `${regionList(p, c.stuck)} can't take any colour: the neighbours use all four`, focus: { regions: c.stuck, because: [] } satisfies MapFocus };
+  if (c.clashes.length) return { message: `${regionList(p, c.clashes)} ${c.clashes.length === 1 ? "has" : "have"} the same color as a neighbor`, focus: { regions: c.clashes, because: [] } satisfies MapFocus };
+  if (c.stuck.length) return { message: `${regionList(p, c.stuck)} can't take any color: the neighbors use all four`, focus: { regions: c.stuck, because: [] } satisfies MapFocus };
   const a = analyze(p);
   if (a.count === 0) return { message: "this map has no solution" };
   if (a.count === 2) return { message: "this map has more than one solution, so it can need a guess" };
@@ -293,9 +293,9 @@ function generate(v: Values<typeof params>, rng: Rng, ctx: GenerateContext): Pro
 export const map: PuzzleDef<MapPuzzle, MapState, MapAction, MapInteraction, typeof params> = {
   id: "map",
   name: "map",
-  aliases: ["four colour", "four color", "map colouring", "map coloring", "four colour theorem"],
-  tags: ["logic", "regions", "colouring"],
-  description: "colour every region of the map with one of four colours so that no two regions that share a border have the same colour.",
+  aliases: ["four color", "four color", "map coloring", "map coloring", "four color theorem"],
+  tags: ["logic", "regions", "coloring"],
+  description: "color every region of the map with one of four colors so that no two regions that share a border have the same color.",
   generatorVersion: 1,
   params,
   presets: [
@@ -312,10 +312,10 @@ export const map: PuzzleDef<MapPuzzle, MapState, MapAction, MapInteraction, type
   reduce,
   isRetraction: (a) => (a.type === "colour" && a.colour < 0) || a.type === "toggle-mark",
   rules: () => [
-    "colour every region with one of four colours.",
-    "regions that share a border (not just a corner) must have different colours.",
-    "regions coloured from the start are fixed.",
-    "pencil marks are your own notes of which colours a region could still have. they don't count for anything.",
+    "color every region with one of four colors.",
+    "regions that share a border (not just a corner) must have different colors.",
+    "regions colored from the start are fixed.",
+    "pencil marks are your own notes of which colors a region could still have. they don't count for anything.",
   ],
   isSolved,
   solve(p) {

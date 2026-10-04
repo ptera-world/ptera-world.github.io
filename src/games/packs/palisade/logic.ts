@@ -60,7 +60,7 @@ export interface Geometry {
   n: number;
   /** Inner edges as the two cells they separate: first all left-right pairs by row, then all up-down pairs. */
   edges: [number, number][];
-  /** Per cell: its inner edges and the neighbour across each. */
+  /** Per cell: its inner edges and the neighbor across each. */
   sides: { edge: number; other: number }[][];
   /** Per inner grid point (corner not on the rim): its four edges. */
   corners: number[][];
@@ -374,7 +374,7 @@ function rate(p: PalisadePuzzle): { label: string; score: number } {
 /**
  * A random split of the grid into connected regions of k cells, or null if this try paints itself
  * into a corner. Regions grow one cell at a time from the open cell with the fewest open
- * neighbours; a region is undone if it leaves an open pocket whose size isn't a multiple of k.
+ * neighbors; a region is undone if it leaves an open pocket whose size isn't a multiple of k.
  */
 export function divide(w: number, h: number, k: number, rng: Rng): Int32Array | null {
   const n = w * h;

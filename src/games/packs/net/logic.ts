@@ -12,7 +12,7 @@ export interface NetState {
 }
 
 export type NetAction =
-  /** Rotate by `turns` quarter turns clockwise (negative = anticlockwise). No-op on locked tiles. */
+  /** Rotate by `turns` quarter turns clockwise (negative = counterclockwise). No-op on locked tiles. */
   | { type: "rotate"; cell: number; turns: number }
   | { type: "rotateMany"; cells: number[]; turns: number[] }
   /** Turn a tile to `mask` (must be a rotation of it), optionally locking it. No-op on locked tiles. */

@@ -3,7 +3,7 @@
  * Every value is optional; views render whatever is present.
  */
 
-/** number[]: candidate masks to show for empty cells instead of the player's centre marks. */
+/** number[]: candidate masks to show for empty cells instead of the player's center marks. */
 export const CANDIDATES = "sudoku.candidates";
 /** number[]: cells breaking a rule. */
 export const CONFLICTS = "sudoku.conflicts";

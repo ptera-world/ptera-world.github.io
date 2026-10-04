@@ -52,7 +52,7 @@ export interface Geometry {
   n: number;
   /** Inner edges as the two cells they separate: left-right pairs by row, then up-down pairs. */
   edges: [number, number][];
-  /** Edge between two neighbouring cells. */
+  /** Edge between two neighboring cells. */
   edgeOf: Map<number, number>;
   nbrs: number[][];
 }
@@ -318,7 +318,7 @@ function rate(p: RectPuzzle): { label: string; score: number } {
 /**
  * A random split into rectangles after tatham's: an uncovered cell at random gets a random
  * rectangle of area 2 up to a sixth of the grid that fits the uncovered space (never the full
- * width or height unless the grid is tiny). A leftover single cell joins a neighbouring strip
+ * width or height unless the grid is tiny). A leftover single cell joins a neighboring strip
  * when that keeps it a rectangle, and is a 1 otherwise. Returns per cell its rectangle id.
  */
 export function split(w: number, h: number, rng: Rng): Int32Array {
@@ -348,7 +348,7 @@ export function split(w: number, h: number, rng: Rng): Int32Array {
     for (let yy = y; yy < y + bh; yy++) for (let xx = x; xx < x + bw; xx++) id[yy * w + xx] = next;
     next++;
   }
-  // single cells join a 1-wide neighbouring strip that lines up with them
+  // single cells join a 1-wide neighboring strip that lines up with them
   const cellsOf = (r: number) => Array.from({ length: n }, (_, c) => c).filter((c) => id[c] === r);
   for (let c = 0; c < n; c++) {
     const r = id[c]!;

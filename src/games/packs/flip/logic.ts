@@ -6,7 +6,7 @@ export const params = defineSchema({
   width: { type: "int", label: "width", default: 5, min: 2, max: 12 },
   height: { type: "int", label: "height", default: 5, min: 2, max: 12 },
   shape: {
-    type: "enum", label: "neighbourhood", default: "cross",
+    type: "enum", label: "neighborhood", default: "cross",
     options: [
       { value: "cross", label: "cross (+)" },
       { value: "x", label: "diagonal (×)" },
@@ -145,7 +145,7 @@ export const flip: PuzzleDef<FlipPuzzle, FlipState, FlipAction, FlipInteraction,
   name: "lights out",
   aliases: ["flip", "merlin"],
   tags: ["logic", "grid", "toggle"],
-  description: "turn every light off. pressing a cell toggles it and its neighbours.",
+  description: "turn every light off. pressing a cell toggles it and its neighbors.",
   generatorVersion: 1,
   params,
   presets: [
@@ -182,7 +182,7 @@ export const flip: PuzzleDef<FlipPuzzle, FlipState, FlipAction, FlipInteraction,
     return { label: `${n} presses`, score: n };
   },
   rules: (p) => [
-    "pressing a cell toggles it and its neighbours (" + (p.shape === "cross" ? "up, down, left, right" : p.shape === "x" ? "the four diagonals" : "all eight around it") + ").",
+    "pressing a cell toggles it and its neighbors (" + (p.shape === "cross" ? "up, down, left, right" : p.shape === "x" ? "the four diagonals" : "all eight around it") + ").",
     "turn every light off.",
   ],
   describe: (p) => `${p.w}×${p.h} ${p.shape}`,

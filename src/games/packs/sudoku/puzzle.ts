@@ -11,15 +11,15 @@ import { latinFormats } from "./formats";
 
 export type { LatinPuzzle };
 
-/** Player progress. Arrays are length n*n; marks and colours are bitmasks. */
+/** Player progress. Arrays are length n*n; marks and colors are bitmasks. */
 export interface GridState {
   /** Digits including givens, 0 = empty. */
   values: number[];
   center: number[];
   corner: number[];
-  /** Colour ids 1..9 as bits. */
+  /** Color ids 1..9 as bits. */
   colors: number[];
-  /** Candidates the player has ruled out (honoured by auto candidates and techniques). */
+  /** Candidates the player has ruled out (honored by auto candidates and techniques). */
   struck: number[];
 }
 

@@ -45,7 +45,7 @@ const BINDINGS: BindingSchema = {
   "netslide.col-down": { label: "slide column down", category: "netslide", keys: ["shift+ArrowDown", "shift+s"], description: "slide the selected piece's column one place down" },
 };
 
-/** Arms start a pipe's half-width behind the centre, so corners join without a notch. */
+/** Arms start a pipe's half-width behind the center, so corners join without a notch. */
 const ARM: Record<number, string> = { [R]: "M4 5H10", [U]: "M5 6V0", [L]: "M6 5H0", [D]: "M5 4V10" };
 
 /** Pipe markup for a mask in a 10×10 box. */
@@ -79,10 +79,10 @@ export const netslideView: View<NetslidePuzzle, NetslideState, NetslideAction, N
     { how: "drag a piece sideways or up and down", what: "slide its row or column by as many places as you drag" },
   ],
   legend: [
-    { sample: swatch(sample(R | L | D, "var(--text-dim)")), meaning: "a pipe piece not yet joined to the centre" },
-    { sample: swatch(sample(R | L | D, "var(--accent)")), meaning: "a piece joined to the centre" },
+    { sample: swatch(sample(R | L | D, "var(--text-dim)")), meaning: "a pipe piece not yet joined to the center" },
+    { sample: swatch(sample(R | L | D, "var(--accent)")), meaning: "a piece joined to the center" },
     { sample: swatch(sample(U, "var(--accent)")), meaning: "a dead end" },
-    { sample: swatch(sample(R | D, "var(--accent)", `<circle cx="5" cy="5" r="2" fill="var(--accent)"/>`)), meaning: "the centre piece: it never moves" },
+    { sample: swatch(sample(R | D, "var(--accent)", `<circle cx="5" cy="5" r="2" fill="var(--accent)"/>`)), meaning: "the center piece: it never moves" },
     { sample: swatch(`<rect width="10" height="10" fill="var(--cell)"/><line x1="10" y1="0" x2="10" y2="10" stroke="var(--text)" stroke-width="1.2"/>`), meaning: "a wall: no pipe may cross it" },
     { sample: swatch(`<polygon points="${tri(5, 5, 0)}" fill="var(--text-dim)"/>`, "2 2 6 6"), meaning: "slides its row or column this way" },
     { sample: swatch(sample(R | L, "var(--text-dim)") + box(`stroke-width="1"`)), meaning: "hint: the piece being moved into place" },

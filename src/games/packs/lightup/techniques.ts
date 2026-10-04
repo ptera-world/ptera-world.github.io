@@ -83,7 +83,7 @@ export const finished: LightupTechnique = {
   name: "finished number",
   puzzles: ["lightup"],
   level: 1,
-  description: "a number that already touches as many lights as it shows can't take any more, so its other open neighbours get no-light marks. a 0 is finished from the start.",
+  description: "a number that already touches as many lights as it shows can't take any more, so its other open neighbors get no-light marks. a 0 is finished from the start.",
   find(p, s) {
     const hit = first(p, s, ["clue-full"]);
     if (!hit) return null;
@@ -101,7 +101,7 @@ export const needsAll: LightupTechnique = {
   name: "no room to spare",
   puzzles: ["lightup"],
   level: 2,
-  description: "a number with exactly as many neighbours that could still take a light as lights it still needs: every one of them is a light. a 4 always is, and so is a 3 against an edge.",
+  description: "a number with exactly as many neighbors that could still take a light as lights it still needs: every one of them is a light. a 4 always is, and so is a 3 against an edge.",
   find(p, s) {
     const hit = first(p, s, ["clue-needs-all"]);
     if (!hit) return null;
@@ -110,7 +110,7 @@ export const needsAll: LightupTechnique = {
     const need = hit.raw.cells.length;
     const at = cellName(p, q);
     return step(hit.raw, hit.cells,
-      `the ${v} at ${at} still needs ${need} ${plural(need, "light", "lights")} and only ${need} of its neighbours can take one, so ${outcome(p, hit.cells, LIGHT)}`,
+      `the ${v} at ${at} still needs ${need} ${plural(need, "light", "lights")} and only ${need} of its neighbors can take one, so ${outcome(p, hit.cells, LIGHT)}`,
       `look at the ${v} at ${at}`, { cells: [], because: [q] });
   },
   practice: { params: EASY },
@@ -160,7 +160,7 @@ export const crowds: LightupTechnique = {
   name: "would crowd a number",
   puzzles: ["lightup"],
   level: 5,
-  description: "a light that would shine on so many of a number's open neighbours that the number couldn't get its lights any more can't go there. the classic cases: the corners diagonal to a 3, or the corner between a 1's only two open neighbours.",
+  description: "a light that would shine on so many of a number's open neighbors that the number couldn't get its lights any more can't go there. the classic cases: the corners diagonal to a 3, or the corner between a 1's only two open neighbors.",
   find(p, s) {
     const hit = first(p, s, ["starves-clue"]);
     if (!hit) return null;

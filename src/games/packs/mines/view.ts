@@ -49,8 +49,8 @@ const CSS = `
 
 const settings = defineSchema({
   longPressMs: { type: "int", label: "touch long-press for flag (ms)", default: 380, min: 150, max: 1500 },
-  chordOnClick: { type: "bool", label: "click a number that has all its flags to open its other neighbours (chording)", default: true },
-  dimDone: { type: "bool", label: "fade numbers whose neighbours are all decided", default: true },
+  chordOnClick: { type: "bool", label: "click a number that has all its flags to open its other neighbors (chording)", default: true },
+  dimDone: { type: "bool", label: "fade numbers whose neighbors are all decided", default: true },
 });
 
 const SIZE = 10;
@@ -84,14 +84,14 @@ const BINDINGS: BindingSchema = {
   "mines.right": { label: "cursor right", category: "minesweeper", keys: ["ArrowRight", "d"] },
   "mines.up": { label: "cursor up", category: "minesweeper", keys: ["ArrowUp", "w"] },
   "mines.down": { label: "cursor down", category: "minesweeper", keys: ["ArrowDown", "s"] },
-  "mines.open": { label: "open cell", category: "minesweeper", keys: ["space"], description: "open the cell under the keyboard cursor. on an open number, opens its neighbours instead (like clicking it)" },
+  "mines.open": { label: "open cell", category: "minesweeper", keys: ["space"], description: "open the cell under the keyboard cursor. on an open number, opens its neighbors instead (like clicking it)" },
   "mines.flag": { label: "flag / unflag cell", category: "minesweeper", keys: ["f", "x"], description: "put a flag on the cell under the keyboard cursor (or take it off). flags mark mines and can't be opened by accident" },
-  "mines.chord": { label: "open around number", category: "minesweeper", keys: ["Enter", "c"], description: "on an open number that already has that many flags around it, open all its other neighbours at once" },
+  "mines.chord": { label: "open around number", category: "minesweeper", keys: ["Enter", "c"], description: "on an open number that already has that many flags around it, open all its other neighbors at once" },
   "mines.mode": { label: "flag mode", category: "minesweeper", keys: ["m"], description: "while on, clicking or tapping a hidden cell flags it instead of opening it. for touch screens, where there is no right click" },
   "mines.flag-at": { label: "flag / unflag (pointer)", category: "minesweeper", mouse: ["rightclick"], description: "flag the cell under the pointer, or take its flag off" },
 };
 
-/** Flag-or-unflag as an explicit action, so unflagging is recognisably a retraction. */
+/** Flag-or-unflag as an explicit action, so unflagging is recognizably a retraction. */
 export const toggleFlag = (st: MinesState, cell: number): MinesAction => ({ type: "flag", cells: [cell], on: !st.flags[cell] });
 
 export function minesView(look: Look, labelSides: () => ReadonlySet<Side>): View<MinesPuzzle, MinesState, MinesAction, MinesInteraction> {
@@ -117,7 +117,7 @@ export function minesView(look: Look, labelSides: () => ReadonlySet<Side>): View
     controls: [
       { how: "click or tap a hidden cell", what: "open it" },
       { how: "right-click, or long-press on touch", what: "flag it as a mine (again to take the flag off)" },
-      { how: "click an open number that has all its flags", what: "open its other neighbours: pointing at it shows which (middle-click or enter does the same; \"open around finished numbers\" in assists does it by itself)" },
+      { how: "click an open number that has all its flags", what: "open its other neighbors: pointing at it shows which (middle-click or enter does the same; \"open around finished numbers\" in assists does it by itself)" },
       { how: "press, then drag off the cell before letting go", what: "change your mind: nothing happens" },
     ],
     mount(root, { session, settings }) {
@@ -176,7 +176,7 @@ export function minesView(look: Look, labelSides: () => ReadonlySet<Side>): View
         }
         return out;
       };
-      /** A number whose every neighbour is open or flagged has nothing left to say. */
+      /** A number whose every neighbor is open or flagged has nothing left to say. */
       const isDone = (st: MinesState, c: number) => neighbours(c).every((d) => st.open[d] || st.flags[d]);
 
       const render = () => {

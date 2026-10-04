@@ -6,7 +6,7 @@ import { COLOUR_NAMES, MAX_COLOURS, region, type FloodAction, type FloodFocus, t
 
 const SIZE = 10;
 
-/** Cell colours; a theme can override any of them with --flood-0 … --flood-9. */
+/** Cell colors; a theme can override any of them with --flood-0 … --flood-9. */
 export const PALETTE = ["#d9443f", "#e8c62c", "#3fa34d", "#3b6fd6", "#ef8a2b", "#8b4fc7", "#8a5a33", "#5fc4e8", "#a6d64a", "#ef7fb6"] as const;
 export const colourVar = (c: number) => `var(--flood-${c}, ${PALETTE[c]})`;
 
@@ -25,12 +25,12 @@ const CSS = `
 
 const settings = defineSchema({
   outline: { type: "bool", label: "outline the flooded area", default: true },
-  numbers: { type: "bool", label: "show a number on each colour", default: false, description: "for telling colours apart without relying on hue" },
+  numbers: { type: "bool", label: "show a number on each color", default: false, description: "for telling colors apart without relying on hue" },
 });
 
 const BINDINGS: BindingSchema = Object.fromEntries(Array.from({ length: MAX_COLOURS }, (_, c) => [
   `flood.colour-${c + 1}`,
-  { label: `flood with ${COLOUR_NAMES[c]}`, category: "flood", keys: [String((c + 1) % 10)], description: `fill the flooded area with colour ${c + 1} (${COLOUR_NAMES[c]})` },
+  { label: `flood with ${COLOUR_NAMES[c]}`, category: "flood", keys: [String((c + 1) % 10)], description: `fill the flooded area with color ${c + 1} (${COLOUR_NAMES[c]})` },
 ]));
 
 const swatch = (body: string) => `<svg viewBox="-0.5 -0.5 11 11">${body}</svg>`;
@@ -39,7 +39,7 @@ function legend(p: FloodPuzzle) {
   return [
     ...Array.from({ length: p.colours }, (_, c) => ({
       sample: swatch(`<rect width="10" height="10" fill="${colourVar(c)}"/>`),
-      meaning: `colour ${c + 1}, ${COLOUR_NAMES[c]} (key ${(c + 1) % 10})`,
+      meaning: `color ${c + 1}, ${COLOUR_NAMES[c]} (key ${(c + 1) % 10})`,
     })),
     { sample: swatch(`<rect width="10" height="10" fill="${colourVar(0)}"/><path d="M0 10V0H10" fill="none" stroke="var(--text)" stroke-width="0.7"/>`), meaning: "the edge of the flooded area (with the outline setting on)" },
     { sample: swatch(`<rect width="10" height="10" fill="${colourVar(3)}"/><rect x="0.6" y="0.6" width="8.8" height="8.8" fill="none" stroke="var(--hint)" stroke-width="0.8"/>`), meaning: "hint: cells the suggested fill brings in" },
@@ -51,7 +51,7 @@ export const floodView: View<FloodPuzzle, FloodState, FloodAction, null> = {
   name: "grid",
   puzzle: "flood",
   settings,
-  controls: [{ how: "click or tap any cell", what: "flood with that cell's colour" }],
+  controls: [{ how: "click or tap any cell", what: "flood with that cell's color" }],
   legend,
   mount(root, { session, settings }) {
     style("flood", CSS);

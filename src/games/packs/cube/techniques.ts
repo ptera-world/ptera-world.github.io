@@ -6,7 +6,7 @@ type CubeTechnique = Technique<CubePuzzle, CubeState, CubeAction>;
 
 const NAMES = ["right", "down-right", "down", "down-left", "left", "up-left", "up", "up-right"] as const;
 
-/** Compass name for rolling from one square to a neighbour. */
+/** Compass name for rolling from one square to a neighbor. */
 export function direction(p: CubePuzzle, from: number, to: number): string {
   const a = arena(p).squares;
   const angle = Math.atan2(a[to]!.y - a[from]!.y, a[to]!.x - a[from]!.x);
@@ -35,12 +35,12 @@ export const fetchBlue: CubeTechnique = {
   name: "fetch a blue square",
   puzzles: ["cube"],
   level: 1,
-  description: "roll towards a blue square along a route that lands a plain face on it, without setting a blue face down on a plain square on the way.",
+  description: "roll toward a blue square along a route that lands a plain face on it, without setting a blue face down on a plain square on the way.",
   find: (p, s) => step(p, s, false, (pl, d) => ({
     message: pl.whole
       ? `roll ${d}: it doesn't set any blue down, and ${rolls(pl.route.squares.length)} from here make every face blue.`
       : `roll ${d}: ${rolls(pl.route.squares.length)} land a plain face on the highlighted blue square, without setting a blue face down on the way.`,
-    nudge: "roll towards a blue square without losing any blue",
+    nudge: "roll toward a blue square without losing any blue",
   })),
 };
 

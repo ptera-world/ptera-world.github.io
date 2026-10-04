@@ -35,7 +35,7 @@ const CSS = `
 `;
 
 const settings = defineSchema({
-  numbers: { type: "bool", label: "number the colours (1-4) as well", default: false },
+  numbers: { type: "bool", label: "number the colors (1-4) as well", default: false },
   grid: { type: "bool", label: "show faint lines between cells", default: false },
 });
 
@@ -44,12 +44,12 @@ const PAD = 0.6;
 const LABEL = 6;
 
 const BINDINGS: BindingSchema = {
-  "map.colour-1": { label: "red", category: "map", keys: ["1", "r"], description: "colour the selected region red (or add a red pencil mark, in pencil mode). again to remove it" },
-  "map.colour-2": { label: "yellow", category: "map", keys: ["2", "y"], description: "colour the selected region yellow (or a pencil mark). again to remove it" },
-  "map.colour-3": { label: "green", category: "map", keys: ["3", "g"], description: "colour the selected region green (or a pencil mark). again to remove it" },
-  "map.colour-4": { label: "blue", category: "map", keys: ["4", "b"], description: "colour the selected region blue (or a pencil mark). again to remove it" },
-  "map.clear": { label: "clear region", category: "map", keys: ["Backspace", "Delete", "0"], description: "remove the colour or pencil marks from the selected region" },
-  "map.pencil": { label: "pencil mode", category: "map", keys: ["p"], description: "while on, typed colours go in as small pencil marks: your notes of what a region could still be" },
+  "map.colour-1": { label: "red", category: "map", keys: ["1", "r"], description: "color the selected region red (or add a red pencil mark, in pencil mode). again to remove it" },
+  "map.colour-2": { label: "yellow", category: "map", keys: ["2", "y"], description: "color the selected region yellow (or a pencil mark). again to remove it" },
+  "map.colour-3": { label: "green", category: "map", keys: ["3", "g"], description: "color the selected region green (or a pencil mark). again to remove it" },
+  "map.colour-4": { label: "blue", category: "map", keys: ["4", "b"], description: "color the selected region blue (or a pencil mark). again to remove it" },
+  "map.clear": { label: "clear region", category: "map", keys: ["Backspace", "Delete", "0"], description: "remove the color or pencil marks from the selected region" },
+  "map.pencil": { label: "pencil mode", category: "map", keys: ["p"], description: "while on, typed colors go in as small pencil marks: your notes of what a region could still be" },
   "map.left": { label: "cursor left", category: "map", keys: ["ArrowLeft", "a"] },
   "map.right": { label: "cursor right", category: "map", keys: ["ArrowRight", "d"] },
   "map.up": { label: "cursor up", category: "map", keys: ["ArrowUp", "w"] },
@@ -85,12 +85,12 @@ function legend(): { sample: string; meaning: string }[] {
   const border = (w = 10) => `<rect width="${w}" height="10" fill="none" stroke="var(--text)" stroke-width="0.7"/>`;
   const dots = [0, 1, 2, 3].map((c) => `<circle cx="${3.2 + (c % 2) * 3.6}" cy="${3.2 + Math.floor(c / 2) * 3.6}" r="1.2" fill="${FILLS[c]}" stroke="var(--text)" stroke-width="0.2"/>`);
   return [
-    { sample: svg(cell("var(--cell)") + border()), meaning: "a region with no colour yet" },
+    { sample: svg(cell("var(--cell)") + border()), meaning: "a region with no color yet" },
     ...FILLS.map((f, c) => ({ sample: svg(cell(f) + border()), meaning: `${COLOUR_NAMES[c]} (${c + 1})` })),
-    { sample: svg(cell(FILLS[2]) + border() + `<circle cx="5" cy="5" r="0.9" fill="var(--text)"/>`), meaning: "a region coloured from the start: fixed" },
-    { sample: svg(cell("var(--cell)") + border() + dots[0] + dots[3]), meaning: "pencil marks: your notes of which colours a region could still be" },
-    { sample: svg(cell(FILLS[0]) + cell(FILLS[0], 10) + `<rect width="20" height="10" fill="none" stroke="var(--danger)" stroke-width="1.2" stroke-dasharray="1.4 0.8"/>` + `<line x1="10" y1="0" x2="10" y2="10" stroke="var(--text)" stroke-width="0.7"/>`, 20), meaning: "neighbouring regions with the same colour" },
-    { sample: svg(cell("var(--danger-soft)") + border()), meaning: "a region its neighbours leave with no colour" },
+    { sample: svg(cell(FILLS[2]) + border() + `<circle cx="5" cy="5" r="0.9" fill="var(--text)"/>`), meaning: "a region colored from the start: fixed" },
+    { sample: svg(cell("var(--cell)") + border() + dots[0] + dots[3]), meaning: "pencil marks: your notes of which colors a region could still be" },
+    { sample: svg(cell(FILLS[0]) + cell(FILLS[0], 10) + `<rect width="20" height="10" fill="none" stroke="var(--danger)" stroke-width="1.2" stroke-dasharray="1.4 0.8"/>` + `<line x1="10" y1="0" x2="10" y2="10" stroke="var(--text)" stroke-width="0.7"/>`, 20), meaning: "neighboring regions with the same color" },
+    { sample: svg(cell("var(--danger-soft)") + border()), meaning: "a region its neighbors leave with no color" },
     { sample: svg(cell("var(--cell)") + `<rect width="10" height="10" fill="none" stroke="var(--hint)" stroke-width="1.3"/>`), meaning: "hint: a region it changes" },
     { sample: svg(cell("var(--cell)") + `<rect width="10" height="10" fill="none" stroke="var(--hint)" stroke-width="0.8" stroke-dasharray="1.2 0.8"/>`), meaning: "hint: the regions behind it" },
     { sample: svg(cell("var(--cell)") + border() + `<rect x="0.3" y="0.3" width="9.4" height="9.4" rx="1" fill="none" stroke="var(--focus)" stroke-width="0.6"/>`), meaning: "the keyboard selection (shown while using the keyboard)" },
@@ -104,9 +104,9 @@ export function mapView(board: Board): View<MapPuzzle, MapState, MapAction, MapI
     puzzle: "map",
     settings,
     controls: [
-      { how: "click or tap a region", what: "cycle its colour: red, yellow, green, blue, none" },
+      { how: "click or tap a region", what: "cycle its color: red, yellow, green, blue, none" },
       { how: "right-click a region", what: "cycle the other way" },
-      { how: "drag from a coloured region to another", what: "copy the colour across" },
+      { how: "drag from a colored region to another", what: "copy the color across" },
     ],
     legend: legend(),
     mount(root, { session, settings }) {

@@ -19,7 +19,7 @@ export function peerCandidates(m: Model, values: readonly number[], struck?: rea
   return masks;
 }
 
-/** Shows computed candidates instead of centre marks; centre-mark input strikes or restores them. */
+/** Shows computed candidates instead of center marks; center-mark input strikes or restores them. */
 function showCandidates({ session, owner }: Api): void {
   session.hooks.derive.tap((d, { puzzle, state }) => {
     const masks = peerCandidates(modelOf(puzzle), state.values, state.struck);
@@ -34,7 +34,7 @@ function showCandidates({ session, owner }: Api): void {
 const autoCandidates: LatinPlugin = {
   id: "sudoku.auto-candidates",
   name: "auto candidates",
-  description: "show every digit each empty cell can still hold, given the digits placed so far. centre-mark input then crosses candidates out or brings them back. turn on auto for clue techniques to have clues narrow them too.",
+  description: "show every digit each empty cell can still hold, given the digits placed so far. center-mark input then crosses candidates out or brings them back. turn on auto for clue techniques to have clues narrow them too.",
   category: "assists",
   appliesTo: LATIN_IDS,
   enabledByDefault: false,
@@ -43,7 +43,7 @@ const autoCandidates: LatinPlugin = {
 
 const practiceCandidates: LatinPlugin = {
   id: "sudoku.practice-candidates",
-  name: "candidates while practising",
+  name: "candidates while practicing",
   description: "on practice boards for techniques that cross out candidates, show the candidates (like auto candidates) so the pattern is there to find.",
   category: "assists",
   appliesTo: LATIN_IDS,

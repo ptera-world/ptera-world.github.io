@@ -35,7 +35,7 @@ const BINDINGS: BindingSchema = {
   "twiddle.right": { label: "select block right", category: "twiddle", keys: ["ArrowRight", "d"] },
   "twiddle.up": { label: "select block up", category: "twiddle", keys: ["ArrowUp", "w"] },
   "twiddle.down": { label: "select block down", category: "twiddle", keys: ["ArrowDown", "s"] },
-  "twiddle.ccw": { label: "turn anticlockwise", category: "twiddle", keys: ["space", "Enter"], description: "turn the selected block a quarter turn anticlockwise" },
+  "twiddle.ccw": { label: "turn counterclockwise", category: "twiddle", keys: ["space", "Enter"], description: "turn the selected block a quarter turn counterclockwise" },
   "twiddle.cw": { label: "turn clockwise", category: "twiddle", keys: ["shift+space", "shift+Enter", "x"], description: "turn the selected block a quarter turn clockwise" },
   "twiddle.cw-at": { label: "turn clockwise (pointer)", category: "twiddle", mouse: ["rightclick"], description: "turn the block under the pointer clockwise" },
 };
@@ -64,7 +64,7 @@ export const twiddleView: View<TwiddlePuzzle, TwiddleState, TwiddleAction, Twidd
   puzzle: "twiddle",
   settings,
   controls: [
-    { how: "click or tap where four tiles meet", what: "turn that 2×2 block anticlockwise" },
+    { how: "click or tap where four tiles meet", what: "turn that 2×2 block counterclockwise" },
     { how: "right-click, or hold on a touch screen", what: "turn it clockwise" },
   ],
   legend,
@@ -153,7 +153,7 @@ export const twiddleView: View<TwiddlePuzzle, TwiddleState, TwiddleAction, Twidd
       cursor.setAttribute("y", String(Math.floor(cur / p.w) * SIZE));
     };
 
-    /** Top-left cell of the block whose centre is nearest the pointer. */
+    /** Top-left cell of the block whose center is nearest the pointer. */
     const blockAt = (e: MouseEvent): number => {
       const r = svg.getBoundingClientRect();
       const ux = ((e.clientX - r.left) / r.width) * (W + 1) - 0.5, uy = ((e.clientY - r.top) / r.height) * (H + 1) - 0.5;
