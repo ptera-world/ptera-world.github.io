@@ -200,7 +200,7 @@ export function lightupView(look: Look, board: Board): View<LightupPuzzle, Light
         const lit = litCounts(g, m);
         const conf = session.derived()[CONFLICTS_KEY] as Conflicts | undefined;
         const badLights = new Set(conf?.lights), badClues = new Set(conf?.clues), dead = new Set(conf?.dark);
-        const beam = settings.beam && hover >= 0 && p.cells[hover] === EMPTY && m[hover] === NONE && !lit[hover]
+        const beam = settings.beam && !session.locked && hover >= 0 && p.cells[hover] === EMPTY && m[hover] === NONE && !lit[hover]
           ? new Set([hover, ...g.sees[hover]!]) : null;
         for (const c of g.empties) {
           const gl = glow[c]!;
@@ -287,11 +287,10 @@ export function lightupView(look: Look, board: Board): View<LightupPuzzle, Light
         const c = cellAt(e);
         if (c < 0 || pointerId !== -1) return;
         e.preventDefault();
-        // holding a cell places marks here, so the board's hold-for-menu must not also fire
-        if (e.pointerType === "touch") e.stopPropagation();
+        setCursor(c);
+        if (session.locked) return;
         pointerId = e.pointerId;
         svg.setPointerCapture?.(e.pointerId);
-        setCursor(c);
         const markMode = session.interaction.markMode;
         if (e.pointerType === "touch") {
           if (markMode) startPaint(c);
@@ -373,7 +372,14 @@ export function lightupView(look: Look, board: Board): View<LightupPuzzle, Light
           render();
         }, { owner: "view" }),
         session.hooks.interaction.tap(render, { owner: "view" }),
-        session.hooks.refresh.tap(render, { owner: "view" }),
+        session.hooks.refresh.tap(() => {
+          if (session.locked && (paint || pressTimer)) {
+            cancelPress();
+            pressCell = -1;
+            paint = null;
+          }
+          render();
+        }, { owner: "view" }),
       ];
       render();
 
@@ -394,6 +400,7 @@ export function lightupView(look: Look, board: Board): View<LightupPuzzle, Light
         "lightup.mode": { menu: "board", checked: () => session.interaction.markMode },
       });
       return {
+        gestures: { secondaryClick: true, hold: true },
         aspect: vbW / vbH,
         commands,
         context: () => ({ lightupMarkMode: session.interaction.markMode }),
