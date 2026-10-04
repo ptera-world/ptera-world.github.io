@@ -2,8 +2,8 @@ import { defineSchema } from "../../core/schema";
 import type { Plugin } from "../../core/types";
 import { decorate } from "./deco";
 import { components, cycleEdges, graph, islandSums, type BridgesPuzzle, type BridgesState, type Graph } from "./graph";
-import type { BridgesAction, BridgesInteraction } from "./logic";
-import { analyze, domainFromState, isContradiction, propagate, type Tier } from "./solver";
+import { mistakeHint, type BridgesAction, type BridgesInteraction } from "./logic";
+import { analyze } from "./solver";
 
 type BridgesPlugin = Plugin<BridgesPuzzle, BridgesState, BridgesAction, BridgesInteraction>;
 
@@ -33,7 +33,7 @@ function room(g: Graph, s: BridgesState, sums: readonly number[], i: number): nu
 
 const complete: BridgesPlugin = {
   id: "bridges.complete",
-  name: "dim finished islands",
+  name: "fade finished islands",
   category: "assists",
   appliesTo: APPLIES,
   enabledByDefault: true,
@@ -56,7 +56,6 @@ const errors: BridgesPlugin = {
     over: { type: "bool", label: "islands with too many bridges", default: true },
     stuck: { type: "bool", label: "islands that can't be finished any more", default: true },
     closed: { type: "bool", label: "finished groups cut off from the rest", default: true },
-    loops: { type: "bool", label: "loops (when loops aren't allowed)", default: true },
   }),
   setup({ session, settings, owner }) {
     session.hooks.derive.tap((d, { puzzle, state }) => {
@@ -75,9 +74,22 @@ const errors: BridgesPlugin = {
             puzzle.islands.forEach((_, i) => { if (!open.has(comp[i]!)) b.island(i, "error"); });
           }
         }
-        if (settings.loops && !puzzle.loops) for (const e of cycleEdges(g, state.b)) b.edge(e, "error");
       });
     }, { owner });
+  },
+};
+
+const loops: BridgesPlugin = {
+  id: "bridges.loop-errors",
+  name: "flag loops",
+  description: "bridges that close a loop, on boards where loops aren't allowed",
+  category: "assists",
+  appliesTo: APPLIES,
+  requires: ["no-loops"],
+  enabledByDefault: true,
+  setup({ session, owner }) {
+    session.hooks.derive.tap((d, { puzzle, state }) =>
+      decorate(d, (b) => { for (const e of cycleEdges(graph(puzzle), state.b)) b.edge(e, "error"); }), { owner });
   },
 };
 
@@ -154,15 +166,15 @@ const guides: BridgesPlugin = {
 const check: BridgesPlugin = {
   id: "bridges.check",
   name: "flag wrong bridges",
-  description: "compares against the solution (unique puzzles only)",
+  description: "compares against the solution",
   category: "assists",
   appliesTo: APPLIES,
+  requires: ["unique"],
   enabledByDefault: false,
   setup({ session, owner }) {
     session.hooks.derive.tap((d, { puzzle, state }) => {
-      const a = analyze(puzzle);
-      if (a.unique !== true || !a.solution) return d;
-      const sol = a.solution;
+      const sol = analyze(puzzle).solution;
+      if (!sol) return d;
       return decorate(d, (b) => {
         for (let e = 0; e < sol.length; e++) {
           if (state.b[e]! > sol[e]! || (state.no[e] === 1 && sol[e]! > 0)) b.edge(e, "wrong");
@@ -172,62 +184,16 @@ const check: BridgesPlugin = {
   },
 };
 
-const TIER_OF: Record<string, Tier> = { counting: 1, connectivity: 2, all: 3 };
-
-/** Bridges and marks every deduction up to `tier` forces from the player's state; same object if none. */
-export function autoFill(puzzle: BridgesPuzzle, s: BridgesState, tier: Tier, marks: boolean): BridgesState {
-  const g = graph(puzzle);
-  const d = domainFromState(g, s);
-  if (isContradiction(d) || propagate(g, d, tier)) return s;
-  let b: number[] | null = null, no: number[] | null = null;
-  for (const e of g.edges) {
-    if (d.lo[e.id]! > s.b[e.id]!) {
-      b ??= s.b.slice();
-      b[e.id] = d.lo[e.id]!;
-    }
-  }
-  if (marks) {
-    const nb = b ?? s.b;
-    for (const e of g.edges) {
-      if (d.hi[e.id] === 0 && nb[e.id] === 0 && s.no[e.id] !== 1 && !g.cross[e.id]!.some((c) => nb[c]! > 0)) {
-        no ??= s.no.slice();
-        no[e.id] = 1;
-      }
-    }
-  }
-  if (!b && !no) return s;
-  return { b: b ?? s.b, no: no ?? s.no };
-}
-
-const auto: BridgesPlugin = {
-  id: "bridges.auto",
-  name: "auto-place forced bridges",
-  description: "after each move, adds bridges that follow from what's on the board",
+const mistakes: BridgesPlugin = {
+  id: "bridges.mistakes",
+  name: "hints point out mistakes first",
+  description: "before suggesting a deduction, a hint shows a bridge or mark that's wrong",
   category: "assists",
   appliesTo: APPLIES,
-  enabledByDefault: false,
-  settings: defineSchema({
-    strength: {
-      type: "enum", label: "reasoning", default: "counting",
-      options: [
-        { value: "counting", label: "counting only" },
-        { value: "connectivity", label: "plus connectivity" },
-        { value: "all", label: "everything (solves a lot)" },
-      ],
-    },
-    marks: { type: "bool", label: "also mark impossible connections", default: false },
-  }),
-  /** Fires on settle passes and on moves that add a bridge or mark, so removals stick. */
-  setup({ session, settings, owner }) {
-    const tier = TIER_OF[settings.strength as string] ?? 1;
-    const marks = settings.marks === true;
-    session.hooks.apply.tap((next, { puzzle, prev, action }) => {
-      if (!action) return autoFill(puzzle, next, tier, marks);
-      if (Object.is(next, prev)) return next;
-      const added = next.b.some((v, e) => v > prev.b[e]!) || next.no.some((v, e) => v > prev.no[e]!);
-      return added ? autoFill(puzzle, next, tier, marks) : next;
-    }, { owner });
+  enabledByDefault: true,
+  setup({ session, owner }) {
+    session.hooks.hint.tap(({ puzzle, state }) => mistakeHint(puzzle, state) ?? undefined, { owner, priority: 50 });
   },
 };
 
-export const plugins: readonly BridgesPlugin[] = [complete, errors, counts, groups, guides, check, auto];
+export const plugins: readonly BridgesPlugin[] = [complete, errors, loops, counts, groups, guides, check, mistakes];

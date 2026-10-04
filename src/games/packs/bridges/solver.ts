@@ -53,7 +53,7 @@ export function solverWork(): number {
   return work;
 }
 
-function cloneDomain(d: Domain): Domain {
+export function cloneDomain(d: Domain): Domain {
   return { lo: d.lo.slice(), hi: d.hi.slice() };
 }
 
@@ -87,7 +87,7 @@ function isContradiction(x: unknown): x is Contradiction {
 }
 
 const islandEdgeList = new WeakMap<Graph, number[][]>();
-function incident(g: Graph): number[][] {
+export function incident(g: Graph): number[][] {
   let l = islandEdgeList.get(g);
   if (!l) {
     l = g.islandEdges.map((es) => es.filter((e) => e >= 0));
@@ -99,7 +99,7 @@ function incident(g: Graph): number[][] {
 // --- tier 1 ---
 
 /** Narrowings for one island from its own count; snapshot-based, so each is individually sound. */
-function capacity(g: Graph, d: Domain, i: number): Change[] | Contradiction {
+export function capacity(g: Graph, d: Domain, i: number): Change[] | Contradiction {
   const n = g.puzzle.islands[i]!.n;
   const inc = incident(g)[i]!;
   let sumLo = 0, sumHi = 0;
@@ -114,18 +114,6 @@ function capacity(g: Graph, d: Domain, i: number): Change[] | Contradiction {
     const lo = Math.max(d.lo[e]!, n - (sumHi - d.hi[e]!));
     const hi = Math.min(d.hi[e]!, n - (sumLo - d.lo[e]!));
     if (lo !== d.lo[e] || hi !== d.hi[e]) out.push({ edge: e, lo, hi });
-  }
-  return out;
-}
-
-function crossing(g: Graph, d: Domain): Change[] | Contradiction {
-  const out: Change[] = [];
-  for (const e of g.edges) {
-    if (d.lo[e.id]! <= 0) continue;
-    for (const c of g.cross[e.id]!) {
-      if (d.lo[c]! > 0) return { kind: "cross", islands: [], edges: [e.id, c] };
-      if (d.hi[c]! > 0) out.push({ edge: c, lo: 0, hi: 0 });
-    }
   }
   return out;
 }
@@ -250,19 +238,18 @@ function membersOf(gr: Groups, r: number): number[] {
   return out;
 }
 
-function edgeName(g: Graph, e: number): string {
+export function edgeName(g: Graph, e: number): string {
   const ed = g.edges[e]!;
   return `${islandName(g.puzzle, ed.a)} and ${islandName(g.puzzle, ed.b)}`;
 }
 
-function bridgesWord(n: number): string {
+export function bridgesWord(n: number): string {
   return n === 1 ? "one bridge" : `${n} bridges`;
 }
 
-/** Tier-2 steps, or a contradiction. Bulk callers apply every change; step callers pick one. */
-function tier2Steps(g: Graph, d: Domain, wantMessages: boolean): Step[] | Contradiction {
-  const p = g.puzzle;
-  const N = p.islands.length;
+/** Groups, or the contradiction that a finished group is cut off from the rest. */
+function checkedGroups(g: Graph, d: Domain): Groups | Contradiction {
+  const N = g.puzzle.islands.length;
   const gr = groups(g, d);
   if (isContradiction(gr)) return gr;
   if (gr.count > 1) {
@@ -273,21 +260,37 @@ function tier2Steps(g: Graph, d: Domain, wantMessages: boolean): Step[] | Contra
       }
     }
   }
+  return gr;
+}
+
+/** Open edges inside an already-connected group, when loops are forbidden. */
+export function loopSteps(g: Graph, d: Domain, wantMessages: boolean): Step[] | Contradiction {
+  if (g.puzzle.loops) return [];
+  const gr = checkedGroups(g, d);
+  if (isContradiction(gr)) return gr;
+  const steps: Step[] = [];
+  for (const e of g.edges) {
+    if (d.hi[e.id]! <= 0 || d.lo[e.id]! > 0 || gr.root[e.a] !== gr.root[e.b]) continue;
+    steps.push({
+      tier: 2, technique: "loop", islands: [e.a, e.b], edges: [e.id],
+      changes: [{ edge: e.id, lo: 0, hi: 0 }],
+      message: wantMessages ? `${edgeName(g, e.id)} are already connected, and loops aren't allowed, so no bridge goes between them` : "",
+    });
+  }
+  return steps;
+}
+
+/** Edges whose maximum would finish both sides and seal them off from the other islands. */
+export function isolationSteps(g: Graph, d: Domain, wantMessages: boolean): Step[] | Contradiction {
+  const N = g.puzzle.islands.length;
+  const gr = checkedGroups(g, d);
+  if (isContradiction(gr)) return gr;
   const steps: Step[] = [];
   for (const e of g.edges) {
     const hi = d.hi[e.id]!;
     if (hi <= 0 || d.lo[e.id]! > 0) continue;
     const ra = gr.root[e.a]!, rb = gr.root[e.b]!;
-    if (ra === rb) {
-      if (!p.loops) {
-        steps.push({
-          tier: 2, technique: "loop", islands: [e.a, e.b], edges: [e.id],
-          changes: [{ edge: e.id, lo: 0, hi: 0 }],
-          message: wantMessages ? `${edgeName(g, e.id)} are already connected, and loops aren't allowed, so no bridge goes between them` : "",
-        });
-      }
-      continue;
-    }
+    if (ra === rb) continue;
     if (gr.size[ra]! + gr.size[rb]! < N && gr.residual[ra]! + gr.residual[rb]! === 2 * hi) {
       const k = gr.size[ra]! + gr.size[rb]!;
       const then = hi - 1 === 0 ? "they can't be joined" : `at most ${bridgesWord(hi - 1)} can go between them`;
@@ -302,8 +305,19 @@ function tier2Steps(g: Graph, d: Domain, wantMessages: boolean): Step[] | Contra
       });
     }
   }
-  if (steps.length) return steps;
+  return steps;
+}
 
+/**
+ * Edges every connection between two parts of the network must use, or the contradiction that
+ * some group can never connect.
+ */
+export function cutSteps(g: Graph, d: Domain, wantMessages: boolean): Step[] | Contradiction {
+  const p = g.puzzle;
+  const N = p.islands.length;
+  const gr = checkedGroups(g, d);
+  if (isContradiction(gr)) return gr;
+  const steps: Step[] = [];
   if (gr.count <= 1) return steps;
   const dense = new Int32Array(N).fill(-1);
   const roots: number[] = [];
@@ -339,6 +353,16 @@ function tier2Steps(g: Graph, d: Domain, wantMessages: boolean): Step[] | Contra
   return steps;
 }
 
+/** Tier-2 steps from the first of loop/isolation, then cut, that has any; or a contradiction. */
+function tier2Steps(g: Graph, d: Domain, wantMessages: boolean): Step[] | Contradiction {
+  const loops = loopSteps(g, d, wantMessages);
+  if (isContradiction(loops)) return loops;
+  const iso = isolationSteps(g, d, wantMessages);
+  if (isContradiction(iso)) return iso;
+  if (loops.length || iso.length) return [...loops, ...iso];
+  return cutSteps(g, d, wantMessages);
+}
+
 /** Islands reachable from group `start` without using edge `cut`. */
 function sideSize(adj: [number, number][][], start: number, cut: number, roots: number[], gr: Groups): number {
   const seen = new Uint8Array(adj.length);
@@ -355,7 +379,7 @@ function sideSize(adj: [number, number][][], start: number, cut: number, roots: 
 
 // --- tier 3 ---
 
-function trialValues(d: Domain, e: number): number[] {
+export function trialValues(d: Domain, e: number): number[] {
   const lo = d.lo[e]!, hi = d.hi[e]!;
   return lo === hi ? [] : [hi, lo];
 }
@@ -365,14 +389,14 @@ function propagateBelow3(g: Graph, d: Domain, changedEdge: number): Contradictio
   return propagate(g, d, 2, undefined, changedEdge);
 }
 
-interface TrialResult {
+export interface TrialResult {
   edge: number;
   value: number;
   contradiction: Contradiction;
   change: Change;
 }
 
-function trial(g: Graph, d: Domain, e: number, v: number): TrialResult | null {
+export function trial(g: Graph, d: Domain, e: number, v: number): TrialResult | null {
   const t = cloneDomain(d);
   t.lo[e] = v;
   t.hi[e] = v;
@@ -395,7 +419,7 @@ export function describeContradiction(g: Graph, c: Contradiction): string {
   }
 }
 
-function trialStep(g: Graph, r: TrialResult): Step {
+export function trialStep(g: Graph, r: TrialResult): Step {
   const ed = g.edges[r.edge]!;
   const v = r.value;
   const ch = r.change;
@@ -448,39 +472,9 @@ export function propagate(g: Graph, d: Domain, tier: Tier, stats?: Stats, change
   }
 }
 
-// --- step mode ---
+// --- explanations ---
 
-/** Steps from the easiest tier (≤ maxTier) that has any, or a contradiction. */
-export function nextSteps(g: Graph, d: Domain, maxTier: Tier): Step[] | Contradiction {
-  const p = g.puzzle;
-  const steps: Step[] = [];
-  const cr = crossing(g, d);
-  if (isContradiction(cr)) return cr;
-  for (const ch of cr) {
-    const blocker = g.edges.find((e) => d.lo[e.id]! > 0 && g.cross[e.id]!.includes(ch.edge))!;
-    steps.push({
-      tier: 1, technique: "cross", islands: [], edges: [ch.edge, blocker.id], changes: [ch],
-      message: `the bridge between ${edgeName(g, blocker.id)} blocks the path between ${edgeName(g, ch.edge)}`,
-    });
-  }
-  for (let i = 0; i < p.islands.length; i++) {
-    const r = capacity(g, d, i);
-    if (isContradiction(r)) return r;
-    if (r.length) steps.push(capacityStep(g, d, i, r));
-  }
-  if (steps.length || maxTier < 2) return steps;
-  const s2 = tier2Steps(g, d, true);
-  if (isContradiction(s2) || s2.length || maxTier < 3) return s2;
-  for (const e of g.edges) {
-    for (const v of trialValues(d, e.id)) {
-      const r = trial(g, d, e.id, v);
-      if (r) return [trialStep(g, r)];
-    }
-  }
-  return [];
-}
-
-function capacityStep(g: Graph, d: Domain, i: number, changes: Change[]): Step {
+export function capacityStep(g: Graph, d: Domain, i: number, changes: Change[]): Step {
   const p = g.puzzle;
   const n = p.islands[i]!.n;
   const dirs = g.islandEdges[i]!;

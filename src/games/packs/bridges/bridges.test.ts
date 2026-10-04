@@ -6,8 +6,12 @@ import { Session } from "../../core/session";
 import { gridFormat, pzprFormat, sgtFormat } from "./formats";
 import { layout, params } from "./generate";
 import { emptyState, graph, isValidSolution, normalize, type BridgesPuzzle, type BridgesState } from "./graph";
-import { bridges, reduce, type BridgesAction } from "./logic";
-import { autoFill } from "./plugins";
+import { bridges, isRetraction, mistakeHint, reduce, type BridgesAction } from "./logic";
+import { plugins } from "./plugins";
+import { techniques } from "./techniques";
+import { register } from "./index";
+import { Registry } from "../../core/registry";
+import { TechniqueHost, firstStep } from "../../core/techniques";
 import { initialDomain, logicSolve, propagate, search } from "./solver";
 
 const sig = () => new AbortController().signal;
@@ -96,39 +100,98 @@ describe("solver", () => {
   });
 });
 
-describe("hints", () => {
-  test("following hints from scratch solves generated puzzles", async () => {
-    for (const [p, seed] of [[{ difficulty: "easy" }, "h1"], [{ difficulty: "medium", width: 9, height: 9 }, "h2"], [{ difficulty: "hard", width: 10, height: 10 }, "h3"], [{ difficulty: "medium", loops: false }, "h4"]] as const) {
+describe("techniques", () => {
+  const ordered = [...techniques].sort((a, b) => a.level - b.level);
+  const want = { easy: 1, medium: 2, hard: 3 } as const;
+  /** Hardest technique level each solver tier corresponds to. */
+  const maxLevel = { 1: 3, 2: 6, 3: 7 } as const;
+
+  test("each technique level matches the generator's difficulty, and every step agrees with the solution", async () => {
+    const cases = [[{ difficulty: "easy" }, "h1"], [{ difficulty: "medium", width: 9, height: 9 }, "h2"], [{ difficulty: "hard", width: 10, height: 10 }, "h3"], [{ difficulty: "medium", loops: false }, "h4"], [{ difficulty: "hard", maxb: 3, width: 9, height: 9 }, "h5"]] as const;
+    for (const [p, seed] of cases) {
       const puzzle = await gen(p, seed);
+      const sol = bridges.solve!(puzzle)!;
       let s: BridgesState = emptyState(puzzle);
-      for (let i = 0; i < 500 && !bridges.isSolved(puzzle, s); i++) {
-        const h = bridges.hint!(puzzle, s);
-        expect(h).not.toBeNull();
-        expect(h!.actions?.[0]).toBeDefined();
-        expect(h!.message.length).toBeGreaterThan(0);
-        expect(h!.message).not.toContain("no clean deduction");
-        const next = h!.actions!.reduce((st, a) => reduce(puzzle, st, a), s);
-        expect(next).not.toBe(s);
-        s = next;
+      let hardest = 0;
+      for (let i = 0; i < 2000 && !bridges.isSolved(puzzle, s); i++) {
+        const hit = firstStep(bridges, ordered, puzzle, s);
+        expect(hit).not.toBeNull();
+        const { technique: t, step } = hit!;
+        hardest = Math.max(hardest, t.level);
+        expect(step.message.length).toBeGreaterThan(0);
+        expect(step.nudge?.length).toBeGreaterThan(0);
+        s = step.actions.reduce((st, a) => reduce(puzzle, st, a as BridgesAction), s);
+        s.b.forEach((v, e) => expect(v).toBeLessThanOrEqual(sol.b[e]!));
+        s.no.forEach((v, e) => { if (v) expect(sol.b[e]).toBe(0); });
       }
       expect(bridges.isSolved(puzzle, s)).toBe(true);
+      const tier = want[p.difficulty];
+      expect(hardest).toBeLessThanOrEqual(maxLevel[tier]);
+      if (tier > 1) expect(hardest).toBeGreaterThan(maxLevel[(tier - 1) as 1 | 2]);
     }
   });
 
-  test("points out a wrong bridge and fixes it", async () => {
+  test("the no-loops technique only exists for tree puzzles", async () => {
+    const reg = new Registry();
+    register(reg);
+    const tree = await gen({ difficulty: "medium", loops: false }, "tree");
+    const loopy = await gen({ difficulty: "medium" }, "loopy");
+    expect(reg.techniquesFor("bridges", tree).map((t) => t.id)).toContain("bridges.loop");
+    expect(reg.techniquesFor("bridges", loopy).map((t) => t.id)).not.toContain("bridges.loop");
+    expect(reg.pluginsFor("bridges", loopy).map((p) => p.id)).not.toContain("bridges.loop-errors");
+  });
+
+  test("a nudge comes before the full explanation, and both carry the move", async () => {
+    const puzzle = await gen({ difficulty: "easy" }, "nudge");
+    const session = new Session(bridges, puzzle, { kind: "imported" });
+    const reg = new Registry();
+    register(reg);
+    const host = new TechniqueHost(reg, session);
+    const h = session.hint()!;
+    expect(h.level).toBe(1);
+    expect(h.more?.level).toBe(2);
+    expect(h.actions?.length).toBeGreaterThan(0);
+    host.destroy();
+  });
+
+  test("no step on a board that breaks the rules; the fallback says why", async () => {
+    const puzzle = await gen({ difficulty: "easy" }, "broken");
+    const g = graph(puzzle);
+    const e = g.edges.find((x) => x.horizontal)!;
+    let s = emptyState(puzzle);
+    for (const ed of g.edges) if (ed.a === e.a || ed.b === e.a) s = reduce(puzzle, s, { type: "set", edge: ed.id, n: puzzle.maxb });
+    if (!bridges.isSolved(puzzle, s) && graph(puzzle).edges.some((ed) => s.b[ed.id]! > 0)) {
+      const sums = s.b.reduce((n, v, id) => (g.edges[id]!.a === e.a || g.edges[id]!.b === e.a ? n + v : n), 0);
+      if (sums > puzzle.islands[e.a]!.n) {
+        for (const t of techniques) expect(t.find(puzzle, s)).toBeNull();
+        expect(bridges.hint!(puzzle, s)!.message).toContain("too many");
+      }
+    }
+  });
+});
+
+describe("mistakes", () => {
+  test("points out a wrong bridge ahead of any technique, and fixes it", async () => {
     const puzzle = await gen({ difficulty: "easy" }, "oops");
     const sol = bridges.solve!(puzzle)!;
     const wrong = sol.b.findIndex((v) => v < puzzle.maxb);
     let s = emptyState(puzzle);
     s = reduce(puzzle, s, { type: "set", edge: wrong, n: sol.b[wrong]! + 1 });
-    if (s.b[wrong] === sol.b[wrong]! + 1) {
-      const h = bridges.hint!(puzzle, s)!;
-      expect(h.focus).toEqual({ islands: expect.any(Array), edges: [wrong] });
-      expect(h.actions!.reduce((st, a) => reduce(puzzle, st, a), s).b[wrong]).toBe(sol.b[wrong]!);
-    }
+    expect(s.b[wrong]).toBe(sol.b[wrong]! + 1);
+    const h = mistakeHint(puzzle, s)!;
+    expect(h.focus).toEqual({ islands: expect.any(Array), edges: [wrong] });
+    expect(h.actions!.reduce((st, a) => reduce(puzzle, st, a), s).b[wrong]).toBe(sol.b[wrong]!);
+
+    const session = new Session(bridges, puzzle, { kind: "imported" }, { state: s });
+    const reg = new Registry();
+    register(reg);
+    const host = new TechniqueHost(reg, session);
+    const mistakes = plugins.find((p) => p.id === "bridges.mistakes")!;
+    mistakes.setup!({ session, settings: {}, owner: "m" });
+    expect(session.hint()!.message).toBe(h.message);
+    host.destroy();
   });
 });
-
 describe("rules", () => {
   const p = gridFormat.parse(".2.\n2.2\n.2.");
   const g = graph(p);
@@ -202,16 +265,24 @@ describe("formats", () => {
   });
 });
 
-describe("session + assists", () => {
-  test("auto-fill places forced bridges in the same undo step", async () => {
-    const puzzle = await gen({ difficulty: "easy" }, "auto");
-    const s = emptyState(puzzle);
-    const filled = autoFill(puzzle, s, 1, false);
-    const sol = bridges.solve!(puzzle)!;
-    filled.b.forEach((v, e) => expect(v).toBeLessThanOrEqual(sol.b[e]!));
+describe("session", () => {
+  test("player removals are retractions, additions aren't", () => {
+    expect(isRetraction({ type: "cycle", edge: 0, delta: -1 })).toBe(true);
+    expect(isRetraction({ type: "set", edge: 0, n: 0 })).toBe(true);
+    expect(isRetraction({ type: "mark", edge: 0, on: false })).toBe(true);
+    expect(isRetraction({ type: "set", edge: 0, n: 1 })).toBe(false);
+    expect(isRetraction({ type: "mark", edge: 0, on: true })).toBe(false);
+  });
 
+  test("techniques applied after a move to a fixpoint land in the same undo step", async () => {
+    const puzzle = await gen({ difficulty: "hard", width: 9, height: 9 }, "auto");
+    const sol = bridges.solve!(puzzle)!;
     const session = new Session(bridges, puzzle, { kind: "imported" });
-    session.hooks.apply.tap((next, { puzzle: pz, prev }) => (Object.is(next, prev) ? next : autoFill(pz, next, 3, false)), { owner: "t" });
+    const ordered = [...techniques].sort((a, b) => a.level - b.level);
+    session.hooks.apply.tap((next, { puzzle: pz }) => {
+      const hit = firstStep(bridges, ordered, pz, next);
+      return hit ? hit.step.actions.reduce((st, a) => reduce(pz, st, a as BridgesAction), next) : next;
+    }, { owner: "t" });
     const e = sol.b.findIndex((v) => v > 0);
     session.dispatch({ type: "set", edge: e, n: sol.b[e]! });
     expect(session.solved).toBe(true);

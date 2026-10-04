@@ -2,10 +2,8 @@ import type { Hint, PuzzleDef, Rating } from "../../core/types";
 import { formats } from "./formats";
 import { generate, params } from "./generate";
 import { emptyState, graph, isValidSolution, islandName, type BridgesPuzzle, type BridgesState, type Graph } from "./graph";
-import {
-  TIER_NAMES, analyze, describeContradiction, domainFromState, isContradiction, nextSteps, search,
-  type Domain, type Step,
-} from "./solver";
+import { TIER_NAMES, analyze, domainFromState, isContradiction, search } from "./solver";
+import { boardProblem } from "./techniques";
 
 export type BridgesAction =
   /** Exact bridge count on an edge; n > 0 clears its mark. Ignored if a placed bridge crosses it. */
@@ -80,35 +78,31 @@ export function reduce(p: BridgesPuzzle, s: BridgesState, a: BridgesAction): Bri
   }
 }
 
+/**
+ * Moves that take something off the board. Views send removals as `cycle -1`, `set 0` or
+ * `mark on:false`, so this can tell them apart without the state.
+ */
+export function isRetraction(a: BridgesAction): boolean {
+  switch (a.type) {
+    case "cycle": return a.delta < 0;
+    case "set": return a.n === 0;
+    case "mark": return a.on === false;
+    case "many": return a.actions.length > 0 && a.actions.every(isRetraction);
+    default: return false;
+  }
+}
+
 function edgeName(p: BridgesPuzzle, g: Graph, e: number): string {
   const ed = g.edges[e]!;
   return `${islandName(p, ed.a)} and ${islandName(p, ed.b)}`;
 }
 
-/** Player-visible effect of a step: bridges to add, and marks for edges not already obviously blocked. */
-function stepActions(g: Graph, s: BridgesState, st: Step): BridgesAction[] {
-  const out: BridgesAction[] = [];
-  for (const c of st.changes) {
-    if (c.lo > (s.b[c.edge] ?? 0)) out.push({ type: "set", edge: c.edge, n: c.lo });
-    else if (c.hi === 0 && visibleMark(g, s, c.edge)) out.push({ type: "mark", edge: c.edge, on: true });
-  }
-  return out;
-}
-
-function visibleMark(g: Graph, s: BridgesState, e: number): boolean {
-  return s.b[e] === 0 && s.no[e] !== 1 && !blocked(g, s.b, e);
-}
-
-function applySteps(d: Domain, steps: readonly Step[]): void {
-  for (const st of steps) {
-    for (const c of st.changes) {
-      d.lo[c.edge] = Math.max(d.lo[c.edge]!, c.lo);
-      d.hi[c.edge] = Math.min(d.hi[c.edge]!, c.hi);
-    }
-  }
-}
-
-function mistakeHint(p: BridgesPuzzle, s: BridgesState): Hint<BridgesAction> | null {
+/**
+ * A bridge or mark that disagrees with the solution (unique puzzles), or a note that the board
+ * can't be finished (others). Null when nothing is wrong.
+ */
+export function mistakeHint(p: BridgesPuzzle, s: BridgesState): Hint<BridgesAction> | null {
+  if (isValidSolution(p, s.b)) return null;
   const g = graph(p);
   const a = analyze(p);
   if (a.unique === true && a.solution) {
@@ -146,34 +140,12 @@ function mistakeHint(p: BridgesPuzzle, s: BridgesState): Hint<BridgesAction> | n
   };
 }
 
+/** Fallback when no technique applies: what breaks the rules, else the next bridge of the solution. */
 export function hint(p: BridgesPuzzle, s: BridgesState): Hint<BridgesAction> | null {
   if (isValidSolution(p, s.b)) return null;
   const g = graph(p);
-  const mistake = mistakeHint(p, s);
-  if (mistake) return mistake;
-  const d0 = domainFromState(g, s);
-  if (isContradiction(d0)) return { message: describeContradiction(g, d0), focus: { islands: d0.islands, edges: d0.edges } satisfies Focus };
-  const d = d0;
-  let because: Step | null = null;
-  for (let iter = 0; iter < 10_000; iter++) {
-    const steps = nextSteps(g, d, 3);
-    if (isContradiction(steps)) {
-      return { message: `something's off: ${describeContradiction(g, steps)}`, focus: { islands: steps.islands, edges: steps.edges } satisfies Focus };
-    }
-    if (!steps.length) break;
-    const adds = steps.find((st) => st.changes.some((c) => c.lo > (s.b[c.edge] ?? 0)));
-    const pick = adds ?? (steps[0]!.tier >= 2 ? steps.find((st) => stepActions(g, s, st).length > 0) : undefined);
-    if (pick) {
-      const prefix = because && because !== pick ? `${because.message}. ` : "";
-      return {
-        message: prefix + pick.message,
-        focus: { islands: pick.islands, edges: pick.edges } satisfies Focus,
-        actions: stepActions(g, s, pick),
-      };
-    }
-    applySteps(d, steps);
-    if (steps[0]!.tier >= 2) because = steps[steps.length - 1]!;
-  }
+  const problem = boardProblem(p, s);
+  if (problem) return problem;
   const a = analyze(p);
   if (a.solution) {
     const e = g.edges.find((x) => s.b[x.id]! < a.solution![x.id]!);
@@ -201,7 +173,9 @@ export function rate(p: BridgesPuzzle): Rating | null {
 
 export const bridges: PuzzleDef<BridgesPuzzle, BridgesState, BridgesAction, BridgesInteraction, typeof params> = {
   id: "bridges",
-  name: "bridges",
+  name: "hashi",
+  aliases: ["bridges", "hashiwokakero", "hashikake"],
+  tags: ["logic", "grid", "numbers", "connection"],
   description: "connect every island into one network. each number is how many bridges touch that island; bridges run straight, never cross, and at most a set number join any two islands.",
   generatorVersion: 1,
   params,
@@ -219,12 +193,28 @@ export const bridges: PuzzleDef<BridgesPuzzle, BridgesState, BridgesAction, Brid
   init: (p) => emptyState(p),
   initInteraction: () => ({ cursor: 0, mode: "bridge", drag: null }),
   reduce,
+  isRetraction,
   isSolved: (p, s) => isValidSolution(p, s.b),
   solve(p) {
     const sol = analyze(p).solution;
     return sol ? { b: sol.slice(), no: sol.map(() => 0) } : null;
   },
   hint,
+  rules: (p) => [
+    "each island's number is how many bridges touch it.",
+    "bridges run straight up, down, left or right between two islands, and never cross each other or another island.",
+    p.maxb === 1 ? "at most one bridge joins any two islands." : `at most ${p.maxb} bridges join any two islands.`,
+    p.loops ? "all the islands have to end up connected into one network." : "all the islands have to end up connected into one network, with no loops: only one route between any two islands.",
+  ],
+  /**
+   * "loops" / "no-loops": whether the network may contain cycles. "multi": more than one bridge
+   * may join a pair. "unique": exactly one solution is known.
+   */
+  features: (p) => [
+    p.loops ? "loops" : "no-loops",
+    ...(p.maxb > 1 ? ["multi"] : []),
+    ...(analyze(p).unique === true ? ["unique"] : []),
+  ],
   rate,
   describe: (p) => `${p.w}×${p.h}, max ${p.maxb}${p.loops ? "" : ", no loops"}`,
 };
