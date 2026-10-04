@@ -142,7 +142,9 @@ const textFormat: Format<FlipPuzzle> = {
 
 export const flip: PuzzleDef<FlipPuzzle, FlipState, FlipAction, FlipInteraction, typeof params> = {
   id: "flip",
-  name: "flip",
+  name: "lights out",
+  aliases: ["flip", "merlin"],
+  tags: ["logic", "grid", "toggle"],
   description: "turn every light off. pressing a cell toggles it and its neighbours.",
   generatorVersion: 1,
   params,
@@ -179,5 +181,9 @@ export const flip: PuzzleDef<FlipPuzzle, FlipState, FlipAction, FlipInteraction,
     const n = x.reduce((a, b) => a + b, 0);
     return { label: `${n} presses`, score: n };
   },
+  rules: (p) => [
+    "pressing a cell toggles it and its neighbours (" + (p.shape === "cross" ? "up, down, left, right" : p.shape === "x" ? "the four diagonals" : "all eight around it") + ").",
+    "turn every light off.",
+  ],
   describe: (p) => `${p.w}×${p.h} ${p.shape}`,
 };

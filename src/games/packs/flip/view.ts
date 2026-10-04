@@ -15,6 +15,7 @@ const CSS = `
 .flip-board .cell.solution { stroke: var(--hint); stroke-width: 1; stroke-dasharray: 1.5 1; }
 .flip-board .cell.hint { stroke: var(--hint); stroke-width: 1.4; }
 .flip-board .cursor { stroke: var(--focus); stroke-width: 0.6; pointer-events: none; }
+[data-input="pointer"] .flip-board .cursor { display: none; }
 `;
 
 const settings = defineSchema({
@@ -27,11 +28,11 @@ export const flipView: View<FlipPuzzle, FlipState, FlipAction, FlipInteraction> 
   puzzle: "flip",
   settings,
   bindings: {
-    "flip.left": { label: "Cursor left", category: "Flip", keys: ["ArrowLeft", "a"] },
-    "flip.right": { label: "Cursor right", category: "Flip", keys: ["ArrowRight", "d"] },
-    "flip.up": { label: "Cursor up", category: "Flip", keys: ["ArrowUp", "w"] },
-    "flip.down": { label: "Cursor down", category: "Flip", keys: ["ArrowDown", "s"] },
-    "flip.press": { label: "Press cell", category: "Flip", keys: ["space", "Enter"] },
+    "flip.left": { label: "cursor left", category: "flip", keys: ["ArrowLeft", "a"] },
+    "flip.right": { label: "cursor right", category: "flip", keys: ["ArrowRight", "d"] },
+    "flip.up": { label: "cursor up", category: "flip", keys: ["ArrowUp", "w"] },
+    "flip.down": { label: "cursor down", category: "flip", keys: ["ArrowDown", "s"] },
+    "flip.press": { label: "press cell", category: "flip", keys: ["space", "Enter"] },
   },
   mount(root, { session, settings }) {
     style("flip", CSS);

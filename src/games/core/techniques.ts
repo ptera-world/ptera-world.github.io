@@ -240,19 +240,46 @@ export async function findPracticePosition(
   return null;
 }
 
-/**
- * True if the move prev → next is part of `step`: it changed something, and finishing the step
- * from next lands exactly where finishing it from prev would.
- */
-export function isPartOfStep(def: AnyPuzzleDef, puzzle: unknown, prev: unknown, next: unknown, step: Step): boolean {
-  if (Object.is(prev, next)) return false;
-  const target = JSON.stringify(applyStep(def, puzzle, prev, step));
-  return JSON.stringify(applyStep(def, puzzle, next, step)) === target;
+/** Leaf-level changes from a to b, keyed by JSON path. */
+function leafChanges(a: unknown, b: unknown, path = "", out = new Map<string, string>()): Map<string, string> {
+  if (Object.is(a, b)) return out;
+  if (Array.isArray(a) && Array.isArray(b) && a.length === b.length) {
+    for (let i = 0; i < a.length; i++) leafChanges(a[i], b[i], `${path}/${i}`, out);
+    return out;
+  }
+  if (a && b && typeof a === "object" && typeof b === "object" && !Array.isArray(a) && !Array.isArray(b)) {
+    const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+    for (const k of keys) leafChanges((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k], `${path}/${k}`, out);
+    return out;
+  }
+  const bj = JSON.stringify(b);
+  if (JSON.stringify(a) !== bj) out.set(path, bj ?? "undefined");
+  return out;
 }
 
-/** True once the step has been fully carried out. */
-export function isStepDone(def: AnyPuzzleDef, puzzle: unknown, state: unknown, step: Step): boolean {
-  return Object.is(applyStep(def, puzzle, state, step), state) || JSON.stringify(applyStep(def, puzzle, state, step)) === JSON.stringify(state);
+const same = (a: unknown, b: unknown): boolean => Object.is(a, b) || JSON.stringify(a) === JSON.stringify(b);
+
+/**
+ * True if the move prev → next is part of `step`. Either test suffices:
+ * - every leaf the move changed now holds the value the completed step gives it (handles toggles);
+ * - finishing the step from next lands where finishing it from prev would (handles several facts
+ *   packed into one value, e.g. candidate bitmasks, where a partial move sets a leaf to an
+ *   intermediate value).
+ */
+export function isPartOfStep(def: AnyPuzzleDef, puzzle: unknown, prev: unknown, next: unknown, step: Step): boolean {
+  const moved = leafChanges(prev, next);
+  if (moved.size === 0) return false;
+  const target = applyStep(def, puzzle, prev, step);
+  const tLeaves = leafChanges(prev, target);
+  let leafOk = true;
+  for (const [p, v] of moved) if (tLeaves.get(p) !== v) { leafOk = false; break; }
+  return leafOk || same(applyStep(def, puzzle, next, step), target);
+}
+
+/** True once `state` carries every change the step makes from `from`. */
+export function isStepDone(def: AnyPuzzleDef, puzzle: unknown, from: unknown, state: unknown, step: Step): boolean {
+  const target = applyStep(def, puzzle, from, step);
+  return same(state, target);
 }
 
 /** Hardest technique needed to solve from the start using only techniques, or null if they don't suffice. */

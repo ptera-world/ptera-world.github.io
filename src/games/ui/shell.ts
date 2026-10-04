@@ -22,8 +22,9 @@ import { CommandHub } from "./commands";
 import { clear, formatTime, h, style } from "./dom";
 import { arrange, loadLayout, saveLayout, type LayoutConfig } from "./layout";
 import { builtinWidgets } from "./widgets";
+import { onThemeChange } from "./themes";
+import { SAVE_PREFIX, INDEX_KEY, findSession, listSessions, loadSession, newSessionId, removeSession, saveSession } from "./sessions";
 
-const saves = namespace("save");
 const prefs = namespace("prefs");
 
 /** Serialized text, or null if the format can't write or throws on this puzzle. */
@@ -46,8 +47,6 @@ function originKey(def: AnyPuzzleDef, origin: Origin): string {
   return `i|${origin.source ?? ""}`;
 }
 
-/** Practice boards save separately so they never overwrite the real game. */
-const saveKey = (def: AnyPuzzleDef, origin: Origin): string => (origin.kind === "practice" ? `${def.id}:practice` : def.id);
 
 interface MountedWidget {
   def: WidgetDef;
@@ -66,9 +65,15 @@ export class Shell {
     sessionStart: new HookEvent<{ session: Session<any, any, any, any> }>("sessionStart"),
     sessionEnd: new HookEvent<{ session: Session<any, any, any, any> }>("sessionEnd"),
     status: new HookEvent<{ text: string }>("status"),
+    /** The saved-games list changed (here or in another tab). */
+    sessions: new HookEvent<void>("sessions"),
   };
 
   session: Session<any, any, any, any> | null = null;
+  /** Saved-game id of the current session. */
+  sessionId = "";
+  /** Adopting another tab's save: don't write it back. */
+  private reloading = false;
   host: PluginHost | null = null;
   techniques: TechniqueHost | null = null;
   readonly hub: CommandHub;
@@ -80,6 +85,10 @@ export class Shell {
   private layout: LayoutConfig = {};
   private activeTab = prefs.get("tab", "game");
   private statusText = "";
+  /** Skip the next status reset (a message about the change that is being undone automatically). */
+  private keepStatus = false;
+  /** Practice: the state the step was found in. */
+  private practiceStart: unknown = null;
   private els: ReturnType<Shell["buildDom"]>;
 
   constructor(readonly root: HTMLElement, readonly registry: Registry, readonly modResults: ModLoadResult[], readonly packs: LoadedPack[] = []) {
@@ -96,9 +105,27 @@ export class Shell {
       if (document.hidden) {
         this.session.pause();
         this.saveNow();
-      } else if (!prefs.get("paused", false)) this.session.resume();
+      } else if (!this.session.paused) this.session.resume();
     });
     window.addEventListener("pagehide", () => this.saveNow());
+    // another tab saved: pick up its version of this game (last write wins), refresh the list
+    window.addEventListener("storage", (e) => {
+      if (e.key === INDEX_KEY) this.hooks.sessions.call();
+      const s = this.session;
+      if (s && e.key === SAVE_PREFIX + this.sessionId && e.newValue) {
+        const snap = JSON.parse(e.newValue) as Snapshot;
+        // only board/history changes count; time-only saves would otherwise bounce between tabs
+        if (snap.past.length === s.depth && JSON.stringify(snap.state) === JSON.stringify(s.state)) return;
+        this.reloading = true;
+        try {
+          this.setSession(Session.restore(s.def, snap), false, this.sessionId);
+        } finally {
+          this.reloading = false;
+        }
+        this.setStatus("updated from another tab");
+      }
+    });
+    if (new URLSearchParams(location.search).has("debugLayout")) watchLayoutShifts();
     let raf = 0;
     window.addEventListener("resize", () => {
       cancelAnimationFrame(raf);
@@ -110,6 +137,13 @@ export class Shell {
       this.hub.openMenu("board", e.clientX, e.clientY);
     });
     setInterval(() => this.tick(), 250);
+    // keyboard-only affordances (cursors) show while the keyboard is in use; views style off [data-input]
+    this.root.dataset.input = "pointer";
+    document.addEventListener("keydown", (e) => {
+      if (!["Shift", "Control", "Alt", "Meta"].includes(e.key)) this.root.dataset.input = "keyboard";
+    }, { capture: true });
+    document.addEventListener("pointerdown", () => { this.root.dataset.input = "pointer"; }, { capture: true });
+    onThemeChange(() => { if (this.session) this.mountView(); });
     this.hub.setSource("shell", () => this.shellCommands());
     await this.fromUrl();
   }
@@ -171,21 +205,28 @@ export class Shell {
       const params = fromQuery(def.params, q);
       const v = Number(q.get("v") ?? def.generatorVersion);
       const origin: Origin = { kind: "generated", seed, params, generatorVersion: def.generatorVersion };
-      if (!shared && this.resume(def, def.id, originKey(def, origin))) return;
+      if (!shared && this.resume(def, originKey(def, origin), false)) return;
       await this.newGame(def, params, seed, false, shared);
       if (v !== def.generatorVersion) this.setStatus("this link was made by an older generator, so it's a different puzzle now");
       return;
     }
-    if (this.resume(def, def.id, null)) return;
+    if (this.resume(def, null, false)) return;
     await this.newGame(def, prefs.get(`params:${def.id}`, {}), randomSeed(), false);
   }
 
-  private resume(def: AnyPuzzleDef, key: string, origin: string | null): boolean {
-    const snap = saves.get<Snapshot | null>(key, null);
-    if (!snap || snap.puzzleId !== def.id) return false;
-    if (origin !== null && originKey(def, snap.origin) !== origin) return false;
+  /** Reopen the saved game for (puzzle, source key), or the latest unfinished one when key is null. */
+  private resume(def: AnyPuzzleDef, key: string | null, practice: boolean): boolean {
+    const m = findSession(def.id, key, practice);
+    return m ? this.openSession(m.id, false) : false;
+  }
+
+  /** Switch to a saved game by id. */
+  openSession(id: string, push = true): boolean {
+    const snap = loadSession(id);
+    const def = snap ? this.registry.getPuzzle(snap.puzzleId) : undefined;
+    if (!snap || !def) return false;
     try {
-      this.setSession(Session.restore(def, snap), false);
+      this.setSession(Session.restore(def, snap), push, id);
       return true;
     } catch (e) {
       console.error("[games] save restore failed", e);
@@ -225,7 +266,7 @@ export class Shell {
   /** A board where `t` is the next easiest deduction (deterministic in seed). */
   async startPractice(def: AnyPuzzleDef, t: Technique, seed: string, push = true): Promise<void> {
     const origin = { kind: "practice" as const, technique: t.id, seed };
-    if (this.resume(def, `${def.id}:practice`, originKey(def, { ...origin, step: { message: "", actions: [] } }))) return;
+    if (this.resume(def, originKey(def, { ...origin, step: { message: "", actions: [] } }), true)) return;
     this.generating?.abort();
     const ac = new AbortController();
     this.generating = ac;
@@ -291,10 +332,12 @@ export class Shell {
 
   // --- session lifecycle ---
 
-  private setSession(session: Session<any, any, any, any>, push: boolean): void {
+  private setSession(session: Session<any, any, any, any>, push: boolean, id: string = newSessionId()): void {
     this.teardownSession();
     this.session = session;
+    this.sessionId = id;
     this.techniques = new TechniqueHost(this.registry, session);
+    this.practiceStart = session.origin.kind === "practice" ? session.state : null;
     this.host = new PluginHost(this.registry, session);
     this.hub.setScope(session.def.id);
     const url = this.urlFor(session);
@@ -315,8 +358,8 @@ export class Shell {
       }, { owner: "shell" }),
       session.hooks.refresh.tap(() => this.hub.syncContext(), { owner: "shell" }),
     );
-    if (!prefs.get("paused", false) && !document.hidden) session.resume();
-    this.root.toggleAttribute("data-paused", prefs.get("paused", false) && !session.solved);
+    if (!session.paused && !document.hidden) session.resume();
+    this.root.toggleAttribute("data-paused", session.paused);
     this.renderHeader();
     this.mountView();
     this.syncSolvedStatus();
@@ -450,7 +493,7 @@ export class Shell {
       m.el.remove();
     }
     this.widgets = [];
-    for (const el of [this.els.top, this.els.side, this.els.bottom, this.els.tabs, this.els.panelBody]) clear(el);
+    for (const el of [this.els.top, this.els.side, this.els.bottom, this.els.overlay, this.els.tabs, this.els.panelBody]) clear(el);
   }
 
   /** Mount every placed widget; panel widgets become tabs (only the active one is mounted). */
@@ -475,7 +518,7 @@ export class Shell {
     }
     for (const { d, p } of placed) {
       if (p.slot === "panel" && d.id !== this.activeTab) continue;
-      const target = p.slot === "top" ? this.els.top : p.slot === "side" ? this.els.side : p.slot === "bottom" ? this.els.bottom : this.els.panelBody;
+      const target = p.slot === "top" ? this.els.top : p.slot === "side" ? this.els.side : p.slot === "bottom" ? this.els.bottom : p.slot === "overlay" ? this.els.overlay : this.els.panelBody;
       const el = h("div", { class: "widget", "data-widget": d.id });
       target.append(el);
       const owner = `widget:${d.id}`;
@@ -576,9 +619,9 @@ export class Shell {
           else this.setStatus("no solution available");
         },
       },
-      { id: "shell.pause", label: prefs.get("paused", false) ? "resume" : "pause", category: "game", keys: ["p"], when: (c) => !c.solved, run: () => this.togglePause() },
+      { id: "shell.pause", label: "pause", category: "game", keys: ["p"], when: (c) => !c.solved, checked: () => s.paused, run: () => this.togglePause() },
       {
-        id: "shell.new", label: "new game", category: "game", keys: ["$mod+Enter"],
+        id: "shell.new", label: "new game", category: "game", keys: ["$mod+Enter"], danger: progress,
         confirm: () => (progress() ? "start a new game? this one's progress will be lost." : null),
         run: () => this.newGameSame(),
       },
@@ -647,11 +690,8 @@ export class Shell {
   togglePause(): void {
     const s = this.session;
     if (!s || s.solved) return;
-    const paused = !prefs.get("paused", false);
-    prefs.set("paused", paused);
-    if (paused) s.pause();
-    else s.resume();
-    this.root.toggleAttribute("data-paused", paused);
+    s.setPaused(!s.paused);
+    this.root.toggleAttribute("data-paused", s.paused);
     this.hub.refresh();
   }
 
@@ -692,9 +732,14 @@ export class Shell {
       this.setStatus(hint.message);
       return;
     }
+    const t = hint.technique ? this.techniques?.list.find((x) => x.id === hint.technique) : undefined;
+    const full = hint.more ?? hint;
+    const source = t
+      ? { kind: "technique" as const, technique: t.id, name: t.name, step: { message: full.message, focus: full.focus, actions }, auto: false, viaHint: true }
+      : { kind: "hint" as const };
     let changed = false;
     s.batch(() => {
-      for (const a of actions) changed = s.dispatch(a, { source: { kind: "hint", technique: hint.technique } }) || changed;
+      for (const a of actions) changed = s.dispatch(a, { source }) || changed;
     });
     if (!changed) this.setStatus("that hint no longer applies");
   }
@@ -705,12 +750,15 @@ export class Shell {
     const s = this.session;
     if (!s || s.origin.kind !== "practice" || ctx.cause !== "action" || ctx.source?.kind !== "player") return;
     const step = s.origin.step;
-    if (isPartOfStep(s.def, s.puzzle, ctx.prev, ctx.state, step)) {
-      const done = isStepDone(s.def, s.puzzle, ctx.state, step);
+    // the step is judged from the position the practice started at
+    const from = this.practiceStart ?? ctx.prev;
+    if (isPartOfStep(s.def, s.puzzle, ctx.prev, ctx.state, step) && isPartOfStep(s.def, s.puzzle, from, ctx.state, step)) {
+      const done = isStepDone(s.def, s.puzzle, from, ctx.state, step);
       s.hooks.fx.call({ kind: "practice", correct: true, done });
       this.setStatus(done ? "that's it!" : "yes, keep going");
     } else {
       s.hooks.fx.call({ kind: "practice", correct: false, done: false });
+      this.keepStatus = true;
       queueMicrotask(() => s.undo());
       this.setStatus("not that one. look again");
     }
@@ -726,7 +774,34 @@ export class Shell {
   private saveNow(): void {
     clearTimeout(this.saveTimer);
     const s = this.session;
-    if (s) saves.set(saveKey(s.def, s.origin), s.snapshot());
+    if (!s || this.reloading) return;
+    saveSession({
+      id: this.sessionId,
+      puzzleId: s.def.id,
+      key: originKey(s.def, s.origin),
+      title: s.def.name,
+      detail: [s.origin.kind === "practice" ? "practice" : "", s.def.describe?.(s.puzzle) ?? ""].filter(Boolean).join(" · "),
+      updatedAt: Date.now(),
+      solved: s.solved,
+      elapsedMs: s.solvedAtMs ?? s.elapsedMs(),
+      practice: s.origin.kind === "practice",
+    }, s.snapshot());
+    this.hooks.sessions.call();
+  }
+
+  /** Forget a saved game; closing the open one returns to the game list. */
+  closeSession(id: string): void {
+    removeSession(id);
+    if (id === this.sessionId) {
+      this.session?.pause();
+      this.session = null;
+      this.goIndex();
+    }
+    this.hooks.sessions.call();
+  }
+
+  savedGames() {
+    return listSessions();
   }
 
   // --- chrome ---
@@ -739,11 +814,13 @@ export class Shell {
       title: h("span", { class: "title" }),
       meta: h("span", { class: "meta" }),
       timer: h("span", { class: "timer", "aria-label": "elapsed time" }),
+      pauseMark: h("span", { class: "pause-mark", "aria-hidden": "true" }, "paused"),
       stage: h("div", { class: "stage", "data-panel": "right", "data-side": "right" }),
       main: h("div", { class: "main" }),
       top: h("div", { class: "slot slot-top" }),
       middle: h("div", { class: "middle" }),
       boardbox: h("div", { class: "boardbox" }),
+      overlay: h("div", { class: "slot slot-overlay" }),
       side: h("div", { class: "slot slot-side" }),
       bottom: h("div", { class: "slot slot-bottom" }),
       panel: h("aside", { class: "panel" }),
@@ -754,9 +831,9 @@ export class Shell {
     els.header.append(
       h("a", { href: "/", class: "home", title: "ptera.world" }, "ptera"),
       h("a", { href: location.pathname, class: "crumb", onclick: (ev: MouseEvent) => { ev.preventDefault(); this.goIndex(); } }, "games"),
-      els.title, els.meta, h("span", { class: "spacer" }), els.timer,
+      els.title, els.meta, h("span", { class: "spacer" }), els.pauseMark, els.timer,
       h("button", { class: "palette-btn", title: "all commands", onclick: () => this.hub.openPalette() }, "commands"));
-    els.middle.append(els.boardbox, els.side);
+    els.middle.append(h("div", { class: "boardwrap" }, els.boardbox, els.overlay), els.side);
     els.main.append(els.top, els.middle, els.bottom);
     els.panel.append(els.tabs, els.panelBody);
     els.stage.append(els.main, els.panel);
@@ -787,6 +864,7 @@ export class Shell {
     let active = prefs.get<string | null>("indexTag", null);
     if (active && !tags.includes(active)) active = null;
     const filters = h("div", { class: "index-tags", role: "group", "aria-label": "filter by tag" });
+    const search = h("input", { type: "search", placeholder: "search games", "aria-label": "search games", class: "index-search", oninput: () => render() });
     const list = h("ul", { class: "index" });
     const render = () => {
       clear(filters);
@@ -799,7 +877,9 @@ export class Shell {
         }
       }
       clear(list);
-      for (const li of items.filter((x) => !active || (x.def.tags ?? []).includes(active))) list.append(li.el);
+      const q = search.value.trim().toLowerCase();
+      const hay = (d: AnyPuzzleDef) => [d.id, d.name, d.description ?? "", ...(d.aliases ?? []), ...(d.tags ?? [])].join(" ").toLowerCase();
+      for (const li of items.filter((x) => (!active || (x.def.tags ?? []).includes(active)) && (!q || hay(x.def).includes(q)))) list.append(li.el);
     };
     const items = all.map((def) => {
       const n = this.registry.techniquesFor(def.id).length;
@@ -807,11 +887,17 @@ export class Shell {
       return h("li", null,
         h("a", { href: `?p=${p}`, class: "card", onclick: go(`p=${p}`) },
           h("strong", null, def.name),
+          def.aliases?.length ? h("em", { class: "aka" }, `also: ${def.aliases.join(", ")}`) : null,
           def.description ? h("span", null, def.description) : null),
         def.tags?.length ? h("span", { class: "tags" }, def.tags.join(" · ")) : null,
         n ? h("a", { href: `?p=${p}&tab=techniques`, class: "learn", onclick: go(`p=${p}&tab=techniques`) }, `learn · ${n} techniques`) : null);
     }).map((el, i) => ({ el, def: all[i]! }));
-    this.els.index.append(h("div", { class: "index-inner" }, filters, list));
+    const going = listSessions().filter((m) => !m.solved && !m.practice).slice(0, 6);
+    const resumeRow = going.length
+      ? h("div", { class: "index-continue" }, h("span", { class: "w-dim" }, "continue:"), going.map((m) =>
+        h("button", { onclick: () => this.openSession(m.id) }, m.title, " ", h("span", { class: "w-dim" }, formatTime(m.elapsedMs)))))
+      : null;
+    this.els.index.append(h("div", { class: "index-inner" }, resumeRow, search, filters, list));
     render();
     this.hub.refresh();
   }
@@ -841,7 +927,10 @@ export class Shell {
     const s = this.session;
     if (!s) return;
     const hide = prefs.get("hideTimer", false);
-    this.els.timer.textContent = hide ? "" : formatTime(s.elapsedMs()) + (s.running || s.solved ? "" : " ⏸");
+    const time = formatTime(s.solved ? s.solvedAtMs ?? 0 : s.elapsedMs());
+    this.els.timer.textContent = hide && !s.solved ? "" : time;
+    this.els.pauseMark.textContent = s.solved ? "solved" : "paused";
+    this.els.pauseMark.classList.toggle("on", s.solved || !s.running);
   }
 
   get status(): string {
@@ -856,6 +945,10 @@ export class Shell {
   private syncSolvedStatus(): void {
     const s = this.session;
     if (!s) return;
+    if (this.keepStatus) {
+      this.keepStatus = false;
+      return;
+    }
     if (s.solved) {
       this.root.dataset.solved = "";
       this.root.removeAttribute("data-paused");
@@ -882,16 +975,28 @@ const SHELL_CSS = `
 .bar .title:empty { display: none; }
 .bar .meta { color: var(--text-dim); font-size: 13px; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .bar .spacer { flex: 1; }
-.bar .timer { font-family: var(--mono); color: var(--text-dim); }
+/* fixed boxes: the timer and its state label never change the header layout */
+.bar .timer { font-family: var(--mono); color: var(--text-dim); font-variant-numeric: tabular-nums; min-width: 7ch; text-align: right; }
+.bar .pause-mark { font-size: 12px; color: var(--text-dim); min-width: 6ch; text-align: right; visibility: hidden; }
+.bar .pause-mark.on { visibility: visible; }
+[data-solved] .bar .pause-mark { color: var(--accent); }
+[data-solved] .bar .timer { color: var(--accent); }
 .bar .palette-btn { padding: 4px 10px; font-size: 13px; }
 
 .stage { flex: 1; display: flex; min-height: 0; }
 .stage[data-panel="below"] { flex-direction: column; overflow-y: auto; }
 .main { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 12px; overflow-y: auto; }
 .stage[data-panel="below"] .main { flex: none; overflow: visible; }
-.middle { display: flex; gap: 12px; align-items: center; justify-content: center; max-width: 100%; }
+/* top-aligned: a side column growing or shrinking never moves the board */
+.middle { display: flex; gap: 12px; align-items: flex-start; justify-content: center; max-width: 100%; }
 .stage[data-side="below"] .middle { flex-direction: column; }
+.boardwrap { position: relative; flex: none; }
 .boardbox { position: relative; flex: none; display: flex; align-items: center; justify-content: center; }
+.slot-overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 10px; }
+.slot-overlay > .widget { pointer-events: auto; }
+[data-solved] .boardbox { animation: solved-glow 1.6s ease-out; border-radius: 10px; }
+@keyframes solved-glow { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 70%, transparent); } 40% { box-shadow: 0 0 0 14px color-mix(in srgb, var(--accent) 25%, transparent); } 100% { box-shadow: 0 0 0 28px transparent; } }
+@media (prefers-reduced-motion: reduce) { [data-solved] .boardbox { animation: none; } }
 .boardbox > .view { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
 .slot { display: flex; flex-direction: column; gap: 10px; }
 .slot:empty { display: none; }
@@ -918,6 +1023,9 @@ const SHELL_CSS = `
 .index-tags:empty { display: none; }
 .index-tags button { padding: 3px 10px; font-size: 13px; border-radius: 99px; }
 .index-tags button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); }
+.index-search { max-width: 320px; }
+.index-continue { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.index .aka { font-size: 12px; color: var(--text-dim); font-style: normal; }
 .index .tags { font-size: 11px; padding: 0 14px 8px; color: var(--text-dim); }
 .index { list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; width: 100%; max-width: 960px; }
 .index li { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); overflow: hidden; }
@@ -927,3 +1035,21 @@ const SHELL_CSS = `
 .index .learn { font-size: 12px; padding: 8px 14px; border-top: 1px solid var(--border); }
 .generating { display: flex; gap: 12px; align-items: center; color: var(--text-dim); }
 `;
+
+/** Debug aid (?debugLayout): logs every layout shift with the nodes that moved. */
+function watchLayoutShifts(): void {
+  type Shift = PerformanceEntry & { value: number; sources?: { node?: Node; previousRect: DOMRectReadOnly; currentRect: DOMRectReadOnly }[] };
+  const shifts: unknown[] = [];
+  (globalThis as { __layoutShifts?: unknown[] }).__layoutShifts = shifts;
+  new PerformanceObserver((list) => {
+    for (const e of list.getEntries() as Shift[]) {
+      const moved = (e.sources ?? []).map((s) => ({
+        node: s.node instanceof Element ? `${s.node.tagName.toLowerCase()}.${[...s.node.classList].join(".")}` : s.node?.nodeName,
+        from: [Math.round(s.previousRect.x), Math.round(s.previousRect.y)],
+        to: [Math.round(s.currentRect.x), Math.round(s.currentRect.y)],
+      }));
+      shifts.push({ value: e.value, moved });
+      console.warn("[games] layout shift", e.value.toFixed(4), moved);
+    }
+  }).observe({ type: "layout-shift", buffered: false });
+}

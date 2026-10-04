@@ -1,4 +1,4 @@
-import { listMods, saveMods, setPackEnabled, type ModEntry } from "../core/mods";
+import { checkForUpdate, listMods, packRecord, saveMods, selectPackVersion, setPackEnabled, type LoadedPack, type ModEntry } from "../core/mods";
 import { COLOR_TOKENS, setTheme, setTokenOverride, themeChoice, tokenOverrides } from "./themes";
 import { loadPluginConfig } from "../core/plugins";
 import { randomSeed } from "../core/rng";
@@ -7,9 +7,9 @@ import type { Source, TimelineEntry } from "../core/session";
 import { namespace } from "../core/storage";
 import { firstStep, hintFrom, loadPace, rateByTechniques } from "../core/techniques";
 import type { Action, Plugin, SlotId, Technique, WidgetContext, WidgetDef } from "../core/types";
-import type { ConfirmPolicy } from "./commands";
+import { isDanger, type ConfirmPolicy } from "./commands";
 import { confirmDialog } from "./dialog";
-import { add, clear, h, style } from "./dom";
+import { add, clear, formatTime, h, style } from "./dom";
 import { schemaForm } from "./form";
 import { SLOTS, loadLayout } from "./layout";
 import type { Shell, ShareLevel } from "./shell";
@@ -20,7 +20,8 @@ const prefs = namespace("prefs");
 const CSS = `
 .widget:empty { display: none; }
 .slot:not(:has(> .widget:not(:empty))) { display: none; }
-.w-status { min-height: 1.5em; text-align: center; color: var(--text-dim); max-width: 60ch; }
+/* reserves two lines, so a message appearing or wrapping never moves what sits above or beside it */
+.w-status { min-height: 2.9em; line-height: 1.45; text-align: center; color: var(--text-dim); max-width: 60ch; }
 [data-solved] .w-status { color: var(--accent); }
 .w-toolbar { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
 button.danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 45%, var(--border)); }
@@ -48,6 +49,16 @@ button.danger:hover:not(:disabled) { border-color: var(--danger); background: va
 .w-practice { display: flex; flex-direction: column; gap: 6px; align-items: center; text-align: center; max-width: 60ch; }
 .w-practice p { color: var(--text-dim); font-size: 13px; }
 .w-search { position: sticky; top: -12px; background: var(--bg); padding: 4px 0 8px; z-index: 1; }
+.w-results { background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(6px); border: 1px solid var(--accent); border-radius: 12px; padding: 10px 14px; box-shadow: 0 10px 30px rgba(0,0,0,.35); display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; justify-content: center; max-width: 100%; animation: results-in 420ms cubic-bezier(.2,.9,.3,1.3); }
+.w-results .big { font-size: 18px; color: var(--accent); }
+.w-results .time { font: 600 18px var(--mono); }
+.w-results ul { list-style: none; font-size: 12px; color: var(--text-dim); display: flex; flex-wrap: wrap; gap: 2px 10px; flex-basis: 100%; justify-content: center; }
+[data-slot="side"] .w-results, [data-slot="panel"] .w-results { flex-direction: column; }
+@keyframes results-in { from { opacity: 0; transform: scale(.85) translateY(10px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .w-results { animation: none; } }
+.w-game.current { background: var(--accent-soft); border-radius: 6px; padding-left: 6px; }
+.w-game .link { background: none; border: none; padding: 0; text-align: left; flex: 1; }
+.w-game .link:hover strong { color: var(--accent); }
 .w-note { font-size: 13px; padding: 6px 8px; border-radius: 6px; background: var(--surface-2); }
 `;
 
@@ -56,6 +67,7 @@ const sessionTaps = (ctx: WidgetContext, render: () => void): void => {
   ctx.session.hooks.change.tap(render, opts);
   ctx.session.hooks.interaction.tap(render, opts);
   ctx.session.hooks.refresh.tap(render, opts);
+  ctx.session.hooks.solved.tap(render, opts);
 };
 
 /** Short description of who made a timeline step. */
@@ -81,7 +93,7 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
   style("widgets", CSS);
 
   const status: WidgetDef = {
-    id: "status", name: "status", description: "hints, results and messages", puzzles: "*", defaultSlot: "bottom", order: 10,
+    id: "status", name: "status", description: "hints, results and messages", puzzles: "*", defaultSlot: "bottom", order: 30,
     mount(el) {
       const box = h("div", { class: "w-status", "aria-live": "polite" }, shell.status);
       el.append(box);
@@ -110,7 +122,8 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
           if (!cmd) continue;
           const keys = shell.hub.keysFor(id);
           bar.append(h("button", {
-            "data-command": id, class: cmd.danger ? "danger" : undefined,
+            "data-command": id,
+            class: [isDanger(cmd) ? "danger" : "", c.solved && id === "shell.new" ? "primary" : ""].join(" ").trim() || undefined,
             disabled: cmd.when ? !cmd.when(c) : false,
             "aria-pressed": cmd.checked ? String(cmd.checked()) : undefined,
             title: keys.length ? `${cmd.label} (${keys.join(", ")})` : cmd.label,
@@ -323,6 +336,7 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
           ? "your auto-applied techniques solve this whole board on their own."
           : rest ? `with your auto techniques on, the hardest thing left for you is: ${rest.hardest.name}.` : "this board needs more than the listed techniques.";
       };
+      el.append(h("button", { class: "primary", title: "practise every technique in order, easiest first", onclick: () => void shell.startPractice(s.def, th.list[0]!, randomSeed()) }, "start the tutorial"));
       el.append(note, h("div", { class: "w-inline" },
         h("h3", { style: "flex: 1; font-size: 12px; color: var(--text-dim); letter-spacing: 0.06em" }, "techniques"),
         h("button", { onclick: check, title: "mark which techniques have an instance on the board right now" }, "what applies now?")), list);
@@ -396,9 +410,17 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
       const s = ctx.session;
       if (s.origin.kind !== "practice") return;
       const origin = s.origin;
-      const t: Technique | undefined = shell.registry.techniquesFor(s.def.id).find((x) => x.id === origin.technique);
+      const all = shell.registry.techniquesFor(s.def.id);
+      const idx = all.findIndex((x) => x.id === origin.technique);
+      const t: Technique | undefined = all[idx];
       if (!t) return;
+      const next = all[idx + 1];
+      const nextBtn = next ? h("button", { class: "primary", style: "visibility: hidden", onclick: () => void shell.startPractice(s.def, next, randomSeed()) }, `next: ${next.name}`) : null;
+      s.hooks.fx.tap((e) => {
+        if (e.kind === "practice" && e.done && nextBtn) nextBtn.style.visibility = "visible";
+      }, { owner: ctx.owner });
       el.append(h("div", { class: "w-practice" },
+        h("span", { class: "w-dim" }, `lesson ${idx + 1} of ${all.length}`),
         h("strong", null, `practise: ${t.name}`),
         h("p", null, t.description),
         h("div", { class: "w-inline" },
@@ -412,6 +434,7 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
             },
           }, "show me"),
           h("button", { onclick: () => void shell.startPractice(s.def, t, randomSeed()) }, "another one"),
+          nextBtn,
           h("button", {
             onclick: () => {
               history.pushState(null, "", `?p=${encodeURIComponent(s.def.id)}`);
@@ -475,6 +498,36 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
     },
   };
 
+  /** Update check, adopt, and rollback for a pack that runs from stored versions. */
+  const versionControls = (p: LoadedPack): HTMLElement => {
+    const box = h("div", { class: "w-inline" });
+    const render = (note = "") => {
+      clear(box);
+      const rec = packRecord(p.key);
+      const current = rec.versions.find((v) => v.hash === rec.selected) ?? rec.versions[0];
+      const when = (ms: number) => new Date(ms).toLocaleDateString();
+      add(box,
+        current ? h("small", null, `version ${current.hash} · ${when(current.fetchedAt)}`) : null,
+        rec.available
+          ? h("button", { class: "primary", onclick: () => { selectPackVersion(p.key); render("updated, reload to apply"); } }, `update to ${rec.available.hash}`)
+          : h("button", {
+            onclick: async () => {
+              render("checking…");
+              try { render((await checkForUpdate(p.key)) ? "" : "up to date"); } catch (e) { render(`couldn't check: ${e instanceof Error ? e.message : e}`); }
+            },
+          }, "check for updates"),
+        rec.versions.length > 1
+          ? h("select", {
+            "aria-label": `${p.name} version`,
+            onchange: (e: Event) => { selectPackVersion(p.key, (e.target as HTMLSelectElement).value); render("switched, reload to apply"); },
+          }, rec.versions.map((v) => h("option", { value: v.hash, selected: v === current }, `${v.hash} · ${when(v.fetchedAt)}`)))
+          : null,
+        note ? h("small", null, note) : null);
+    };
+    render();
+    return box;
+  };
+
   const packs: WidgetDef = {
     id: "packs", name: "packs", description: "turn content packs on and off, or add your own from a url (a pack or a list of packs)", puzzles: "*", defaultSlot: "panel", order: 50,
     mount(el) {
@@ -494,6 +547,7 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
                 type: "checkbox", checked: p.enabled,
                 onchange: (e: Event) => setPackEnabled(p.key, (e.target as HTMLInputElement).checked),
               }), h("span", { class: "name" }, p.name)),
+              p.versioned ? versionControls(p) : null,
               p.error ? h("p", { class: "error" }, p.error) : null));
           }
         }
@@ -529,7 +583,72 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
     },
   };
 
-  return [status, toolbar, game, settings, techniques, historyW, practice, share, packs];
+  const results: WidgetDef = {
+    id: "results", name: "results", description: "what happened when you finish: time, difficulty, what you used", puzzles: "*", defaultSlot: "overlay", order: 0,
+    mount(el, ctx) {
+      const s = ctx.session;
+      let dismissed = false;
+      const render = () => {
+        clear(el);
+        if (!s.solved || dismissed) return;
+        const { past } = s.timeline();
+        let yours = 0, hints = 0, revealed = false;
+        const used = new Map<string, { auto: number; manual: number; hint: number }>();
+        for (const e of past) {
+          for (const src of e.sources) {
+            if (src.kind === "player") yours++;
+            else if (src.kind === "hint") hints++;
+            else if (src.kind === "system" && src.reason === "reveal") revealed = true;
+            else if (src.kind === "technique") {
+              const u = used.get(src.name) ?? { auto: 0, manual: 0, hint: 0 };
+              if (src.auto) u.auto++; else if (src.viaHint) u.hint++; else u.manual++;
+              used.set(src.name, u);
+            }
+          }
+        }
+        const rating = (() => { try { return s.def.rate?.(s.puzzle)?.label; } catch { return undefined; } })();
+        const time = s.origin.kind === "practice" ? null : formatTime(s.solvedAtMs ?? 0);
+        add(el, h("div", { class: "w-results", role: "status" },
+          h("strong", { class: "big" }, revealed ? "revealed" : s.origin.kind === "practice" ? "nice!" : "solved!"),
+          time ? h("div", { class: "time" }, time) : null,
+          rating ? h("div", { class: "w-dim" }, rating) : null,
+          h("ul", null,
+            h("li", null, `${yours} moves by you`),
+            hints ? h("li", null, `${hints} hint${hints > 1 ? "s" : ""}`) : null,
+            [...used].map(([name, u]) => h("li", null, `${name}: ${[u.manual ? `${u.manual} by button` : "", u.hint ? `${u.hint} from hints` : "", u.auto ? `${u.auto} auto` : ""].filter(Boolean).join(", ")}`))),
+          h("div", { class: "w-inline" },
+            h("button", { class: "primary", onclick: () => ctx.run("shell.new") }, "new game"),
+            h("button", { onclick: () => shell.openTab("share") }, "share"),
+            h("button", { onclick: () => { dismissed = true; render(); } }, "close"))));
+      };
+      sessionTaps(ctx, () => { if (!s.solved) dismissed = false; render(); });
+      s.hooks.solved.tap(() => { dismissed = false; render(); }, { owner: ctx.owner });
+      render();
+    },
+  };
+
+  const opened: WidgetDef = {
+    id: "games", name: "games", description: "every game you have going, across puzzles; switch or close them", puzzles: "*", defaultSlot: "panel", order: 5,
+    mount(el) {
+      const render = () => {
+        clear(el);
+        const list = shell.savedGames();
+        if (!list.length) { el.append(h("p", { class: "w-dim" }, "no saved games yet.")); return; }
+        for (const m of list) {
+          el.append(h("div", { class: `w-row w-game${m.id === shell.sessionId ? " current" : ""}` },
+            h("div", { class: "head" },
+              h("button", { class: "name link", onclick: () => { if (m.id !== shell.sessionId) shell.openSession(m.id); } },
+                h("strong", null, m.title), " ", h("span", { class: "w-dim" }, m.detail)),
+              h("span", { class: "w-dim" }, m.solved ? `solved · ${formatTime(m.elapsedMs)}` : formatTime(m.elapsedMs)),
+              h("button", { title: "close this game", "aria-label": `close ${m.title}`, onclick: () => shell.closeSession(m.id) }, "×"))));
+        }
+      };
+      render();
+      return shell.hooks.sessions.tap(render);
+    },
+  };
+
+  return [status, toolbar, game, settings, techniques, historyW, practice, share, packs, results, opened];
 }
 
 /** Assisted rating used by packs/mods: hardest technique still left for the player given their auto techniques. */

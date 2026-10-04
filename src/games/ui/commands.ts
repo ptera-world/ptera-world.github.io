@@ -10,7 +10,7 @@ import {
   type KeybindCheatsheet,
   type KeybindSettings,
 } from "keybinds";
-import paletteCss from "keybinds/styles/palette.css" with { type: "text" };
+import { KEYBINDS_CSS } from "./keybinds-theme";
 import type { CommandDef } from "../core/types";
 import { bindCommands, type BindingSchema } from "../core/commands";
 import { confirmDialog } from "./dialog";
@@ -21,13 +21,15 @@ const prefs = namespace("prefs");
 
 export type ConfirmPolicy = "danger" | "always" | "never";
 
+export const isDanger = (c: CommandDef): boolean => (typeof c.danger === "function" ? c.danger() : !!c.danger);
+
 /** Whether a command's confirm question is asked, per the player's setting. */
 function shouldConfirm(c: CommandDef): string | null {
   const policy = prefs.get<ConfirmPolicy>("confirm", "danger");
   if (policy === "never" || !c.confirm) return null;
   const q = c.confirm();
   if (!q) return null;
-  return policy === "always" || c.danger ? q : null;
+  return policy === "always" || isDanger(c) ? q : null;
 }
 
 type Schema = BindingSchema;
@@ -54,7 +56,7 @@ export class CommandHub {
 
   constructor(host: HTMLElement) {
     registerComponents();
-    style("keybinds", paletteCss);
+    style("keybinds", KEYBINDS_CSS);
     this.palette = document.createElement("command-palette") as CommandPalette;
     this.palette.matcher = fuzzyMatcher as CommandPalette["matcher"];
     this.cheatsheet = document.createElement("keybind-cheatsheet") as KeybindCheatsheet;
@@ -105,7 +107,7 @@ export class CommandHub {
   /** Every trigger (key, palette, menu, button) goes through here, so confirmation is uniform. */
   private async execute(cmd: CommandDef, ctx: Record<string, unknown>, event?: Event): Promise<void> {
     const q = shouldConfirm(cmd);
-    if (q && !(await confirmDialog(q, cmd.label, cmd.danger))) return;
+    if (q && !(await confirmDialog(q, cmd.label, isDanger(cmd)))) return;
     cmd.run(ctx, event);
   }
 
@@ -137,8 +139,11 @@ export class CommandHub {
         id: c.id, label: c.checked ? `${c.checked() ? "☑" : "☐"} ${c.label}` : c.label,
         description: c.description, category: c.category, keys: b.keys, mouse: b.mouse,
         when: c.when, hidden: c.hidden, captureInput: c.captureInput, menu: c.menu,
+        // a run() returning false (with no confirmation pending) lets the key/mouse event through
         execute: (ctx, ev) => {
+          if (!shouldConfirm(c)) return c.run(ctx, ev);
           void this.execute(c, ctx, ev);
+          return undefined;
         },
       };
       try {

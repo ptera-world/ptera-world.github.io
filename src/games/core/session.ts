@@ -54,7 +54,7 @@ export interface DeriveCtx<Pz, S, I> {
 /** Who made a change. Everything that changes state carries one, so it can be explained, paced, logged or celebrated. */
 export type Source =
   | { kind: "player" }
-  | { kind: "technique"; technique: string; name: string; step: Step; auto: boolean }
+  | { kind: "technique"; technique: string; name: string; step: Step; auto: boolean; viaHint?: boolean }
   | { kind: "hint"; technique?: string }
   | { kind: "assist"; owner: string }
   | { kind: "system"; reason: string };
@@ -123,6 +123,8 @@ export interface Snapshot {
   origin: Origin;
   elapsedMs: number;
   solvedAtMs: number | null;
+  /** Player-paused (as opposed to paused because the page is hidden). */
+  paused?: boolean;
   past: { state: unknown; actions: unknown[]; sources?: Source[] }[];
   future: { state: unknown; actions: unknown[]; sources?: Source[] }[];
 }
@@ -165,6 +167,7 @@ export class Session<Pz = unknown, S = unknown, A extends Action = Action, I = u
   private batchDepth = 0;
   private batchStart: S | null = null;
   private _activeHint: Hint<A> | null = null;
+  private _paused = false;
   private pendingNotes: Note<S>[] = [];
   private batchActions: A[] = [];
   private batchSources: Source[] = [];
@@ -266,6 +269,8 @@ export class Session<Pz = unknown, S = unknown, A extends Action = Action, I = u
     const start = this.batchStart!;
     this.batchStart = null;
     if (!Object.is(start, this._state)) this.pushHistory(start, this.batchActions, this.batchSources);
+    // undo availability changed without a change event; observers re-read
+    this.hooks.refresh.call();
     this.checkSolved();
   }
 
@@ -532,6 +537,19 @@ export class Session<Pz = unknown, S = unknown, A extends Action = Action, I = u
     return this.elapsedBase + (this.runningSince === null ? 0 : performance.now() - this.runningSince);
   }
 
+  /** Paused by the player; belongs to this game and is saved with it. */
+  get paused(): boolean {
+    return this._paused;
+  }
+
+  setPaused(paused: boolean): void {
+    if (this._solvedAtMs !== null) paused = false;
+    this._paused = paused;
+    if (paused) this.pause();
+    else this.resume();
+    this.hooks.refresh.call();
+  }
+
   get running(): boolean {
     return this.runningSince !== null;
   }
@@ -559,6 +577,7 @@ export class Session<Pz = unknown, S = unknown, A extends Action = Action, I = u
       origin: this.origin,
       elapsedMs: this.elapsedMs(),
       solvedAtMs: this._solvedAtMs,
+      paused: this._paused,
       past: trim(this.past),
       future: trim(this.future),
     };
@@ -571,6 +590,7 @@ export class Session<Pz = unknown, S = unknown, A extends Action = Action, I = u
       elapsedMs: snap.elapsedMs,
       solvedAtMs: snap.solvedAtMs,
     });
+    s._paused = !!snap.paused && snap.solvedAtMs === null;
     s.past = snap.past as HistoryEntry<unknown, Action>[];
     s.future = snap.future as HistoryEntry<unknown, Action>[];
     return s;

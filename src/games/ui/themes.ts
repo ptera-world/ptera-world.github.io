@@ -44,7 +44,23 @@ export function applyTheme(registry: Registry): void {
   const th = pick(registry);
   const tokens = { ...th?.tokens, ...tokenOverrides() };
   const body = Object.entries(tokens).map(([k, v]) => `--${k}: ${v};`).join(" ");
-  style("theme", `:root { ${body} color-scheme: ${th?.scheme ?? "dark"}; }`);
+  style("theme", `:root { ${body} color-scheme: ${th?.scheme ?? "dark"}; }\n${th?.css ?? ""}`);
+  current = th;
+  for (const cb of listeners) cb();
+}
+
+let current: Theme | undefined;
+const listeners = new Set<() => void>();
+
+/** Called after any theme (re)application; views that draw assets re-render. */
+export function onThemeChange(cb: () => void): () => void {
+  listeners.add(cb);
+  return () => listeners.delete(cb);
+}
+
+/** A themed graphic by id, or the view's own default. */
+export function asset(id: string, fallback: string): string {
+  return current?.assets?.[id] ?? fallback;
 }
 
 export function setTheme(registry: Registry, id: string): void {

@@ -15,6 +15,7 @@ export const SLOTS: readonly { id: SlotId; label: string }[] = [
   { id: "side", label: "beside the board" },
   { id: "bottom", label: "below the board" },
   { id: "panel", label: "sidebar tab" },
+  { id: "overlay", label: "over the board" },
   { id: "off", label: "hidden" },
 ];
 

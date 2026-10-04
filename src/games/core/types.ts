@@ -110,14 +110,15 @@ export interface CommandDef {
   checked?(): boolean;
   /** Typing into an input does not block this command. */
   captureInput?: boolean;
-  /** Loses progress: shown in the danger colour everywhere. */
-  danger?: boolean;
+  /** Loses progress: shown in the danger colour everywhere. A function is re-checked whenever it is shown. */
+  danger?: boolean | (() => boolean);
   /** Question to confirm first, or null to skip. Asked however the command is triggered (subject to the player's confirmation setting). */
   confirm?(): string | null;
   run(ctx: Record<string, unknown>, event?: Event): unknown;
 }
 
-export type SlotId = "top" | "side" | "bottom" | "panel" | "off";
+/** "overlay" sits over the board (results, tutorials); its size never affects layout. */
+export type SlotId = "top" | "side" | "bottom" | "panel" | "overlay" | "off";
 
 export interface WidgetContext<Pz = any, S = any, A extends Action = any, I = any> {
   session: Session<Pz, S, A, I>;
@@ -202,6 +203,8 @@ export interface PuzzleDef<Pz = unknown, S = unknown, A extends Action = Action,
   features?(puzzle: Pz): readonly string[];
   /** Catalogue labels (genre, mechanics), used to group and filter the game list. */
   tags?: readonly string[];
+  /** Other names people know it by (e.g. "nonogram", "picross"); searchable on the game list. */
+  aliases?: readonly string[];
   rate?(puzzle: Pz): Rating | null;
   /** Short label for the current puzzle (e.g. "9×9 killer"), shown in the header. */
   describe?(puzzle: Pz): string;
@@ -291,4 +294,11 @@ export interface Theme {
   scheme: "dark" | "light";
   /** Custom property name (without "--") to value. Unset tokens keep the base stylesheet value. */
   tokens: Record<string, string>;
+  /** Extra stylesheet applied with the theme (e.g. to restyle a specific view). */
+  css?: string;
+  /**
+   * Named graphics views draw with, overriding their defaults: SVG markup or an image URL.
+   * Ids are namespaced by the view that reads them, e.g. "pattern.empty-mark".
+   */
+  assets?: Record<string, string>;
 }

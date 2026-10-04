@@ -19,22 +19,39 @@ export async function buildApp(app: AppConfig, opts: { minify: boolean }): Promi
   const packIds = app.packs && existsSync(app.packs)
     ? readdirSync(app.packs, { withFileTypes: true }).filter((d) => d.isDirectory() && existsSync(join(app.packs!, d.name, "index.ts"))).map((d) => d.name).sort()
     : [];
-  const result = await Bun.build({
-    entrypoints: [app.entry, ...packIds.map((id) => join(app.packs!, id, "index.ts"))],
-    root,
-    target: "browser",
-    splitting: true,
-    minify: opts.minify,
-    sourcemap: opts.minify ? "none" : "inline",
-    naming: { entry: "[dir]/[name].[ext]", chunk: "chunks/[name]-[hash].[ext]", asset: "assets/[name]-[hash].[ext]" },
-  });
-  if (!result.success) throw new AggregateError(result.logs, "bundle failed");
-  const out: AppOutput[] = result.outputs.map((o) => ({ path: o.path.replace(/^(\.\/)+/, ""), body: o, type: o.type }));
+  // a pack that fails to compile is dropped and reported, never takes the others down with it
+  const broken = new Map<string, string>();
+  let result: Awaited<ReturnType<typeof Bun.build>> | null = null;
+  for (let attempt = 0; attempt <= packIds.length; attempt++) {
+    const live = packIds.filter((id) => !broken.has(id));
+    try {
+      result = await Bun.build({
+        entrypoints: [app.entry, ...live.map((id) => join(app.packs!, id, "index.ts"))],
+        root,
+        target: "browser",
+        splitting: true,
+        minify: opts.minify,
+        sourcemap: opts.minify ? "none" : "inline",
+        naming: { entry: "[dir]/[name].[ext]", chunk: "chunks/[name]-[hash].[ext]", asset: "assets/[name]-[hash].[ext]" },
+        throw: false,
+      });
+    } catch (e) {
+      result = { success: false, logs: [e], outputs: [] } as never;
+    }
+    if (result!.success) break;
+    const culprits = live.filter((id) => result!.logs.some((l) => String((l as { position?: { file?: string } }).position?.file ?? l).includes(join(app.packs!, id))));
+    if (!culprits.length) throw new AggregateError(result!.logs, "bundle failed");
+    for (const id of culprits) broken.set(id, result!.logs.map(String).filter((m) => m.includes(id)).join("\n").slice(0, 500) || "failed to build");
+  }
+  const out: AppOutput[] = result!.outputs.map((o) => ({ path: o.path.replace(/^(\.\/)+/, ""), body: o, type: o.type }));
   const packsBase = app.packs ? app.packs.slice(root.length).replace(/^\//, "") : "";
   out.push({
     path: "packs.json",
     type: "application/json",
-    body: JSON.stringify({ name: "built-in", packs: packIds.map((id) => ({ id, name: id, url: `./${packsBase}/${id}/index.js` })) }, null, 2),
+    body: JSON.stringify({
+      name: "built-in",
+      packs: packIds.map((id) => broken.has(id) ? { id, name: id, url: `./${packsBase}/${id}/index.js`, error: broken.get(id) } : { id, name: id, url: `./${packsBase}/${id}/index.js` }),
+    }, null, 2),
   });
   return out;
 }
