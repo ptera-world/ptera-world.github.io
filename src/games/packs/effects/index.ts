@@ -79,6 +79,15 @@ const effects: Plugin[] = [
   effect("pop", "placement pop", "a quick ring where your move landed", true, undefined, (e, api) => {
     if (e.kind === "change" && (e.source as { kind: string }).kind === "player") fx.pop(rectsOf(api.view, undefined, e.prev, e.state));
   }),
+  effect("glow", "solve glow", "the board pulses when you finish", true, undefined, (e, api) => {
+    if (e.kind !== "solved" || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const accent = (pct: number) => `color-mix(in srgb, var(--accent) ${pct}%, transparent)`;
+    boardEl(api)?.animate([
+      { boxShadow: `0 0 0 0 ${accent(70)}` },
+      { boxShadow: `0 0 0 14px ${accent(25)}`, offset: 0.4 },
+      { boxShadow: "0 0 0 28px transparent" },
+    ], { duration: 1600, easing: "ease-out" });
+  }),
   effect("celebrate", "solve celebration", "confetti when you finish", true,
     defineSchema({ amount: { type: "int", label: "amount", default: 50, min: 5, max: 300 } }),
     (e, api) => {

@@ -28,8 +28,10 @@ export interface LoadedPack {
   /** Name of the list it came from, if any. */
   list?: string;
   enabled: boolean;
-  /** Runs from stored versions (player-added URL packs), so it can be updated and rolled back. */
+  /** Runs from stored versions, so it can be updated, pinned and rolled back. */
   versioned?: boolean;
+  /** Track used unless the player chose one: built-in lists follow latest, player sources stay pinned. */
+  defaultTrack?: Track;
   error?: string;
 }
 
@@ -63,30 +65,59 @@ export function setPackEnabled(key: string, enabled: boolean): void {
 const isList = (url: string): boolean => /\.json(\?|#|$)/i.test(url);
 
 /**
- * Versions of player-added packs, keyed by module URL. A pack runs from the stored copy of its
- * selected version, so it keeps working offline and never changes under the player until they
- * update; older versions stay available to roll back to.
+ * Every pack, built-in or not, runs from a stored copy of one of its versions. Version metadata
+ * lives in local storage and code in Cache Storage (sizes beyond local storage). A source either
+ * follows the latest upstream copy (fetched on each load, falling back to the stored copy when
+ * offline) or stays pinned to the version the player chose until they update.
  */
+export type Track = "latest" | "pinned";
+
 export interface PackVersion {
   hash: string;
   fetchedAt: number;
-  code: string;
 }
 
 export interface PackRecord {
   versions: PackVersion[];
-  /** Hash of the version that runs; latest when unset. */
+  /** Hash of the version that runs; newest when unset. */
   selected?: string;
-  /** Hash of a newer upstream copy found by the last update check, not yet adopted. */
+  /** A newer upstream version found by the last check, stored but not yet adopted. */
   available?: PackVersion;
+  /** Unset: the default for where the pack came from. */
+  track?: Track;
 }
 
 const versions = namespace("packstore");
 const KEEP_VERSIONS = 5;
+const CACHE = "games-packs";
+const memory = new Map<string, string>();
 
 async function sha(text: string): Promise<string> {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
   return Array.from(new Uint8Array(buf).slice(0, 6), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+const codeKey = (url: string, hash: string): string => `${url}${url.includes("?") ? "&" : "?"}__pack=${hash}`;
+
+async function putCode(url: string, hash: string, code: string): Promise<void> {
+  memory.set(codeKey(url, hash), code);
+  try {
+    const c = await caches.open(CACHE);
+    await c.put(codeKey(url, hash), new Response(code, { headers: { "Content-Type": "text/javascript" } }));
+  } catch {
+    // no Cache Storage (e.g. insecure origin): this page load still has the in-memory copy
+  }
+}
+
+async function getCode(url: string, hash: string): Promise<string | null> {
+  const mem = memory.get(codeKey(url, hash));
+  if (mem !== undefined) return mem;
+  try {
+    const res = await (await caches.open(CACHE)).match(codeKey(url, hash));
+    return res ? await res.text() : null;
+  } catch {
+    return null;
+  }
 }
 
 export function packRecord(url: string): PackRecord {
@@ -97,11 +128,26 @@ function savePackRecord(url: string, rec: PackRecord): void {
   versions.set(url, rec);
 }
 
+export function setTrack(url: string, track: Track): void {
+  const rec = packRecord(url);
+  rec.track = track;
+  if (track === "pinned" && !rec.selected) rec.selected = rec.versions[0]?.hash;
+  savePackRecord(url, rec);
+}
+
+/** Fetch upstream and store it; returns its version. */
 async function fetchVersion(url: string): Promise<PackVersion> {
   const res = await fetch(url, { cache: "no-cache" });
   if (!res.ok) throw new Error(`${url}: ${res.status}`);
   const code = await res.text();
-  return { hash: await sha(code), fetchedAt: Date.now(), code };
+  const v = { hash: await sha(code), fetchedAt: Date.now() };
+  await putCode(url, v.hash, code);
+  return v;
+}
+
+function remember(rec: PackRecord, v: PackVersion): void {
+  if (!rec.versions.some((x) => x.hash === v.hash)) rec.versions.unshift(v);
+  rec.versions = rec.versions.slice(0, KEEP_VERSIONS);
 }
 
 /** Fetch upstream; if it differs from every stored version, remember it as available. */
@@ -122,8 +168,7 @@ export async function checkForUpdate(url: string): Promise<PackVersion | null> {
 export function selectPackVersion(url: string, hash?: string): void {
   const rec = packRecord(url);
   if (!hash && rec.available) {
-    rec.versions.unshift(rec.available);
-    rec.versions = rec.versions.slice(0, KEEP_VERSIONS);
+    remember(rec, rec.available);
     hash = rec.available.hash;
     delete rec.available;
   }
@@ -131,29 +176,37 @@ export function selectPackVersion(url: string, hash?: string): void {
   savePackRecord(url, rec);
 }
 
-/** Code to run for a player pack: the selected stored version, fetching the first one if none. */
-async function storedCode(url: string): Promise<string> {
+/** The code a pack runs: latest upstream when following, else the selected stored version. */
+async function resolveCode(url: string, defaultTrack: Track): Promise<string> {
   const rec = packRecord(url);
-  if (!rec.versions.length) {
-    rec.versions.push(await fetchVersion(url));
-    savePackRecord(url, rec);
+  const track = rec.track ?? defaultTrack;
+  if (track === "latest" || !rec.versions.length) {
+    try {
+      const v = await fetchVersion(url);
+      remember(rec, v);
+      if (track === "latest" || !rec.selected) rec.selected = v.hash;
+      savePackRecord(url, rec);
+    } catch (e) {
+      if (!rec.versions.length) throw e;
+    }
   }
-  return (rec.versions.find((v) => v.hash === rec.selected) ?? rec.versions[0]!).code;
+  const order = [rec.selected, ...rec.versions.map((v) => v.hash)].filter((h): h is string => !!h);
+  for (const h of order) {
+    const code = await getCode(url, h);
+    if (code !== null) return code;
+  }
+  throw new Error("no stored copy of this pack is available");
 }
 
 async function runCode(code: string, api: unknown): Promise<void> {
   const blobUrl = URL.createObjectURL(new Blob([code], { type: "text/javascript" }));
   try {
-    await runModule(blobUrl, api);
+    const m = (await import(/* @vite-ignore */ blobUrl)) as { default?: unknown };
+    if (typeof m.default !== "function") throw new Error("pack has no default export function");
+    await (m.default as (api: unknown) => unknown)(api);
   } finally {
     URL.revokeObjectURL(blobUrl);
   }
-}
-
-async function runModule(url: string, api: unknown): Promise<void> {
-  const m = (await import(/* @vite-ignore */ url)) as { default?: unknown };
-  if (typeof m.default !== "function") throw new Error("pack has no default export function");
-  await (m.default as (api: unknown) => unknown)(api);
 }
 
 /**
@@ -167,24 +220,23 @@ export async function loadPacks(api: unknown, baseList: string): Promise<{ packs
   const sources: ModLoadResult[] = [];
   const seen = new Set<string>();
 
-  /** Built-in packs import their own chunks, so they run straight from the site; player packs run from stored versions. */
-  const loadUrl = async (url: string, name: string, list?: string, builtin = false): Promise<void> => {
+  /** One path for every pack; where it came from only sets its default track. */
+  const loadUrl = async (url: string, name: string, list: string | undefined, defaultTrack: Track): Promise<void> => {
     const key = new URL(url, location.href).href;
     if (seen.has(key)) return;
     seen.add(key);
-    const entry: LoadedPack = { key, name, list, enabled: !disabled.has(key), versioned: !builtin };
+    const entry: LoadedPack = { key, name, list, enabled: !disabled.has(key), versioned: true, defaultTrack };
     packs.push(entry);
     if (!entry.enabled) return;
     try {
-      if (builtin) await runModule(key, api);
-      else await runCode(await storedCode(key), api);
+      await runCode(await resolveCode(key, defaultTrack), api);
     } catch (e) {
       console.error(`[games] pack ${name} failed`, e);
       entry.error = e instanceof Error ? e.message : String(e);
     }
   };
 
-  const loadList = async (url: string, builtin = false): Promise<void> => {
+  const loadList = async (url: string, defaultTrack: Track): Promise<void> => {
     const base = new URL(url, location.href);
     const res = await fetch(base);
     if (!res.ok) throw new Error(`list ${url}: ${res.status}`);
@@ -195,12 +247,12 @@ export async function loadPacks(api: unknown, baseList: string): Promise<{ packs
         packs.push({ key: new URL(p.url, base).href, name: p.name ?? p.id ?? p.url, list: data.name, enabled: false, error: p.error });
         continue;
       }
-      await loadUrl(new URL(p.url, base).href, p.name ?? p.id ?? p.url, data.name, builtin);
+      await loadUrl(new URL(p.url, base).href, p.name ?? p.id ?? p.url, data.name, defaultTrack);
     }
   };
 
   try {
-    await loadList(baseList, true);
+    await loadList(baseList, "latest");
   } catch (e) {
     console.error("[games] built-in pack list failed", e);
   }
@@ -209,8 +261,8 @@ export async function loadPacks(api: unknown, baseList: string): Promise<{ packs
     if (!mod.enabled) continue;
     try {
       if ("url" in mod.source) {
-        if (isList(mod.source.url)) await loadList(mod.source.url);
-        else await loadUrl(mod.source.url, mod.name);
+        if (isList(mod.source.url)) await loadList(mod.source.url, "pinned");
+        else await loadUrl(mod.source.url, mod.name, undefined, "pinned");
       } else {
         const key = `inline:${mod.id}`;
         const entry: LoadedPack = { key, name: mod.name, enabled: !disabled.has(key) };

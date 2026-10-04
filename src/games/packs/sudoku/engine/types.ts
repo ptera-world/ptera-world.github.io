@@ -1,5 +1,5 @@
 import type { Rng } from "../../../core/rng";
-import { cellName as boardCell, colName } from "../../../ui/board";
+import { cellName as boardCell, colName } from "../../../core/names";
 
 /**
  * Engine contracts. A puzzle is an n×n grid of digits 1..n plus a list of constraint instances.

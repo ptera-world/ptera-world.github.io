@@ -1,5 +1,5 @@
 import type { Step, Technique } from "../../core/types";
-import { cellName } from "../../ui/board";
+import { cellName } from "../../core/names";
 import { info, type PatternAction, type PatternFocus, type PatternPuzzle, type PatternState, type GuideSpan } from "./logic";
 import { ruleOnLine, type LineFind, type LineRuleId } from "./rules";
 import { EMPTY, FILLED, Lines, UNKNOWN, findProbe, lineClue, lineName } from "./solver";

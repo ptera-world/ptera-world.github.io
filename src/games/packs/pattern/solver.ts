@@ -1,5 +1,5 @@
 import type { Rng } from "../../core/rng";
-import { colName, rowName } from "../../ui/board";
+import { colName, rowName } from "../../core/names";
 
 export const UNKNOWN = 0;
 export const FILLED = 1;

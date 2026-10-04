@@ -1105,9 +1105,7 @@ const SHELL_CSS = `
 .slot-overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 10px; }
 .slot-overlay > .widget { pointer-events: auto; }
 [data-lost] .boardbox { box-shadow: 0 0 0 3px var(--danger); border-radius: 10px; }
-[data-solved] .boardbox { animation: solved-glow 1.6s ease-out; border-radius: 10px; }
-@keyframes solved-glow { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 70%, transparent); } 40% { box-shadow: 0 0 0 14px color-mix(in srgb, var(--accent) 25%, transparent); } 100% { box-shadow: 0 0 0 28px transparent; } }
-@media (prefers-reduced-motion: reduce) { [data-solved] .boardbox { animation: none; } }
+[data-solved] .boardbox { box-shadow: 0 0 0 3px var(--accent); border-radius: 10px; }
 .boardbox > .view { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
 .slot { display: flex; flex-direction: column; gap: 10px; }
 .slot:empty { display: none; }

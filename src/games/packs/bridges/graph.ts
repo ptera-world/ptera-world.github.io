@@ -1,4 +1,4 @@
-import { cellName } from "../../ui/board";
+import { cellName } from "../../core/names";
 
 /**
  * Puzzle data and the derived island/edge graph shared by rules, solver, generator and views.

@@ -2,7 +2,7 @@ import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
 import { HOLD_MS } from "../../core/gestures";
 import { bindCommands, type BindingSchema, type CommandHandler } from "../../core/commands";
-import { colName, rowName } from "../../ui/board";
+import { colName, rowName } from "../../core/names";
 import { s, style } from "../../ui/dom";
 import { KEYS } from "./assists";
 import { D, DIRS, L, R, U, degree, orientations, turnsBetween, type NetPuzzle } from "./grid";

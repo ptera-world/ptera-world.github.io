@@ -1,15 +1,15 @@
 import { expect, test } from "bun:test";
 import { readdirSync } from "fs";
-import { api } from "../api";
-import { generate } from "./generate";
-import { Registry } from "./registry";
-import { resolve } from "./schema";
-import { Session } from "./session";
-import { TechniqueHost } from "./techniques";
+import { api } from "./api";
+import { generate } from "./core/generate";
+import { Registry } from "./core/registry";
+import { resolve } from "./core/schema";
+import { Session } from "./core/session";
+import { TechniqueHost } from "./core/techniques";
 
 const registry = new Registry();
-for (const dir of readdirSync(new URL("../packs", import.meta.url))) {
-  const mod = (await import(`../packs/${dir}/index.ts`)) as { default: (games: typeof api) => void };
+for (const dir of readdirSync(new URL("./packs", import.meta.url))) {
+  const mod = (await import(`./packs/${dir}/index.ts`)) as { default: (games: typeof api) => void };
   mod.default({ ...api, registry });
 }
 

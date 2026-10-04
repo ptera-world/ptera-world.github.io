@@ -1,7 +1,7 @@
 import type { Rng } from "../../core/rng";
 import { defineSchema, type Values } from "../../core/schema";
 import type { Format, GenerateContext, Hint, PuzzleDef, Rating } from "../../core/types";
-import { cellName as boardCellName } from "../../ui/board";
+import { cellName as boardCellName } from "../../core/names";
 import { obfuscateBitmap } from "./sha1";
 import { UNKNOWN, countNumbers, generateLayout, neighbourTable, solveLayout, startKnowledge, type Level } from "./solver";
 

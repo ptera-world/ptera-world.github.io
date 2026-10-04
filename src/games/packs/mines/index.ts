@@ -9,7 +9,7 @@ import { minesWidgets } from "./widgets";
 export default function pack(games: GamesApi): void {
   const { registry } = games;
   registry.puzzle(mines);
-  registry.view(minesView(games.look));
+  registry.view(minesView(games.look, games.board.labelSides));
   for (const t of minesTechniques) registry.technique(t);
   for (const p of minesPlugins) registry.plugin(p);
   for (const w of minesWidgets) registry.widget(w);

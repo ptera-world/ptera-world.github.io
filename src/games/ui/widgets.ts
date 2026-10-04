@@ -1,4 +1,4 @@
-import { checkForUpdate, listMods, packRecord, saveMods, selectPackVersion, setPackEnabled, type LoadedPack, type ModEntry } from "../core/mods";
+import { checkForUpdate, listMods, packRecord, saveMods, selectPackVersion, setPackEnabled, setTrack, type LoadedPack, type ModEntry, type Track } from "../core/mods";
 import { COLOR_TOKENS, setTheme, setTokenOverride, themeChoice, tokenOverrides } from "./themes";
 import { loadPluginConfig } from "../core/plugins";
 import { randomSeed } from "../core/rng";
@@ -536,9 +536,16 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
       const rec = packRecord(p.key);
       const current = rec.versions.find((v) => v.hash === rec.selected) ?? rec.versions[0];
       const when = (ms: number) => new Date(ms).toLocaleDateString();
+      const track = rec.track ?? p.defaultTrack ?? "pinned";
       add(box,
         current ? h("small", null, `version ${current.hash} · ${when(current.fetchedAt)}`) : null,
-        rec.available
+        h("select", {
+          "aria-label": `${p.name} updates`,
+          onchange: (e: Event) => { setTrack(p.key, (e.target as HTMLSelectElement).value as Track); render("applies on reload"); },
+        },
+        h("option", { value: "latest", selected: track === "latest" }, "follow updates"),
+        h("option", { value: "pinned", selected: track === "pinned" }, "stay on this version")),
+        track === "latest" ? null : rec.available
           ? h("button", { class: "primary", onclick: () => { selectPackVersion(p.key); render("updated, reload to apply"); } }, `update to ${rec.available.hash}`)
           : h("button", {
             onclick: async () => {

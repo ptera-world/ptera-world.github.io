@@ -1,7 +1,7 @@
 import { Event as HookEvent } from "../../core/hooks";
 import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
-import { colName, rowName, type Side } from "../../ui/board";
+import { colName, rowName, type Side } from "../../core/names";
 import { s, style } from "../../ui/dom";
 import { getDeco } from "./deco";
 import { DIR_NAMES, graph, type BridgesPuzzle, type BridgesState } from "./graph";

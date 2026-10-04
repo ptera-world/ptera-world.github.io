@@ -8,6 +8,7 @@ export default function themesPack(games: GamesApi): void {
       bg: "#0a0a0a", surface: "#131313", "surface-2": "#1b1b1b", border: "#2a2a2a",
       text: "#ddd", "text-dim": "#888", accent: "#6a9", danger: "#e66", warn: "#db6",
       hint: "#c8f", cell: "#1a1a1a", "cell-lit": "#e8d27a", focus: "#8cf", "done-opacity": "0.35",
+      font: "-apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif", mono: "ui-monospace, \"SF Mono\", Menlo, Consolas, monospace",
     },
   });
   games.registry.theme({

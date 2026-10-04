@@ -1,4 +1,4 @@
-import { cellName } from "../../ui/board";
+import { cellName } from "../../core/names";
 import type { Grid } from "./grid";
 
 /**

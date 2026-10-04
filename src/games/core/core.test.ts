@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { flip, solvePresses } from "../packs/flip/logic";
+import { solvePresses, toggle as flip } from "./fixture";
 import { generate } from "./generate";
 import { createRng } from "./rng";
 import { canonical, defineSchema, fromQuery, resolve, toQuery } from "./schema";
@@ -72,14 +72,14 @@ test("session: dispatch, apply hook, batch, undo/redo, solve", async () => {
 });
 
 test("action hook can veto", () => {
-  const puzzle = flip.formats[0]!.parse("2x2:cross:1000");
+  const puzzle = flip.formats[0]!.parse("2x2:1000");
   const session = new Session(flip, puzzle, { kind: "imported" });
   session.hooks.action.tap(() => null, { owner: "veto" });
   expect(session.dispatch({ type: "press", cell: 0 })).toBe(false);
 });
 
 test("cross-event batch is one undo step; restart clears solved", () => {
-  const puzzle = flip.formats[0]!.parse("1x2:cross:11");
+  const puzzle = flip.formats[0]!.parse("1x2:11");
   const session = new Session(flip, puzzle, { kind: "imported" });
   let solvedCount = 0;
   session.hooks.solved.tap(() => { solvedCount++; });
@@ -100,7 +100,7 @@ test("cross-event batch is one undo step; restart clears solved", () => {
 });
 
 test("checkSolved fires for a puzzle that opens already solved", () => {
-  const session = new Session(flip, flip.formats[0]!.parse("2x1:cross:00"), { kind: "imported" });
+  const session = new Session(flip, flip.formats[0]!.parse("2x1:00"), { kind: "imported" });
   let fired = false;
   session.hooks.solved.tap(() => { fired = true; });
   session.checkSolved();
@@ -111,7 +111,7 @@ test("apply taps run to a fixpoint, so one assist's change can trigger another",
   // tap A: a lit cell 0 turns cell 1 on. tap B (runs after A): lit cell 1 turns cell 2 on.
   // a single pass would light cell 2 only if B saw A's output; a second round is needed for
   // tap A to react to B. Here: cell 2 lit → cell 3 lit, handled by A again.
-  const puzzle = flip.formats[0]!.parse("4x1:cross:0000");
+  const puzzle = flip.formats[0]!.parse("4x1:0000");
   const session = new Session(flip, puzzle, { kind: "imported" });
   const light = (s: { lights: number[] }, c: number) => (s.lights[c] ? s : { lights: s.lights.map((v, i) => (i === c ? 1 : v)) });
   session.hooks.apply.tap((s) => {
@@ -129,7 +129,7 @@ test("apply taps run to a fixpoint, so one assist's change can trigger another",
 test("shared history rebuilds the exact game, independent of assists", async () => {
   const { packJson, unpackJson, diff, apply } = await import("./patch");
   expect(apply({ a: [1, 2, 3], b: "x" }, diff({ a: [1, 2, 3], b: "x" }, { a: [1, 9, 3], c: [1] }))).toEqual({ a: [1, 9, 3], c: [1] });
-  const puzzle = flip.formats[0]!.parse("3x3:cross:010111010");
+  const puzzle = flip.formats[0]!.parse("3x3:010111010");
   const s = new Session(flip, puzzle, { kind: "imported" });
   s.dispatch({ type: "press", cell: 0 });
   s.dispatch({ type: "press", cell: 8 });

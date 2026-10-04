@@ -3,7 +3,7 @@
  * (anticlockwise order, same encoding as Simon Tatham's net).
  */
 
-import { cellName } from "../../ui/board";
+import { cellName } from "../../core/names";
 
 export const R = 1, U = 2, L = 4, D = 8;
 export const DIRS = [R, U, L, D] as const;

@@ -2,7 +2,7 @@ import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
 import { bindCommands, type BindingSchema } from "../../core/commands";
 import { s, style } from "../../ui/dom";
-import { colName, labelSides, rowName } from "../../ui/board";
+import { colName, rowName, type Side } from "../../core/names";
 import {
   numbers, type MinesAction, type MinesFocus, type MinesInteraction, type MinesPuzzle, type MinesState,
 } from "./logic";
@@ -89,7 +89,7 @@ const BINDINGS: BindingSchema = {
 /** Flag-or-unflag as an explicit action, so unflagging is recognisably a retraction. */
 export const toggleFlag = (st: MinesState, cell: number): MinesAction => ({ type: "flag", cells: [cell], on: !st.flags[cell] });
 
-export function minesView(look: Look): View<MinesPuzzle, MinesState, MinesAction, MinesInteraction> {
+export function minesView(look: Look, labelSides: () => ReadonlySet<Side>): View<MinesPuzzle, MinesState, MinesAction, MinesInteraction> {
   return {
     id: "mines.svg",
     name: "grid",

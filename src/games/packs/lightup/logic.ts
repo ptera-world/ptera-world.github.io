@@ -2,7 +2,7 @@ import type { Rng } from "../../core/rng";
 import { defineSchema, type Values } from "../../core/schema";
 import type { Format, GenerateContext, Hint, PuzzleDef } from "../../core/types";
 import { BLACK, EMPTY, geometry, litCounts, type LightupPuzzle } from "./grid";
-import { cellName as boardCell } from "../../ui/board";
+import { cellName as boardCell } from "../../core/names";
 import { LEVEL_NAMES, analyze, generatePuzzle, type Level, type Symmetry } from "./solver";
 
 export type { LightupPuzzle } from "./grid";
