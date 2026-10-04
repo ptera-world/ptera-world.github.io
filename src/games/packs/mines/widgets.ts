@@ -47,8 +47,8 @@ export const flagMode: MinesWidget = {
   order: 15,
   mount(el, { session, owner, run }) {
     style("mines-widgets", CSS);
-    const openBtn = h("button", { type: "button", onclick: () => { if (session.interaction.flagMode) run("mines.mode"); } }, "open");
-    const flagBtn = h("button", { type: "button", class: "flag", onclick: () => { if (!session.interaction.flagMode) run("mines.mode"); } }, "flag");
+    const openBtn = h("button", { type: "button", title: "taps open cells", onclick: () => { if (session.interaction.flagMode) run("mines.mode"); } }, "open");
+    const flagBtn = h("button", { type: "button", class: "flag", title: "taps put flags on cells instead of opening them", onclick: () => { if (!session.interaction.flagMode) run("mines.mode"); } }, "flag");
     el.append(h("div", { class: "mines-mode", role: "group", "aria-label": "what a tap does" }, openBtn, flagBtn));
     const render = () => {
       openBtn.setAttribute("aria-pressed", String(!session.interaction.flagMode));
@@ -87,6 +87,14 @@ export const lost: MinesWidget = {
           h("button", { onclick: () => { dismissed = true; render(); } }, "look at the board"))));
     };
     session.hooks.change.tap(render, { owner });
+    // a move on a lost board does nothing, so bring the card back to say why
+    session.hooks.action.tap((a, { state }) => {
+      if (state.dead >= 0 && dismissed) {
+        dismissed = false;
+        render();
+      }
+      return a;
+    }, { owner });
     render();
   },
 };

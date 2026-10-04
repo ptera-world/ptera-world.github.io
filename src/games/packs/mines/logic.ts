@@ -1,6 +1,7 @@
 import type { Rng } from "../../core/rng";
 import { defineSchema, type Values } from "../../core/schema";
 import type { Format, GenerateContext, Hint, PuzzleDef, Rating } from "../../core/types";
+import { cellName as boardCellName } from "../../ui/board";
 import { obfuscateBitmap } from "./sha1";
 import { UNKNOWN, countNumbers, generateLayout, neighbourTable, solveLayout, startKnowledge, type Level } from "./solver";
 
@@ -71,7 +72,8 @@ export function mineCount(p: MinesPuzzle): number {
   return p.mines.reduce((a, b) => a + b, 0);
 }
 
-export const cellName = (p: { w: number }, c: number) => `(${(c % p.w) + 1}, ${Math.floor(c / p.w) + 1})`;
+/** Shared board name of a cell ("C5"), matching the edge labels. */
+export const cellName = (p: { w: number }, c: number) => boardCellName(c % p.w, Math.floor(c / p.w));
 
 /** Open `cells` (flood-filling zeros, skipping flags). Mutates `open`; returns the mine hit or -1. */
 function openCells(p: MinesPuzzle, open: number[], flags: number[], cells: readonly number[]): number {
@@ -316,7 +318,7 @@ export const mines: PuzzleDef<MinesPuzzle, MinesState, MinesAction, MinesInterac
   name: "minesweeper",
   aliases: ["mines", "minesweeper", "no-guess minesweeper"],
   tags: ["classic", "numbers", "hidden information"],
-  description: "clear every safe cell. numbers count the mines around them.",
+  description: "some cells hide mines. open every other cell without setting one off: each opened number tells you how many of the eight cells around it are mines.",
   generatorVersion: 1,
   params,
   presets: [
@@ -335,7 +337,9 @@ export const mines: PuzzleDef<MinesPuzzle, MinesState, MinesAction, MinesInterac
     "open every cell that isn't a mine.",
     "an open number shows how many of its eight neighbours are mines.",
     `there are ${mineCount(p)} mines in total.`,
-    "opening a mine loses (undo steps back). flags are only notes for you.",
+    "opening a mine loses the game (undo steps back).",
+    "flags are notes for you: they mark cells you think are mines and stop them being opened by accident.",
+    "a number with all its flags around it can be clicked to open the rest of its neighbours.",
   ],
   isSolved: (p, s) => s.dead < 0 && p.mines.every((m, c) => m || s.open[c]),
   solve: (p) => ({ open: p.mines.map((m) => (m ? 0 : 1)), flags: p.mines.slice(), dead: -1 }),

@@ -2,6 +2,7 @@ import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
 import { bindCommands, type BindingSchema } from "../../core/commands";
 import { s, style } from "../../ui/dom";
+import { colName, labelSides, rowName } from "../../ui/board";
 import {
   numbers, type MinesAction, type MinesFocus, type MinesInteraction, type MinesPuzzle, type MinesState,
 } from "./logic";
@@ -36,6 +37,7 @@ const CSS = `
 .mines-board .deco { pointer-events: none; }
 .mines-board .hint { fill: none; stroke: var(--hint); stroke-width: 1.2; pointer-events: none; }
 .mines-board .source { fill: none; stroke: var(--hint); stroke-width: 0.6; stroke-dasharray: 1.2 0.8; pointer-events: none; }
+.mines-board .edge { fill: var(--text-dim); font-size: 4.2px; font-weight: 400; }
 .mines-board .cursor { fill: none; stroke: var(--focus); stroke-width: 0.8; pointer-events: none; }
 [data-input="pointer"] .mines-board .cursor { display: none; }
 `;
@@ -47,6 +49,8 @@ const settings = defineSchema({
 });
 
 const SIZE = 10;
+/** Width of an edge-label strip, in cell units of SIZE. */
+const EDGE = 6;
 const SVG_NS = "http://www.w3.org/2000/svg";
 
 /** An asset (SVG markup or image URL) as an element filling one cell box. */
@@ -68,11 +72,11 @@ const BINDINGS: BindingSchema = {
   "mines.right": { label: "cursor right", category: "minesweeper", keys: ["ArrowRight", "d"] },
   "mines.up": { label: "cursor up", category: "minesweeper", keys: ["ArrowUp", "w"] },
   "mines.down": { label: "cursor down", category: "minesweeper", keys: ["ArrowDown", "s"] },
-  "mines.open": { label: "open cell (or around a number)", category: "minesweeper", keys: ["space"] },
-  "mines.flag": { label: "flag / unflag cell", category: "minesweeper", keys: ["f", "x"] },
-  "mines.chord": { label: "open around number", category: "minesweeper", keys: ["Enter", "c"] },
-  "mines.mode": { label: "flag mode (taps flag instead of open)", category: "minesweeper", keys: ["m"] },
-  "mines.flag-at": { label: "flag / unflag the cell under the pointer", category: "minesweeper", mouse: ["rightclick"] },
+  "mines.open": { label: "open cell", category: "minesweeper", keys: ["space"], description: "open the cell under the keyboard cursor. on an open number, opens its neighbours instead (like clicking it)" },
+  "mines.flag": { label: "flag / unflag cell", category: "minesweeper", keys: ["f", "x"], description: "put a flag on the cell under the keyboard cursor (or take it off). flags mark mines and can't be opened by accident" },
+  "mines.chord": { label: "open around number", category: "minesweeper", keys: ["Enter", "c"], description: "on an open number that already has that many flags around it, open all its other neighbours at once" },
+  "mines.mode": { label: "flag mode", category: "minesweeper", keys: ["m"], description: "while on, clicking or tapping a hidden cell flags it instead of opening it. for touch screens, where there is no right click" },
+  "mines.flag-at": { label: "flag / unflag (pointer)", category: "minesweeper", mouse: ["rightclick"], description: "flag the cell under the pointer, or take its flag off" },
 };
 
 /** Flag-or-unflag as an explicit action, so unflagging is recognisably a retraction. */
@@ -84,6 +88,12 @@ export function minesView(look: Look): View<MinesPuzzle, MinesState, MinesAction
     name: "grid",
     puzzle: "mines",
     settings,
+    controls: [
+      { how: "click or tap a hidden cell", what: "open it" },
+      { how: "right-click, or long-press on touch", what: "flag it as a mine (again to take the flag off)" },
+      { how: "click an open number that has all its flags", what: "open its other neighbours (middle-click does the same)" },
+      { how: "press, then drag off the cell before letting go", what: "change your mind: nothing happens" },
+    ],
     mount(root, { session, settings }) {
       style("mines", CSS);
       const p = session.puzzle;
@@ -92,8 +102,11 @@ export function minesView(look: Look): View<MinesPuzzle, MinesState, MinesAction
       const flagNode = assetNode(look.asset("mines.flag", ASSETS.flag));
       const mineNode = assetNode(look.asset("mines.mine", ASSETS.mine));
       const wrongNode = assetNode(look.asset("mines.wrong", ASSETS.wrong));
+      const sides = labelSides();
+      const pad = { top: sides.has("top") ? EDGE : 0, right: sides.has("right") ? EDGE : 0, bottom: sides.has("bottom") ? EDGE : 0, left: sides.has("left") ? EDGE : 0 };
+      const vw = p.w * SIZE + pad.left + pad.right, vh = p.h * SIZE + pad.top + pad.bottom;
       const svg = s("svg", {
-        viewBox: `0 0 ${p.w * SIZE} ${p.h * SIZE}`, class: "mines-board", role: "grid",
+        viewBox: `${-pad.left} ${-pad.top} ${vw} ${vh}`, class: "mines-board", role: "grid",
         "aria-label": `${p.w} by ${p.h} minefield`,
       });
       root.append(svg);
@@ -107,6 +120,15 @@ export function minesView(look: Look): View<MinesPuzzle, MinesState, MinesAction
         svg.append(r, g);
         cells.push(r);
         deco.push(g);
+      }
+      const edge = (x: number, y: number, text: string) => svg.append(s("text", { x, y, class: "edge" }, text));
+      for (let x = 0; x < p.w; x++) {
+        if (pad.top) edge(x * SIZE + SIZE / 2, -EDGE / 2, colName(x));
+        if (pad.bottom) edge(x * SIZE + SIZE / 2, p.h * SIZE + EDGE / 2, colName(x));
+      }
+      for (let y = 0; y < p.h; y++) {
+        if (pad.left) edge(-EDGE / 2, y * SIZE + SIZE / 2, rowName(y));
+        if (pad.right) edge(p.w * SIZE + EDGE / 2, y * SIZE + SIZE / 2, rowName(y));
       }
       const overlay = s("g");
       const cursor = s("rect", { width: SIZE, height: SIZE, rx: 1.5, class: "cursor" });
@@ -297,7 +319,7 @@ export function minesView(look: Look): View<MinesPuzzle, MinesState, MinesAction
         "mines.mode": { checked: () => session.interaction.flagMode },
       });
       return {
-        aspect: p.w / p.h,
+        aspect: vw / vh,
         commands,
         context: () => ({ minesFlagMode: session.interaction.flagMode, minesLost: session.state.dead >= 0 }),
         locate: (focus) => {
