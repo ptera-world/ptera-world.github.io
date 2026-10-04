@@ -1,4 +1,5 @@
 import type { Rng } from "../../core/rng";
+import { colName, rowName } from "../../ui/board";
 
 export const UNKNOWN = 0;
 export const FILLED = 1;
@@ -94,6 +95,105 @@ export function solveLine(clue: Clue, line: ArrayLike<number>): Uint8Array | nul
   return out;
 }
 
+/**
+ * suffix[j][i] (flattened, stride n + 2): blocks j..k-1 fit into cells i..n-1 with every FILLED
+ * cell covered. Position n + 1 stands for "past the end".
+ */
+function suffixTable(clue: Clue, line: ArrayLike<number>): Uint8Array {
+  const n = line.length;
+  const k = clue.length;
+  const stride = n + 2;
+  const canEmpty = (i: number) => i >= n || line[i] !== FILLED;
+  const emptyBefore = new Int32Array(n + 1);
+  for (let i = 0; i < n; i++) emptyBefore[i + 1] = emptyBefore[i]! + (line[i] === EMPTY ? 1 : 0);
+  const fits = (s: number, e: number) => e <= n && emptyBefore[e]! - emptyBefore[s]! === 0;
+  const t = new Uint8Array((k + 1) * stride);
+  t[k * stride + n + 1] = 1;
+  for (let i = n; i >= 0; i--) {
+    for (let j = k; j >= 0; j--) {
+      let ok = canEmpty(i) && t[j * stride + i + 1] === 1;
+      if (!ok && j < k) {
+        const e = i + clue[j]!;
+        ok = fits(i, e) && canEmpty(e) && t[(j + 1) * stride + e + 1] === 1;
+      }
+      if (ok) t[j * stride + i] = 1;
+    }
+  }
+  return t;
+}
+
+/** Start of every block in the leftmost arrangement consistent with `line`, or null if none fits. */
+function leftmost(clue: Clue, line: ArrayLike<number>): Int32Array | null {
+  const n = line.length;
+  const k = clue.length;
+  const stride = n + 2;
+  const t = suffixTable(clue, line);
+  if (!t[0]) return null;
+  const out = new Int32Array(k);
+  let i = 0;
+  for (let j = 0; j < k; j++) {
+    const len = clue[j]!;
+    let s = i;
+    for (;; s++) {
+      if (s + len > n) return null;
+      let fits = s + len >= n || line[s + len] !== FILLED;
+      for (let c = s; fits && c < s + len; c++) if (line[c] === EMPTY) fits = false;
+      if (fits && t[(j + 1) * stride + s + len + 1]) break;
+      if (line[s] === FILLED) return null;
+    }
+    out[j] = s;
+    i = s + len + 1;
+  }
+  return out;
+}
+
+export interface Extremes {
+  /** Start of each block when every block is pushed as far left (top) as the marks allow. */
+  left: Int32Array;
+  /** Start of each block when pushed as far right (bottom). */
+  right: Int32Array;
+}
+
+/**
+ * Leftmost and rightmost start of every block over all arrangements consistent with `line`, or
+ * null if the clue can't fit. Any arrangement places block j within [left[j], right[j] + clue[j]).
+ */
+export function extremes(clue: Clue, line: ArrayLike<number>): Extremes | null {
+  const left = leftmost(clue, line);
+  if (!left) return null;
+  const n = line.length;
+  const k = clue.length;
+  const rev = Array.from({ length: n }, (_, i) => line[n - 1 - i]!);
+  const r = leftmost([...clue].reverse(), rev)!;
+  const right = new Int32Array(k);
+  for (let j = 0; j < k; j++) right[j] = n - r[k - 1 - j]! - clue[j]!;
+  return { left, right };
+}
+
+/** Number of arrangements of `clue` consistent with `line`, saturating at `cap`. */
+export function countArrangements(clue: Clue, line: ArrayLike<number>, cap = 1e9): number {
+  const n = line.length;
+  const k = clue.length;
+  const canEmpty = (i: number) => i >= n || line[i] !== FILLED;
+  const emptyBefore = new Int32Array(n + 1);
+  for (let i = 0; i < n; i++) emptyBefore[i + 1] = emptyBefore[i]! + (line[i] === EMPTY ? 1 : 0);
+  const fits = (s: number, e: number) => e <= n && emptyBefore[e]! - emptyBefore[s]! === 0;
+  const stride = n + 2;
+  const ways = new Float64Array((k + 1) * stride);
+  ways[k * stride + n + 1] = 1;
+  for (let i = n; i >= 0; i--) {
+    for (let j = k; j >= 0; j--) {
+      let w = canEmpty(i) ? ways[j * stride + i + 1]! : 0;
+      if (j < k) {
+        const e = i + clue[j]!;
+        if (fits(i, e) && canEmpty(e)) w += ways[(j + 1) * stride + e + 1]!;
+      }
+      ways[j * stride + i] = Math.min(cap, w);
+    }
+  }
+  return ways[0]!;
+}
+
 /** Line index space: rows are 0..h-1, columns are h..h+w-1. */
 export function lineCells(p: Clues, line: number): number[] {
   const out: number[] = [];
@@ -106,8 +206,9 @@ export function lineClue(p: Clues, line: number): Clue {
   return line < p.h ? p.rows[line]! : p.cols[line - p.h]!;
 }
 
+/** "row 5" / "column C", matching the shared board labels. */
 export function lineName(p: Clues, line: number): string {
-  return line < p.h ? `row ${line + 1}` : `column ${line - p.h + 1}`;
+  return line < p.h ? `row ${rowName(line)}` : `column ${colName(line - p.h)}`;
 }
 
 /** Precomputed line → cells table, shared by every solver call on one puzzle. */
@@ -173,6 +274,8 @@ export interface ProbeDeduction {
   tried: Cell;
   /** Line found impossible after trying. */
   failedLine: number;
+  /** Knowledge line logic reached from the assumption before failedLine broke (includes the assumed cell). */
+  after: Uint8Array;
 }
 
 /**
@@ -207,7 +310,7 @@ export function findProbe(L: Lines, cells: Uint8Array, from = 0): ProbeDeduction
       const copy = cells.slice();
       copy[i] = v;
       const failed = propagateWhy(L, copy, L.linesOf(i));
-      if (failed >= 0) return { cell: i, tried: v, failedLine: failed };
+      if (failed >= 0) return { cell: i, tried: v, failedLine: failed, after: copy };
     }
   }
   return null;

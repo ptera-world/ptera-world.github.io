@@ -2,11 +2,15 @@ import { expect, test } from "bun:test";
 import { generate } from "../../core/generate";
 import { createRng } from "../../core/rng";
 import { Session } from "../../core/session";
-import { info, pattern, type PatternPuzzle } from "./logic";
-import { doneNumbers, plugins } from "./plugins";
+import { info, pattern, type PatternAction, type PatternPuzzle } from "./logic";
+import { Registry } from "../../core/registry";
+import { TechniqueHost, applyStep, findPracticePosition, firstStep } from "../../core/techniques";
+import { doneNumbers, patternPlugins } from "./plugins";
+import { LINE_RULES, ruleOnLine } from "./rules";
 import {
-  CAN_EMPTY, CAN_FILL, EMPTY, FILLED, UNKNOWN, analyze, cluesOf, countSolutions, randomPicture, solveLine,
+  CAN_EMPTY, CAN_FILL, EMPTY, FILLED, UNKNOWN, analyze, cluesOf, countArrangements, countSolutions, extremes, randomPicture, solveLine,
 } from "./solver";
+import { finishedLine, patternTechniques } from "./techniques";
 
 const sig = () => new AbortController().signal;
 
@@ -94,35 +98,6 @@ test("formats round-trip", () => {
   expect(() => pattern.formats[0]!.parse("2x2:3/0/1/1")).toThrow();
 });
 
-test("session: hints solve the puzzle, mistakes get flagged first", async () => {
-  const puzzle = await generate(pattern, { width: 8, height: 8, difficulty: "hard" }, "hints", sig()) as PatternPuzzle;
-  const session = new Session(pattern, puzzle, { kind: "imported" });
-  const sol = info(puzzle).solution!;
-  const bad = sol.indexOf(EMPTY);
-  session.dispatch({ type: "set", cells: [bad], value: FILLED });
-  const h1 = session.hint()!;
-  expect(h1.focus).toEqual({ cells: [bad] });
-  session.dispatch(h1.actions![0]!);
-  for (let i = 0; i < 500 && !session.solved; i++) {
-    const h = session.hint();
-    expect(h?.actions?.[0]).toBeDefined();
-    session.dispatch(h!.actions![0]!);
-  }
-  expect(session.solved).toBe(true);
-  expect(pattern.solve!(puzzle)!.cells).toEqual(Array.from(sol));
-});
-
-test("auto-cross runs inside the same undo step", () => {
-  const puzzle = pattern.formats[0]!.parse("3x3:1/1/1/1/1/1");
-  const session = new Session(pattern, puzzle, { kind: "imported" });
-  const auto = plugins.find((p) => p.id === "pattern.auto-cross")!;
-  auto.setup!({ session, settings: {}, owner: "t" });
-  session.dispatch({ type: "set", cells: [0], value: FILLED });
-  expect(session.state.cells.slice(0, 3)).toEqual([FILLED, EMPTY, EMPTY]);
-  session.undo();
-  expect(session.state.cells.every((v) => v === UNKNOWN)).toBe(true);
-});
-
 test("done numbers only count provable runs", () => {
   const F = FILLED, E = EMPTY, U = UNKNOWN;
   expect(doneNumbers([2, 1], [F, F, E, U, U, U])).toEqual([true, false]);
@@ -130,3 +105,141 @@ test("done numbers only count provable runs", () => {
   expect(doneNumbers([2, 1], [U, U, U, E, F, E])).toEqual([false, true]);
   expect(doneNumbers([2, 1], [U, F, F, U, F, U])).toEqual([true, true]);
 });
+
+/** Every arrangement of `clue` on a line of length n consistent with `line`, as block start lists. */
+function arrangements(clue: number[], line: number[]): number[][] {
+  const n = line.length;
+  const out: number[][] = [];
+  const rec = (j: number, from: number, starts: number[]) => {
+    if (j === clue.length) {
+      const vals = Array.from({ length: n }, () => EMPTY);
+      starts.forEach((s, b) => { for (let i = s; i < s + clue[b]!; i++) vals[i] = FILLED; });
+      if (vals.every((v, i) => line[i] === UNKNOWN || line[i] === v)) out.push(starts.slice());
+      return;
+    }
+    for (let s = from; s + clue[j]! <= n; s++) rec(j + 1, s + clue[j]! + 1, [...starts, s]);
+  };
+  rec(0, 0, []);
+  return out;
+}
+
+function randomLine(rng: ReturnType<typeof createRng>): { clue: number[]; line: number[]; truth: number[] } {
+  const n = rng.range(1, 10);
+  const truth = Array.from({ length: n }, () => (rng.bool(0.55) ? FILLED : EMPTY));
+  const clue = cluesOf(n, 1, truth).rows[0]!.slice();
+  const line = truth.map((v) => (rng.bool(0.35) ? v : UNKNOWN));
+  return { clue, line, truth };
+}
+
+test("extremes and arrangement counts match brute force", () => {
+  const rng = createRng("extremes");
+  for (let t = 0; t < 3000; t++) {
+    const { clue, line } = randomLine(rng);
+    if (rng.bool(0.15) && line.length) line[rng.int(line.length)] = rng.bool() ? FILLED : EMPTY;
+    const all = arrangements(clue, line);
+    expect(countArrangements(clue, line)).toBe(all.length);
+    const ext = extremes(clue, line);
+    if (!all.length) {
+      expect(ext).toBeNull();
+      continue;
+    }
+    expect(ext).not.toBeNull();
+    for (let j = 0; j < clue.length; j++) {
+      expect(ext!.left[j]).toBe(Math.min(...all.map((a) => a[j]!)));
+      expect(ext!.right[j]).toBe(Math.max(...all.map((a) => a[j]!)));
+    }
+  }
+});
+
+test("every line rule is sound and only decides blank cells", () => {
+  const rng = createRng("rules");
+  const fired = new Map<string, number>();
+  for (let t = 0; t < 4000; t++) {
+    const { clue, line } = randomLine(rng);
+    const poss = solveLine(clue, line)!;
+    for (const r of LINE_RULES) {
+      const f = r.find({ clue, vals: line });
+      for (const i of f.fill) { expect(line[i]).toBe(UNKNOWN); expect(poss[i]).toBe(CAN_FILL); }
+      for (const i of f.empty) { expect(line[i]).toBe(UNKNOWN); expect(poss[i]).toBe(CAN_EMPTY); }
+      if (f.fill.length || f.empty.length) fired.set(r.id, (fired.get(r.id) ?? 0) + 1);
+      const own = ruleOnLine(r.id, { clue, vals: line });
+      if (own) expect(own.fill.length + own.empty.length).toBeGreaterThan(0);
+    }
+  }
+  for (const r of LINE_RULES) expect(fired.get(r.id) ?? 0).toBeGreaterThan(0);
+});
+
+function hostFor(puzzle: PatternPuzzle, techniques = patternTechniques, plugins: typeof patternPlugins = []) {
+  const registry = new Registry();
+  registry.puzzle(pattern);
+  for (const t of techniques) registry.technique(t);
+  const session = new Session(pattern, puzzle, { kind: "imported" });
+  for (const p of plugins) p.setup!({ session, settings: {}, owner: p.id });
+  return { session, host: new TechniqueHost(registry, session) };
+}
+
+test("techniques solve generated puzzles, every step agreeing with the solution", async () => {
+  for (const difficulty of ["easy", "hard"]) {
+    for (const seed of ["s1", "s2", "s3"]) {
+      const puzzle = await generate(pattern, { width: 12, height: 9, difficulty }, seed, sig()) as PatternPuzzle;
+      const sol = info(puzzle).solution!;
+      let state = pattern.init(puzzle);
+      const used = new Set<string>();
+      for (let guard = 0; guard < 2000 && !pattern.isSolved(puzzle, state); guard++) {
+        const hit = firstStep(pattern, patternTechniques, puzzle, state)!;
+        expect(hit).not.toBeNull();
+        used.add(hit.technique.id);
+        for (const a of hit.step.actions as PatternAction[]) for (const c of a.cells) expect<number>(a.value).toBe(sol[c]!);
+        state = applyStep(pattern, puzzle, state, hit.step);
+      }
+      expect(pattern.isSolved(puzzle, state)).toBe(true);
+      expect(used.has("pattern.what-if")).toBe(difficulty === "hard");
+    }
+  }
+});
+
+test("a wrong mark never misleads a technique, and gets pointed out before any hint", async () => {
+  const puzzle = await generate(pattern, { width: 8, height: 8, difficulty: "hard" }, "hints", sig()) as PatternPuzzle;
+  const sol = info(puzzle).solution!;
+  const { session } = hostFor(puzzle, patternTechniques, patternPlugins.filter((p) => p.id === "pattern.check-marks"));
+  const bad = sol.indexOf(EMPTY);
+  session.dispatch({ type: "set", cells: [bad], value: FILLED });
+  for (const t of patternTechniques) {
+    const step = t.find(puzzle, session.state);
+    for (const a of step?.actions ?? []) for (const c of a.cells) { expect<number>(a.value).toBe(sol[c]!); expect(c).not.toBe(bad); }
+  }
+  const h1 = session.hint()!;
+  expect(h1.focus).toEqual({ cells: [bad] });
+  session.dispatch(h1.actions![0]!);
+  for (let i = 0; i < 500 && !session.solved; i++) {
+    const h = session.hint();
+    expect(h?.more?.actions?.length).toBeGreaterThan(0);
+    for (const a of h!.more!.actions!) session.dispatch(a);
+  }
+  expect(session.solved).toBe(true);
+});
+
+test("finished lines get crossed automatically inside the same undo step", () => {
+  const puzzle = pattern.formats[0]!.parse("3x3:1/1/1/1/1/1");
+  const { session } = hostFor(puzzle, [finishedLine]);
+  session.dispatch({ type: "set", cells: [0], value: FILLED });
+  expect(session.state.cells.slice(0, 3)).toEqual([FILLED, EMPTY, EMPTY]);
+  expect([session.state.cells[3], session.state.cells[6]]).toEqual([EMPTY, EMPTY]);
+  session.undo();
+  expect(session.state.cells.every((v) => v === UNKNOWN)).toBe(true);
+  // clearing a cross is a retraction: auto-apply leaves it alone
+  session.dispatch({ type: "set", cells: [0], value: FILLED });
+  session.dispatch({ type: "set", cells: [1], value: UNKNOWN });
+  expect(session.state.cells[1]).toBe(UNKNOWN);
+});
+
+test("every technique can be practised", async () => {
+  for (const t of patternTechniques) {
+    for (const seed of ["a", "b", "c", "d"]) {
+      const t0 = performance.now();
+      const pos = await findPracticePosition(pattern, patternTechniques, t, seed, sig());
+      expect(pos, t.id).not.toBeNull();
+      expect(performance.now() - t0, t.id).toBeLessThan(3000);
+    }
+  }
+}, 60000);

@@ -2,8 +2,8 @@ import type { Rng } from "../../core/rng";
 import { defineSchema, type Values } from "../../core/schema";
 import type { Format, GenerateContext, Hint, PuzzleDef } from "../../core/types";
 import {
-  EMPTY, FILLED, Lines, UNKNOWN, analyze, cluesOf, countSolutions, deduceLine, findProbe, generatePicture, lineCells,
-  lineName, runs, type Analysis, type Cell, type Clue, type Level,
+  EMPTY, FILLED, Lines, UNKNOWN, analyze, cluesOf, countSolutions, generatePicture, lineCells, lineName, runs, solveLine,
+  type Analysis, type Cell, type Clue, type Level,
 } from "./solver";
 
 export const params = defineSchema({
@@ -44,13 +44,39 @@ export interface PatternInteraction {
   cursor: number;
   /** Primary input crosses instead of fills (for touch). */
   crossMode: boolean;
+  /** Clue number the player is pointing at, if any. */
+  clue?: ClueRef | null;
 }
 
-/** Hint focus understood by the pattern views. */
+/** One clue number: block `block` of line `line`. */
+export interface ClueRef {
+  line: number;
+  block: number;
+}
+
+/** A block placement drawn on the board, in positions along `line`. */
+export interface GuideSpan {
+  line: number;
+  block: number;
+  from: number;
+  to: number;
+  kind: "left" | "right" | "reach" | "place";
+}
+
+/** Highlight data understood by the pattern view (hints, techniques, effects). */
 export interface PatternFocus {
+  /** Cells being decided. */
   cells?: number[];
   /** Line indices: rows 0..h-1, columns h..h+w-1. */
   lines?: number[];
+  /** Existing marks the reasoning uses. */
+  sources?: number[];
+  clues?: ClueRef[];
+  spans?: GuideSpan[];
+  /** A line shown as impossible. */
+  broken?: number;
+  /** A what-if: the supposed cell and what line logic derives from it. */
+  suppose?: { cell: number; value: number; fill: number[]; empty: number[] };
 }
 
 const LEVEL_OF: Record<string, Level> = { easy: "line", hard: "probe" };
@@ -230,66 +256,23 @@ export function isSolved(p: PatternPuzzle, s: PatternState): boolean {
   return true;
 }
 
-function plural(n: number, one: string, many: string): string {
-  return n === 1 ? one : many;
-}
-
+/** Points at a line that can no longer fit its clue; techniques cover every actual deduction. */
 export function hint(p: PatternPuzzle, s: PatternState): Hint<PatternAction> | null {
-  const inf = info(p);
-  if (inf.unique && inf.solution) {
-    const sol = inf.solution;
-    const wrong = s.cells.flatMap((v, i) => (v !== UNKNOWN && v !== sol[i] ? [i] : []));
-    if (wrong.length) {
-      return {
-        message: wrong.length === 1 ? "this cell is wrong" : `${wrong.length} cells are wrong`,
-        focus: { cells: wrong } satisfies PatternFocus,
-        actions: [{ type: "set", cells: wrong, value: UNKNOWN }],
-      };
+  for (let l = 0; l < p.w + p.h; l++) {
+    const clue = l < p.h ? p.rows[l]! : p.cols[l - p.h]!;
+    if (!solveLine(clue, lineCells(p, l).map((i) => s.cells[i]!))) {
+      return { message: `${lineName(p, l)} can't fit its clue any more`, focus: { lines: [l], broken: l } satisfies PatternFocus };
     }
-  }
-  if (isSolved(p, s)) return null;
-  const cells = Uint8Array.from(s.cells);
-  let best: { line: number; fill: number[]; empty: number[] } | null = null;
-  for (let l = 0; l < inf.lines.count; l++) {
-    const d = deduceLine(inf.lines, cells, l);
-    if (!d) {
-      return { message: `${lineName(p, l)} can't fit its clue any more`, focus: { lines: [l] } satisfies PatternFocus };
-    }
-    const n = d.fill.length + d.empty.length;
-    if (n && (!best || n > best.fill.length + best.empty.length)) best = d;
-  }
-  if (best) {
-    const name = lineName(p, best.line);
-    if (best.fill.length) {
-      return {
-        message: `${name}: ${plural(best.fill.length, "this cell must", "these cells must")} be filled`,
-        focus: { cells: best.fill, lines: [best.line] } satisfies PatternFocus,
-        actions: [{ type: "set", cells: best.fill, value: FILLED }],
-      };
-    }
-    return {
-      message: `${name}: ${plural(best.empty.length, "this cell must", "these cells must")} be empty`,
-      focus: { cells: best.empty, lines: [best.line] } satisfies PatternFocus,
-      actions: [{ type: "set", cells: best.empty, value: EMPTY }],
-    };
-  }
-  const probe = findProbe(inf.lines, cells);
-  if (probe) {
-    const other = probe.tried === FILLED ? EMPTY : FILLED;
-    const word = (v: number) => (v === FILLED ? "filled" : "empty");
-    return {
-      message: `if this cell were ${word(probe.tried)}, ${lineName(p, probe.failedLine)} couldn't fit its clue, so it's ${word(other)}`,
-      focus: { cells: [probe.cell], lines: [probe.failedLine] } satisfies PatternFocus,
-      actions: [{ type: "set", cells: [probe.cell], value: other }],
-    };
   }
   return null;
 }
 
 export const pattern: PuzzleDef<PatternPuzzle, PatternState, PatternAction, PatternInteraction, typeof params> = {
   id: "pattern",
-  name: "pattern",
-  description: "fill cells so each row and column shows its runs of filled cells, in order.",
+  name: "nonogram",
+  description: "uncover a hidden picture. the numbers beside each row and above each column are the lengths of its blocks of filled cells, in order: fill in cells until every row and column matches its numbers.",
+  aliases: ["picross", "griddlers", "paint by numbers", "hanjie", "pic-a-pix", "japanese crosswords", "logic pictures", "pattern"],
+  tags: ["logic", "grid", "numbers", "picture"],
   generatorVersion: 1,
   params,
   presets: [
@@ -302,7 +285,14 @@ export const pattern: PuzzleDef<PatternPuzzle, PatternState, PatternAction, Patt
   generate,
   formats: [sgtFormat, nonFormat, pictureFormat],
   init: (p) => ({ cells: Array.from({ length: p.w * p.h }, () => UNKNOWN) }),
-  initInteraction: (p) => ({ cursor: Math.floor(p.h / 2) * p.w + Math.floor(p.w / 2), crossMode: false }),
+  initInteraction: (p) => ({ cursor: Math.floor(p.h / 2) * p.w + Math.floor(p.w / 2), crossMode: false, clue: null }),
+  isRetraction: (a) => a.type === "set" && a.value === UNKNOWN,
+  rules: () => [
+    "fill in cells so every row and column matches its clue.",
+    "a clue lists the lengths of the blocks of filled cells in that line, in order: left to right for rows, top to bottom for columns.",
+    "blocks are separated by at least one empty cell. a 0 means the line is empty.",
+    "cross out cells you know are empty, to keep track. crosses don't count towards the answer.",
+  ],
   reduce(p, s, a) {
     if (a.type !== "set") return s;
     if (a.value !== UNKNOWN && a.value !== FILLED && a.value !== EMPTY) return s;
