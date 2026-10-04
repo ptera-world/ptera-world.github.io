@@ -1,6 +1,6 @@
 import type { Step, Technique } from "../../core/types";
 import { cellName } from "../../core/names";
-import { info, type PatternAction, type PatternFocus, type PatternPuzzle, type PatternState, type GuideSpan } from "./logic";
+import { info, type PatternAction, type PatternFocus, type PatternPuzzle, type PatternState, type PatternTarget, type GuideSpan } from "./logic";
 import { ruleOnLine, type LineFind, type LineRuleId } from "./rules";
 import { EMPTY, FILLED, Lines, UNKNOWN, findProbe, lineClue, lineName } from "./solver";
 
@@ -82,33 +82,41 @@ function legend(row: boolean, id: LineRuleId, f: LineFind): string {
   return parts.length ? ` ${parts.join("; ")}.` : "";
 }
 
-/** A line rule as a technique: one line per step, chosen by most cells decided. */
+const targetOf = (t: unknown): PatternTarget | null =>
+  t && typeof t === "object" && Array.isArray((t as PatternTarget).lines) ? t as PatternTarget : null;
+
+/** A line rule as a technique: one line per step, chosen by most cells decided (among the target's lines when aimed). */
 function lineTechnique(
   id: LineRuleId,
   def: Omit<PatternTechnique, "find" | "puzzles"> & { explain(p: PatternPuzzle, line: number, f: LineFind): string },
 ): PatternTechnique {
   const { explain, ...rest } = def;
+  const stepOf = (p: PatternPuzzle, hit: LineHit | null): Step<PatternAction> | null => {
+    if (!hit) return null;
+    const { line, cells, find } = hit;
+    const at = (i: number) => cells[i]!;
+    const fill = find.fill.map(at), empty = find.empty.map(at);
+    const spans: GuideSpan[] = find.spans.map((x) => ({ ...x, line }));
+    const focus: PatternFocus = {
+      lines: [line], cells: [...fill, ...empty], sources: find.sources.map(at),
+      clues: find.blocks.map((block) => ({ line, block })), spans,
+    };
+    return {
+      message: `${explain(p, line, find)}, so ${outcome(fill.length, empty.length)}.${legend(line < p.h, id, find)}`,
+      nudge: `look at ${lineName(p, line)}`,
+      focus,
+      nudgeFocus: { lines: [line] } satisfies PatternFocus,
+      actions: actionsOf(fill, empty),
+    };
+  };
   return {
     ...rest,
     puzzles: ["pattern"],
-    find(p, s): Step<PatternAction> | null {
-      const hit = best(ruleHits(p, knowledge(p, s), id, s));
-      if (!hit) return null;
-      const { line, cells, find } = hit;
-      const at = (i: number) => cells[i]!;
-      const fill = find.fill.map(at), empty = find.empty.map(at);
-      const spans: GuideSpan[] = find.spans.map((x) => ({ ...x, line }));
-      const focus: PatternFocus = {
-        lines: [line], cells: [...fill, ...empty], sources: find.sources.map(at),
-        clues: find.blocks.map((block) => ({ line, block })), spans,
-      };
-      return {
-        message: `${explain(p, line, find)}, so ${outcome(fill.length, empty.length)}.${legend(line < p.h, id, find)}`,
-        nudge: `look at ${lineName(p, line)}`,
-        focus,
-        nudgeFocus: { lines: [line] } satisfies PatternFocus,
-        actions: actionsOf(fill, empty),
-      };
+    find: (p, s) => stepOf(p, best(ruleHits(p, knowledge(p, s), id, s))),
+    findAt(p, s, t) {
+      const target = targetOf(t);
+      if (!target) return null;
+      return stepOf(p, best(ruleHits(p, knowledge(p, s), id, s).filter((h) => target.lines.includes(h.line))));
     },
   };
 }
@@ -192,31 +200,38 @@ export const whatIf: PatternTechnique = {
   puzzles: ["pattern"],
   level: 8,
   description: "when no single line says anything more, pick a cell and suppose it's filled (or empty). follow the line logic that suppose leads to. if some line ends up with no way to fit its clue, the supposition was wrong, so the cell is the other way.",
-  find(p, s) {
-    const K = knowledge(p, s);
-    const L: Lines = info(p).lines;
-    const probe = findProbe(L, K);
-    if (!probe || s.cells[probe.cell] !== UNKNOWN) return null;
-    const other = probe.tried === FILLED ? EMPTY : FILLED;
-    const fill: number[] = [], empty: number[] = [];
-    probe.after.forEach((v, c) => {
-      if (K[c] !== UNKNOWN || c === probe.cell) return;
-      if (v === FILLED) fill.push(c);
-      else if (v === EMPTY) empty.push(c);
-    });
-    const at = cellAt(p, probe.cell);
-    return {
-      message: `if ${at} were ${word(probe.tried)}, line logic from there (the faded marks) leaves ${lineName(p, probe.failedLine)} no way to fit its clue, so ${at} is ${word(other)}`,
-      nudge: `suppose something about ${at} and follow where it leads`,
-      focus: {
-        cells: [probe.cell], lines: [probe.failedLine], broken: probe.failedLine,
-        suppose: { cell: probe.cell, value: probe.tried, fill, empty },
-      } satisfies PatternFocus,
-      nudgeFocus: { cells: [probe.cell] } satisfies PatternFocus,
-      actions: [{ type: "set", cells: [probe.cell], value: other }],
-    };
+  find: (p, s) => whatIfStep(p, s),
+  findAt(p, s, t) {
+    const cell = targetOf(t)?.cell;
+    return cell === undefined ? null : whatIfStep(p, s, cell);
   },
   practice: { params: { width: 10, height: 10, difficulty: "hard" } },
 };
+
+/** A what-if anywhere, or only at `at`. */
+function whatIfStep(p: PatternPuzzle, s: PatternState, at?: number): Step<PatternAction> | null {
+  const K = knowledge(p, s);
+  const L: Lines = info(p).lines;
+  const probe = at === undefined ? findProbe(L, K) : findProbe(L, K, at, 1);
+  if (!probe || s.cells[probe.cell] !== UNKNOWN) return null;
+  const other = probe.tried === FILLED ? EMPTY : FILLED;
+  const fill: number[] = [], empty: number[] = [];
+  probe.after.forEach((v, c) => {
+    if (K[c] !== UNKNOWN || c === probe.cell) return;
+    if (v === FILLED) fill.push(c);
+    else if (v === EMPTY) empty.push(c);
+  });
+  const name = cellAt(p, probe.cell);
+  return {
+    message: `if ${name} were ${word(probe.tried)}, line logic from there (the faded marks) leaves ${lineName(p, probe.failedLine)} no way to fit its clue, so ${name} is ${word(other)}`,
+    nudge: `suppose something about ${name} and follow where it leads`,
+    focus: {
+      cells: [probe.cell], lines: [probe.failedLine], broken: probe.failedLine,
+      suppose: { cell: probe.cell, value: probe.tried, fill, empty },
+    } satisfies PatternFocus,
+    nudgeFocus: { cells: [probe.cell] } satisfies PatternFocus,
+    actions: [{ type: "set", cells: [probe.cell], value: other }],
+  };
+}
 
 export const patternTechniques: PatternTechnique[] = [finishedLine, exactFit, overlap, cappedRun, sliding, outOfReach, everyWay, whatIf];

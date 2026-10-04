@@ -2,7 +2,7 @@ import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
 import { bindCommands, type BindingSchema } from "../../core/commands";
 import { s, style } from "../../core/dom";
-import type { ClueRef, PatternAction, PatternFocus, PatternInteraction, PatternPuzzle, PatternState } from "./logic";
+import type { ClueRef, PatternAction, PatternFocus, PatternInteraction, PatternPuzzle, PatternState, PatternTarget } from "./logic";
 import { EMPTY, FILLED, UNKNOWN, type Cell } from "./solver";
 
 /** Derived: per-line flags for clue numbers already satisfied. */
@@ -55,6 +55,7 @@ const CSS = `
 .pattern-board .gl.major { stroke: var(--text-dim); stroke-width: 0.6; }
 .pattern-board .frame { fill: none; stroke: var(--text-dim); stroke-width: 0.8; pointer-events: none; }
 .pattern-board .band { fill: var(--accent-soft); pointer-events: none; }
+.pattern-board .strip-bg { fill: var(--bg); }
 .pattern-board .band.hint { fill: var(--hint-soft); }
 .pattern-board .band.broken { fill: var(--danger-soft); }
 .pattern-board .reach { fill: color-mix(in srgb, var(--hint) 18%, transparent); pointer-events: none; }
@@ -242,10 +243,21 @@ export function patternView(look: Look, board: Board, menuHoldMs: number): View<
       const cellOf = (l: number, i: number) => (l < p.h ? l * p.w + i : i * p.w + (l - p.h));
 
       svg.append(s("rect", { x: gx, y: gy, width: p.w * SIZE, height: p.h * SIZE, class: "bg" }));
-      const bandRow = s("rect", { x: 0, height: SIZE, width: W, class: "band", visibility: "hidden" });
-      const bandCol = s("rect", { y: 0, width: SIZE, height: H, class: "band", visibility: "hidden" });
+      const bandRow = s("rect", { x: gx, height: SIZE, width: W - gx, class: "band", visibility: "hidden" });
+      const bandCol = s("rect", { y: gy, width: SIZE, height: H - gy, class: "band", visibility: "hidden" });
       const under = s("g");
       svg.append(bandRow, bandCol, under);
+      // clues (and the top/left labels) live in strips that stay in view when the board scrolls
+      const strip = (width: number, height: number) => {
+        const bg = s("rect", { x: 0, y: 0, width, height, class: "strip-bg", visibility: "hidden" });
+        return { g: s("g", { class: "strip" }, bg), bg };
+      };
+      const colStrip = strip(W, gy), rowStrip = strip(gx, H), corner = strip(gx, gy);
+      const bandColS = s("rect", { y: 0, width: SIZE, height: gy, class: "band", visibility: "hidden" });
+      const bandRowS = s("rect", { x: 0, height: SIZE, width: gx, class: "band", visibility: "hidden" });
+      const colUnder = s("g"), rowUnder = s("g");
+      colStrip.g.append(bandColS, colUnder);
+      rowStrip.g.append(bandRowS, rowUnder);
 
       const cells: SVGRectElement[] = [];
       const deco: SVGGElement[] = [];
@@ -266,22 +278,20 @@ export function patternView(look: Look, board: Board, menuHoldMs: number): View<
         svg.append(s("line", { y1: gy + y * SIZE, y2: gy + y * SIZE, x1: gx, x2: gx + p.w * SIZE, class: major ? "gl major" : "gl" }));
       }
       svg.append(s("rect", { x: gx, y: gy, width: p.w * SIZE, height: p.h * SIZE, class: "frame" }));
-      const label = (x: number, y: number, text: string) => svg.append(s("text", { x, y, class: "edge-label" }, text));
+      const label = (to: Element, x: number, y: number, text: string) => to.append(s("text", { x, y, class: "edge-label" }, text));
       for (let x = 0; x < p.w; x++) {
         const mid = gx + x * SIZE + SIZE / 2;
-        if (lab.top) label(mid, gy - LABEL / 2, board.colName(x));
-        if (lab.bottom) label(mid, gy + p.h * SIZE + 1 + LABEL / 2, board.colName(x));
+        if (lab.top) label(colStrip.g, mid, gy - LABEL / 2, board.colName(x));
+        if (lab.bottom) label(svg, mid, gy + p.h * SIZE + 1 + LABEL / 2, board.colName(x));
       }
       for (let y = 0; y < p.h; y++) {
         const mid = gy + y * SIZE + SIZE / 2;
-        if (lab.left) label(gx - LABEL / 2, mid, board.rowName(y));
-        if (lab.right) label(gx + p.w * SIZE + 1 + LABEL / 2, mid, board.rowName(y));
+        if (lab.left) label(rowStrip.g, gx - LABEL / 2, mid, board.rowName(y));
+        if (lab.right) label(svg, gx + p.w * SIZE + 1 + LABEL / 2, mid, board.rowName(y));
       }
 
-      const clueHits = s("g");
-      svg.append(clueHits);
       const hit = (x: number, y: number, width: number, height: number, ref: ClueRef) =>
-        clueHits.append(s("rect", { x, y, width, height, class: "clue-hit", "data-clue": `${ref.line}:${ref.block}` }));
+        (ref.line < p.h ? rowStrip : colStrip).g.append(s("rect", { x, y, width, height, class: "clue-hit", "data-clue": `${ref.line}:${ref.block}` }));
       const rowClues = p.rows.map((clue, y) => {
         const nums = clue.length ? clue : [0];
         let right = gx - 2 - lab.left;
@@ -291,7 +301,7 @@ export function patternView(look: Look, board: Board, menuHoldMs: number): View<
           const t = s("text", { x: right, y: gy + y * SIZE + SIZE / 2, "text-anchor": "end", class: "clue" }, String(num));
           if (clue.length) hit(right - numW(num) + 1, gy + y * SIZE, numW(num), SIZE, { line: y, block: k });
           right -= numW(num);
-          svg.append(t);
+          rowStrip.g.append(t);
           texts[k] = t;
         }
         return texts;
@@ -302,7 +312,7 @@ export function patternView(look: Look, board: Board, menuHoldMs: number): View<
           const ty = gy - lab.top - 2 -(nums.length - 1 - k) * CLUE_H - CLUE_H / 2 + 1;
           const t = s("text", { x: gx + x * SIZE + SIZE / 2, y: ty, "text-anchor": "middle", class: "clue" }, String(num));
           if (clue.length) hit(gx + x * SIZE, ty - CLUE_H / 2, SIZE, CLUE_H, { line: p.h + x, block: k });
-          svg.append(t);
+          colStrip.g.append(t);
           return t;
         });
       });
@@ -311,18 +321,45 @@ export function patternView(look: Look, board: Board, menuHoldMs: number): View<
           ? s("circle", { cx: MARGIN / 2, cy: gy + l * SIZE + SIZE / 2, r: 0.9, class: "progress", visibility: "hidden" })
           : s("circle", { cx: gx + (l - p.h) * SIZE + SIZE / 2, cy: MARGIN / 2, r: 0.9, class: "progress", visibility: "hidden" });
         d.append(s("title", null, "this line alone decides more cells"));
-        svg.append(d);
+        (l < p.h ? rowStrip : colStrip).g.append(d);
         return d;
       });
 
       const over = s("g");
       const count = s("text", { x: (gx + MARGIN) / 2, y: (gy + MARGIN) / 2, class: "count" });
       const cursor = s("rect", { width: SIZE, height: SIZE, rx: 1, class: "cursor" });
-      svg.append(over, count, cursor);
+      corner.g.append(count);
+      svg.append(over, cursor, colStrip.g, rowStrip.g, corner.g);
       root.append(svg);
+
+      /** Shift the strips by however much of the board is scrolled out of view above / left. */
+      const stick = () => {
+        const m = svg.getScreenCTM();
+        let clip: Element | null = svg.parentElement;
+        while (clip && getComputedStyle(clip).overflow === "visible") clip = clip.parentElement;
+        if (!m || !clip) return;
+        const r = clip.getBoundingClientRect();
+        const pt = new DOMPoint(r.left, r.top).matrixTransform(m.inverse());
+        const dx = Math.min(p.w * SIZE, Math.max(0, pt.x)), dy = Math.min(p.h * SIZE, Math.max(0, pt.y));
+        colStrip.g.setAttribute("transform", `translate(0 ${dy})`);
+        rowStrip.g.setAttribute("transform", `translate(${dx} 0)`);
+        corner.g.setAttribute("transform", `translate(${dx} ${dy})`);
+        colStrip.bg.setAttribute("visibility", dy > 0 ? "visible" : "hidden");
+        rowStrip.bg.setAttribute("visibility", dx > 0 ? "visible" : "hidden");
+        corner.bg.setAttribute("visibility", dx > 0 || dy > 0 ? "visible" : "hidden");
+      };
+      let stickFrame = 0;
+      const queueStick = () => { stickFrame ||= requestAnimationFrame(() => { stickFrame = 0; stick(); }); };
+      document.addEventListener("scroll", queueStick, true);
+      const resize = new ResizeObserver(queueStick);
+      resize.observe(svg);
 
       let drag: Drag | null = null;
       let hover = -1;
+      let ghost: PatternState | null = null;
+      const lineTarget = (cell: number): PatternTarget => ({ cell, lines: [Math.floor(cell / p.w), p.h + (cell % p.w)] });
+      /** Last cell or clue pointed at, or the keyboard cursor after it moves. */
+      let aim: PatternTarget = lineTarget(session.interaction.cursor);
       let lastKeyValue: Cell = FILLED;
       const drawn: string[] = Array.from({ length: n }, () => "");
       const keyboardInput = () => root.closest("[data-input]")?.getAttribute("data-input") === "keyboard";
@@ -345,9 +382,15 @@ export function patternView(look: Look, board: Board, menuHoldMs: number): View<
       const lineRect = (l: number, from: number, to: number, a: number, b: number, cls: string) => (l < p.h
         ? s("rect", { x: gx + from * SIZE + 0.8, y: gy + l * SIZE + a, width: (to - from) * SIZE - 1.6, height: b - a, rx: 0.8, class: cls })
         : s("rect", { x: gx + (l - p.h) * SIZE + a, y: gy + from * SIZE + 0.8, width: b - a, height: (to - from) * SIZE - 1.6, rx: 0.8, class: cls }));
-      const fullBand = (l: number, cls: string) => (l < p.h
-        ? s("rect", { x: 0, y: gy + l * SIZE, width: W, height: SIZE, class: cls })
-        : s("rect", { x: gx + (l - p.h) * SIZE, y: 0, width: SIZE, height: H, class: cls }));
+      const fullBand = (l: number, cls: string) => {
+        if (l < p.h) {
+          under.append(s("rect", { x: gx, y: gy + l * SIZE, width: W - gx, height: SIZE, class: cls }));
+          rowUnder.append(s("rect", { x: 0, y: gy + l * SIZE, width: gx, height: SIZE, class: cls }));
+        } else {
+          under.append(s("rect", { x: gx + (l - p.h) * SIZE, y: gy, width: SIZE, height: H - gy, class: cls }));
+          colUnder.append(s("rect", { x: gx + (l - p.h) * SIZE, y: 0, width: SIZE, height: gy, class: cls }));
+        }
+      };
       const box = (c: number, cls: string) => s("rect", { x: cx(c) + 0.6, y: cy(c) + 0.6, width: SIZE - 1.2, height: SIZE - 1.2, rx: 0.8, class: cls });
 
       const render = () => {
@@ -364,8 +407,9 @@ export function patternView(look: Look, board: Board, menuHoldMs: number): View<
         const preview = drag ? new Set(dragCells(drag)) : null;
         const pFill = new Set(prog?.fill ?? []), pEmpty = new Set(prog?.empty ?? []);
         for (let i = 0; i < n; i++) {
-          const pv = preview?.has(i) ?? false;
-          const v = pv ? drag!.target : st.cells[i]!;
+          const dragged = preview?.has(i) ?? false;
+          const pv = dragged || (!!ghost && ghost.cells[i] !== st.cells[i]);
+          const v = dragged ? drag!.target : pv ? ghost!.cells[i]! : st.cells[i]!;
           let cls = "cell";
           if (pv && v === UNKNOWN) cls += " pv-clear";
           else if (!pv && v === UNKNOWN && pFill.has(i)) cls += " p-fill";
@@ -396,7 +440,9 @@ export function patternView(look: Look, board: Board, menuHoldMs: number): View<
         progressDots.forEach((dot, l) => dot.setAttribute("visibility", progLines.has(l) && !solved ? "visible" : "hidden"));
 
         under.replaceChildren();
-        for (const l of focus.lines ?? []) under.append(fullBand(l, l === focus.broken ? "band broken" : "band hint"));
+        rowUnder.replaceChildren();
+        colUnder.replaceChildren();
+        for (const l of focus.lines ?? []) fullBand(l, l === focus.broken ? "band broken" : "band hint");
         if (range?.reach) {
           for (let i = range.reach[0]; i < range.reach[1]; i++) under.append(box(cellOf(range.line, i), "reach"));
           if (range.sure) for (let i = range.sure[0]; i < range.sure[1]; i++) under.append(box(cellOf(range.line, i), "sure"));
@@ -426,11 +472,12 @@ export function patternView(look: Look, board: Board, menuHoldMs: number): View<
         const kb = keyboardInput();
         const focusCell = drag ? drag.cur : kb ? session.interaction.cursor : hover;
         const band = settings.band && focusCell >= 0 && !solved;
-        bandRow.setAttribute("visibility", band ? "visible" : "hidden");
-        bandCol.setAttribute("visibility", band ? "visible" : "hidden");
+        for (const el of [bandRow, bandCol, bandRowS, bandColS]) el.setAttribute("visibility", band ? "visible" : "hidden");
         if (band) {
           bandRow.setAttribute("y", String(cy(focusCell)));
+          bandRowS.setAttribute("y", String(cy(focusCell)));
           bandCol.setAttribute("x", String(cx(focusCell)));
+          bandColS.setAttribute("x", String(cx(focusCell)));
         }
         count.textContent = preview && preview.size > 1 ? String(preview.size) : "";
         const c = session.interaction.cursor;
@@ -439,6 +486,7 @@ export function patternView(look: Look, board: Board, menuHoldMs: number): View<
       };
 
       const pointToCell = (e: PointerEvent, clamp: boolean): number => {
+        if (!clamp && (e.target as Element | null)?.closest?.(".strip")) return -1;
         const m = svg.getScreenCTM();
         if (!m) return -1;
         const pt = new DOMPoint(e.clientX, e.clientY).matrixTransform(m.inverse());
@@ -477,6 +525,7 @@ export function patternView(look: Look, board: Board, menuHoldMs: number): View<
         if (drag || e.button > 2 || session.locked) return;
         const ref = clueAt(e);
         if (ref) {
+          aim = { lines: [ref.line] };
           // touch has no hover: a tap toggles the guide for that number
           if (e.pointerType !== "mouse") pointClue(sameClue(session.interaction.clue, ref) ? null : ref);
           return;
@@ -487,6 +536,7 @@ export function patternView(look: Look, board: Board, menuHoldMs: number): View<
           return;
         }
         e.preventDefault();
+        aim = lineTarget(cell);
         svg.setPointerCapture(e.pointerId);
         const swap = session.interaction.crossMode && e.button === 0;
         const secondary = (e.button === 2) !== swap;
@@ -520,8 +570,11 @@ export function patternView(look: Look, board: Board, menuHoldMs: number): View<
           return;
         }
         if (e.pointerType !== "mouse") return;
-        pointClue(session.locked ? null : clueAt(e));
+        const ref = clueAt(e);
+        pointClue(session.locked ? null : ref);
         const cell = pointToCell(e, false);
+        if (ref) aim = { lines: [ref.line] };
+        else if (cell >= 0) aim = lineTarget(cell);
         if (cell !== hover) { hover = cell; render(); }
       };
       const onLeave = (e: PointerEvent) => {
@@ -553,7 +606,10 @@ export function patternView(look: Look, board: Board, menuHoldMs: number): View<
 
       const offs = [
         session.hooks.change.tap(render, { owner: "view" }),
-        session.hooks.interaction.tap(render, { owner: "view" }),
+        session.hooks.interaction.tap(({ prev, interaction }) => {
+          if (prev.cursor !== interaction.cursor) aim = lineTarget(interaction.cursor);
+          render();
+        }, { owner: "view" }),
         session.hooks.refresh.tap(() => {
           if (session.locked && drag) endDrag(false);
           if (session.locked && session.interaction.clue) pointClue(null);
@@ -584,12 +640,16 @@ export function patternView(look: Look, board: Board, menuHoldMs: number): View<
         "pattern.mode": () => session.setInteraction((i) => ({ ...i, crossMode: !i.crossMode })),
       }, {
         "pattern.mode": { checked: () => session.interaction.crossMode, menu: "board" },
-        "pattern.fill": { menu: "board" },
-        "pattern.cross": { menu: "board" },
-        "pattern.clear": { menu: "board" },
       });
       return {
         aspect: W / H,
+        // the whole board (clues included) in cell units, so grid cells themselves meet the minimum size
+        cells: { cols: W / SIZE, rows: H / SIZE },
+        target: () => aim,
+        preview: (state) => {
+          ghost = state as PatternState | null;
+          render();
+        },
         // right-click crosses; a touch hold crosses unless hold-to-cross is off, then it is the shell menu
         gestures: { secondaryClick: true, hold: (settings.longPressMs as number) > 0 },
         commands,
@@ -608,6 +668,9 @@ export function patternView(look: Look, board: Board, menuHoldMs: number): View<
         },
         destroy() {
           if (drag) clearTimeout(drag.timer);
+          document.removeEventListener("scroll", queueStick, true);
+          resize.disconnect();
+          cancelAnimationFrame(stickFrame);
           offs.forEach((f) => f());
           svg.remove();
         },

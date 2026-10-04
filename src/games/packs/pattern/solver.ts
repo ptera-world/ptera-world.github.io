@@ -298,12 +298,13 @@ function propagateWhy(L: Lines, cells: Uint8Array, start: readonly number[]): nu
 }
 
 /**
- * First cell (scanning from `from`, wrapping) where assuming one value and line-solving leads to a
- * contradiction, so the other value is forced. `cells` must already be line-solved.
+ * First cell (scanning `count` cells from `from`, wrapping) where assuming one value and
+ * line-solving leads to a contradiction, so the other value is forced. `cells` must already be
+ * line-solved.
  */
-export function findProbe(L: Lines, cells: Uint8Array, from = 0): ProbeDeduction | null {
+export function findProbe(L: Lines, cells: Uint8Array, from = 0, count = cells.length): ProbeDeduction | null {
   const n = cells.length;
-  for (let k = 0; k < n; k++) {
+  for (let k = 0; k < Math.min(n, count); k++) {
     const i = (from + k) % n;
     if (cells[i] !== UNKNOWN) continue;
     for (const v of [FILLED, EMPTY] as const) {

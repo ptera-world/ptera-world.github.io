@@ -48,6 +48,12 @@ export interface PatternInteraction {
   clue?: ClueRef | null;
 }
 
+/** What the player points at, for aimed techniques: a cell (its row and column) or one clue's line. */
+export interface PatternTarget {
+  lines: number[];
+  cell?: number;
+}
+
 /** One clue number: block `block` of line `line`. */
 export interface ClueRef {
   line: number;
