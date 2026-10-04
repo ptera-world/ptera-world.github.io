@@ -27,6 +27,7 @@ const PACK_SDK = new Set([
   "core/patch.ts",
   "core/dom.ts",
   "core/storage.ts",
+  "core/anim.ts",
 ]);
 
 /**

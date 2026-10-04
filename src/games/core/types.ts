@@ -75,6 +75,8 @@ export interface Technique<Pz = any, S = any, A extends Action = any> {
   level: number;
   /** Plain-language explanation for the guide. */
   description: string;
+  /** Colour used for this technique's highlights, flashes and labels. Default: picked per technique. */
+  color?: string;
   /** First instance in the state, or null. Must be pure and deterministic. */
   find(puzzle: Pz, state: S): Step<A> | null;
   /**
@@ -218,6 +220,11 @@ export interface PuzzleDef<Pz = unknown, S = unknown, A extends Action = Action,
   /** Other names people know it by (e.g. "nonogram", "picross"); searchable on the game list. */
   aliases?: readonly string[];
   rate?(puzzle: Pz): Rating | null;
+  /**
+   * One move in words, for history ("C5: 7", "flag E1", "turn B3 clockwise"). Gets the states
+   * before and after so it can describe what actually changed.
+   */
+  describeAction?(puzzle: Pz, action: A, before: S, after: S): string;
   /** Short label for the current puzzle (e.g. "9×9 killer"), shown in the header. */
   describe?(puzzle: Pz): string;
 }

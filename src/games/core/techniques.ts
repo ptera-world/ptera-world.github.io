@@ -45,6 +45,13 @@ export function findStep<Pz, S>(def: AnyPuzzleDef, t: Technique, puzzle: Pz, sta
   }
 }
 
+/** A technique's colour: its own, else a hue spread evenly by its position among `list` (its puzzle's techniques). */
+export function colorOf(t: Technique, list: readonly Technique[]): string {
+  if (t.color) return t.color;
+  const i = Math.max(0, list.findIndex((x) => x.id === t.id));
+  return `hsl(${Math.round((i * 137.508 + 280) % 360)} 70% 58%)`;
+}
+
 /** Safe targeted find (see Technique.findAt); null when the technique has no targeted form. */
 export function findStepAt<Pz, S>(def: AnyPuzzleDef, t: Technique, puzzle: Pz, state: S, target: unknown): Step | null {
   if (!t.findAt || target === undefined || target === null) return null;

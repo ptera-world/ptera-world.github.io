@@ -9,6 +9,8 @@ import { fx } from "./core/fx";
 import { generate } from "./core/generate";
 import { HOLD_MS } from "./core/gestures";
 import * as hooks from "./core/hooks";
+import * as anim from "./core/anim";
+import * as i18n from "./core/i18n";
 import * as mods from "./core/mods";
 import * as patch from "./core/patch";
 import * as plugins from "./core/plugins";
@@ -39,6 +41,10 @@ export const api = {
   look: themes,
   /** Cell names for hints, and which edges the player wants labelled. */
   board,
+  /** Frame animation for views (also bundleable: core/anim). */
+  anim,
+  /** Locale and translations: `t(ns, key, fallback, params)`, `register(ns, locale, messages)`. */
+  i18n,
   /** Touch hold duration (ms) at which a hold counts as a hold. */
   HOLD_MS,
   /** Pack management, and what this page load loaded (filled in by the loader before any frontend mounts). */

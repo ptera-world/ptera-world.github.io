@@ -111,9 +111,12 @@ interface HistoryEntry<S, A> {
 }
 
 /** One undo step as seen from outside: what was dispatched and who did it. */
-export interface TimelineEntry<A> {
+export interface TimelineEntry<A, S = unknown> {
   actions: readonly A[];
   sources: readonly Source[];
+  /** Board before and after this step. */
+  before: S;
+  after: S;
 }
 
 export interface Snapshot {
@@ -508,9 +511,13 @@ export class Session<Pz = unknown, S = unknown, A extends Action = Action, I = u
   }
 
   /** Undo steps oldest first (`past`), and redo steps nearest first (`future`). */
-  timeline(): { past: TimelineEntry<A>[]; future: TimelineEntry<A>[] } {
-    const view = (e: HistoryEntry<S, A>): TimelineEntry<A> => ({ actions: e.actions, sources: e.sources ?? [] });
-    return { past: this.past.map(view), future: [...this.future].reverse().map(view) };
+  timeline(): { past: TimelineEntry<A, S>[]; future: TimelineEntry<A, S>[] } {
+    // past[i].state is the board before step i; the board after it is the next entry's, or now
+    const past = this.past.map((e, i): TimelineEntry<A, S> => ({ actions: e.actions, sources: e.sources ?? [], before: e.state, after: this.past[i + 1]?.state ?? this._state }));
+    // future entries hold the board after them; the one before is the previous entry's, or now
+    const fut = [...this.future].reverse();
+    const future = fut.map((e, i): TimelineEntry<A, S> => ({ actions: e.actions, sources: e.sources ?? [], before: i === 0 ? this._state : fut[i - 1]!.state, after: e.state }));
+    return { past, future };
   }
 
   /** Undo or redo until `depth` undo steps remain. */

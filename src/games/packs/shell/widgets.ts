@@ -46,6 +46,8 @@ button.danger:hover:not(:disabled) { border-color: var(--danger); background: va
 .w-history li.current button { background: var(--accent-soft); }
 .w-history li.future { opacity: 0.45; }
 .w-history .n { color: var(--text-dim); font-family: var(--mono); min-width: 2.5em; }
+.w-history .what { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.w-history .who { color: var(--text-dim); font-size: 12px; white-space: nowrap; }
 .w-history .who-technique { color: var(--hint); }
 .w-practice { display: flex; flex-direction: column; gap: 6px; align-items: center; text-align: center; max-width: 60ch; }
 .w-practice p { color: var(--text-dim); font-size: 13px; }
@@ -418,48 +420,76 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
   };
 
   const historyW: WidgetDef = {
-    id: "history", name: "history", description: "every step, who made it, jump back to any point, replay, export", puzzles: "*", defaultSlot: "panel", order: 25,
+    id: "history", name: "history", description: "every step: what it was and who made it. jump to any point, scrub, replay at your speed, point at a step to see the board as it was", puzzles: "*", defaultSlot: "panel", order: 25,
     mount(el, ctx) {
       const s = ctx.session;
       const list = h("ol");
-      const done = h("span", { class: "w-dim" });
+      const done = h("span", { class: "w-dim", "aria-live": "polite" });
+      const scrub = h("input", { type: "range", min: 0, value: 0, step: 1, "aria-label": "scrub through history", style: "flex: 1" });
+      const speeds: [number, string][] = [[900, "slow"], [450, "normal"], [180, "fast"], [60, "very fast"]];
+      const speed = h("select", { "aria-label": "replay speed", onchange: (e: Event) => prefs.set("replaySpeed", Number((e.target as HTMLSelectElement).value)) },
+        speeds.map(([ms, lab]) => h("option", { value: ms, selected: ms === prefs.get("replaySpeed", 450) }, lab)));
       let replayTimer = 0;
-      const stopReplay = () => { clearInterval(replayTimer); replayTimer = 0; };
+      const stopReplay = () => { clearTimeout(replayTimer); replayTimer = 0; playBtn.textContent = "replay"; };
+      const what = (e: TimelineEntry<Action>): string => {
+        if (!e.actions.length) return "";
+        const desc = s.def.describeAction;
+        if (desc) {
+          try {
+            const parts = e.actions.map((act) => desc(s.puzzle, act, e.before, e.after)).filter(Boolean);
+            if (parts.length) return [...new Set(parts)].join(", ");
+          } catch { /* fall through to a generic description */ }
+        }
+        const n = shell.view?.handle.locateChange?.(e.before, e.after).length ?? 0;
+        return n ? `${n} change${n === 1 ? "" : "s"}` : "";
+      };
+      // pointing at a step shows the board as it was then, faded over the current one
+      const peek = (state: unknown | null) => { shell.view?.handle.preview?.(state); };
       const render = () => {
         clear(list);
         const { past, future } = s.timeline();
+        const total = past.length + future.length;
+        scrub.max = String(total);
+        scrub.value = String(past.length);
         const row = (e: TimelineEntry<Action>, i: number, isFuture: boolean) => {
           const d = describe(e.sources);
           return h("li", { class: `${isFuture ? "future" : ""} ${!isFuture && i === past.length ? "current" : ""}` },
-            h("button", { onclick: () => { stopReplay(); s.jumpTo(i); }, title: "go to just after this step" },
-              h("span", { class: "n" }, String(i)), h("span", { class: `who-${d.kind}` }, d.who)));
+            h("button", {
+              onclick: () => { stopReplay(); s.jumpTo(i); },
+              onpointerenter: () => peek(e.after), onpointerleave: () => peek(null), onfocus: () => peek(e.after), onblur: () => peek(null),
+              "data-tip": "go to just after this step",
+            },
+              h("span", { class: "n" }, String(i)),
+              h("span", { class: "what" }, what(e) || "—"),
+              h("span", { class: `who who-${d.kind}` }, d.who)));
         };
-        list.append(h("li", { class: past.length === 0 ? "current" : "" }, h("button", { onclick: () => { stopReplay(); s.jumpTo(0); } }, h("span", { class: "n" }, "0"), h("span", null, "start"))));
+        list.append(h("li", { class: past.length === 0 ? "current" : "" }, h("button", { onclick: () => { stopReplay(); s.jumpTo(0); } }, h("span", { class: "n" }, "0"), h("span", { class: "what" }, "start"))));
         past.forEach((e, i) => list.append(row(e, i + 1, false)));
         future.forEach((e, i) => list.append(row(e, past.length + i + 1, true)));
       };
+      scrub.addEventListener("input", () => { stopReplay(); s.jumpTo(Number(scrub.value)); });
+      const playBtn = h("button", {
+        onclick: () => {
+          if (replayTimer) { stopReplay(); return; }
+          const end = s.depth + s.timeline().future.length;
+          if (s.depth >= end) s.jumpTo(0);
+          playBtn.textContent = "stop";
+          const tick = () => { if (s.depth >= end || !s.redo()) { stopReplay(); return; } replayTimer = window.setTimeout(tick, prefs.get("replaySpeed", 450)); };
+          replayTimer = window.setTimeout(tick, prefs.get("replaySpeed", 450));
+        },
+      }, "replay");
       sessionTaps(ctx, render);
       render();
       el.append(
+        h("div", { class: "w-inline" }, h("span", { class: "w-dim" }, "start"), scrub, h("span", { class: "w-dim" }, "now")),
         h("div", { class: "w-inline" },
+          playBtn, speed,
           h("button", {
-            onclick: () => {
-              stopReplay();
-              const end = s.depth + s.timeline().future.length;
-              s.jumpTo(0);
-              replayTimer = window.setInterval(() => { if (s.depth >= end || !s.redo()) stopReplay(); }, 350);
-            },
-          }, "replay"),
-          h("button", { onclick: stopReplay }, "stop"),
-          h("button", {
-            title: "a link that opens this board with this whole history, undoable",
-            onclick: async () => {
-              await navigator.clipboard?.writeText(await shell.shareUrl("history"));
-              done.textContent = "copied";
-            },
+            "data-tip": "a link that opens this board with this whole history, undoable",
+            onclick: async () => { await navigator.clipboard?.writeText(await shell.shareUrl("history")); done.textContent = "copied"; },
           }, "copy link with every move"), done),
         h("div", { class: "w-history" }, list));
-      return stopReplay;
+      return () => { stopReplay(); peek(null); };
     },
   };
 

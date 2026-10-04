@@ -5,7 +5,7 @@ import type { Registry } from "../../core/registry";
 import { randomSeed } from "../../core/rng";
 import { canonical, fromQuery, resolve, toQuery } from "../../core/schema";
 import type { Origin, Session, SharedHistory, Snapshot } from "../../core/session";
-import { PluginHostCtor, SessionCtor, TechniqueHostCtor, applyStep, findStepAt, cycleLabels, findPracticePosition, generate, hintFrom, isPartOfStep, isStepDone, loadPluginConfig, onBoardPrefsChange, onThemeChange } from "./engine";
+import { PluginHostCtor, SessionCtor, TechniqueHostCtor, applyStep, colorOf, findStepAt, cycleLabels, findPracticePosition, generate, hintFrom, isPartOfStep, isStepDone, loadPluginConfig, onBoardPrefsChange, onThemeChange } from "./engine";
 import { packJson, unpackJson, type Patch } from "../../core/patch";
 
 /** What a share link carries beyond the puzzle itself. */
@@ -407,6 +407,7 @@ export class Shell {
         if (lost) session.pause();
         else if (!session.paused && !document.hidden && !session.solved) session.resume();
         this.scheduleSave();
+        this.paintHintColor();
         this.syncSolvedStatus();
         this.hub.syncContext();
         this.checkPractice(ctx);
@@ -415,7 +416,7 @@ export class Shell {
         this.syncSolvedStatus();
         this.saveNow();
       }, { owner: "shell" }),
-      session.hooks.refresh.tap(() => this.hub.syncContext(), { owner: "shell" }),
+      session.hooks.refresh.tap(() => { this.hub.syncContext(); this.paintHintColor(); }, { owner: "shell" }),
       // a solved board is a finished thing: player moves are refused until it is unlocked
       session.hooks.solved.tap(() => this.syncLock(), { owner: "shell" }),
       session.hooks.action.tap((a, { source }) => {
@@ -612,6 +613,21 @@ export class Shell {
     }
     this.root.toggleAttribute("data-has-panel", tabs.length > 0);
     this.relayout();
+  }
+
+  /** Hint highlights take the colour of the technique the hint comes from. */
+  private paintHintColor(): void {
+    const id = this.session?.activeHint?.technique;
+    const list = this.techniques?.list ?? [];
+    const t = id ? list.find((x) => x.id === id) : undefined;
+    if (t) {
+      const c = colorOf(t, list);
+      this.root.style.setProperty("--hint", c);
+      this.root.style.setProperty("--hint-soft", `color-mix(in srgb, ${c} 22%, transparent)`);
+    } else {
+      this.root.style.removeProperty("--hint");
+      this.root.style.removeProperty("--hint-soft");
+    }
   }
 
   /** Keep the session's lock in step with solved state, the unlock choice and the setting. */
