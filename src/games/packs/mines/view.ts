@@ -67,6 +67,13 @@ export function assetNode(markup: string): () => Element {
   return () => (el ? el.cloneNode(true) as Element : s("g"));
 }
 
+const CLOSED = "color-mix(in srgb, var(--text) 16%, var(--surface))";
+const NUM = `font-family="var(--mono)" font-weight="700" font-size="6.4" text-anchor="middle" dominant-baseline="central" `;
+/** A one-cell legend swatch: background fill plus optional inner markup (nested svg allowed). */
+function sample(fill: string, inner = ""): string {
+  return `<svg viewBox="0 0 10 10" width="22" height="22"><rect width="10" height="10" rx="1.2" fill="${fill}"/>${inner}</svg>`;
+}
+
 const BINDINGS: BindingSchema = {
   "mines.left": { label: "cursor left", category: "minesweeper", keys: ["ArrowLeft", "a"] },
   "mines.right": { label: "cursor right", category: "minesweeper", keys: ["ArrowRight", "d"] },
@@ -88,6 +95,20 @@ export function minesView(look: Look): View<MinesPuzzle, MinesState, MinesAction
     name: "grid",
     puzzle: "mines",
     settings,
+    legend: [
+      { sample: sample(CLOSED), meaning: "hidden cell: could be a mine" },
+      { sample: sample("var(--surface)", `<text x="5" y="5.4" ${NUM}fill="#7ab0ff">1</text>`), meaning: "opened cell: the number counts the mines in the eight cells around it (blank means none)" },
+      { sample: sample("var(--surface)", `<text x="5" y="5.4" ${NUM}fill="#7ab0ff" opacity="var(--done-opacity)">1</text>`), meaning: "faded number: every cell around it is opened or flagged" },
+      { sample: sample(CLOSED, ASSETS.flag), meaning: "flag: your note that a mine is here" },
+      { sample: sample("var(--danger)", ASSETS.mine), meaning: "the mine you opened (game over)" },
+      { sample: sample(CLOSED, ASSETS.mine), meaning: "after a loss: where the other mines were" },
+      { sample: sample(CLOSED, ASSETS.flag + ASSETS.wrong), meaning: "after a loss: a flag that wasn't on a mine" },
+      { sample: sample(CLOSED, `<rect x="0.6" y="0.6" width="8.8" height="8.8" rx="1.2" fill="none" stroke="var(--hint)" stroke-width="1.2"/>`), meaning: "hint: the cells it decides" },
+      { sample: sample("var(--surface)", `<rect x="0.6" y="0.6" width="8.8" height="8.8" rx="1.2" fill="none" stroke="var(--hint)" stroke-width="0.6" stroke-dasharray="1.2 0.8"/>`), meaning: "hint: the numbers it reasons from" },
+      { sample: sample("color-mix(in srgb, var(--accent) 40%, var(--surface))"), meaning: "provably safe (only with \"highlight provable cells\" on)" },
+      { sample: sample("color-mix(in srgb, var(--danger) 40%, var(--surface))"), meaning: "provably a mine (only with \"highlight provable cells\" on)" },
+      { sample: sample("var(--surface)", `<rect x="0.4" y="0.4" width="9.2" height="9.2" rx="1.5" fill="none" stroke="var(--focus)" stroke-width="0.8"/>`), meaning: "keyboard cursor (shown while using the keyboard)" },
+    ],
     controls: [
       { how: "click or tap a hidden cell", what: "open it" },
       { how: "right-click, or long-press on touch", what: "flag it as a mine (again to take the flag off)" },
