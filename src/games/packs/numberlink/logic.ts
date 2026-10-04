@@ -171,7 +171,7 @@ const NUMLIN_RE = /numlin\/(?:[^/\d][^/]*\/)?(\d+)\/(\d+)\/([^/?#\s]*)/;
 /**
  * puzz.link / pzv.jp numberlink URL (`…?numlin/W/H/body`): numbers as in pzprjs (a hex digit, or
  * `-xx` / `+xxx` for larger ones), `g`…`z` skipping 1…20 empty cells. Numberlink rules: cells may
- * stay empty.
+ * stay empty, so only puzzles with those rules can be written.
  */
 export const puzzlinkFormat: Format<NumberlinkPuzzle> = {
   id: "puzzlink",
@@ -200,6 +200,7 @@ export const puzzlinkFormat: Format<NumberlinkPuzzle> = {
     return checked({ w, h, dots: values.map((v) => (v ? ids.get(v)! : 0)), fill: false }, (i) => String(order[i - 1]! - 1));
   },
   serialize(p) {
+    if (p.fill) throw new Error("puzz.link numberlink lets cells stay empty; this puzzle needs every cell used");
     let body = "", run = 0;
     const flush = () => {
       if (run) body += (run + 15).toString(36);

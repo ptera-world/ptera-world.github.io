@@ -117,7 +117,7 @@ export const rushView: View<RushPuzzle, RushState, RushAction, RushInteraction> 
         if (drag?.car === i) return;
         const from = shown[i]!, to = target(st, i);
         if (from === to) { place(i); return; }
-        anims.push(animate(Math.abs(to - from) * MS_PER_CELL, (k) => { shown[i] = lerp(from, to, k); place(i); }, ease.out));
+        anims.push(animate(Math.abs(to - from) * MS_PER_CELL, (k) => { shown[i] = lerp(from, to, Math.max(0, k)); place(i); }, ease.out));
       });
       const sel = session.interaction.selected;
       carEls.forEach((el, i) => {

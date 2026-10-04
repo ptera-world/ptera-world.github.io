@@ -143,6 +143,7 @@ test("formats round-trip; puzz.link urls parse like pzprjs", async () => {
   const open = { ...p, fill: false };
   expect(gridFormat.parse(gridFormat.serialize!(open))).toEqual(open);
   expect(puzzlinkFormat.parse(puzzlinkFormat.serialize!(open))).toEqual(open);
+  expect(() => puzzlinkFormat.serialize!(p)).toThrow();
   const q = puzzlinkFormat.parse("https://puzz.link/p?numlin/5/5/1j2h3m1h2j3");
   expect(q.fill).toBe(false);
   expect(q.dots).toEqual([1, 0, 0, 0, 0, 2, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 2, 0, 0, 0, 0, 3]);
