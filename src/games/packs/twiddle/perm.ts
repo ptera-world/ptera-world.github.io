@@ -29,10 +29,6 @@ export interface PermSpec<A> {
   order: readonly number[];
   /** Every value appears once (so arrangement parity is meaningful). */
   distinct: boolean;
-  /** Rounds of re-aiming small cycles with single moves before and after (default 0). */
-  spread?: number;
-  /** Macros moving more cells than this are dropped (default 6). */
-  supportCap?: number;
   /** How many cells at the end of the order are searched together (default 6). */
   endgame?: number;
 }
@@ -140,10 +136,9 @@ function library<A>(spec: PermSpec<A>): Library<A> {
     return found;
   };
   const inv = new Map(base.map((b) => [b, inverse(b)]));
-  const cap = spec.supportCap ?? SUPPORT_CAP;
   const best = new Map<string, Macro<A>>();
   const add = (m: Macro<A>) => {
-    if (!m.support.length || m.support.length > cap) return;
+    if (!m.support.length || m.support.length > SUPPORT_CAP) return;
     const sig = signature(m);
     const old = best.get(sig);
     if (!old || old.actions.length > m.actions.length) best.set(sig, m);
@@ -154,7 +149,7 @@ function library<A>(spec: PermSpec<A>): Library<A> {
   for (const a of base) for (const b of base) {
     if (a === b || inv.get(a) === b || !overlaps(a, b)) continue;
     const m = compose("cycle", compose("cycle", compose("cycle", a, b, T), inv.get(a)!, T), inv.get(b)!, T);
-    if (m.support.length && m.support.length <= cap) { comms.push(m); add(m); }
+    if (m.support.length && m.support.length <= SUPPORT_CAP) { comms.push(m); add(m); }
   }
   for (const c of base) for (const x of comms) {
     if (!overlaps(c, x)) continue;
@@ -172,10 +167,6 @@ function library<A>(spec: PermSpec<A>): Library<A> {
       tried.add(k);
       add(compose("cycle", x, y, T));
     }
-  }
-  for (let round = 0; round < (spec.spread ?? 0); round++) {
-    const seeds = [...best.values()].filter((m) => m.kind === "cycle" && m.support.length <= 4);
-    for (const c of base) for (const x of seeds) if (overlaps(c, x)) add(compose("cycle", compose("cycle", c, x, T), inv.get(c)!, T));
   }
   const all = [...best.values()].sort((a, b) => a.actions.length - b.actions.length);
   const region = new Set(spec.order.slice(Math.max(0, spec.order.length - (spec.endgame ?? ENDGAME_CELLS))));
@@ -251,28 +242,49 @@ function place<A>(spec: PermSpec<A>, lib: Library<A>, goal: readonly number[], s
 
 /** Breadth-first over the joint contents of the unfinished cells, using macros that stay inside them. */
 function endgame<A>(spec: PermSpec<A>, lib: Library<A>, goal: readonly number[], st: PermState, cells: number[]): Macro<A>[] | null {
-  const inside = new Set(cells);
-  const macros = lib.macros.filter((m) => m.support.every((c) => inside.has(c)));
-  const key = (s: PermState) => cells.map((c) => `${s.values[c]}.${s.turns?.[c] ?? 0}`).join(",");
-  const isGoal = (s: PermState) => cells.every((c) => done(spec, goal, s, c));
-  if (isGoal(st)) return [];
-  const seen = new Map<string, { from: string; m: number } | null>([[key(st), null]]);
-  let frontier: PermState[] = [st];
-  while (frontier.length && seen.size < ENDGAME_STATES) {
-    const next: PermState[] = [];
-    for (const s of frontier) {
-      const sk = key(s);
-      for (let k = 0; k < macros.length; k++) {
-        const t = applyMacro(s, macros[k]!, spec.turns);
-        const tk = key(t);
-        if (seen.has(tk)) continue;
-        seen.set(tk, { from: sk, m: k });
-        if (isGoal(t)) {
+  const k = cells.length, T = spec.turns;
+  const local = new Map(cells.map((c, i) => [c, i]));
+  const macros = lib.macros.filter((m) => m.support.every((c) => local.has(c)));
+  const moves = macros.map((m) => ({
+    to: cells.map((c) => local.get(m.to[c]!)!),
+    turn: cells.map((c) => m.turn?.[c] ?? 0),
+  }));
+  const symbols = [...new Set(cells.map((c) => goal[c]!))];
+  const sym = new Map(symbols.map((v, i) => [v, i]));
+  if (cells.some((c) => !sym.has(st.values[c]!))) return null;
+  const base = symbols.length * T;
+  if (base ** k > 2 ** 52) return null;
+  const encode = (v: number[], o: number[]) => {
+    let code = 0;
+    for (let i = k - 1; i >= 0; i--) code = code * base + v[i]! * T + o[i]!;
+    return code;
+  };
+  const startV = cells.map((c) => sym.get(st.values[c]!)!), startO = cells.map((c) => (T > 1 ? st.turns![c]! : 0));
+  const goalCode = encode(cells.map((c) => sym.get(goal[c]!)!), cells.map(() => 0));
+  const s0 = encode(startV, startO);
+  if (s0 === goalCode) return [];
+  const parent = new Map<number, number>([[s0, -1]]);
+  const via = new Map<number, number>();
+  let frontier = [s0];
+  const v = new Array<number>(k), o = new Array<number>(k), nv = new Array<number>(k), no = new Array<number>(k);
+  while (frontier.length && parent.size < ENDGAME_STATES) {
+    const next: number[] = [];
+    for (const code of frontier) {
+      let x = code;
+      for (let i = 0; i < k; i++) { const d = x % base; x = (x - d) / base; v[i] = Math.floor(d / T); o[i] = d % T; }
+      for (let mi = 0; mi < moves.length; mi++) {
+        const mv = moves[mi]!;
+        for (let i = 0; i < k; i++) { const j = mv.to[i]!; nv[j] = v[i]!; no[j] = (o[i]! + mv.turn[i]!) % T; }
+        const nc = encode(nv, no);
+        if (parent.has(nc)) continue;
+        parent.set(nc, code);
+        via.set(nc, mi);
+        if (nc === goalCode) {
           const path: Macro<A>[] = [];
-          for (let e = seen.get(tk); e; e = seen.get(e.from)) path.push(macros[e.m]!);
+          for (let c = nc; c !== s0; c = parent.get(c)!) path.push(macros[via.get(c)!]!);
           return path.reverse();
         }
-        next.push(t);
+        next.push(nc);
       }
     }
     frontier = next;
