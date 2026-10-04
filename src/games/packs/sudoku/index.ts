@@ -4,7 +4,9 @@ import { latinDefs } from "./defs";
 import { constraintTypes } from "./engine/registry";
 import { techniques as gradingTechniques } from "./engine/human";
 import { latinPlugins } from "./plugins";
-import { clueTechnique, latinTechnique, latinTechniques } from "./techniques";
+import {
+  clueTechnique, fullHouseTechnique, hiddenSingleTechnique, latinTechnique, latinTechniques, nakedSingleTechnique, otherClues,
+} from "./techniques";
 import { viewFor, type BoardPrefs } from "./view";
 import { latinWidgets } from "./widgets";
 
@@ -20,7 +22,7 @@ export const engine = { constraintTypes, latinTechnique, clueTechnique, gradingT
 export function register(registry: Registry, board?: BoardPrefs): void {
   for (const def of latinDefs) {
     registry.puzzle(Object.assign(def, { engine }));
-    registry.view(viewFor(def.id, board));
+    registry.view(viewFor(def, board));
   }
   for (const p of latinPlugins) registry.plugin(p);
   for (const t of latinTechniques()) registry.technique(t);
@@ -35,20 +37,22 @@ export function register(registry: Registry, board?: BoardPrefs): void {
 function migrate(games: GamesApi): void {
   const plugins = games.storage("plugin");
   const tech = games.storage("technique");
-  const auto = (key: string) => {
-    const id = `sudoku.${key}`;
+  const auto = ({ id }: { id: string }) => {
     tech.set(id, { ...tech.get<Record<string, unknown>>(id, {}), auto: true });
   };
-  for (const kind of ["naked", "hidden"]) {
+  for (const [kind, single] of [["naked", nakedSingleTechnique], ["hidden", hiddenSingleTechnique]] as const) {
     const old = plugins.get<{ enabled?: boolean; settings?: { depth?: string } } | null>(`sudoku.fill-${kind}`, null);
     if (!old) continue;
     plugins.remove(`sudoku.fill-${kind}`);
     if (!old.enabled) continue;
-    auto("full-house");
-    auto(`${kind}-single`);
+    auto(fullHouseTechnique);
+    auto(single);
     if (old.settings?.depth !== "rules") continue;
-    for (const t of constraintTypes.list()) if (t.logic) auto(`clue.${t.type}`);
-    auto("clue.other");
+    for (const t of constraintTypes.list()) {
+      const c = clueTechnique(t);
+      if (c) auto(c);
+    }
+    auto(otherClues);
   }
 }
 

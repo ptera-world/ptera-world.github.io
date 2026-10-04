@@ -1,6 +1,6 @@
 import type { Step as CoreStep, Technique } from "../../core/types";
 import { coord, type NetPuzzle } from "./grid";
-import type { NetAction, NetHintFocus, NetState } from "./logic";
+import { net, type NetAction, type NetHintFocus, type NetState } from "./logic";
 import { RULES, deduce, type Rule, type Step } from "./solver";
 
 interface Info {
@@ -94,7 +94,7 @@ export function stepFor(p: NetPuzzle, s: NetState, rule: Rule): CoreStep<NetActi
 export const techniques: Technique<NetPuzzle, NetState, NetAction>[] = RULES.map((rule, i) => ({
   id: `net.${rule}`,
   name: INFO[rule].name,
-  puzzles: ["net"],
+  puzzles: [net],
   level: i + 1,
   description: INFO[rule].description,
   find: (p, s) => stepFor(p, s, rule),

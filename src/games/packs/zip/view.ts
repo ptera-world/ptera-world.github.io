@@ -1,10 +1,10 @@
-import { bindCommands, type BindingSchema } from "../../core/commands";
+import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
 import { s, style } from "../../core/dom";
 import type { View } from "../../core/types";
 import { DOWN, LEFT, RIGHT, UP, edgeGrid, step } from "../../lib/edges";
 import type { Focus } from "../../lib/grid-kit/names";
 import { KIT_CSS, SIZE, drawFocus, focusCells, focusLegend, frame, sample, sampleCell, type BoardPrefs } from "../../lib/grid-kit/view";
-import { type ZipAction, type ZipFocus, type ZipPuzzle, type ZipState } from "./logic";
+import { zip, type ZipAction, type ZipFocus, type ZipPuzzle, type ZipState } from "./logic";
 import { CONFLICTS_KEY } from "./plugins";
 import { board } from "./solver";
 
@@ -21,13 +21,17 @@ const CSS = `
 .zip-board .route { fill: none; stroke: var(--hint); stroke-width: 1.4; stroke-dasharray: 1.6 1; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
 `;
 
-const BINDINGS: BindingSchema = {
+const BINDINGS = {
   "zip.up": { label: "path up", category: "zip", keys: ["ArrowUp", "w"], description: "carry the path on upwards (or take back its last step, if that's where it came from)" },
   "zip.right": { label: "path right", category: "zip", keys: ["ArrowRight", "d"], description: "carry the path on to the right (or take back its last step)" },
   "zip.down": { label: "path down", category: "zip", keys: ["ArrowDown", "s"], description: "carry the path on downwards (or take back its last step)" },
   "zip.left": { label: "path left", category: "zip", keys: ["ArrowLeft", "a"], description: "carry the path on to the left (or take back its last step)" },
   "zip.back": { label: "step back", category: "zip", keys: ["Backspace"], description: "take back the path's last step" },
-};
+} satisfies BindingSchema;
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof BINDINGS> {}
+}
 
 function legend(): { sample: string; meaning: string }[] {
   const badge = `<circle cx="5" cy="5" r="3.2" fill="var(--text)"/><text x="5" y="5.2" font-size="4" font-weight="700" font-family="var(--font)" text-anchor="middle" dominant-baseline="central" fill="var(--bg)">1</text>`;
@@ -46,7 +50,7 @@ export function zipView(prefs: BoardPrefs): View<ZipPuzzle, ZipState, ZipAction,
   return {
     id: "zip.svg",
     name: "grid",
-    puzzle: "zip",
+    puzzle: zip,
     controls: [
       { how: "drag from the end of the path", what: "draw it on; drag back over it to take steps back" },
       { how: "click or tap a cell on the path", what: "cut the path back to there" },

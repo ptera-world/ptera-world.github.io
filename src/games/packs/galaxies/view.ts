@@ -1,10 +1,11 @@
-import { bindCommands, type BindingSchema } from "../../core/commands";
-import { s, style } from "../../core/dom";
+import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
+import { s, style, inputIs } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
 import type { Conflicts, GalaxiesAction, GalaxiesFocus, GalaxiesInteraction, GalaxiesPuzzle, GalaxiesState } from "./logic";
 import { geometry } from "./solver";
 import type { GalaxiesTarget } from "./techniques";
+import { galaxies } from "./logic";
 
 /** Derived: Conflicts to flag on the board. */
 export const CONFLICTS_KEY = "galaxies.conflicts";
@@ -25,7 +26,7 @@ const CSS = `
 .galaxies-board .focus.dot { stroke-width: 0.7; }
 .galaxies-board .labels text { fill: var(--text-dim); font: 500 3.6px var(--font); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
 .galaxies-board .cursor { fill: none; stroke: var(--focus); stroke-width: 0.6; pointer-events: none; }
-[data-input="pointer"] .galaxies-board .cursor { display: none; }
+${inputIs("pointer")} .galaxies-board .cursor { display: none; }
 `;
 
 const settings = defineSchema({
@@ -37,7 +38,7 @@ const PAD = 0.5;
 const LABEL = 6;
 const DOT_R = 1.6;
 
-const BINDINGS: BindingSchema = {
+const BINDINGS = {
   "galaxies.pick": { label: "pick galaxy", category: "galaxies", keys: ["space"], description: "take the galaxy of the selected tile (or the dot on it) as the one to paint with" },
   "galaxies.paint": { label: "paint tile", category: "galaxies", keys: ["Enter"], description: "put the selected tile in the picked galaxy, or take it out if it's already there" },
   "galaxies.clear": { label: "clear tile", category: "galaxies", keys: ["Backspace", "Delete"], description: "take the selected tile out of its galaxy" },
@@ -45,7 +46,11 @@ const BINDINGS: BindingSchema = {
   "galaxies.right": { label: "cursor right", category: "galaxies", keys: ["ArrowRight", "d"] },
   "galaxies.up": { label: "cursor up", category: "galaxies", keys: ["ArrowUp", "w"] },
   "galaxies.down": { label: "cursor down", category: "galaxies", keys: ["ArrowDown", "s"] },
-};
+} satisfies BindingSchema;
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof BINDINGS> {}
+}
 
 export type Side = "top" | "right" | "bottom" | "left";
 export type Board = { labelSides(): Set<Side>; colName(col: number): string; rowName(row: number): string };
@@ -72,11 +77,11 @@ function legend(): { sample: string; meaning: string }[] {
   ];
 }
 
-export function galaxiesView(board: Board): View<GalaxiesPuzzle, GalaxiesState, GalaxiesAction, GalaxiesInteraction> {
+export function galaxiesView(board: Board): View<GalaxiesPuzzle, GalaxiesState, GalaxiesAction, GalaxiesInteraction, typeof settings> {
   return {
     id: "galaxies.svg",
     name: "grid",
-    puzzle: "galaxies",
+    puzzle: galaxies,
     settings,
     controls: [
       { how: "press on a dot (or a tile of its galaxy) and drag", what: "paint tiles into that galaxy" },

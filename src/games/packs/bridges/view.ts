@@ -1,11 +1,18 @@
 import { Event as HookEvent } from "../../core/hooks";
 import { defineSchema } from "../../core/schema";
+import type { CommandId } from "../../core/commands";
 import type { CommandDef, View } from "../../core/types";
 import { colName, rowName, type Side } from "../../core/names";
-import { s, style } from "../../core/dom";
+import { s, style, inputIs } from "../../core/dom";
 import { getDeco } from "./deco";
 import { DIR_NAMES, graph, type BridgesPuzzle, type BridgesState } from "./graph";
-import type { BridgesAction, BridgesInteraction, Focus } from "./logic";
+import { bridges, type BridgesAction, type BridgesInteraction, type Focus } from "./logic";
+
+declare module "../../core/commands" {
+  interface CommandNames {
+    "bridges.mode": true;
+  }
+}
 
 const S = 10;
 const R = 3.4;
@@ -57,7 +64,7 @@ ${Array.from({ length: 8 }, (_, k) => `.bridges-board .island.g${k} .shape { str
 .bridges-board .focus { stroke: var(--hint-soft); stroke-width: 4.5; stroke-linecap: round; }
 .bridges-board .preview { stroke: var(--accent); stroke-width: 0.7; stroke-dasharray: 1 1; }
 .bridges-board .cursor { fill: none; stroke: var(--focus); stroke-width: 0.6; pointer-events: none; }
-[data-input="pointer"] .bridges-board .cursor { display: none; }
+${inputIs("pointer")} .bridges-board .cursor { display: none; }
 `;
 
 const settings = defineSchema({
@@ -116,11 +123,11 @@ function legend(look: Look): { sample: string; meaning: string }[] {
   ];
 }
 
-export function makeView(look: Look, board: BoardPrefs, holdMs: number): View<BridgesPuzzle, BridgesState, BridgesAction, BridgesInteraction> {
-  const view: View<BridgesPuzzle, BridgesState, BridgesAction, BridgesInteraction> = {
+export function makeView(look: Look, board: BoardPrefs, holdMs: number): View<BridgesPuzzle, BridgesState, BridgesAction, BridgesInteraction, typeof settings> {
+  const view: View<BridgesPuzzle, BridgesState, BridgesAction, BridgesInteraction, typeof settings> = {
     id: "bridges.svg",
     name: "board",
-    puzzle: "bridges",
+    puzzle: bridges,
     settings,
     get legend() {
       return legend(look);
@@ -405,7 +412,7 @@ export function makeView(look: Look, board: BoardPrefs, holdMs: number): View<Br
 
       const commands: CommandDef[] = [
         {
-          id: "bridges.mode", label: "tap removes", category: "board", keys: ["x"], menu: "board",
+          id: "bridges.mode" satisfies CommandId, label: "tap removes", category: "board", keys: ["x"], menu: "board",
           description: "for touch, where there's no right-click: while on, a tap or drag takes a bridge away, or puts a ✕ (no bridge here) on an empty gap. while off, taps add bridges. with a mouse, right-click does the same without switching",
           checked: () => session.interaction.mode === "mark",
           run: () => session.setInteraction((i) => ({ ...i, mode: i.mode === "mark" ? "bridge" : "mark" })),

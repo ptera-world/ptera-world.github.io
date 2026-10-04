@@ -2,7 +2,7 @@ import type { View } from "../../core/types";
 import { CARD_H, CARD_W, cardSample } from "../../lib/cards/draw";
 import { SUIT_GLYPHS } from "../../lib/cards/deck";
 import { mountTable, tableLegend, tableSettings, type Slot } from "../../lib/cards/table";
-import { canLift, moveAction, pileName, tapAction, type KlondikeAction, type KlondikeInteraction, type KlondikePuzzle, type KlondikeState } from "./logic";
+import { klondike, canLift, moveAction, pileName, tapAction, type KlondikeAction, type KlondikeInteraction, type KlondikePuzzle, type KlondikeState } from "./logic";
 import { STOCK } from "./solver";
 
 const GAP = 1.5;
@@ -22,10 +22,10 @@ function slots(p: KlondikePuzzle): Slot[] {
   ];
 }
 
-export const klondikeView: View<KlondikePuzzle, KlondikeState, KlondikeAction, KlondikeInteraction> = {
+export const klondikeView: View<KlondikePuzzle, KlondikeState, KlondikeAction, KlondikeInteraction, typeof tableSettings> = {
   id: "klondike.table",
   name: "table",
-  puzzle: "klondike",
+  puzzle: klondike,
   settings: tableSettings,
   controls: [
     { how: "click or tap the stock", what: "turn over the next cards, or turn the waste back over when the stock is empty" },

@@ -1,5 +1,5 @@
 import type { Step, Technique } from "../../core/types";
-import { cellName, pushText, solveFrom, type SokoAction, type SokoFocus, type SokoPuzzle, type SokoState } from "./logic";
+import { sokoban, cellName, pushText, solveFrom, type SokoAction, type SokoFocus, type SokoPuzzle, type SokoState } from "./logic";
 import { stepFrom, type Push } from "./solver";
 
 type SokoTechnique = Technique<SokoPuzzle, SokoState, SokoAction>;
@@ -26,7 +26,7 @@ function step(plan: Push[], count: number, message: string, nudge: string, goal:
 export const pushHome: SokoTechnique = {
   id: "sokoban.push-home",
   name: "straight home",
-  puzzles: ["sokoban"],
+  puzzles: [sokoban],
   level: 1,
   description: "when the fewest-pushes solution starts by pushing one box in a straight line onto a goal, push it all the way.",
   find(p, s) {
@@ -48,7 +48,7 @@ export const pushHome: SokoTechnique = {
 export const nextPush: SokoTechnique = {
   id: "sokoban.next-push",
   name: "fewest pushes",
-  puzzles: ["sokoban"],
+  puzzles: [sokoban],
   level: 2,
   description: "search every way of pushing the boxes for one that gets them all home in the fewest pushes (it never pushes a box into a corner or against another box where it would stick), and make its first push.",
   find(p, s) {

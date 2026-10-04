@@ -1,5 +1,5 @@
 import type { Plugin, Technique } from "../../core/types";
-import { cellAt, pegCount, type PegsAction, type PegsFocus, type PegsInteraction, type PegsPuzzle, type PegsState } from "./logic";
+import { pegs, cellAt, pegCount, type PegsAction, type PegsFocus, type PegsInteraction, type PegsPuzzle, type PegsState } from "./logic";
 import { jumps, solveFrom } from "./solver";
 
 type PegsTechnique = Technique<PegsPuzzle, PegsState, PegsAction>;
@@ -7,7 +7,7 @@ type PegsTechnique = Technique<PegsPuzzle, PegsState, PegsAction>;
 export const oneLeft: PegsTechnique = {
   id: "pegs.one-left",
   name: "still one to go",
-  puzzles: ["pegs"],
+  puzzles: [pegs],
   level: 1,
   description: "most jumps that look fine leave pegs stranded where nothing can reach them. this searches ahead for a whole sequence of jumps that ends with one peg, and suggests its first jump.",
   find(p, s) {
@@ -35,7 +35,7 @@ export const checkFinishable: Plugin<PegsPuzzle, PegsState, PegsAction, PegsInte
   name: "hints check one peg can still be left",
   description: "asking for a hint first says so if no sequence of jumps can end with a single peg any more",
   category: "assists",
-  appliesTo: ["pegs"],
+  appliesTo: [pegs],
   enabledByDefault: true,
   setup({ session, owner }) {
     session.hooks.hint.tap(({ puzzle, state }) => {

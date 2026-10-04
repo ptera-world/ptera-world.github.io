@@ -1,6 +1,6 @@
 import type { Step, Technique } from "../../core/types";
 import { boardFrom, dotRule, faceRule, loopEarly, type Board, type Deduction } from "./board";
-import { cluesOf, gridOf, type LoopyAction, type LoopyFocus, type LoopyPuzzle, type LoopyState } from "./def";
+import { cluesOf, gridOf, loopy, type LoopyAction, type LoopyFocus, type LoopyPuzzle, type LoopyState } from "./def";
 import type { Grid } from "./grid";
 import { clueRef, dotRef, edgeRef } from "./names";
 import { findParity, findTrial, findWindow, type WindowKind } from "./solver";
@@ -75,7 +75,7 @@ const NORMAL = { difficulty: "normal", width: 7, height: 7 };
 const TRICKY = { difficulty: "tricky", width: 7, height: 7 };
 const HARD = { difficulty: "hard", width: 6, height: 6 };
 
-const def = (t: Omit<LoopyTechnique, "puzzles" | "id"> & { id: string }): LoopyTechnique => ({ ...t, id: `loopy.${t.id}`, puzzles: ["loopy"] });
+const def = (t: Omit<LoopyTechnique, "puzzles" | "id"> & { id: string }): LoopyTechnique => ({ ...t, id: `loopy.${t.id}`, puzzles: [loopy] });
 
 /** Every loopy deduction, easiest first. Levels 0-9 are "easy", 10-19 "normal", 20-29 "tricky", 30+ "hard". */
 export const techniques: LoopyTechnique[] = [

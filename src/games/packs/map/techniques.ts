@@ -1,6 +1,6 @@
 import type { Step, Technique } from "../../core/types";
 import { ALL, geometry } from "./grid";
-import { COLOUR_NAMES, colourList, regionList, regionName, type MapAction, type MapFocus, type MapPuzzle, type MapState } from "./logic";
+import { map, COLOUR_NAMES, colourList, regionList, regionName, type MapAction, type MapFocus, type MapPuzzle, type MapState } from "./logic";
 import { analyze, assign, scanSteps, startKnowledge, type Knowledge, type Step as SolverStep, type StepKind } from "./solver";
 
 type MapTechnique = Technique<MapPuzzle, MapState, MapAction>;
@@ -77,7 +77,7 @@ function first(p: MapPuzzle, s: MapState, kinds: readonly StepKind[], target?: M
 type Finder = (p: MapPuzzle, s: MapState, target?: MapTarget) => Step<MapAction> | null;
 
 function technique(def: Omit<MapTechnique, "find" | "findAt" | "puzzles">, find: Finder): MapTechnique {
-  return { ...def, puzzles: ["map"], find: (p, s) => find(p, s), findAt: (p, s, t) => find(p, s, t as MapTarget) };
+  return { ...def, puzzles: [map], find: (p, s) => find(p, s), findAt: (p, s, t) => find(p, s, t as MapTarget) };
 }
 
 /** "the region at C5 is red, the region at D2 can't be blue". */

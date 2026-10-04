@@ -1,8 +1,8 @@
 import { animate, ease, lerp, type Animation } from "../../core/anim";
-import { bindCommands, type BindingSchema } from "../../core/commands";
-import { h, s, style } from "../../core/dom";
+import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
+import { h, s, style, inputIs } from "../../core/dom";
 import type { View, WidgetDef } from "../../core/types";
-import { carName, type RushAction, type RushFocus, type RushInteraction, type RushPuzzle, type RushState } from "./logic";
+import { rushhour, carName, type RushAction, type RushFocus, type RushInteraction, type RushPuzzle, type RushState } from "./logic";
 import { exitAt, occupancy, reach } from "./solver";
 
 const SIZE = 10;
@@ -25,7 +25,7 @@ const CSS = `
 .rushhour-board .mark { fill: none; stroke: var(--hint); stroke-width: 0.9; pointer-events: none; }
 .rushhour-board .mark.to { stroke-dasharray: 1.4 0.9; }
 .rushhour-board .mark.cell { fill: var(--hint); opacity: 0.25; stroke: none; }
-[data-input="pointer"] .rushhour-board .car.selected rect { stroke: color-mix(in srgb, currentColor 55%, var(--text)); stroke-width: 0.5; }
+${inputIs("pointer")} .rushhour-board .car.selected rect { stroke: color-mix(in srgb, currentColor 55%, var(--text)); stroke-width: 0.5; }
 .rushhour-moves { font-family: var(--mono); color: var(--text-dim); min-height: 1.4em; }
 `;
 
@@ -34,7 +34,7 @@ const RED = "var(--rushhour-red, #d63a2f)";
 const PALETTE = ["#4f86c6", "#e0b23c", "#5aa36a", "#9a6fc0", "#e07b39", "#4bb3b3", "#c0587e", "#8a8f3a"];
 const carColor = (i: number) => (i === 0 ? RED : `var(--rushhour-${((i - 1) % PALETTE.length) + 1}, ${PALETTE[(i - 1) % PALETTE.length]})`);
 
-const BINDINGS: BindingSchema = {
+const BINDINGS = {
   "rushhour.next": { label: "next car", category: "rush hour", keys: ["bracketright", "c"], description: "pick the next car for the arrow keys" },
   "rushhour.prev": { label: "previous car", category: "rush hour", keys: ["bracketleft", "shift+c"], description: "pick the previous car for the arrow keys" },
   "rushhour.up": { label: "slide up", category: "rush hour", keys: ["ArrowUp", "w"], description: "slide the picked car one cell up" },
@@ -45,7 +45,11 @@ const BINDINGS: BindingSchema = {
   "rushhour.far-down": { label: "slide all the way down", category: "rush hour", keys: ["shift+ArrowDown", "shift+s"], description: "slide the picked car down as far as it goes" },
   "rushhour.far-left": { label: "slide all the way left", category: "rush hour", keys: ["shift+ArrowLeft", "shift+a"], description: "slide the picked car left as far as it goes" },
   "rushhour.far-right": { label: "slide all the way right", category: "rush hour", keys: ["shift+ArrowRight", "shift+d"], description: "slide the picked car right as far as it goes" },
-};
+} satisfies BindingSchema;
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof BINDINGS> {}
+}
 
 const swatch = (body: string, w = 20) => `<svg viewBox="-0.5 -0.5 ${w + 1} 11">${body}</svg>`;
 const carSample = (color: string, len: number, label: string) =>
@@ -54,7 +58,7 @@ const carSample = (color: string, len: number, label: string) =>
 export const rushView: View<RushPuzzle, RushState, RushAction, RushInteraction> = {
   id: "rushhour.svg",
   name: "lot",
-  puzzle: "rushhour",
+  puzzle: rushhour,
   controls: [
     { how: "drag a car along its length", what: "slide it (any distance is one move)" },
     { how: "click or tap a car", what: "pick it for the arrow keys" },
@@ -240,7 +244,7 @@ export const movesWidget: WidgetDef<RushPuzzle, RushState, RushAction, RushInter
   id: "rushhour.moves",
   name: "moves",
   description: "how many moves so far",
-  puzzles: ["rushhour"],
+  puzzles: [rushhour],
   defaultSlot: "top",
   order: 10,
   mount(el, { session, owner }) {

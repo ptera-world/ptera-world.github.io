@@ -1,4 +1,4 @@
-import { namespace } from "./storage";
+import { prefs } from "./storage";
 
 /**
  * Locale and translations as a shared service. Text is written in US English at the call site
@@ -9,7 +9,12 @@ import { namespace } from "./storage";
 
 export type Messages = Record<string, string>;
 
-const prefs = namespace("prefs");
+
+declare module "./storage" {
+  interface Prefs {
+    locale: string | null;
+  }
+}
 const catalog = new Map<string, Map<string, Messages>>();
 const listeners = new Set<() => void>();
 
@@ -18,7 +23,7 @@ function browserLocale(): string {
 }
 
 export function locale(): string {
-  return prefs.get<string | null>("locale", null) ?? browserLocale();
+  return prefs.get("locale", null) ?? browserLocale();
 }
 
 export function setLocale(tag: string | null): void {

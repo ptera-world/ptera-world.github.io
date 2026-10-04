@@ -1,4 +1,4 @@
-import { bindCommands, type BindingSchema } from "../../core/commands";
+import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
 import { s, style } from "../../core/dom";
 import type { View } from "../../core/types";
 import {
@@ -7,7 +7,7 @@ import {
 } from "../../lib/grid-kit/view";
 import { fades } from "../../lib/grid-kit/fade";
 import {
-  boxEdges, edgeBetween, geometry, pieceRight, pieces,
+  rect, boxEdges, edgeBetween, geometry, pieceRight, pieces,
   type RectAction, type RectConflicts, type RectInteraction, type RectPuzzle, type RectState,
 } from "./logic";
 import type { RectFocus } from "./techniques";
@@ -26,7 +26,7 @@ const CSS = `
 .rect-board .edge-focus { stroke: var(--hint); stroke-width: 1.4; stroke-linecap: round; opacity: 0.8; }
 `;
 
-const BINDINGS: BindingSchema = {
+const BINDINGS = {
   "rect.corner": { label: "rectangle corner", category: "rectangles", keys: ["space", "Enter"], description: "press once to mark the selected cell as one corner; move, then press again to draw the rectangle between the two" },
   "rect.wall-up": { label: "wall above on / off", category: "rectangles", keys: ["shift+ArrowUp"], description: "draw or rub out the wall on the top side of the selected cell" },
   "rect.wall-left": { label: "wall left on / off", category: "rectangles", keys: ["shift+ArrowLeft"], description: "draw or rub out the wall on the left side of the selected cell" },
@@ -36,7 +36,11 @@ const BINDINGS: BindingSchema = {
   "rect.right": { label: "cursor right", category: "rectangles", keys: ["ArrowRight", "d"], description: "move the keyboard selection one cell right" },
   "rect.up": { label: "cursor up", category: "rectangles", keys: ["ArrowUp", "w"], description: "move the keyboard selection one cell up" },
   "rect.down": { label: "cursor down", category: "rectangles", keys: ["ArrowDown", "s"], description: "move the keyboard selection one cell down" },
-};
+} satisfies BindingSchema;
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof BINDINGS> {}
+}
 
 function legend(): { sample: string; meaning: string }[] {
   const num = `<text x="5" y="5.3" fill="var(--text)" font-size="5.6" font-weight="600" font-family="var(--font)" text-anchor="middle" dominant-baseline="central">4</text>`;
@@ -57,7 +61,7 @@ export function rectView(board: BoardPrefs): View<RectPuzzle, RectState, RectAct
   return {
     id: "rect.svg",
     name: "grid",
-    puzzle: "rect",
+    puzzle: rect,
     controls: [
       { how: "drag from one cell to another", what: "draw the rectangle between them (walls round it, none inside)" },
       { how: "right-drag", what: "rub out every wall in and around the rectangle" },

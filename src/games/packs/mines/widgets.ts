@@ -1,8 +1,8 @@
-import type { WidgetDef } from "../../core/types";
+import { defineWidgets } from "../../core/define";
 import { h, style } from "../../core/dom";
-import { mineCount, type MinesAction, type MinesInteraction, type MinesPuzzle, type MinesState } from "./logic";
+import { mines, mineCount, type MinesAction, type MinesInteraction, type MinesPuzzle, type MinesState } from "./logic";
 
-type MinesWidget = WidgetDef<MinesPuzzle, MinesState, MinesAction, MinesInteraction>;
+const widget = defineWidgets<MinesPuzzle, MinesState, MinesAction, MinesInteraction>();
 
 const CSS = `
 .mines-counter { font-family: var(--mono); color: var(--text-dim); min-height: 1.4em; }
@@ -14,11 +14,11 @@ const CSS = `
 
 const coarse = (): boolean => typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
 
-export const counter: MinesWidget = {
+export const counter = widget({
   id: "mines.counter",
   name: "mines left",
   description: "total mines minus flags placed",
-  puzzles: ["mines"],
+  puzzles: [mines],
   defaultSlot: "top",
   order: 10,
   mount(el, { session, owner }) {
@@ -33,14 +33,14 @@ export const counter: MinesWidget = {
     session.hooks.change.tap(render, { owner });
     render();
   },
-};
+});
 
 /** Visible by default only on touch screens, where there is no right click. */
-export const flagMode: MinesWidget = {
+export const flagMode = widget({
   id: "mines.mode",
   name: "open / flag switch",
   description: "choose whether tapping a cell opens it or flags it",
-  puzzles: ["mines"],
+  puzzles: [mines],
   defaultSlot: coarse() ? "bottom" : "off",
   order: 15,
   mount(el, { session, owner, run }) {
@@ -55,6 +55,6 @@ export const flagMode: MinesWidget = {
     session.hooks.interaction.tap(render, { owner });
     render();
   },
-};
+});
 
 export const minesWidgets = [counter, flagMode];

@@ -1,10 +1,10 @@
 import { checkMarksPlugin, conflictsPlugin } from "../../lib/grid-kit/plugins";
-import { findConflicts, pointCell, wrongMarksHint, type SlantPuzzle, type SlantState } from "./logic";
+import { slant, findConflicts, pointCell, wrongMarksHint, type SlantPuzzle, type SlantState } from "./logic";
 import { CONFLICTS_KEY } from "./view";
 
 export const conflicts = conflictsPlugin<SlantPuzzle, SlantState>({
   id: "slant.conflicts",
-  puzzle: "slant",
+  puzzle: slant,
   description: "marks rule breaks in red: lines that close a loop, and numbers that are passed or can't be reached any more",
   key: CONFLICTS_KEY,
   kinds: [
@@ -17,7 +17,7 @@ export const conflicts = conflictsPlugin<SlantPuzzle, SlantState>({
 
 export const checkMarks = checkMarksPlugin({
   id: "slant.check-marks",
-  puzzle: "slant",
+  puzzle: slant,
   description: "asking for a hint points out lines drawn the wrong way before suggesting anything else",
   wrong: wrongMarksHint,
 });

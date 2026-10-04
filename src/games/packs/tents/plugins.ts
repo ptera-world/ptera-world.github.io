@@ -1,10 +1,10 @@
 import { checkMarksPlugin, conflictsPlugin } from "../../lib/grid-kit/plugins";
-import { findConflicts, geometry, wrongMarksHint, type TentsPuzzle, type TentsState } from "./logic";
+import { tents, findConflicts, geometry, wrongMarksHint, type TentsPuzzle, type TentsState } from "./logic";
 import { CONFLICTS_KEY } from "./view";
 
 export const conflicts = conflictsPlugin<TentsPuzzle, TentsState>({
   id: "tents.conflicts",
-  puzzle: "tents",
+  puzzle: tents,
   description: "marks rule breaks in red: tents that touch, numbers that are passed or out of reach, tents with no tree beside them and trees with no spot left",
   key: CONFLICTS_KEY,
   kinds: [
@@ -18,7 +18,7 @@ export const conflicts = conflictsPlugin<TentsPuzzle, TentsState>({
 
 export const checkMarks = checkMarksPlugin({
   id: "tents.check-marks",
-  puzzle: "tents",
+  puzzle: tents,
   description: "asking for a hint points out tents and grass that don't match the solution before suggesting anything else",
   wrong: wrongMarksHint,
 });

@@ -19,7 +19,7 @@ for (const def of registry.listPuzzles()) {
   test(`settle: ${def.id} assists are idempotent on a fresh board`, async () => {
     const small = def.presets?.[0]?.params ?? {};
     const puzzle = await generate(def, small, "settle", new AbortController().signal);
-    for (const p of registry.pluginsFor(def.id)) {
+    for (const p of registry.pluginsFor(def)) {
       if (!p.setup) continue;
       const session = new Session(def, puzzle, { kind: "imported" });
       p.setup({ session, settings: p.settings ? resolve(p.settings, {}) : {}, owner: p.id });
@@ -35,7 +35,7 @@ for (const def of registry.listPuzzles()) {
 /** A session with the sudoku naked-single technique switched to auto, attached as the shell does it. */
 function nakedAuto(): Session<any, any, any, any> {
   const def = registry.getPuzzle("sudoku")!;
-  const naked = registry.techniquesFor("sudoku").find((t) => t.id === "sudoku.naked-single")!;
+  const naked = registry.techniquesFor(def).find((t) => t.id === "sudoku.naked-single")!;
   const reg = new Registry();
   reg.puzzle(def);
   reg.technique({ ...naked, defaults: { auto: true } });

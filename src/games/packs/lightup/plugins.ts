@@ -1,20 +1,20 @@
 import { defineSchema } from "../../core/schema";
-import type { Plugin } from "../../core/types";
+import { definePlugins } from "../../core/define";
 import {
-  findConflicts, wrongMarksHint,
+  findConflicts, lightup, wrongMarksHint,
   type Conflicts, type LightupAction, type LightupFocus, type LightupInteraction, type LightupPuzzle, type LightupState,
 } from "./logic";
 import { CONFLICTS_KEY } from "./view";
 
-type LightupPlugin = Plugin<LightupPuzzle, LightupState, LightupAction, LightupInteraction>;
+const plugin = definePlugins<LightupPuzzle, LightupState, LightupAction, LightupInteraction>();
 
 /** Shows visible rule breaks, and reports the ones a player move just made as a mistake fx. */
-export const conflicts: LightupPlugin = {
+export const conflicts = plugin({
   id: "lightup.conflicts",
   name: "show conflicts",
   description: "marks rule breaks you can see without knowing the answer in red: a ring around lights that shine on each other, numbers that can't get the right count any more, and cells nothing can light",
   category: "assists",
-  appliesTo: ["lightup"],
+  appliesTo: [lightup],
   enabledByDefault: true,
   settings: defineSchema({
     lights: { type: "bool", label: "lights that see each other", default: true },
@@ -39,19 +39,19 @@ export const conflicts: LightupPlugin = {
       if (cells.length || because.length) session.hooks.fx.call({ kind: "mistake", focus: { cells, because } satisfies LightupFocus });
     }, { owner });
   },
-};
+});
 
 /** Runs ahead of technique hints (priority 100), so a wrong mark is pointed out before any move. */
-export const checkMarks: LightupPlugin = {
+export const checkMarks = plugin({
   id: "lightup.check-marks",
   name: "hints check your marks first",
   description: "asking for a hint points out lights and no-light marks that don't match the solution before suggesting anything else",
   category: "assists",
-  appliesTo: ["lightup"],
+  appliesTo: [lightup],
   enabledByDefault: true,
   setup({ session, owner }) {
     session.hooks.hint.tap(({ puzzle, state }) => wrongMarksHint(puzzle, state) ?? undefined, { owner, priority: 90 });
   },
-};
+});
 
-export const lightupPlugins: LightupPlugin[] = [conflicts, checkMarks];
+export const lightupPlugins = [conflicts, checkMarks];

@@ -1,4 +1,4 @@
-import { bindCommands, type BindingSchema } from "../../core/commands";
+import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
 import { s, style } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
 import type { View } from "../../core/types";
@@ -10,7 +10,7 @@ import {
 } from "../../lib/grid-kit/view";
 import { fades } from "../../lib/grid-kit/fade";
 import {
-  BLANK, FULL, MAGNET, MINUS, NEUTRAL, PLUS, cellSigns, geometry, shownSigns, targets, valueFor,
+  magnets, BLANK, FULL, MAGNET, MINUS, NEUTRAL, PLUS, cellSigns, geometry, shownSigns, targets, valueFor,
   type MagnetsAction, type MagnetsConflicts, type MagnetsInteraction, type MagnetsPuzzle, type MagnetsState,
 } from "./logic";
 
@@ -36,7 +36,7 @@ const settings = defineSchema({
   longPressMs: { type: "int", label: "touch hold to mark a blank (ms)", default: 400, min: 150, max: 1500, step: 50 },
 });
 
-const BINDINGS: BindingSchema = {
+const BINDINGS = {
   "magnets.cycle": { label: "cycle plus / minus / empty", category: "magnets", keys: ["space"], description: "the selected cell goes plus → minus → empty; its domino's other end follows" },
   "magnets.cycle-blank": { label: "cycle blank / magnet / empty", category: "magnets", keys: ["Enter"], description: "the selected cell's domino goes blank → magnet (not yet turned) → empty" },
   "magnets.plus": { label: "plus", category: "magnets", keys: ["equal", "shift+equal"], description: "make the selected cell a plus end" },
@@ -45,7 +45,11 @@ const BINDINGS: BindingSchema = {
   "magnets.magnet": { label: "magnet, not turned yet", category: "magnets", keys: ["m"], description: "mark the selected cell's domino as a magnet without saying which end is plus" },
   "magnets.clear": { label: "clear domino", category: "magnets", keys: ["Backspace", "Delete"], description: "forget everything marked on the selected cell's domino" },
   ...cursorBindings("magnets", "magnets"),
-};
+} satisfies BindingSchema;
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof BINDINGS> {}
+}
 
 /** Stroke intents: what a press does to the pressed cell. */
 const CLEAR = 0, SET_PLUS = 1, SET_MINUS = 2, SET_BLANK = 3, SET_MAGNET = 4;
@@ -72,11 +76,11 @@ function legend(): { sample: string; meaning: string }[] {
   ];
 }
 
-export function magnetsView(board: BoardPrefs): View<MagnetsPuzzle, MagnetsState, MagnetsAction, MagnetsInteraction> {
+export function magnetsView(board: BoardPrefs): View<MagnetsPuzzle, MagnetsState, MagnetsAction, MagnetsInteraction, typeof settings> {
   return {
     id: "magnets.svg",
     name: "grid",
-    puzzle: "magnets",
+    puzzle: magnets,
     settings,
     controls: [
       { how: "click or tap a cell", what: "make it plus, then minus, then empty again; the other end of its domino follows. drag to do several" },
@@ -171,7 +175,7 @@ export function magnetsView(board: BoardPrefs): View<MagnetsPuzzle, MagnetsState
         next: (c, kind) => intentFor(c, kind),
         commit: (cells, intent) => apply(cells, intent),
         redraw: () => render(),
-        holdMs: () => settings.longPressMs as number,
+        holdMs: () => settings.longPressMs,
       });
 
       /** Masks with the stroke in progress applied. */

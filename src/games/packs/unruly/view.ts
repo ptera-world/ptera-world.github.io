@@ -1,4 +1,4 @@
-import { bindCommands, type BindingSchema } from "../../core/commands";
+import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
 import { s, style } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
 import type { View } from "../../core/types";
@@ -9,7 +9,7 @@ import {
 } from "../../lib/grid-kit/view";
 import { fades } from "../../lib/grid-kit/fade";
 import {
-  DARK, LIGHT, NONE, ONE, colours,
+  unruly, DARK, LIGHT, NONE, ONE, colours,
   type Mark, type UnrulyAction, type UnrulyConflicts, type UnrulyInteraction, type UnrulyPuzzle, type UnrulyState,
 } from "./logic";
 
@@ -29,14 +29,18 @@ const settings = defineSchema({
   longPressMs: { type: "int", label: "touch hold for a light piece (ms)", default: 400, min: 150, max: 1500, step: 50 },
 });
 
-const BINDINGS: BindingSchema = {
+const BINDINGS = {
   "unruly.cycle": { label: "cycle dark / light / empty", category: "unruly", keys: ["space"], description: "the selected cell goes empty → dark → light → empty" },
   "unruly.cycle-back": { label: "cycle light / dark / empty", category: "unruly", keys: ["Enter"], description: "the selected cell goes empty → light → dark → empty" },
   "unruly.dark": { label: "dark piece", category: "unruly", keys: ["1"], description: "put a dark piece on the selected cell" },
   "unruly.light": { label: "light piece", category: "unruly", keys: ["0", "2"], description: "put a light piece on the selected cell" },
   "unruly.clear": { label: "clear cell", category: "unruly", keys: ["Backspace", "Delete"], description: "empty the selected cell" },
   ...cursorBindings("unruly", "unruly"),
-};
+} satisfies BindingSchema;
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof BINDINGS> {}
+}
 
 const R = 3.4;
 
@@ -55,11 +59,11 @@ function legend(): { sample: string; meaning: string }[] {
   ];
 }
 
-export function unrulyView(board: BoardPrefs): View<UnrulyPuzzle, UnrulyState, UnrulyAction, UnrulyInteraction> {
+export function unrulyView(board: BoardPrefs): View<UnrulyPuzzle, UnrulyState, UnrulyAction, UnrulyInteraction, typeof settings> {
   return {
     id: "unruly.svg",
     name: "grid",
-    puzzle: "unruly",
+    puzzle: unruly,
     settings,
     controls: [
       { how: "click or tap an empty cell", what: "dark piece; again for light, again to empty it. drag to do the same to several" },
@@ -100,7 +104,7 @@ export function unrulyView(board: BoardPrefs): View<UnrulyPuzzle, UnrulyState, U
         next: (c, kind) => cycle(session.state.marks[c]!, kind),
         commit: (cells, value) => void session.dispatch({ type: "set", cells, value: value as Mark }),
         redraw: () => render(),
-        holdMs: () => settings.longPressMs as number,
+        holdMs: () => settings.longPressMs,
       });
 
       const render = () => {

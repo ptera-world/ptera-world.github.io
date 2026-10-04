@@ -1,7 +1,7 @@
 import type { Step, Technique } from "../../core/types";
 import { cellList, cellName, type Focus } from "../../lib/grid-kit/names";
 import {
-  edgeCells, geometry, puzzleLayout, readBoard, wallFacts,
+  rect, edgeCells, geometry, puzzleLayout, readBoard, wallFacts,
   type RectAction, type RectPuzzle, type RectState,
 } from "./logic";
 import { easyRules, trialRule, type Alive, type Kill, type Layout } from "./solver";
@@ -124,7 +124,7 @@ function uncrossable(p: RectPuzzle, s: RectState, target?: number): Step<RectAct
 export const edge: RectTechnique = {
   id: "rect.edge",
   name: "no rectangle fits across",
-  puzzles: ["rect"],
+  puzzles: [rect],
   level: 1,
   description: "two neighboring cells that no number's rectangle could ever hold together (two numbers side by side, say, or cells out of every rectangle's reach together) have a wall between them.",
   find: (p, s) => uncrossable(p, s),
@@ -135,7 +135,7 @@ export const edge: RectTechnique = {
 const make = (kind: Kind, id: string, name: string, level: number, description: string, params: Record<string, unknown>): RectTechnique => ({
   id,
   name,
-  puzzles: ["rect"],
+  puzzles: [rect],
   level,
   description,
   find: (p, s) => find(p, s, kind),

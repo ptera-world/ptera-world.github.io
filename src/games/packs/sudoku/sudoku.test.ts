@@ -153,7 +153,7 @@ test("every technique step is sound and changes the board, across puzzle types",
   for (const [def, params] of cases) {
     const p = await generate(def, params, "sound", sig()) as LatinPuzzle;
     const sol = p.solution!;
-    const list = latinTechniques().filter((t) => t.puzzles.includes(def.id) && (t.requires ?? []).every((r) => featuresOf(p).includes(r))).sort((a, b) => a.level - b.level);
+    const list = latinTechniques().filter((t) => t.puzzles.some((r) => r.id === def.id) && (t.requires ?? []).every((r) => featuresOf(p).includes(r))).sort((a, b) => a.level - b.level);
     let s = initState(p);
     for (let guard = 0; guard < 500 && !def.isSolved(p, s); guard++) {
       const hit = firstStep(def, list, p, s);
@@ -176,15 +176,15 @@ test("features keep techniques, assists and widgets to the puzzles they make sen
   const registry = new Registry();
   register(registry);
   const ids = (xs: { id: string }[]) => xs.map((x) => x.id);
-  const towerTech = ids(registry.techniquesFor("towers", t));
+  const towerTech = ids(registry.techniquesFor(towers, t));
   expect(towerTech).toContain("sudoku.clue.towers");
   expect(towerTech).not.toContain("sudoku.pointing");
   expect(towerTech).not.toContain("sudoku.clue.killer");
-  expect(ids(registry.widgetsFor("towers", t))).not.toContain("sudoku.combos");
-  expect(ids(registry.widgetsFor("sudoku", k))).toContain("sudoku.combos");
-  expect(ids(registry.pluginsFor("towers", t))).not.toContain("sudoku.links");
-  expect(ids(registry.pluginsFor("sudoku", k))).toContain("sudoku.links");
-  expect(ids(registry.techniquesFor("sudoku", k))).toContain("sudoku.clue.killer");
+  expect(ids(registry.widgetsFor(towers, t))).not.toContain("sudoku.combos");
+  expect(ids(registry.widgetsFor(sudoku, k))).toContain("sudoku.combos");
+  expect(ids(registry.pluginsFor(towers, t))).not.toContain("sudoku.links");
+  expect(ids(registry.pluginsFor(sudoku, k))).toContain("sudoku.links");
+  expect(ids(registry.techniquesFor(sudoku, k))).toContain("sudoku.clue.killer");
 });
 
 test("auto singles land in the move's undo step and never stop early", async () => {
@@ -279,7 +279,7 @@ test("every cell a hint names is highlighted, at both hint levels", async () => 
   for (const [def, params] of cases) {
     const p = await generate(def, params, "names", sig()) as LatinPuzzle;
     const cell = (c9: number) => Math.floor(c9 / 9) * p.n + (c9 % 9);
-    const list = latinTechniques().filter((t) => t.puzzles.includes(def.id) && (t.requires ?? []).every((r) => featuresOf(p).includes(r))).sort((a, b) => a.level - b.level);
+    const list = latinTechniques().filter((t) => t.puzzles.some((r) => r.id === def.id) && (t.requires ?? []).every((r) => featuresOf(p).includes(r))).sort((a, b) => a.level - b.level);
     let s = initState(p);
     for (let guard = 0; guard < 300 && !def.isSolved(p, s); guard++) {
       const hit = firstStep(def, list, p, s);

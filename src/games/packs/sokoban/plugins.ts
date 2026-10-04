@@ -1,5 +1,5 @@
 import type { Plugin } from "../../core/types";
-import { stuckHint, type SokoAction, type SokoFocus, type SokoInteraction, type SokoPuzzle, type SokoState } from "./logic";
+import { sokoban, stuckHint, type SokoAction, type SokoFocus, type SokoInteraction, type SokoPuzzle, type SokoState } from "./logic";
 import { stuckBoxes } from "./solver";
 
 type SokoPlugin = Plugin<SokoPuzzle, SokoState, SokoAction, SokoInteraction>;
@@ -12,7 +12,7 @@ export const showStuck: SokoPlugin = {
   name: "show stuck boxes",
   description: "marks boxes in red once they can never be pushed onto a goal (in a corner, along a wall with no goal, or jammed against other boxes)",
   category: "assists",
-  appliesTo: ["sokoban"],
+  appliesTo: [sokoban],
   enabledByDefault: true,
   setup({ session, owner }) {
     session.hooks.derive.tap((d, { puzzle, state }) => ({ ...d, [STUCK_KEY]: stuckBoxes(puzzle, state.boxes) }), { owner });
@@ -31,7 +31,7 @@ export const checkStuck: SokoPlugin = {
   name: "hints check every box can still get home",
   description: "asking for a hint first says so if a box is stuck or the boxes can no longer all reach goals",
   category: "assists",
-  appliesTo: ["sokoban"],
+  appliesTo: [sokoban],
   enabledByDefault: true,
   setup({ session, owner }) {
     session.hooks.hint.tap(({ puzzle, state }) => stuckHint(puzzle, state) ?? undefined, { owner, priority: 90 });

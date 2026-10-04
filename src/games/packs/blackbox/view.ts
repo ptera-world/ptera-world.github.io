@@ -1,8 +1,8 @@
-import { bindCommands, type BindingSchema } from "../../core/commands";
-import { s, style } from "../../core/dom";
+import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
+import { s, style, inputIs } from "../../core/dom";
 import type { CommandDef, View } from "../../core/types";
 import { entryAt, entryOf, hitCode, reflectCode } from "./beam";
-import { ballCount, beamLabels, canCheck, type BlackboxAction, type BlackboxFocus, type BlackboxInteraction, type BlackboxPuzzle, type BlackboxState } from "./logic";
+import { blackbox, ballCount, beamLabels, canCheck, type BlackboxAction, type BlackboxFocus, type BlackboxInteraction, type BlackboxPuzzle, type BlackboxState } from "./logic";
 
 const CSS = `
 .blackbox-board { display: block; width: 100%; height: 100%; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
@@ -26,13 +26,13 @@ const CSS = `
 .blackbox-board .focus.why { stroke-dasharray: 1.2 0.8; stroke-width: 0.6; }
 .blackbox-board .labels text { fill: var(--text-dim); font: 500 3.6px var(--font); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
 .blackbox-board .cursor { fill: none; stroke: var(--focus); stroke-width: 0.6; pointer-events: none; }
-[data-input="pointer"] .blackbox-board .cursor { display: none; }
+${inputIs("pointer")} .blackbox-board .cursor { display: none; }
 `;
 
 const SIZE = 10;
 const LABEL = 6;
 
-const BINDINGS: BindingSchema = {
+const BINDINGS = {
   "blackbox.act": { label: "fire, place ball or check", category: "black box", keys: ["Enter"], description: "fire the laser at the selected edge square, put a ball in (or take it out of) the selected cell, or check your balls from the corner" },
   "blackbox.lock": { label: "lock", category: "black box", keys: ["space"], description: "lock the selected cell as certainly empty (or unlock it). on an edge square, lock or unlock that whole row or column" },
   "blackbox.check": { label: "check balls", category: "black box", keys: ["c"], description: "have your balls checked (once you've placed the right number)" },
@@ -40,7 +40,11 @@ const BINDINGS: BindingSchema = {
   "blackbox.right": { label: "cursor right", category: "black box", keys: ["ArrowRight", "d"] },
   "blackbox.up": { label: "cursor up", category: "black box", keys: ["ArrowUp", "w"] },
   "blackbox.down": { label: "cursor down", category: "black box", keys: ["ArrowDown", "s"] },
-};
+} satisfies BindingSchema;
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof BINDINGS> {}
+}
 
 export type Side = "top" | "right" | "bottom" | "left";
 export type Board = { labelSides(): Set<Side>; colName(col: number): string; rowName(row: number): string };
@@ -69,7 +73,7 @@ export function blackboxView(board: Board): View<BlackboxPuzzle, BlackboxState, 
   return {
     id: "blackbox.svg",
     name: "box",
-    puzzle: "blackbox",
+    puzzle: blackbox,
     controls: [
       { how: "click or tap an edge square", what: "fire a laser in from there" },
       { how: "point at a fired edge square", what: "highlights the other end of its beam" },

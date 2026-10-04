@@ -1,5 +1,5 @@
-import type { BindingSchema } from "../../core/commands";
-import { s } from "../../core/dom";
+import type { Binding } from "../../core/commands";
+import { s, inputIs } from "../../core/dom";
 import type { Side } from "../../core/names";
 import type { Session } from "../../core/session";
 import type { Focus } from "./names";
@@ -59,7 +59,7 @@ export const KIT_CSS = `
 .kit-board .cursor { fill: none; stroke: var(--focus); stroke-width: 0.6; pointer-events: none; }
 .kit-board .ghost { opacity: 0.45; pointer-events: none; }
 .kit-board .marks, .kit-board .over { pointer-events: none; }
-[data-input="pointer"] .kit-board .cursor { display: none; }
+${inputIs("pointer")} .kit-board .cursor { display: none; }
 `;
 
 /** Draws the grid's frame: viewBox with clue margins and edge labels, layers, and cell lookup. */
@@ -266,9 +266,11 @@ export class Strokes {
   }
 }
 
+type CursorId<P extends string> = `${P}.${"left" | "right" | "up" | "down"}`;
+
 /** Cursor movement bindings for a `<prefix>` category. */
-export function cursorBindings(prefix: string, category: string): BindingSchema {
-  return {
+export function cursorBindings<P extends string>(prefix: P, category: string): Record<CursorId<P>, Binding> {
+  return <Record<CursorId<P>, Binding>>{
     [`${prefix}.left`]: { label: "cursor left", category, keys: ["ArrowLeft", "a"], description: "move the keyboard selection one cell left" },
     [`${prefix}.right`]: { label: "cursor right", category, keys: ["ArrowRight", "d"], description: "move the keyboard selection one cell right" },
     [`${prefix}.up`]: { label: "cursor up", category, keys: ["ArrowUp", "w"], description: "move the keyboard selection one cell up" },
@@ -277,7 +279,7 @@ export function cursorBindings(prefix: string, category: string): BindingSchema 
 }
 
 /** Handlers for cursorBindings. */
-export function cursorHandlers(prefix: string, p: { w: number; h: number }, session: Session<any, any, any, { cursor: number }>): Record<string, () => void> {
+export function cursorHandlers<P extends string>(prefix: P, p: { w: number; h: number }, session: Session<any, any, any, { cursor: number }>): Record<CursorId<P>, () => void> {
   const move = (dx: number, dy: number) => () => {
     session.setInteraction((i) => {
       const x = Math.min(p.w - 1, Math.max(0, (i.cursor % p.w) + dx));
@@ -286,7 +288,7 @@ export function cursorHandlers(prefix: string, p: { w: number; h: number }, sess
       return c === i.cursor ? i : { ...i, cursor: c };
     });
   };
-  return { [`${prefix}.left`]: move(-1, 0), [`${prefix}.right`]: move(1, 0), [`${prefix}.up`]: move(0, -1), [`${prefix}.down`]: move(0, 1) };
+  return <Record<CursorId<P>, () => void>>{ [`${prefix}.left`]: move(-1, 0), [`${prefix}.right`]: move(1, 0), [`${prefix}.up`]: move(0, -1), [`${prefix}.down`]: move(0, 1) };
 }
 
 /** Keyboard cursor outline, positioned on cell c. */

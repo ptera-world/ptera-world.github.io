@@ -53,7 +53,7 @@ function solverStep(p: MahjongPuzzle, s: MahjongState, path: readonly [number, n
 export const safe: MahjongTechnique = {
   id: "mahjong.safe-pair",
   name: "all of a kind free",
-  puzzles: ["mahjong"],
+  puzzles: [mahjong],
   level: 1,
   color: "#3fa34d",
   description: "when every tile left of a kind is free (both of the last two, or all four), pairing them any way can't go wrong: nothing else will ever need them.",
@@ -80,7 +80,7 @@ function freeCount(p: MahjongPuzzle, s: MahjongState, i: number): number {
 export const openUp: MahjongTechnique = {
   id: "mahjong.open-up",
   name: "open up the stack",
-  puzzles: ["mahjong"],
+  puzzles: [mahjong],
   level: 2,
   color: "#3b6fd6",
   description: "when several pairs could go, the order matters: take the one that frees the tiles the rest of the game needs. the hint follows a search for a whole clearing order.",
@@ -96,7 +96,7 @@ export const openUp: MahjongTechnique = {
 export const pickTwo: MahjongTechnique = {
   id: "mahjong.pick-two",
   name: "pick the right two",
-  puzzles: ["mahjong"],
+  puzzles: [mahjong],
   level: 3,
   color: "#8b4fc7",
   description: "with three free tiles of a kind (the fourth still buried), which two to take is a real choice: the one left behind has to wait for the buried one. the hint takes the two a search for a whole clearing order does.",
@@ -118,7 +118,7 @@ export const checkClearable: Plugin<MahjongPuzzle, MahjongState, MahjongAction, 
   name: "hints check the board can still be cleared",
   description: "asking for a hint first says so if no order of matches can clear the board any more",
   category: "assists",
-  appliesTo: ["mahjong"],
+  appliesTo: [mahjong],
   enabledByDefault: true,
   setup({ session, owner }) {
     session.hooks.hint.tap(({ puzzle, state }) => {

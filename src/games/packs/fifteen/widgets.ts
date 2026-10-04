@@ -1,12 +1,12 @@
 import { h, style } from "../../core/dom";
 import type { WidgetDef } from "../../core/types";
-import { type FifteenAction, type FifteenPuzzle, type FifteenState } from "./logic";
+import { fifteen, type FifteenAction, type FifteenPuzzle, type FifteenState } from "./logic";
 
 export const movesWidget: WidgetDef<FifteenPuzzle, FifteenState, FifteenAction, null> = {
   id: "fifteen.moves",
   name: "moves",
   description: "how many moves so far",
-  puzzles: ["fifteen"],
+  puzzles: [fifteen],
   defaultSlot: "top",
   order: 10,
   mount(el, { session, owner }) {

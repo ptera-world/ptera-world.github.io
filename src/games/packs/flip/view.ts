@@ -1,8 +1,8 @@
 import { defineSchema } from "../../core/schema";
 import type { View } from "../../core/types";
-import { bindCommands, type BindingSchema } from "../../core/commands";
-import { s, style } from "../../core/dom";
-import { affected, type FlipAction, type FlipInteraction, type FlipPuzzle, type FlipState } from "./logic";
+import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
+import { s, style, inputIs } from "../../core/dom";
+import { affected, flip, type FlipAction, type FlipInteraction, type FlipPuzzle, type FlipState } from "./logic";
 
 /** Derived-annotation key: cells to press (from the solution assist). */
 export const SOLUTION_KEY = "flip.solution";
@@ -16,26 +16,32 @@ const CSS = `
 .flip-board .cell.hint { stroke: var(--hint); stroke-width: 1.4; }
 .flip-board .ghost { pointer-events: none; opacity: 0.8; stroke: var(--text-dim); stroke-width: 0.4; stroke-dasharray: 1 0.7; }
 .flip-board .cursor { stroke: var(--focus); stroke-width: 0.6; pointer-events: none; }
-[data-input="pointer"] .flip-board .cursor { display: none; }
+${inputIs("pointer")} .flip-board .cursor { display: none; }
 `;
 
 const settings = defineSchema({
   preview: { type: "bool", label: "highlight affected cells on hover", default: true },
 });
 
-export const flipView: View<FlipPuzzle, FlipState, FlipAction, FlipInteraction> & { bindings: BindingSchema } = {
+const BINDINGS = {
+  "flip.left": { label: "cursor left", category: "flip", keys: ["ArrowLeft", "a"] },
+  "flip.right": { label: "cursor right", category: "flip", keys: ["ArrowRight", "d"] },
+  "flip.up": { label: "cursor up", category: "flip", keys: ["ArrowUp", "w"] },
+  "flip.down": { label: "cursor down", category: "flip", keys: ["ArrowDown", "s"] },
+  "flip.press": { label: "press cell", category: "flip", keys: ["space", "Enter"] },
+} satisfies BindingSchema;
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof BINDINGS> {}
+}
+
+export const flipView: View<FlipPuzzle, FlipState, FlipAction, FlipInteraction, typeof settings> & { bindings: typeof BINDINGS } = {
   id: "flip.svg",
   name: "grid",
-  puzzle: "flip",
+  puzzle: flip,
   settings,
   controls: [{ how: "click or tap a light", what: "press it (toggles it and its neighbors)" }],
-  bindings: {
-    "flip.left": { label: "cursor left", category: "flip", keys: ["ArrowLeft", "a"] },
-    "flip.right": { label: "cursor right", category: "flip", keys: ["ArrowRight", "d"] },
-    "flip.up": { label: "cursor up", category: "flip", keys: ["ArrowUp", "w"] },
-    "flip.down": { label: "cursor down", category: "flip", keys: ["ArrowDown", "s"] },
-    "flip.press": { label: "press cell", category: "flip", keys: ["space", "Enter"] },
-  },
+  bindings: BINDINGS,
   mount(root, { session, settings }) {
     style("flip", CSS);
     const p = session.puzzle;

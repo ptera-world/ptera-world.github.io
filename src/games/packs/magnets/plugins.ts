@@ -1,11 +1,11 @@
 import { checkMarksPlugin, conflictsPlugin } from "../../lib/grid-kit/plugins";
-import { findConflicts, geometry, wrongHint, type MagnetsPuzzle, type MagnetsState } from "./logic";
+import { magnets, findConflicts, geometry, wrongHint, type MagnetsPuzzle, type MagnetsState } from "./logic";
 import { CONFLICTS_KEY } from "./view";
 
 /** Count conflicts are reported by line; the mistake fx points at that line's cells. */
 export const conflicts = conflictsPlugin<MagnetsPuzzle, MagnetsState>({
   id: "magnets.conflicts",
-  puzzle: "magnets",
+  puzzle: magnets,
   description: "marks rule breaks in red: like poles touching, and numbers that are passed or can't be reached any more",
   key: CONFLICTS_KEY,
   kinds: [
@@ -18,7 +18,7 @@ export const conflicts = conflictsPlugin<MagnetsPuzzle, MagnetsState>({
 
 export const checkMarks = checkMarksPlugin({
   id: "magnets.check-marks",
-  puzzle: "magnets",
+  puzzle: magnets,
   description: "asking for a hint points out dominoes marked in a way that rules out the solution before suggesting anything else",
   wrong: wrongHint,
 });

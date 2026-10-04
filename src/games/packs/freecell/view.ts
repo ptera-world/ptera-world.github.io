@@ -2,7 +2,7 @@ import type { View } from "../../core/types";
 import { CARD_H, CARD_W, cardSample } from "../../lib/cards/draw";
 import { mountTable, tableLegend, tableSettings, type Slot } from "../../lib/cards/table";
 import { SUIT_GLYPHS } from "../../lib/cards/deck";
-import { canLift, moveAction, pileName, tapAction, type FreecellAction, type FreecellInteraction, type FreecellPuzzle, type FreecellState } from "./logic";
+import { freecell, canLift, moveAction, pileName, tapAction, type FreecellAction, type FreecellInteraction, type FreecellPuzzle, type FreecellState } from "./logic";
 
 const GAP = 1.5;
 const TOP = 1.5;
@@ -22,10 +22,10 @@ function geometry(p: FreecellPuzzle) {
   return { w, h, slots };
 }
 
-export const freecellView: View<FreecellPuzzle, FreecellState, FreecellAction, FreecellInteraction> = {
+export const freecellView: View<FreecellPuzzle, FreecellState, FreecellAction, FreecellInteraction, typeof tableSettings> = {
   id: "freecell.table",
   name: "table",
-  puzzle: "freecell",
+  puzzle: freecell,
   settings: tableSettings,
   controls: [
     { how: "drag a card, or an ordered run of cards, onto another pile", what: "move it there if the rules allow" },

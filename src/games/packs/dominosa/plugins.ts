@@ -1,20 +1,20 @@
 import { defineSchema } from "../../core/schema";
-import type { Plugin } from "../../core/types";
+import { definePlugins } from "../../core/define";
 import {
-  findConflicts, wrongMarksHint,
+  dominosa, findConflicts, wrongMarksHint,
   type Conflicts, type DominosaAction, type DominosaFocus, type DominosaInteraction, type DominosaPuzzle, type DominosaState,
 } from "./logic";
 import { CONFLICTS_KEY } from "./view";
 
-type DominosaPlugin = Plugin<DominosaPuzzle, DominosaState, DominosaAction, DominosaInteraction>;
+const plugin = definePlugins<DominosaPuzzle, DominosaState, DominosaAction, DominosaInteraction>();
 
 /** Shows visible rule breaks, and reports the ones a player move just made as a mistake fx. */
-export const conflicts: DominosaPlugin = {
+export const conflicts = plugin({
   id: "dominosa.conflicts",
   name: "show conflicts",
   description: "marks rule breaks you can see without knowing the answer in red: a domino placed twice, and cells nothing can cover any more",
   category: "assists",
-  appliesTo: ["dominosa"],
+  appliesTo: [dominosa],
   enabledByDefault: true,
   settings: defineSchema({
     duplicates: { type: "bool", label: "dominoes placed twice", default: true },
@@ -34,19 +34,19 @@ export const conflicts: DominosaPlugin = {
       if (placements.length || because.length) session.hooks.fx.call({ kind: "mistake", focus: { placements, because } satisfies DominosaFocus });
     }, { owner });
   },
-};
+});
 
 /** Runs ahead of technique hints (priority 100), so a wrong mark is pointed out before any move. */
-export const checkMarks: DominosaPlugin = {
+export const checkMarks = plugin({
   id: "dominosa.check-marks",
   name: "hints check your marks first",
   description: "asking for a hint points out dominoes and lines that don't match the solution before suggesting anything else",
   category: "assists",
-  appliesTo: ["dominosa"],
+  appliesTo: [dominosa],
   enabledByDefault: true,
   setup({ session, owner }) {
     session.hooks.hint.tap(({ puzzle, state }) => wrongMarksHint(puzzle, state) ?? undefined, { owner, priority: 90 });
   },
-};
+});
 
-export const dominosaPlugins: DominosaPlugin[] = [conflicts, checkMarks];
+export const dominosaPlugins = [conflicts, checkMarks];

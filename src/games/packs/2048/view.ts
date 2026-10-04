@@ -1,8 +1,8 @@
 import { animate, ease, lerp, type Animation } from "../../core/anim";
-import { bindCommands, type BindingSchema } from "../../core/commands";
+import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
 import { h, s, style } from "../../core/dom";
 import type { View, WidgetDef } from "../../core/types";
-import { best, slide, tileValue, type Action2048, type Focus2048, type Puzzle2048, type State2048 } from "./logic";
+import { game2048, best, slide, tileValue, type Action2048, type Focus2048, type Puzzle2048, type State2048 } from "./logic";
 
 const SIZE = 10;
 const PAD = 0.8;
@@ -33,19 +33,23 @@ const fill = (v: number) => (v <= 11 ? `var(--t2048-${tileValue(v)}, ${COLORS[v]
 const ink = (v: number) => (v <= 11 ? COLORS[v]![1] : "#f9f6f2");
 const fontFor = (v: number) => [4.6, 4.6, 4.6, 4.2, 3.5, 2.9, 2.5][String(tileValue(v)).length] ?? 2.2;
 
-const BINDINGS: BindingSchema = {
+const BINDINGS = {
   "2048.up": { label: "slide up", category: "2048", keys: ["ArrowUp", "w"] },
   "2048.right": { label: "slide right", category: "2048", keys: ["ArrowRight", "d"] },
   "2048.down": { label: "slide down", category: "2048", keys: ["ArrowDown", "s"] },
   "2048.left": { label: "slide left", category: "2048", keys: ["ArrowLeft", "a"] },
-};
+} satisfies BindingSchema;
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof BINDINGS> {}
+}
 
 const sampleTile = (v: number) => `<svg viewBox="-0.5 -0.5 11 11"><rect x="0.4" y="0.4" width="9.2" height="9.2" rx="1" fill="${fill(v)}"/><text x="5" y="5.2" font-size="${fontFor(v)}" font-weight="700" font-family="var(--font)" text-anchor="middle" dominant-baseline="central" fill="${ink(v)}">${tileValue(v)}</text></svg>`;
 
 export const view2048: View<Puzzle2048, State2048, Action2048, null> = {
   id: "2048.svg",
   name: "board",
-  puzzle: "2048",
+  puzzle: game2048,
   controls: [{ how: "swipe or drag across the board", what: "slide the tiles that way" }],
   legend: [
     { sample: sampleTile(1), meaning: "a tile; two equal tiles that meet merge into their sum" },
@@ -207,7 +211,7 @@ export const scoreWidget: WidgetDef<Puzzle2048, State2048, Action2048, null> = {
   id: "2048.score",
   name: "score",
   description: "points so far (every merge scores the new tile) and the biggest tile",
-  puzzles: ["2048"],
+  puzzles: [game2048],
   defaultSlot: "top",
   order: 10,
   mount(el, { session, owner }) {

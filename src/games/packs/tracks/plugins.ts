@@ -1,17 +1,17 @@
 import { defineSchema } from "../../core/schema";
-import type { Plugin } from "../../core/types";
-import { findConflicts, wrongMarksHint, type Conflicts, type TracksAction, type TracksFocus, type TracksInteraction, type TracksPuzzle, type TracksState } from "./logic";
+import { definePlugins } from "../../core/define";
+import { tracks, findConflicts, wrongMarksHint, type Conflicts, type TracksAction, type TracksFocus, type TracksInteraction, type TracksPuzzle, type TracksState } from "./logic";
 import { CONFLICTS_KEY } from "./view";
 
-type TracksPlugin = Plugin<TracksPuzzle, TracksState, TracksAction, TracksInteraction>;
+const plugin = definePlugins<TracksPuzzle, TracksState, TracksAction, TracksInteraction>();
 
 /** Shows visible rule breaks, and reports the ones a player move just made as a mistake fx. */
-export const conflicts: TracksPlugin = {
+export const conflicts = plugin({
   id: "tracks.conflicts",
   name: "show conflicts",
   description: "marks rule breaks you can see without knowing the answer in red: cells whose track can't be right, counts already passed or out of reach, and loops of track",
   category: "assists",
-  appliesTo: ["tracks"],
+  appliesTo: [tracks],
   enabledByDefault: true,
   settings: defineSchema({
     cells: { type: "bool", label: "cells whose track can't be right", default: true },
@@ -32,19 +32,19 @@ export const conflicts: TracksPlugin = {
       if (because.length || counts.length) session.hooks.fx.call({ kind: "mistake", focus: { edges: [], cells: [], because, counts } satisfies TracksFocus });
     }, { owner });
   },
-};
+});
 
 /** Runs ahead of technique hints (priority 100), so a wrong mark is pointed out before any move. */
-export const checkMarks: TracksPlugin = {
+export const checkMarks = plugin({
   id: "tracks.check-marks",
   name: "hints check your marks first",
   description: "asking for a hint points out track, crosses and cell marks that don't match the solution before suggesting anything else",
   category: "assists",
-  appliesTo: ["tracks"],
+  appliesTo: [tracks],
   enabledByDefault: true,
   setup({ session, owner }) {
     session.hooks.hint.tap(({ puzzle, state }) => wrongMarksHint(puzzle, state) ?? undefined, { owner, priority: 90 });
   },
-};
+});
 
-export const tracksPlugins: TracksPlugin[] = [conflicts, checkMarks];
+export const tracksPlugins = [conflicts, checkMarks];

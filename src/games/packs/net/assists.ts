@@ -1,7 +1,7 @@
 import type { Session } from "../../core/session";
 import type { Plugin } from "../../core/types";
 import { D, DIRS, R, connectedFrom, coord, isTree, link, opp, type NetPuzzle } from "./grid";
-import { analyse, type NetAction, type NetHintFocus, type NetInteraction, type NetState } from "./logic";
+import { analyse, net, type NetAction, type NetHintFocus, type NetInteraction, type NetState } from "./logic";
 import { solveLogic } from "./solver";
 
 /**
@@ -115,7 +115,7 @@ const powered: NetPlugin = {
   name: "light up the connected network",
   description: "pipes joined to the source are lit",
   category: "assists",
-  appliesTo: ["net"],
+  appliesTo: [net],
   enabledByDefault: true,
   setup({ session, owner }) {
     session.hooks.derive.tap((d, { puzzle, state, interaction }) => ({
@@ -130,7 +130,7 @@ const loops: NetPlugin = {
   name: "show loops",
   description: "pipes that go round in a circle are marked",
   category: "assists",
-  appliesTo: ["net"],
+  appliesTo: [net],
   enabledByDefault: true,
   setup({ session, owner }) {
     session.hooks.derive.tap((d, { puzzle, state }) => ({ ...d, [KEYS.loops]: loopSides(puzzle, state.tiles) }), { owner });
@@ -142,7 +142,7 @@ const loose: NetPlugin = {
   name: "show loose ends",
   description: "pipe ends that don't meet another pipe are marked",
   category: "assists",
-  appliesTo: ["net"],
+  appliesTo: [net],
   enabledByDefault: false,
   setup({ session, owner }) {
     session.hooks.derive.tap((d, { puzzle, state }) => ({ ...d, [KEYS.loose]: looseSides(puzzle, state.tiles) }), { owner });
@@ -180,7 +180,7 @@ const conflicts: NetPlugin = {
   name: "flag clashing locked tiles",
   description: "locked tiles that can't both be right (or that point into a wall) are marked",
   category: "assists",
-  appliesTo: ["net"],
+  appliesTo: [net],
   enabledByDefault: true,
   setup({ session, owner }) {
     session.hooks.derive.tap((d, { puzzle, state }) => ({ ...d, [KEYS.conflicts]: lockConflicts(puzzle, state) }), { owner });
@@ -193,7 +193,7 @@ const check: NetPlugin = {
   name: "check locked tiles against the solution",
   description: "locked tiles that are turned wrong are marked (spoiler)",
   category: "assists",
-  appliesTo: ["net"],
+  appliesTo: [net],
   enabledByDefault: false,
   setup({ session, owner }) {
     session.hooks.derive.tap((d, { puzzle, state }) => {
@@ -210,7 +210,7 @@ const mistakes: NetPlugin = {
   name: "hints point out wrong locks first",
   description: "before suggesting a move, a hint checks your locked tiles against the solution",
   category: "assists",
-  appliesTo: ["net"],
+  appliesTo: [net],
   enabledByDefault: true,
   setup({ session, owner }) {
     session.hooks.hint.tap(({ puzzle: p, state: s }) => {

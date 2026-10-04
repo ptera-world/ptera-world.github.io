@@ -140,9 +140,9 @@ describe("techniques", () => {
     register(reg);
     const tree = await gen({ difficulty: "medium", loops: false }, "tree");
     const loopy = await gen({ difficulty: "medium" }, "loopy");
-    expect(reg.techniquesFor("bridges", tree).map((t) => t.id)).toContain("bridges.loop");
-    expect(reg.techniquesFor("bridges", loopy).map((t) => t.id)).not.toContain("bridges.loop");
-    expect(reg.pluginsFor("bridges", loopy).map((p) => p.id)).not.toContain("bridges.loop-errors");
+    expect(reg.techniquesFor(bridges, tree).map((t) => t.id)).toContain("bridges.loop");
+    expect(reg.techniquesFor(bridges, loopy).map((t) => t.id)).not.toContain("bridges.loop");
+    expect(reg.pluginsFor(bridges, loopy).map((p) => p.id)).not.toContain("bridges.loop-errors");
   });
 
   test("a nudge comes before the full explanation, and both carry the move", async () => {

@@ -1,13 +1,11 @@
 import { defineSchema } from "../../core/schema";
-import type { Plugin } from "../../core/types";
+import { definePlugins } from "../../core/define";
 import { decorate } from "./deco";
 import { components, cycleEdges, graph, islandSums, type BridgesPuzzle, type BridgesState, type Graph } from "./graph";
-import { mistakeHint, type BridgesAction, type BridgesInteraction } from "./logic";
+import { bridges, mistakeHint, type BridgesAction, type BridgesInteraction } from "./logic";
 import { analyze } from "./solver";
 
-type BridgesPlugin = Plugin<BridgesPuzzle, BridgesState, BridgesAction, BridgesInteraction>;
-
-const APPLIES = ["bridges"] as const;
+const plugin = definePlugins<BridgesPuzzle, BridgesState, BridgesAction, BridgesInteraction>();
 
 function blocked(g: Graph, s: BridgesState, e: number): boolean {
   return s.no[e] === 1 || g.cross[e]!.some((c) => s.b[c]! > 0);
@@ -31,12 +29,12 @@ function room(g: Graph, s: BridgesState, sums: readonly number[], i: number): nu
   return total;
 }
 
-const complete: BridgesPlugin = {
+const complete = plugin({
   id: "bridges.complete",
   name: "fade finished islands",
   description: "islands that have all their bridges turn faint, so the ones still open stand out",
   category: "assists",
-  appliesTo: APPLIES,
+  appliesTo: [bridges],
   enabledByDefault: true,
   setup({ session, owner }) {
     session.hooks.derive.tap((d, { puzzle, state }) => {
@@ -44,14 +42,14 @@ const complete: BridgesPlugin = {
       return decorate(d, (b) => puzzle.islands.forEach((is, i) => { if (sums[i] === is.n) b.island(i, "done"); }));
     }, { owner });
   },
-};
+});
 
-const errors: BridgesPlugin = {
+const errors = plugin({
   id: "bridges.errors",
   name: "flag rule breaks",
   description: "only checks the rules, never the solution",
   category: "assists",
-  appliesTo: APPLIES,
+  appliesTo: [bridges],
   enabledByDefault: true,
   settings: defineSchema({
     over: { type: "bool", label: "islands with too many bridges", default: true },
@@ -78,28 +76,28 @@ const errors: BridgesPlugin = {
       });
     }, { owner });
   },
-};
+});
 
-const loops: BridgesPlugin = {
+const loops = plugin({
   id: "bridges.loop-errors",
   name: "flag loops",
   description: "bridges that close a loop, on boards where loops aren't allowed",
   category: "assists",
-  appliesTo: APPLIES,
+  appliesTo: [bridges],
   requires: ["no-loops"],
   enabledByDefault: true,
   setup({ session, owner }) {
     session.hooks.derive.tap((d, { puzzle, state }) =>
       decorate(d, (b) => { for (const e of cycleEdges(graph(puzzle), state.b)) b.edge(e, "error"); }), { owner });
   },
-};
+});
 
-const counts: BridgesPlugin = {
+const counts = plugin({
   id: "bridges.counts",
   name: "show bridges still needed",
   description: "a small number by each island counting how many more bridges it needs",
   category: "assists",
-  appliesTo: APPLIES,
+  appliesTo: [bridges],
   enabledByDefault: false,
   settings: defineSchema({
     style: {
@@ -117,14 +115,14 @@ const counts: BridgesPlugin = {
       }));
     }, { owner });
   },
-};
+});
 
-const groups: BridgesPlugin = {
+const groups = plugin({
   id: "bridges.groups",
   name: "color connected groups",
   description: "islands already joined to each other by bridges get the same colored ring, so you can see which pieces still need linking up",
   category: "assists",
-  appliesTo: APPLIES,
+  appliesTo: [bridges],
   enabledByDefault: false,
   settings: defineSchema({
     singles: { type: "bool", label: "color lone islands too", default: false },
@@ -143,14 +141,14 @@ const groups: BridgesPlugin = {
       }));
     }, { owner });
   },
-};
+});
 
-const guides: BridgesPlugin = {
+const guides = plugin({
   id: "bridges.guides",
   name: "show open connections",
   description: "faint lines wherever a bridge could still go",
   category: "assists",
-  appliesTo: APPLIES,
+  appliesTo: [bridges],
   enabledByDefault: false,
   setup({ session, owner }) {
     session.hooks.derive.tap((d, { puzzle, state }) => {
@@ -164,14 +162,14 @@ const guides: BridgesPlugin = {
       });
     }, { owner });
   },
-};
+});
 
-const check: BridgesPlugin = {
+const check = plugin({
   id: "bridges.check",
   name: "flag wrong bridges",
   description: "compares against the solution",
   category: "assists",
-  appliesTo: APPLIES,
+  appliesTo: [bridges],
   requires: ["unique"],
   enabledByDefault: false,
   setup({ session, owner }) {
@@ -185,18 +183,18 @@ const check: BridgesPlugin = {
       });
     }, { owner });
   },
-};
+});
 
-const mistakes: BridgesPlugin = {
+const mistakes = plugin({
   id: "bridges.mistakes",
   name: "hints point out mistakes first",
   description: "before suggesting a deduction, a hint shows a bridge or mark that's wrong",
   category: "assists",
-  appliesTo: APPLIES,
+  appliesTo: [bridges],
   enabledByDefault: true,
   setup({ session, owner }) {
     session.hooks.hint.tap(({ puzzle, state }) => mistakeHint(puzzle, state) ?? undefined, { owner, priority: 50 });
   },
-};
+});
 
-export const plugins: readonly BridgesPlugin[] = [complete, errors, loops, counts, groups, guides, check, mistakes];
+export const plugins = [complete, errors, loops, counts, groups, guides, check, mistakes];

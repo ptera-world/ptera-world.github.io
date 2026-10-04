@@ -1,6 +1,6 @@
 import type { Step, Technique } from "../../core/types";
 import { plural } from "../../lib/grid-kit/names";
-import { cellName, mineCount, numbers, visibleKnowledge, type MinesAction, type MinesFocus, type MinesPuzzle, type MinesState } from "./logic";
+import { mines, cellName, mineCount, numbers, visibleKnowledge, type MinesAction, type MinesFocus, type MinesPuzzle, type MinesState } from "./logic";
 import { MINE, UNKNOWN, deduceAt, deduceCount, deduceGlobal, deducePairs, neighbourTable, type Deduction } from "./solver";
 
 type MinesTechnique = Technique<MinesPuzzle, MinesState, MinesAction>;
@@ -81,7 +81,7 @@ function regionDeduction(p: MinesPuzzle, s: MinesState): Deduction | null {
 export const forcedFlags: MinesTechnique = {
   id: "mines.forced",
   name: "no room to spare",
-  puzzles: ["mines"],
+  puzzles: [mines],
   level: 1,
   description: "a number that has exactly as many hidden neighbors as mines it still needs: every one of those hidden neighbors is a mine. flag them.",
   find: (p, s) => forcedStep(p, singles(p, s, "mines")[0]),
@@ -106,7 +106,7 @@ function forcedStep(p: MinesPuzzle, d: Deduction | undefined): Step<MinesAction>
 export const satisfied: MinesTechnique = {
   id: "mines.satisfied",
   name: "satisfied number",
-  puzzles: ["mines"],
+  puzzles: [mines],
   level: 2,
   description: "a number already touching as many flags as it shows has all its mines, so its other hidden neighbors are safe. opening them all at once is what clicking an open number (chording) does.",
   find: (p, s) => satisfiedStep(p, singles(p, s, "safe")[0]),
@@ -131,7 +131,7 @@ function satisfiedStep(p: MinesPuzzle, d: Deduction | undefined): Step<MinesActi
 export const mineCountTechnique: MinesTechnique = {
   id: "mines.count",
   name: "mine count",
-  puzzles: ["mines"],
+  puzzles: [mines],
   level: 3,
   description: "the total number of mines is known. once they're all flagged, every other hidden cell is safe; if the hidden cells left are exactly as many as the mines left, they're all mines.",
   find(p, s) {
@@ -153,7 +153,7 @@ export const mineCountTechnique: MinesTechnique = {
 export const overlap: MinesTechnique = {
   id: "mines.overlap",
   name: "overlapping numbers",
-  puzzles: ["mines"],
+  puzzles: [mines],
   level: 4,
   description: "two nearby numbers that share some hidden neighbors. the shared cells can hold only so many of either number's mines, which settles the cells only one of them touches (the classic 1-1 and 1-2 patterns).",
   find: (p, s) => overlapStep(p, pairDeductions(p, s)[0]),
@@ -177,7 +177,7 @@ function overlapStep(p: MinesPuzzle, d: Deduction | undefined): Step<MinesAction
 export const region: MinesTechnique = {
   id: "mines.region",
   name: "whole region",
-  puzzles: ["mines"],
+  puzzles: [mines],
   level: 5,
   description: "list every way the mines could sit along a stretch of hidden cells next to opened numbers, together with how many mines are left in total. a cell that is the same in every possible way is decided.",
   find(p, s) {

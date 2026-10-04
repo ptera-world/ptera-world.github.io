@@ -1,6 +1,6 @@
 import { cellName as at } from "../../lib/grid-kit/names";
 import type { Step, Technique } from "../../core/types";
-import { GLYPHS, describeShift, hintFor, target, type NetslideAction, type NetslideFocus, type NetslidePuzzle, type NetslideState } from "./logic";
+import { netslide, GLYPHS, describeShift, hintFor, target, type NetslideAction, type NetslideFocus, type NetslidePuzzle, type NetslideState } from "./logic";
 import type { PermStep, StepKind } from "../../lib/perm";
 
 type NetslideTechnique = Technique<NetslidePuzzle, NetslideState, NetslideAction>;
@@ -26,7 +26,7 @@ function step(p: NetslidePuzzle, s: NetslideState, kinds: StepKind[], explain: (
 export const slideHome: NetslideTechnique = {
   id: "netslide.slide-home",
   name: "slide it into place",
-  puzzles: ["netslide"],
+  puzzles: [netslide],
   level: 1,
   description: "pick a finished network the pieces can make, then fill it in square by square: bring the right piece to each spot by sliding rows and columns that hold nothing already placed.",
   find: (p, s) => step(p, s, ["move"], (h) => ({
@@ -38,7 +38,7 @@ export const slideHome: NetslideTechnique = {
 export const threeCycle: NetslideTechnique = {
   id: "netslide.cycle",
   name: "three-piece cycle",
-  puzzles: ["netslide"],
+  puzzles: [netslide],
   level: 2,
   description: "slide a column, then a row, then the column back, then the row back: only three pieces end up swapped round. that moves a piece next to placed ones without disturbing them.",
   find: (p, s) => step(p, s, ["cycle"], (h) => ({
@@ -51,7 +51,7 @@ export const threeCycle: NetslideTechnique = {
 export const lastPieces: NetslideTechnique = {
   id: "netslide.last-pieces",
   name: "last pieces",
-  puzzles: ["netslide"],
+  puzzles: [netslide],
   level: 3,
   description: "the last few pieces are sorted together, using slides and short cycles that stay among them.",
   find: (p, s) => step(p, s, ["endgame", "parity"], (h) => ({

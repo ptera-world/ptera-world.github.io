@@ -1,13 +1,14 @@
-import { bindCommands, type BindingSchema } from "../../core/commands";
-import { s, style } from "../../core/dom";
+import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
+import { s, style, inputIs } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
 import { EMPTY, GHOST, MIRROR_L, VAMPIRE, ZOMBIE, bit, clueAt, geometry } from "./grid";
 import {
-  sightCountsOf,
+  undead, sightCountsOf,
   type Conflicts, type UndeadAction, type UndeadFocus, type UndeadInteraction, type UndeadPuzzle, type UndeadState,
 } from "./logic";
 import type { UndeadTarget } from "./techniques";
+import { themedAssets } from "../../lib/assets";
 
 /** Derived: Conflicts to flag on the board. */
 export const CONFLICTS_KEY = "undead.conflicts";
@@ -40,7 +41,7 @@ const CSS = `
 .undead-board .focus.why { stroke-dasharray: 1.2 0.8; stroke-width: 0.6; }
 .undead-board .labels text { fill: var(--text-dim); font: 500 3.4px var(--font); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
 .undead-board .cursor { fill: none; stroke: var(--focus); stroke-width: 0.6; pointer-events: none; }
-[data-input="pointer"] .undead-board .cursor { display: none; }
+${inputIs("pointer")} .undead-board .cursor { display: none; }
 `;
 
 const settings = defineSchema({
@@ -53,7 +54,7 @@ const LABEL = 5;
 /** Height of the monster totals band above the clues. */
 const BAND = 7;
 
-const BINDINGS: BindingSchema = {
+const BINDINGS = {
   "undead.ghost": { label: "ghost", category: "undead", keys: ["g", "1"], description: "put a ghost in the selected cell (or a ghost pencil mark, in pencil mode). again to remove it" },
   "undead.vampire": { label: "vampire", category: "undead", keys: ["v", "2"], description: "put a vampire in the selected cell (or a pencil mark). again to remove it" },
   "undead.zombie": { label: "zombie", category: "undead", keys: ["z", "3"], description: "put a zombie in the selected cell (or a pencil mark). again to remove it" },
@@ -66,7 +67,11 @@ const BINDINGS: BindingSchema = {
   "undead.right": { label: "cursor right", category: "undead", keys: ["ArrowRight", "d"] },
   "undead.up": { label: "cursor up", category: "undead", keys: ["ArrowUp", "w"] },
   "undead.down": { label: "cursor down", category: "undead", keys: ["ArrowDown", "s"] },
-};
+} satisfies BindingSchema;
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof BINDINGS> {}
+}
 
 export type Side = "top" | "right" | "bottom" | "left";
 export type Board = { labelSides(): Set<Side>; colName(col: number): string; rowName(row: number): string };
@@ -79,8 +84,9 @@ function inner(markup: string): string {
 function legend(look: Look): { sample: string; meaning: string }[] {
   const svg = (body: string) => `<svg viewBox="-0.5 -0.5 11 11">${body}</svg>`;
   const cell = (fill = "var(--cell)") => `<rect width="10" height="10" fill="${fill}" stroke="var(--border)" stroke-width="0.25"/>`;
-  const mon = (id: "ghost" | "vampire" | "zombie") => inner(look.asset(`undead.${id}`, ASSETS[id]));
-  const small = (id: "ghost" | "vampire" | "zombie", x: number, y: number) => `<g transform="translate(${x} ${y}) scale(0.42)">${mon(id)}</g>`;
+  const art = themedAssets(look, "undead", ASSETS);
+  const mon = (id: keyof typeof ASSETS) => inner(art(id));
+  const small = (id: keyof typeof ASSETS, x: number, y: number) => `<g transform="translate(${x} ${y}) scale(0.42)">${mon(id)}</g>`;
   const num = (n: number, fill = "var(--text)", op = "1") => `<text x="5" y="5.3" fill="${fill}" style="opacity:${op}" font-size="4.4" font-weight="600" font-family="var(--font)" text-anchor="middle" dominant-baseline="central">${n}</text>`;
   return [
     { sample: svg(cell() + mon("ghost")), meaning: "a ghost: only seen in a mirror (after the sight line bounces)" },
@@ -101,11 +107,11 @@ function legend(look: Look): { sample: string; meaning: string }[] {
 
 const KIND = ["", "ghost", "vampire", "zombie"] as const;
 
-export function undeadView(look: Look, board: Board): View<UndeadPuzzle, UndeadState, UndeadAction, UndeadInteraction> {
+export function undeadView(look: Look, board: Board): View<UndeadPuzzle, UndeadState, UndeadAction, UndeadInteraction, typeof settings> {
   return {
     id: "undead.svg",
     name: "grid",
-    puzzle: "undead",
+    puzzle: undead,
     settings,
     controls: [
       { how: "click or tap a cell", what: "cycle it through ghost, vampire, zombie and empty" },
@@ -119,7 +125,8 @@ export function undeadView(look: Look, board: Board): View<UndeadPuzzle, UndeadS
       style("undead", CSS);
       const p = session.puzzle;
       const g = geometry(p);
-      const icon = (m: number) => inner(look.asset(`undead.${KIND[m]}`, ASSETS[KIND[m] as "ghost"]));
+      const art = themedAssets(look, "undead", ASSETS);
+      const icon = (m: number) => inner(art(KIND[m] as keyof typeof ASSETS));
       const sides = board.labelSides();
       const m = (side: Side) => (sides.has(side) ? LABEL : 0);
       const left = SIZE + m("left"), top = SIZE + BAND + m("top");

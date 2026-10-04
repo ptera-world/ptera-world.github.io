@@ -1,6 +1,6 @@
 import type { Step, Technique } from "../../core/types";
 import { geometry } from "./grid";
-import { cellList, cellName, stateChains, type SignpostAction, type SignpostFocus, type SignpostPuzzle, type SignpostState } from "./logic";
+import { signpost, cellList, cellName, stateChains, type SignpostAction, type SignpostFocus, type SignpostPuzzle, type SignpostState } from "./logic";
 import { analyze, freshKnowledge, link, look, scanSteps, type Knowledge, type Step as SolverStep, type StepKind } from "./solver";
 
 type SignpostTechnique = Technique<SignpostPuzzle, SignpostState, SignpostAction>;
@@ -57,7 +57,7 @@ function step(st: SolverStep, message: string, nudge: string, nudgeFocus: Signpo
 type Finder = (p: SignpostPuzzle, s: SignpostState, target?: SignpostTarget) => Step<SignpostAction> | null;
 
 function technique(def: Omit<SignpostTechnique, "find" | "findAt" | "puzzles">, find: Finder): SignpostTechnique {
-  return { ...def, puzzles: ["signpost"], find: (p, s) => find(p, s), findAt: (p, s, t) => find(p, s, t as SignpostTarget) };
+  return { ...def, puzzles: [signpost], find: (p, s) => find(p, s), findAt: (p, s, t) => find(p, s, t as SignpostTarget) };
 }
 
 const EASY = { width: 5, height: 5, difficulty: "easy" };

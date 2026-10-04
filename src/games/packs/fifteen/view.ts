@@ -1,8 +1,8 @@
-import { bindCommands, type BindingSchema } from "../../core/commands";
+import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
 import { s, style } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
 import type { View } from "../../core/types";
-import { gapOf, lineToGap, solvedTile, type FifteenAction, type FifteenFocus, type FifteenPuzzle, type FifteenState } from "./logic";
+import { fifteen, gapOf, lineToGap, solvedTile, type FifteenAction, type FifteenFocus, type FifteenPuzzle, type FifteenState } from "./logic";
 
 const SIZE = 10;
 const GAP = 0.4;
@@ -28,22 +28,26 @@ const settings = defineSchema({
   tintHome: { type: "bool", label: "tint tiles that are in their final spot", default: true },
 });
 
-const BINDINGS: BindingSchema = {
+const BINDINGS = {
   "fifteen.left": { label: "slide left", category: "fifteen", keys: ["ArrowLeft", "a"], description: "slide the tile right of the gap into it" },
   "fifteen.right": { label: "slide right", category: "fifteen", keys: ["ArrowRight", "d"], description: "slide the tile left of the gap into it" },
   "fifteen.up": { label: "slide up", category: "fifteen", keys: ["ArrowUp", "w"], description: "slide the tile below the gap into it" },
   "fifteen.down": { label: "slide down", category: "fifteen", keys: ["ArrowDown", "s"], description: "slide the tile above the gap into it" },
-};
+} satisfies BindingSchema;
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof BINDINGS> {}
+}
 
 const swatch = (body: string) => `<svg viewBox="-0.5 -0.5 11 11">${body}</svg>`;
 const tileSample = (fill: string, label = "7") =>
   `<rect x="0.2" y="0.2" width="9.6" height="9.6" rx="1" fill="${fill}" stroke="var(--border)" stroke-width="0.4"/><text x="5" y="5.3" fill="var(--text)" font-size="4.6" font-weight="600" font-family="var(--font)" text-anchor="middle" dominant-baseline="central">${label}</text>`;
 const box = (extra: string) => `<rect x="0.5" y="0.5" width="9" height="9" rx="1" fill="none" stroke="var(--hint)" ${extra}/>`;
 
-export const fifteenView: View<FifteenPuzzle, FifteenState, FifteenAction, null> = {
+export const fifteenView: View<FifteenPuzzle, FifteenState, FifteenAction, null, typeof settings> = {
   id: "fifteen.svg",
   name: "tiles",
-  puzzle: "fifteen",
+  puzzle: fifteen,
   settings,
   controls: [
     { how: "click or tap a tile in the gap's row or column", what: "slide it (and any tiles between) toward the gap" },

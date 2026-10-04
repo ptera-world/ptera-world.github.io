@@ -1,6 +1,6 @@
 import { cellName as at } from "../../lib/grid-kit/names";
 import type { Step, Technique } from "../../core/types";
-import { describeTurn, goalTile, hintFor, type TwiddleAction, type TwiddleFocus, type TwiddlePuzzle, type TwiddleState } from "./logic";
+import { twiddle, describeTurn, goalTile, hintFor, type TwiddleAction, type TwiddleFocus, type TwiddlePuzzle, type TwiddleState } from "./logic";
 import type { PermStep, StepKind } from "../../lib/perm";
 
 type TwiddleTechnique = Technique<TwiddlePuzzle, TwiddleState, TwiddleAction>;
@@ -27,7 +27,7 @@ function step(p: TwiddlePuzzle, s: TwiddleState, kinds: StepKind[], explain: (h:
 export const turnHome: TwiddleTechnique = {
   id: "twiddle.turn-home",
   name: "turn it home",
-  puzzles: ["twiddle"],
+  puzzles: [twiddle],
   level: 1,
   description: "fill the board in order: the top rows left to right, then the last two rows a column at a time. bring each tile to its spot by turning blocks that hold nothing already finished.",
   find: (p, s) => step(p, s, ["move"], (h) => ({
@@ -39,7 +39,7 @@ export const turnHome: TwiddleTechnique = {
 export const blockCycle: TwiddleTechnique = {
   id: "twiddle.cycle",
   name: "turn and turn back",
-  puzzles: ["twiddle"],
+  puzzles: [twiddle],
   level: 2,
   description: "turn one block, then an overlapping one, then undo the first turn and then the second. most tiles come back where they were; only a few, where the blocks overlap, have moved round. that shifts a tile next to finished ones without disturbing them.",
   find: (p, s) => step(p, s, ["cycle"], (h) => ({
@@ -52,7 +52,7 @@ export const blockCycle: TwiddleTechnique = {
 export const lastTiles: TwiddleTechnique = {
   id: "twiddle.last-tiles",
   name: "last tiles",
-  puzzles: ["twiddle"],
+  puzzles: [twiddle],
   level: 3,
   description: "the last few tiles in the bottom-right corner are sorted together, by turning just the blocks there.",
   find: (p, s) => step(p, s, ["endgame", "parity"], (h) => ({

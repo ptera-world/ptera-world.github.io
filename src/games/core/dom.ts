@@ -72,3 +72,21 @@ export function style(id: string, css: string): void {
 export function add(el: Element, ...children: (Child | Child[])[]): void {
   append(el, children);
 }
+
+/**
+ * The frontend marks an ancestor of the board with how the player is giving input: "keyboard"
+ * while keys are in use, otherwise "pointer". Views style keyboard-only parts (cursors) off it.
+ */
+export type InputKind = "pointer" | "keyboard";
+const INPUT_ATTR = "data-input";
+
+/** CSS selector for an ancestor in input mode `kind`. */
+export const inputIs = (kind: InputKind): string => `[${INPUT_ATTR}="${kind}"]`;
+
+export function setInputKind(el: HTMLElement, kind: InputKind): void {
+  el.setAttribute(INPUT_ATTR, kind);
+}
+
+export function inputKind(el: Element): InputKind | null {
+  return (el.closest(`[${INPUT_ATTR}]`)?.getAttribute(INPUT_ATTR) as InputKind | undefined) ?? null;
+}

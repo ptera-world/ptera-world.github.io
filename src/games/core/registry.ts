@@ -1,5 +1,5 @@
 import { Event, Waterfall } from "./hooks";
-import type { AnyPuzzleDef, Frontend, Plugin, Technique, Theme, View, WidgetDef } from "./types";
+import type { AnyPlugin, AnyPuzzleDef, AnyView, AnyWidget, Frontend, PuzzleRef, Technique, Theme } from "./types";
 
 /**
  * Global catalogue of puzzles, plugins and views. Registering an existing id replaces it,
@@ -8,19 +8,19 @@ import type { AnyPuzzleDef, Frontend, Plugin, Technique, Theme, View, WidgetDef 
  */
 export class Registry {
   private puzzles = new Map<string, AnyPuzzleDef>();
-  private plugins = new Map<string, Plugin>();
-  private views = new Map<string, View>();
+  private plugins = new Map<string, AnyPlugin>();
+  private views = new Map<string, AnyView>();
   private techniques = new Map<string, Technique>();
-  private widgets = new Map<string, WidgetDef>();
+  private widgets = new Map<string, AnyWidget>();
   private themes = new Map<string, Theme>();
   private frontends = new Map<string, Frontend>();
 
   readonly hooks = {
     resolvePuzzle: new Waterfall<AnyPuzzleDef, void>("resolvePuzzle"),
-    resolvePlugin: new Waterfall<Plugin, void>("resolvePlugin"),
-    resolveView: new Waterfall<View, void>("resolveView"),
+    resolvePlugin: new Waterfall<AnyPlugin, void>("resolvePlugin"),
+    resolveView: new Waterfall<AnyView, void>("resolveView"),
     resolveTechnique: new Waterfall<Technique, void>("resolveTechnique"),
-    resolveWidget: new Waterfall<WidgetDef, void>("resolveWidget"),
+    resolveWidget: new Waterfall<AnyWidget, void>("resolveWidget"),
     /** Fired after any registration change. */
     changed: new Event<{ kind: "puzzle" | "plugin" | "view" | "technique" | "widget" | "theme" | "frontend"; id: string }>("changed"),
   };
@@ -30,12 +30,12 @@ export class Registry {
     this.hooks.changed.call({ kind: "puzzle", id: def.id });
   }
 
-  plugin(p: Plugin): void {
+  plugin(p: AnyPlugin): void {
     this.plugins.set(p.id, p);
     this.hooks.changed.call({ kind: "plugin", id: p.id });
   }
 
-  view(v: View): void {
+  view(v: AnyView): void {
     this.views.set(v.id, v);
     this.hooks.changed.call({ kind: "view", id: v.id });
   }
@@ -65,35 +65,35 @@ export class Registry {
     return [...this.themes.values()];
   }
 
-  widget(w: WidgetDef): void {
+  widget(w: AnyWidget): void {
     this.widgets.set(w.id, w);
     this.hooks.changed.call({ kind: "widget", id: w.id });
   }
 
   /** True if `requires` is satisfied by the loaded puzzle (always true when no puzzle is given). */
-  private has(puzzleId: string, puzzle: unknown, requires: readonly string[] | undefined): boolean {
+  private has(ref: PuzzleRef, puzzle: unknown, requires: readonly string[] | undefined): boolean {
     if (!requires?.length || puzzle === undefined) return true;
-    const def = this.puzzles.get(puzzleId);
+    const def = this.puzzles.get(ref.id);
     let features: readonly string[] = [];
     try {
       features = def?.features?.(puzzle) ?? [];
     } catch (e) {
-      console.error(`[games] ${puzzleId}.features threw`, e);
+      console.error(`[games] ${ref.id}.features threw`, e);
     }
     return requires.every((r) => features.includes(r));
   }
 
   /** Techniques for a puzzle, easiest first (ties by id, so order is stable). */
-  techniquesFor(puzzleId: string, puzzle?: unknown): Technique[] {
+  techniquesFor(ref: PuzzleRef, puzzle?: unknown): Technique[] {
     return [...this.techniques.values()]
-      .filter((t) => t.puzzles.includes(puzzleId) && this.has(puzzleId, puzzle, t.requires))
+      .filter((t) => covers(t.puzzles, ref) && this.has(ref, puzzle, t.requires))
       .map((t) => this.hooks.resolveTechnique.call(t))
       .sort((a, b) => a.level - b.level || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   }
 
-  widgetsFor(puzzleId: string, puzzle?: unknown): WidgetDef[] {
+  widgetsFor(ref: PuzzleRef, puzzle?: unknown): AnyWidget[] {
     return [...this.widgets.values()]
-      .filter((w) => (w.puzzles === "*" || w.puzzles.includes(puzzleId)) && this.has(puzzleId, puzzle, w.requires))
+      .filter((w) => covers(w.puzzles, ref) && this.has(ref, puzzle, w.requires))
       .map((w) => this.hooks.resolveWidget.call(w));
   }
 
@@ -106,17 +106,21 @@ export class Registry {
     return [...this.puzzles.keys()].map((id) => this.getPuzzle(id)!);
   }
 
-  pluginsFor(puzzleId: string, puzzle?: unknown): Plugin[] {
+  pluginsFor(ref: PuzzleRef, puzzle?: unknown): AnyPlugin[] {
     return [...this.plugins.values()]
-      .filter((p) => (p.appliesTo === "*" || p.appliesTo.includes(puzzleId)) && this.has(puzzleId, puzzle, p.requires))
+      .filter((p) => covers(p.appliesTo, ref) && this.has(ref, puzzle, p.requires))
       .map((p) => this.hooks.resolvePlugin.call(p));
   }
 
-  viewsFor(puzzleId: string): View[] {
+  viewsFor(ref: PuzzleRef): AnyView[] {
     return [...this.views.values()]
-      .filter((v) => v.puzzle === puzzleId)
+      .filter((v) => v.puzzle.id === ref.id)
       .map((v) => this.hooks.resolveView.call(v));
   }
+}
+
+function covers(list: readonly PuzzleRef[] | "*", ref: PuzzleRef): boolean {
+  return list === "*" || list.some((r) => r.id === ref.id);
 }
 
 export const registry = new Registry();

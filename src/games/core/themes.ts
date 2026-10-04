@@ -1,9 +1,15 @@
 import type { Registry } from "./registry";
-import { namespace } from "./storage";
+import { prefs } from "./storage";
 import type { Theme } from "./types";
 import { style } from "./dom";
 
-const prefs = namespace("prefs");
+
+declare module "./storage" {
+  interface Prefs {
+    theme: string;
+    themeTokens: Record<string, string>;
+  }
+}
 
 /** Color tokens a player can override directly. */
 export const COLOR_TOKENS: readonly { id: string; label: string }[] = [
@@ -27,7 +33,7 @@ export function themeChoice(): string {
 }
 
 export function tokenOverrides(): Record<string, string> {
-  return prefs.get<Record<string, string>>("themeTokens", {});
+  return prefs.get("themeTokens", {});
 }
 
 /** Resolve "system" to the first registered theme matching the OS light/dark preference. */

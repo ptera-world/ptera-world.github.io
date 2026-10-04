@@ -1,5 +1,5 @@
 import type { Plugin } from "../../core/types";
-import { COLOUR_NAMES, mark, type GuessAction, type GuessFocus, type GuessInteraction, type GuessPuzzle, type GuessState } from "./logic";
+import { guess, COLOUR_NAMES, mark, type GuessAction, type GuessFocus, type GuessInteraction, type GuessPuzzle, type GuessState } from "./logic";
 
 type GuessPlugin = Plugin<GuessPuzzle, GuessState, GuessAction, GuessInteraction>;
 
@@ -18,7 +18,7 @@ export const checkRow: GuessPlugin = {
   name: "hints check your guess first",
   description: "asking for a hint first says whether the guess you're building can't be the code, because an earlier guess would have been marked differently",
   category: "assists",
-  appliesTo: ["guess"],
+  appliesTo: [guess],
   enabledByDefault: true,
   setup({ session, owner }) {
     session.hooks.hint.tap(({ puzzle, state }) => {

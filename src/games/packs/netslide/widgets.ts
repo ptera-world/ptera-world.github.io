@@ -1,12 +1,12 @@
 import { h, style } from "../../core/dom";
 import type { WidgetDef } from "../../core/types";
-import { type NetslideAction, type NetslideInteraction, type NetslidePuzzle, type NetslideState } from "./logic";
+import { netslide, type NetslideAction, type NetslideInteraction, type NetslidePuzzle, type NetslideState } from "./logic";
 
 export const movesWidget: WidgetDef<NetslidePuzzle, NetslideState, NetslideAction, NetslideInteraction> = {
   id: "netslide.moves",
   name: "moves",
   description: "how many moves so far",
-  puzzles: ["netslide"],
+  puzzles: [netslide],
   defaultSlot: "top",
   order: 10,
   mount(el, { session, owner }) {

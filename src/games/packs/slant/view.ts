@@ -1,4 +1,4 @@
-import { bindCommands, type BindingSchema } from "../../core/commands";
+import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
 import { s, style } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
 import type { View } from "../../core/types";
@@ -9,7 +9,7 @@ import {
 } from "../../lib/grid-kit/view";
 import { fades } from "../../lib/grid-kit/fade";
 import {
-  NONE, SLASH_BACK, SLASH_FWD, geometry, pointCell,
+  slant, NONE, SLASH_BACK, SLASH_FWD, geometry, pointCell,
   type Mark, type SlantAction, type SlantConflicts, type SlantInteraction, type SlantPuzzle, type SlantState,
 } from "./logic";
 
@@ -30,14 +30,18 @@ const settings = defineSchema({
   longPressMs: { type: "int", label: "touch hold to start with / (ms)", default: 400, min: 150, max: 1500, step: 50 },
 });
 
-const BINDINGS: BindingSchema = {
+const BINDINGS = {
   "slant.cycle": { label: "cycle \\ / / / empty", category: "slant", keys: ["space"], description: "the selected cell goes empty → \\ → / → empty" },
   "slant.cycle-back": { label: "cycle / / \\ / empty", category: "slant", keys: ["Enter"], description: "the selected cell goes empty → / → \\ → empty" },
   "slant.back": { label: "draw \\", category: "slant", keys: ["backslash"], description: "draw \\ in the selected cell" },
   "slant.fwd": { label: "draw /", category: "slant", keys: ["slash"], description: "draw / in the selected cell" },
   "slant.clear": { label: "clear cell", category: "slant", keys: ["Backspace", "Delete"], description: "rub out the line in the selected cell" },
   ...cursorBindings("slant", "slant"),
-};
+} satisfies BindingSchema;
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof BINDINGS> {}
+}
 
 const INSET = 1.2;
 
@@ -56,11 +60,11 @@ function legend(): { sample: string; meaning: string }[] {
   ];
 }
 
-export function slantView(board: BoardPrefs): View<SlantPuzzle, SlantState, SlantAction, SlantInteraction> {
+export function slantView(board: BoardPrefs): View<SlantPuzzle, SlantState, SlantAction, SlantInteraction, typeof settings> {
   return {
     id: "slant.svg",
     name: "grid",
-    puzzle: "slant",
+    puzzle: slant,
     settings,
     controls: [
       { how: "click or tap a cell", what: "draw \\, then /, then rub it out. drag to do the same to several" },

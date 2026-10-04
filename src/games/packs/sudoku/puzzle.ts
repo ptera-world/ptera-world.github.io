@@ -1,6 +1,6 @@
 import type { Rng } from "../../core/rng";
 import type { Schema, Values } from "../../core/schema";
-import type { GenerateContext, Hint, Preset, PuzzleDef } from "../../core/types";
+import type { Feature, GenerateContext, Hint, Preset, PuzzleDef } from "../../core/types";
 import { bit, digits, popcount } from "./engine/bits";
 import { listOf } from "../../lib/edge-names";
 import { grade, gridFrom, type Grade, type Grid } from "./engine/human";
@@ -169,18 +169,21 @@ export function gridOf(p: LatinPuzzle, s: GridState): Grid {
   return gridFrom(modelOf(p), s.values, sol, struck);
 }
 
-const featureCache = new WeakMap<LatinPuzzle, string[]>();
+const featureCache = new WeakMap<LatinPuzzle, Feature[]>();
+
+/** A puzzle with a clue of this constraint type has the feature of the same name. */
+export const constraintFeature = (type: string): Feature => type as Feature;
 
 /**
  * Constraint type ids present, plus: "boxes" (box or jigsaw regions), "givens", "rules" (any
  * clue arithmetic), "unnamed-rules" (rules from a type without its own technique), "combos" (clues worth listing combinations for), "links" (cells that see
  * each other other than by row, column or box).
  */
-export function featuresOf(p: LatinPuzzle): string[] {
+export function featuresOf(p: LatinPuzzle): Feature[] {
   let f = featureCache.get(p);
   if (f) return f;
   const m = modelOf(p);
-  const out = new Set(p.constraints.map((c) => c.type));
+  const out = new Set(p.constraints.map((c) => constraintFeature(c.type)));
   if (m.houses.some((h) => h.kind === "box")) out.add("boxes");
   if (p.givens.some((v) => v)) out.add("givens");
   if (m.rules.length) out.add("rules");
@@ -320,4 +323,17 @@ export function latinDef<P extends Schema>(cfg: LatinDefConfig<P>): PuzzleDef<La
       return [`${p.n}×${p.n}`, ...extra].join(" ") + (p.title ? ` · ${p.title}` : "");
     },
   };
+}
+
+declare module "../../core/types" {
+  interface FeatureNames {
+    boxes: true;
+    givens: true;
+    rules: true;
+    /** Some rule comes from a clue type with no named logic. */
+    "unnamed-rules": true;
+    combos: true;
+    /** Cells see each other beyond rows, columns and boxes. */
+    links: true;
+  }
 }

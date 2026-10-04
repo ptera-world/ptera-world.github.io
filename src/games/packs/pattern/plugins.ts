@@ -1,12 +1,12 @@
+import { definePlugins } from "../../core/define";
 import { defineSchema } from "../../core/schema";
-import type { Plugin } from "../../core/types";
-import { info, type PatternAction, type PatternFocus, type PatternInteraction, type PatternPuzzle, type PatternState } from "./logic";
+import { pattern, info, type PatternAction, type PatternFocus, type PatternInteraction, type PatternPuzzle, type PatternState } from "./logic";
 import { LINE_RULES } from "./rules";
 import { EMPTY, FILLED, UNKNOWN, extremes, lineCells, lineClue, runs, solveLine, type Clue } from "./solver";
 import { knowledge } from "./techniques";
 import { BLOCK_RANGE_KEY, CLUE_DONE_KEY, LINE_ERRORS_KEY, MISTAKES_KEY, PROGRESS_KEY, type BlockRange, type ClueDone, type Progress } from "./view";
 
-type PatternPlugin = Plugin<PatternPuzzle, PatternState, PatternAction, PatternInteraction>;
+const plugin = definePlugins<PatternPuzzle, PatternState, PatternAction, PatternInteraction>();
 
 function lineValues(cells: readonly number[], idx: readonly number[]): number[] {
   return idx.map((i) => cells[i]!);
@@ -63,12 +63,12 @@ export function brokenLines(p: PatternPuzzle, cells: readonly number[]): number[
 }
 
 /** Runs ahead of technique hints (priority 100), so a wrong mark is pointed out before any deduction. */
-const checkMarks: PatternPlugin = {
+const checkMarks = plugin({
   id: "pattern.check-marks",
   name: "hints check your marks first",
   description: "asking for a hint points out filled or crossed cells that don't match the solution before suggesting anything else",
   category: "assists",
-  appliesTo: ["pattern"],
+  appliesTo: [pattern],
   enabledByDefault: true,
   setup({ session, owner }) {
     session.hooks.hint.tap(({ puzzle, state }) => {
@@ -81,14 +81,14 @@ const checkMarks: PatternPlugin = {
       };
     }, { owner, priority: 90 });
   },
-};
+});
 
-const clueDone: PatternPlugin = {
+const clueDone = plugin({
   id: "pattern.clue-done",
   name: "fade finished clue numbers",
   description: "fade clue numbers your marks already account for",
   category: "assists",
-  appliesTo: ["pattern"],
+  appliesTo: [pattern],
   enabledByDefault: true,
   setup({ session, owner }) {
     session.hooks.derive.tap((d, { puzzle, state }) => {
@@ -104,15 +104,15 @@ const clueDone: PatternPlugin = {
       return { ...d, [CLUE_DONE_KEY]: done };
     }, { owner });
   },
-};
+});
 
 /** Also fires a "mistake" effect when a move breaks a line that could still fit before. */
-const lineErrors: PatternPlugin = {
+const lineErrors = plugin({
   id: "pattern.line-errors",
   name: "flag impossible lines",
   description: "turn a clue red when the marks in its line can't fit it (only looks at the clue, never the solution)",
   category: "assists",
-  appliesTo: ["pattern"],
+  appliesTo: [pattern],
   enabledByDefault: true,
   setup({ session, owner }) {
     session.hooks.derive.tap((d, { puzzle, state }) => ({ ...d, [LINE_ERRORS_KEY]: brokenLines(puzzle, state.cells) }), { owner });
@@ -123,28 +123,28 @@ const lineErrors: PatternPlugin = {
       if (fresh.length) session.hooks.fx.call({ kind: "mistake", focus: { lines: fresh, broken: fresh[0] } satisfies PatternFocus });
     }, { owner });
   },
-};
+});
 
-const mistakes: PatternPlugin = {
+const mistakes = plugin({
   id: "pattern.mistakes",
   name: "show mistakes",
   description: "highlight marks that disagree with the solution",
   category: "checks",
-  appliesTo: ["pattern"],
+  appliesTo: [pattern],
   enabledByDefault: false,
   setup({ session, owner }) {
     session.hooks.derive.tap((d, { puzzle, state }) => ({ ...d, [MISTAKES_KEY]: wrongCells(puzzle, state) }), { owner });
   },
-};
+});
 
 const completeLine = LINE_RULES.find((r) => r.id === "every")!.find;
 
-const progress: PatternPlugin = {
+const progress = plugin({
   id: "pattern.progress",
   name: "show where progress is",
   description: "mark the lines where one line's logic decides something, or tint the exact cells",
   category: "assists",
-  appliesTo: ["pattern"],
+  appliesTo: [pattern],
   enabledByDefault: false,
   settings: defineSchema({
     show: {
@@ -175,15 +175,15 @@ const progress: PatternPlugin = {
       return { ...d, [PROGRESS_KEY]: out };
     }, { owner });
   },
-};
+});
 
 /** Display-only: the view sets interaction.clue while the player points at a clue number. */
-const blockRange: PatternPlugin = {
+const blockRange = plugin({
   id: "pattern.block-range",
   name: "show where a block can go",
   description: "point at or tap a clue number to shade every cell its block can still reach, darker where it lands however it sits",
   category: "assists",
-  appliesTo: ["pattern"],
+  appliesTo: [pattern],
   enabledByDefault: true,
   setup({ session, owner }) {
     session.hooks.derive.tap((d, { puzzle, state, interaction }) => {
@@ -200,6 +200,6 @@ const blockRange: PatternPlugin = {
       return { ...d, [BLOCK_RANGE_KEY]: range };
     }, { owner });
   },
-};
+});
 
-export const patternPlugins: PatternPlugin[] = [checkMarks, clueDone, lineErrors, mistakes, progress, blockRange];
+export const patternPlugins = [checkMarks, clueDone, lineErrors, mistakes, progress, blockRange];

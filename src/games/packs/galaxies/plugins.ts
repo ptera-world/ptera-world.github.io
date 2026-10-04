@@ -1,5 +1,5 @@
 import type { Plugin } from "../../core/types";
-import { findConflicts, wrongMarksHint, type Conflicts, type GalaxiesAction, type GalaxiesFocus, type GalaxiesInteraction, type GalaxiesPuzzle, type GalaxiesState } from "./logic";
+import { galaxies, findConflicts, wrongMarksHint, type Conflicts, type GalaxiesAction, type GalaxiesFocus, type GalaxiesInteraction, type GalaxiesPuzzle, type GalaxiesState } from "./logic";
 import { CONFLICTS_KEY } from "./view";
 
 type GalaxiesPlugin = Plugin<GalaxiesPuzzle, GalaxiesState, GalaxiesAction, GalaxiesInteraction>;
@@ -10,7 +10,7 @@ export const conflicts: GalaxiesPlugin = {
   name: "show conflicts",
   description: "marks tiles in red when their galaxy can't be right as drawn: their mirror image through the dot is off the board or in another galaxy, or they aren't joined to their dot",
   category: "assists",
-  appliesTo: ["galaxies"],
+  appliesTo: [galaxies],
   enabledByDefault: true,
   setup({ session, owner }) {
     session.hooks.derive.tap((d, { state }) => ({ ...d, [CONFLICTS_KEY]: findConflicts(session.puzzle, state) }), { owner });
@@ -30,7 +30,7 @@ export const checkMarks: GalaxiesPlugin = {
   name: "hints check your galaxies first",
   description: "asking for a hint points out tiles you put in the wrong galaxy before suggesting anything else",
   category: "assists",
-  appliesTo: ["galaxies"],
+  appliesTo: [galaxies],
   enabledByDefault: true,
   setup({ session, owner }) {
     session.hooks.hint.tap(({ puzzle, state }) => wrongMarksHint(puzzle, state) ?? undefined, { owner, priority: 90 });

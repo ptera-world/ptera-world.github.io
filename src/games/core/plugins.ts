@@ -1,9 +1,9 @@
 import { untapAll } from "./hooks";
 import type { Registry } from "./registry";
-import { resolve } from "./schema";
+import { resolve, type Schema, type Values } from "./schema";
 import type { Session } from "./session";
 import { namespace } from "./storage";
-import type { CommandDef, Plugin, PluginApi, ViewHandle } from "./types";
+import type { AnyPlugin, CommandDef, PluginApi, ViewHandle } from "./types";
 
 const store = namespace("plugin");
 
@@ -12,7 +12,7 @@ export interface PluginConfig {
   settings: Record<string, unknown>;
 }
 
-export function loadPluginConfig(p: Plugin): PluginConfig {
+export function loadPluginConfig(p: AnyPlugin): PluginConfig {
   const raw = store.get<Partial<PluginConfig>>(p.id, {});
   return {
     enabled: raw.enabled ?? p.enabledByDefault ?? true,
@@ -20,16 +20,16 @@ export function loadPluginConfig(p: Plugin): PluginConfig {
   };
 }
 
-export function savePluginConfig(p: Plugin, cfg: PluginConfig): void {
+export function savePluginConfig(p: AnyPlugin, cfg: PluginConfig): void {
   store.set(p.id, cfg);
 }
 
 interface Active {
-  plugin: Plugin;
+  plugin: AnyPlugin;
   owner: string;
   teardown?: () => void;
   uiTeardown?: () => void;
-  api: PluginApi<any, any, any, any>;
+  api: PluginApi<any, any, any, any, Schema>;
 }
 
 /**
@@ -38,23 +38,23 @@ interface Active {
  */
 export class PluginHost {
   private active = new Map<string, Active>();
-  private view: { handle: ViewHandle; root: HTMLElement } | null = null;
+  private view: { handle: ViewHandle; root: HTMLElement; frame: HTMLElement } | null = null;
 
   private ready = false;
 
   /** Attaches enabled plugins, then settles the opening state with all of them (no undo step). */
   constructor(private registry: Registry, private session: Session<any, any, any, any>) {
-    for (const p of registry.pluginsFor(session.def.id, session.puzzle)) this.sync(p);
+    for (const p of registry.pluginsFor(session.def, session.puzzle)) this.sync(p);
     this.ready = true;
     session.settle(false);
   }
 
-  plugins(): Plugin[] {
-    return this.registry.pluginsFor(this.session.def.id, this.session.puzzle);
+  plugins(): AnyPlugin[] {
+    return this.registry.pluginsFor(this.session.def, this.session.puzzle);
   }
 
   /** (Re)attach or detach one plugin to match its stored config. */
-  sync(p: Plugin): void {
+  sync(p: AnyPlugin): void {
     this.detach(p.id);
     const cfg = loadPluginConfig(p);
     if (!cfg.enabled) {
@@ -62,7 +62,7 @@ export class PluginHost {
       return;
     }
     const owner = `plugin:${p.id}`;
-    const api: PluginApi<any, any, any, any> = { session: this.session, settings: cfg.settings, owner };
+    const api: PluginApi<any, any, any, any, Schema> = { session: this.session, settings: cfg.settings as Values<Schema>, owner };
     const a: Active = { plugin: p, owner, api };
     try {
       a.teardown = p.setup?.(api) ?? undefined;
@@ -76,14 +76,14 @@ export class PluginHost {
     if (this.ready) this.session.settle(true, owner);
   }
 
-  setConfig(p: Plugin, cfg: PluginConfig): void {
+  setConfig(p: AnyPlugin, cfg: PluginConfig): void {
     savePluginConfig(p, cfg);
     this.sync(p);
   }
 
-  attachView(handle: ViewHandle, root: HTMLElement): void {
+  attachView(handle: ViewHandle, root: HTMLElement, frame: HTMLElement = root): void {
     this.detachView();
-    this.view = { handle, root };
+    this.view = { handle, root, frame };
     for (const a of this.active.values()) this.attachUi(a);
   }
 
@@ -116,7 +116,7 @@ export class PluginHost {
     if (!this.view || !a.plugin.ui) return;
     if (this.view.handle.hooks) untapAll(this.view.handle.hooks, a.owner);
     try {
-      a.uiTeardown = a.plugin.ui({ ...a.api, view: this.view.handle, root: this.view.root }) ?? undefined;
+      a.uiTeardown = a.plugin.ui({ ...a.api, view: this.view.handle, root: this.view.root, frame: this.view.frame }) ?? undefined;
     } catch (e) {
       console.error(`[games] plugin ${a.plugin.id} ui failed`, e);
     }

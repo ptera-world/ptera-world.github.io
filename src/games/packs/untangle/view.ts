@@ -1,8 +1,8 @@
-import { bindCommands, type BindingSchema } from "../../core/commands";
+import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
 import { s, style } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
-import { crossings, type Pt, type UntangleAction, type UntangleFocus, type UntangleInteraction, type UntanglePuzzle, type UntangleState } from "./logic";
+import { untangle, crossings, type Pt, type UntangleAction, type UntangleFocus, type UntangleInteraction, type UntanglePuzzle, type UntangleState } from "./logic";
 import type { UntangleTarget } from "./techniques";
 
 const CSS = `
@@ -31,14 +31,18 @@ const R = 1.1;
 /** Arrow-key step, as a fraction of the board. */
 const NUDGE = 1 / 80;
 
-const BINDINGS: BindingSchema = {
+const BINDINGS = {
   "untangle.next": { label: "next point", category: "untangle", keys: ["Tab", "space"], description: "select the next point for the keyboard" },
   "untangle.prev": { label: "previous point", category: "untangle", keys: ["shift+Tab"], description: "select the previous point" },
   "untangle.left": { label: "move left", category: "untangle", keys: ["ArrowLeft", "a"], description: "move the selected point a little left" },
   "untangle.right": { label: "move right", category: "untangle", keys: ["ArrowRight", "d"], description: "move the selected point a little right" },
   "untangle.up": { label: "move up", category: "untangle", keys: ["ArrowUp", "w"], description: "move the selected point a little up" },
   "untangle.down": { label: "move down", category: "untangle", keys: ["ArrowDown", "s"], description: "move the selected point a little down" },
-};
+} satisfies BindingSchema;
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof BINDINGS> {}
+}
 
 function legend(): { sample: string; meaning: string }[] {
   const svg = (body: string) => `<svg viewBox="0 0 12 6">${body}</svg>`;
@@ -50,11 +54,11 @@ function legend(): { sample: string; meaning: string }[] {
   ];
 }
 
-export function untangleView(): View<UntanglePuzzle, UntangleState, UntangleAction, UntangleInteraction> {
+export function untangleView(): View<UntanglePuzzle, UntangleState, UntangleAction, UntangleInteraction, typeof settings> {
   return {
     id: "untangle.svg",
     name: "board",
-    puzzle: "untangle",
+    puzzle: untangle,
     settings,
     controls: [
       { how: "drag a point", what: "move it; its lines follow" },

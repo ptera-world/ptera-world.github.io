@@ -1,6 +1,6 @@
 import type { Step, Technique } from "../../core/types";
 import { cellName as cellAt, plural } from "../../lib/grid-kit/names";
-import { info, type PatternAction, type PatternFocus, type PatternPuzzle, type PatternState, type PatternTarget, type GuideSpan } from "./logic";
+import { pattern, info, type PatternAction, type PatternFocus, type PatternPuzzle, type PatternState, type PatternTarget, type GuideSpan } from "./logic";
 import { ruleOnLine, type LineFind, type LineRuleId } from "./rules";
 import { EMPTY, FILLED, Lines, UNKNOWN, findProbe, lineClue, lineName } from "./solver";
 
@@ -110,7 +110,7 @@ function lineTechnique(
   };
   return {
     ...rest,
-    puzzles: ["pattern"],
+    puzzles: [pattern],
     find: (p, s) => stepOf(p, best(ruleHits(p, knowledge(p, s), id, s))),
     findAt(p, s, t) {
       const target = targetOf(t);
@@ -195,7 +195,7 @@ const word = (v: number) => (v === FILLED ? "filled" : "empty");
 export const whatIf: PatternTechnique = {
   id: "pattern.what-if",
   name: "what if",
-  puzzles: ["pattern"],
+  puzzles: [pattern],
   level: 8,
   description: "when no single line says anything more, pick a cell and suppose it's filled (or empty). follow the line logic that suppose leads to. if some line ends up with no way to fit its clue, the supposition was wrong, so the cell is the other way.",
   find: (p, s) => whatIfStep(p, s),

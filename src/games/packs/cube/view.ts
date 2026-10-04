@@ -1,8 +1,8 @@
-import { bindCommands, type BindingSchema } from "../../core/commands";
+import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
 import { h, s, style } from "../../core/dom";
 import type { View, WidgetDef } from "../../core/types";
 import { SOLIDS } from "./geometry";
-import { arena, type CubeAction, type CubeFocus, type CubePuzzle, type CubeState } from "./logic";
+import { arena, cube, type CubeAction, type CubeFocus, type CubePuzzle, type CubeState } from "./logic";
 import { animate, ease, type Animation } from "../../core/anim";
 import { add, cross, dot, hull, norm, pose, rotate, signedAngle, sub, type V3 } from "./pose";
 
@@ -28,19 +28,23 @@ const CSS = `
 .cube-moves { font-family: var(--mono); color: var(--text-dim); min-height: 1.4em; }
 `;
 
-const BINDINGS: BindingSchema = {
+const BINDINGS = {
   "cube.left": { label: "roll left", category: "cube", keys: ["ArrowLeft", "a"] },
   "cube.right": { label: "roll right", category: "cube", keys: ["ArrowRight", "d"] },
   "cube.up": { label: "roll up", category: "cube", keys: ["ArrowUp", "w"] },
   "cube.down": { label: "roll down", category: "cube", keys: ["ArrowDown", "s"] },
-};
+} satisfies BindingSchema;
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof BINDINGS> {}
+}
 
 const swatch = (body: string) => `<svg viewBox="-0.5 -0.5 11 11">${body}</svg>`;
 
 export const cubeView: View<CubePuzzle, CubeState, CubeAction, null> = {
   id: "cube.svg",
   name: "arena",
-  puzzle: "cube",
+  puzzle: cube,
   controls: [{ how: "click or tap a square next to the solid", what: "roll the solid onto it" }],
   legend: [
     { sample: swatch(`<rect width="10" height="10" fill="var(--cell)" stroke="var(--border)" stroke-width="0.3"/>`), meaning: "a plain square" },
@@ -204,7 +208,7 @@ export const facesWidget: WidgetDef<CubePuzzle, CubeState, CubeAction, null> = {
   id: "cube.faces",
   name: "faces",
   description: "blue faces so far, and rolls made",
-  puzzles: ["cube"],
+  puzzles: [cube],
   defaultSlot: "top",
   order: 10,
   mount(el, { session, owner }) {

@@ -1,6 +1,6 @@
 import type { Technique } from "../../core/types";
 import { fireAt } from "./beam";
-import { cellList, entryName, type BlackboxAction, type BlackboxFocus, type BlackboxPuzzle, type BlackboxState } from "./logic";
+import { blackbox, cellList, entryName, type BlackboxAction, type BlackboxFocus, type BlackboxPuzzle, type BlackboxState } from "./logic";
 import { expand, families, familySize, signature, type Evidence, type Families } from "./reason";
 
 type BlackboxTechnique = Technique<BlackboxPuzzle, BlackboxState, BlackboxAction>;
@@ -60,7 +60,7 @@ type CellTarget = { cell: number };
 export const certainBall: BlackboxTechnique = {
   id: "blackbox.certain-ball",
   name: "ball for sure",
-  puzzles: ["blackbox"],
+  puzzles: [blackbox],
   level: 1,
   description: "go through every way the balls could be placed that gives exactly the laser results so far. a cell that holds a ball in all of them certainly has one.",
   find: (p, s) => certainBallAt(p, s),
@@ -84,7 +84,7 @@ function certainBallAt(p: BlackboxPuzzle, s: BlackboxState, only?: number) {
 export const certainEmpty: BlackboxTechnique = {
   id: "blackbox.certain-empty",
   name: "empty for sure",
-  puzzles: ["blackbox"],
+  puzzles: [blackbox],
   level: 2,
   description: "a cell that is empty in every way the balls could be placed to give the laser results so far can't hold a ball. it gets locked so you don't put one there.",
   find: (p, s) => certainEmptyAt(p, s),
@@ -111,7 +111,7 @@ const COMPARE_LIMIT = 600;
 export const allAgree: BlackboxTechnique = {
   id: "blackbox.all-agree",
   name: "nothing left to learn",
-  puzzles: ["blackbox"],
+  puzzles: [blackbox],
   level: 3,
   description: "if every placement that fits the lasers so far would give the same result for every laser, more shots can't tell them apart, and any of them counts as right: place one and check it.",
   find(p, s) {
@@ -148,7 +148,7 @@ const SAMPLE_LIMIT = 3000;
 export const bestShot: BlackboxTechnique = {
   id: "blackbox.best-shot",
   name: "most telling laser",
-  puzzles: ["blackbox"],
+  puzzles: [blackbox],
   level: 4,
   description: "of the lasers not fired yet, fire the one whose result is least predictable: whatever comes out, it rules out the most placements that fit so far.",
   find(p, s) {

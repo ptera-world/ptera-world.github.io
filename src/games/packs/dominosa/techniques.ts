@@ -1,7 +1,7 @@
 import type { Step, Technique } from "../../core/types";
 import { geometry } from "./grid";
 import {
-  DOMINO, LINE, NONE, cellList, cellName, coveredBy, dominoName, placementList, placementName,
+  dominosa, DOMINO, LINE, NONE, cellList, cellName, coveredBy, dominoName, placementList, placementName,
   type DominosaAction, type DominosaFocus, type DominosaPuzzle, type DominosaState,
 } from "./logic";
 import { NO, YES, analyze, assign, freshKnowledge, scanSteps, type Knowledge, type Step as SolverStep, type StepKind } from "./solver";
@@ -83,7 +83,7 @@ type Finder = (p: DominosaPuzzle, s: DominosaState, target?: DominosaTarget) => 
 function technique(def: Omit<DominosaTechnique, "find" | "findAt" | "puzzles">, find: Finder): DominosaTechnique {
   return {
     ...def,
-    puzzles: ["dominosa"],
+    puzzles: [dominosa],
     find: (p, s) => find(p, s),
     findAt: (p, s, target) => find(p, s, target as DominosaTarget),
   };

@@ -236,3 +236,10 @@ export const zip: PuzzleDef<ZipPuzzle, ZipState, ZipAction, null, typeof params>
   ],
   describe: (p) => `${p.w}×${p.h}`,
 };
+
+declare module "../../core/types" {
+  interface FeatureNames {
+    /** Some side-by-side cells have a wall between them. */
+    walls: true;
+  }
+}

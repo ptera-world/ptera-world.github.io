@@ -2,9 +2,9 @@ import { HOLD_MS } from "../../core/gestures";
 import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
 import { colName, rowName, type Side } from "../../core/names";
-import { s, style } from "../../core/dom";
+import { s, style, inputIs } from "../../core/dom";
 import { CROSS, LINE, UNKNOWN, type EdgeState } from "./board";
-import { gridOf, type LoopyAction, type LoopyFocus, type LoopyInteraction, type LoopyPuzzle, type LoopyState } from "./def";
+import { gridOf, loopy, type LoopyAction, type LoopyFocus, type LoopyInteraction, type LoopyPuzzle, type LoopyState } from "./def";
 import { edgeBetween, type Grid } from "./grid";
 import { KEYS } from "./keys";
 
@@ -39,7 +39,7 @@ const CSS = `
 .loopy-board .over { fill: none; stroke-linecap: round; pointer-events: none; }
 .loopy-board .over.hover { stroke: var(--accent); stroke-width: var(--uw); opacity: 0.8; }
 .loopy-board .over.cursor { stroke: var(--focus); stroke-width: var(--cw); opacity: 0.55; }
-[data-input="pointer"] .loopy-board .over.cursor { display: none; }
+${inputIs("pointer")} .loopy-board .over.cursor { display: none; }
 .loopy-board .over.hint { stroke: var(--hint); stroke-width: var(--cw); stroke-dasharray: var(--dash); }
 .loopy-board .over.preview { stroke: var(--accent); stroke-width: var(--lw); opacity: 0.75; }
 .loopy-board .over.preview.erase { stroke: var(--danger); stroke-width: var(--uw); }
@@ -201,11 +201,11 @@ function inradius(g: Grid, f: number): number {
  * `holdMs` is the shell's touch hold: held that long without moving 10px, it opens the board
  * menu and swallows the lifting finger, so the press must end here without becoming a tap.
  */
-export function makeLoopyView(look: Look = plainLook, labels: Labels = noLabels, holdMs: number = HOLD_MS): View<LoopyPuzzle, LoopyState, LoopyAction, LoopyInteraction> {
+export function makeLoopyView(look: Look = plainLook, labels: Labels = noLabels, holdMs: number = HOLD_MS): View<LoopyPuzzle, LoopyState, LoopyAction, LoopyInteraction, typeof settings> {
   return {
     id: "loopy.svg",
     name: "board",
-    puzzle: "loopy",
+    puzzle: loopy,
     settings,
     legend: LEGEND,
     controls: [

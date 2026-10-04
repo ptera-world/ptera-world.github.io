@@ -1,5 +1,5 @@
 import { cellName as boardCell } from "../../core/names";
-import type { Action, Step, Technique } from "../../core/types";
+import type { Action, PuzzleRef, Step, Technique } from "../../core/types";
 import { scan, type Deduction, type Doms, type Model } from "./csp";
 
 /** A cell's name as the board's edge labels show it, e.g. "C5". */
@@ -36,7 +36,7 @@ export interface Reading {
 export interface TechniqueSpec<Pz, S, A extends Action> {
   id: string;
   name: string;
-  puzzle: string;
+  puzzle: PuzzleRef;
   level: number;
   description: string;
   /** Deduction kinds this technique reports. */

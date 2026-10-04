@@ -1,5 +1,5 @@
 import type { Plugin, Technique } from "../../core/types";
-import { COLOUR_NAMES, bestFill, fill, isComplete, region, solverMoves, type FloodAction, type FloodFocus, type FloodPuzzle, type FloodState } from "./logic";
+import { flood, COLOUR_NAMES, bestFill, fill, isComplete, region, solverMoves, type FloodAction, type FloodFocus, type FloodPuzzle, type FloodState } from "./logic";
 
 type FloodTechnique = Technique<FloodPuzzle, FloodState, FloodAction>;
 
@@ -19,7 +19,7 @@ function playable(p: FloodPuzzle, s: FloodState): boolean {
 export const clearColour: FloodTechnique = {
   id: "flood.clear-colour",
   name: "wipe out a color",
-  puzzles: ["flood"],
+  puzzles: [flood],
   level: 1,
   description: "if every cell of some color left on the board touches your area (or joins it through others of that color), flooding with it takes that color off the board for good: one fewer color to come back for.",
   find(p, s) {
@@ -47,7 +47,7 @@ export const clearColour: FloodTechnique = {
 export const lookahead: FloodTechnique = {
   id: "flood.lookahead",
   name: "three moves ahead",
-  puzzles: ["flood"],
+  puzzles: [flood],
   level: 2,
   description: "think of each cell's distance as how many fills it takes to reach it. try every sequence of three fills and pick the start that leaves the farthest cell nearest (then the fewest cells that far, then the biggest area). this is the method the move limit is set from.",
   find(p, s) {
@@ -78,7 +78,7 @@ export const behindPace: Plugin<FloodPuzzle, FloodState, FloodAction, null> = {
   name: "hints warn when you fall behind",
   description: "asking for a hint first says so if even the built-in method can no longer finish within the move limit from here",
   category: "assists",
-  appliesTo: ["flood"],
+  appliesTo: [flood],
   enabledByDefault: true,
   setup({ session, owner }) {
     session.hooks.hint.tap(({ puzzle, state }) => {

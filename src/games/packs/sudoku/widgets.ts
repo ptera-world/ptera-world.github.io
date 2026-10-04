@@ -1,16 +1,17 @@
 import { defineSchema } from "../../core/schema";
-import type { WidgetContext, WidgetDef } from "../../core/types";
+import { defineWidgets } from "../../core/define";
+import type { WidgetContext } from "../../core/types";
 import { h, style } from "../../core/dom";
 import { modelOf } from "./engine/model";
 import { constraintTypes } from "./engine/registry";
 import { cellName } from "./engine/types";
-import { LATIN_IDS } from "./defs";
+import { latinDefs } from "./defs";
 import { MODES } from "./input";
 import { peerCandidates } from "./plugins";
 import type { GridAction, GridInteraction, GridState, LatinPuzzle } from "./puzzle";
 import { colorVar } from "./view";
 
-type LatinWidget = WidgetDef<LatinPuzzle, GridState, GridAction, GridInteraction>;
+const widget = defineWidgets<LatinPuzzle, GridState, GridAction, GridInteraction>();
 type Ctx = WidgetContext<LatinPuzzle, GridState, GridAction, GridInteraction>;
 
 const CSS = `
@@ -57,11 +58,11 @@ function counts(p: LatinPuzzle, s: GridState): number[] {
 
 const keep = (e: PointerEvent) => e.preventDefault();
 
-const pad: LatinWidget = {
+const pad = widget({
   id: "sudoku.pad",
   name: "digit pad",
   description: "input modes, digits and erase, for mouse and touch",
-  puzzles: LATIN_IDS,
+  puzzles: latinDefs,
   defaultSlot: "side",
   order: 10,
   settings: defineSchema({
@@ -79,7 +80,7 @@ const pad: LatinWidget = {
     const modeButtons = MODES.map((m) => h("button", { "aria-pressed": "false", onpointerdown: keep, onclick: () => run(`sudoku.mode-${m.id}`) }, m.label));
     // n buttons in every mode (color mode offers the first n colors), so switching modes never resizes the pad
     const digitButtons = Array.from({ length: n }, (_, i) =>
-      h("button", { "aria-label": String(i + 1), onpointerdown: keep, onclick: () => run(`sudoku.${session.interaction.mode === "color" ? "color-" : "d"}${i + 1}`) }));
+      h("button", { "aria-label": String(i + 1), onpointerdown: keep, onclick: () => run(session.interaction.mode === "color" ? `sudoku.colour-${i + 1}` : `sudoku.d${i + 1}`) }));
     const grid = h("div", { class: "sdk-digits", style: `--cols: ${wide ? n : n <= 4 ? 2 : 3}; --n: ${n}` }, digitButtons);
     el.append(h("div", { class: `sdk-pad${wide ? " row" : ""}` },
       h("div", { class: "sdk-modes", role: "group", "aria-label": "input mode" }, modeButtons),
@@ -108,13 +109,13 @@ const pad: LatinWidget = {
     watch(ctx, render);
     render();
   },
-};
+});
 
-const highlighter: LatinWidget = {
+const highlighter = widget({
   id: "sudoku.highlighter",
   name: "digit highlighter",
   description: "pick a digit to light up everywhere; what gets lit is set under the \"highlight a digit\" assist",
-  puzzles: LATIN_IDS,
+  puzzles: latinDefs,
   defaultSlot: "side",
   order: 20,
   mount(el, ctx) {
@@ -132,13 +133,13 @@ const highlighter: LatinWidget = {
     watch(ctx, render);
     render();
   },
-};
+});
 
-const cellLabel: LatinWidget = {
+const cellLabel = widget({
   id: "sudoku.cell-name",
   name: "cell name",
   description: "the selected cell's name as hints use it: column letter, then row number (C5 = column C, row 5). turn on edge labels (l) to see the letters and numbers around the board",
-  puzzles: LATIN_IDS,
+  puzzles: latinDefs,
   defaultSlot: "off",
   order: 30,
   mount(el, ctx) {
@@ -149,13 +150,13 @@ const cellLabel: LatinWidget = {
     watch(ctx, render);
     render();
   },
-};
+});
 
-const combos: LatinWidget = {
+const combos = widget({
   id: "sudoku.combos",
   name: "cage combinations",
   description: "the digit sets still possible for the cage under the cursor",
-  puzzles: LATIN_IDS,
+  puzzles: latinDefs,
   requires: ["combos"],
   defaultSlot: "side",
   order: 40,
@@ -165,7 +166,7 @@ const combos: LatinWidget = {
   mount(el, ctx) {
     style("sudoku-widgets", CSS);
     const { session, settings } = ctx;
-    const max = settings.max as number;
+    const max = settings.max;
     const box = h("div", { class: "sdk-combos", "aria-live": "polite" });
     el.append(box);
     let last = "";
@@ -191,6 +192,6 @@ const combos: LatinWidget = {
     watch(ctx, render);
     render();
   },
-};
+});
 
-export const latinWidgets: LatinWidget[] = [pad, highlighter, cellLabel, combos];
+export const latinWidgets = [pad, highlighter, cellLabel, combos];

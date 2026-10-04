@@ -1,9 +1,9 @@
-import { bindCommands, type BindingSchema } from "../../core/commands";
-import { s, style } from "../../core/dom";
+import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
+import { s, style, inputIs } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
 import { geometry, type Geometry } from "./grid";
-import { COLOUR_NAMES, type Conflicts, type MapAction, type MapFocus, type MapInteraction, type MapPuzzle, type MapState } from "./logic";
+import { map, COLOUR_NAMES, type Conflicts, type MapAction, type MapFocus, type MapInteraction, type MapPuzzle, type MapState } from "./logic";
 import type { MapTarget } from "./techniques";
 
 /** Derived: Conflicts to flag on the board. */
@@ -31,7 +31,7 @@ const CSS = `
 .map-board .num { fill: var(--text); font: 600 4px var(--font); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
 .map-board .labels text { fill: var(--text-dim); font: 500 3.6px var(--font); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
 .map-board .cursor { fill: none; stroke: var(--focus); stroke-width: 0.6; pointer-events: none; }
-[data-input="pointer"] .map-board .cursor { display: none; }
+${inputIs("pointer")} .map-board .cursor { display: none; }
 `;
 
 const settings = defineSchema({
@@ -43,7 +43,7 @@ const SIZE = 10;
 const PAD = 0.6;
 const LABEL = 6;
 
-const BINDINGS: BindingSchema = {
+const BINDINGS = {
   "map.colour-1": { label: "red", category: "map", keys: ["1", "r"], description: "color the selected region red (or add a red pencil mark, in pencil mode). again to remove it" },
   "map.colour-2": { label: "yellow", category: "map", keys: ["2", "y"], description: "color the selected region yellow (or a pencil mark). again to remove it" },
   "map.colour-3": { label: "green", category: "map", keys: ["3", "g"], description: "color the selected region green (or a pencil mark). again to remove it" },
@@ -54,7 +54,11 @@ const BINDINGS: BindingSchema = {
   "map.right": { label: "cursor right", category: "map", keys: ["ArrowRight", "d"] },
   "map.up": { label: "cursor up", category: "map", keys: ["ArrowUp", "w"] },
   "map.down": { label: "cursor down", category: "map", keys: ["ArrowDown", "s"] },
-};
+} satisfies BindingSchema;
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof BINDINGS> {}
+}
 
 export type Side = "top" | "right" | "bottom" | "left";
 export type Board = { labelSides(): Set<Side>; colName(col: number): string; rowName(row: number): string };
@@ -97,11 +101,11 @@ function legend(): { sample: string; meaning: string }[] {
   ];
 }
 
-export function mapView(board: Board): View<MapPuzzle, MapState, MapAction, MapInteraction> {
+export function mapView(board: Board): View<MapPuzzle, MapState, MapAction, MapInteraction, typeof settings> {
   return {
     id: "map.svg",
     name: "map",
-    puzzle: "map",
+    puzzle: map,
     settings,
     controls: [
       { how: "click or tap a region", what: "cycle its color: red, yellow, green, blue, none" },

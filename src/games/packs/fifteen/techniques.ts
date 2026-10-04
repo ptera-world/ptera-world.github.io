@@ -1,5 +1,5 @@
 import type { Step, Technique } from "../../core/types";
-import { type FifteenAction, type FifteenFocus, type FifteenPuzzle, type FifteenState } from "./logic";
+import { fifteen, type FifteenAction, type FifteenFocus, type FifteenPuzzle, type FifteenState } from "./logic";
 import { groupTiles, nextPlan, type GroupKind, type Plan } from "./solver";
 
 type FifteenTechnique = Technique<FifteenPuzzle, FifteenState, FifteenAction>;
@@ -28,7 +28,7 @@ function step(p: FifteenPuzzle, s: FifteenState, kind: GroupKind, explain: (tile
 export const placeTile: FifteenTechnique = {
   id: "fifteen.place",
   name: "next tile home",
-  puzzles: ["fifteen"],
+  puzzles: [fifteen],
   level: 1,
   description: "fill the board a line at a time: the top row or left column of what's left, whichever is longer. bring each tile to its spot by walking the gap round it, never moving a tile that's already finished.",
   find: (p, s) => step(p, s, "single", (t) => `tile ${t} is next.`),
@@ -37,7 +37,7 @@ export const placeTile: FifteenTechnique = {
 export const lineEnd: FifteenTechnique = {
   id: "fifteen.line-end",
   name: "last two of a line",
-  puzzles: ["fifteen"],
+  puzzles: [fifteen],
   level: 2,
   description: "the last two tiles of a row (or column) can't go in one after the other: the second would knock the first out. park them side by side just below (or beside) their spots, then swing both in together.",
   find: (p, s) => step(p, s, "pair", (t) => `tiles ${t} finish this line and go in together.`),
@@ -47,7 +47,7 @@ export const lineEnd: FifteenTechnique = {
 export const lastSquare: FifteenTechnique = {
   id: "fifteen.last-square",
   name: "last square",
-  puzzles: ["fifteen"],
+  puzzles: [fifteen],
   level: 3,
   description: "once only a 2×2 corner is left, its three tiles just go round in a circle: keep turning them the same way until they line up.",
   find: (p, s) => step(p, s, "last", (t) => `only ${t} are left, in the last corner.`),

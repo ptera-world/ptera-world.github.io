@@ -1,8 +1,8 @@
-import { bindCommands, type BindingSchema } from "../../core/commands";
-import { s, style } from "../../core/dom";
+import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
+import { s, style, inputIs } from "../../core/dom";
 import type { View } from "../../core/types";
 import { D, L, R, U, centre, connected, degree, neighbour } from "./grid";
-import { movable, type NetslideAction, type NetslideFocus, type NetslideInteraction, type NetslidePuzzle, type NetslideState } from "./logic";
+import { netslide, movable, type NetslideAction, type NetslideFocus, type NetslideInteraction, type NetslidePuzzle, type NetslideState } from "./logic";
 
 const SIZE = 10;
 const EDGE = 6;
@@ -32,11 +32,11 @@ const CSS = `
 .netslide-board .mark.home { stroke-width: 0.7; stroke-dasharray: 1.2 0.8; }
 .netslide-board .mark.tile { stroke-width: 1; }
 .netslide-board .cursor { fill: none; stroke: var(--focus); stroke-width: 0.6; pointer-events: none; }
-[data-input="pointer"] .netslide-board .cursor { display: none; }
+${inputIs("pointer")} .netslide-board .cursor { display: none; }
 @media (prefers-reduced-motion: reduce) { .netslide-board .tile { transition: none; } }
 `;
 
-const BINDINGS: BindingSchema = {
+const BINDINGS = {
   "netslide.left": { label: "cursor left", category: "netslide", keys: ["ArrowLeft", "a"] },
   "netslide.right": { label: "cursor right", category: "netslide", keys: ["ArrowRight", "d"] },
   "netslide.up": { label: "cursor up", category: "netslide", keys: ["ArrowUp", "w"] },
@@ -45,7 +45,11 @@ const BINDINGS: BindingSchema = {
   "netslide.row-right": { label: "slide row right", category: "netslide", keys: ["shift+ArrowRight", "shift+d"], description: "slide the selected piece's row one place right" },
   "netslide.col-up": { label: "slide column up", category: "netslide", keys: ["shift+ArrowUp", "shift+w"], description: "slide the selected piece's column one place up" },
   "netslide.col-down": { label: "slide column down", category: "netslide", keys: ["shift+ArrowDown", "shift+s"], description: "slide the selected piece's column one place down" },
-};
+} satisfies BindingSchema;
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof BINDINGS> {}
+}
 
 /** Arms start a pipe's half-width behind the center, so corners join without a notch. */
 const ARM: Record<number, string> = { [R]: "M4 5H10", [U]: "M5 6V0", [L]: "M6 5H0", [D]: "M5 4V10" };
@@ -75,7 +79,7 @@ const box = (extra: string) => `<rect x="0.5" y="0.5" width="9" height="9" rx="1
 export const netslideView: View<NetslidePuzzle, NetslideState, NetslideAction, NetslideInteraction> = {
   id: "netslide.svg",
   name: "pipes",
-  puzzle: "netslide",
+  puzzle: netslide,
   controls: [
     { how: "click or tap an arrow at the end of a row or column", what: "slide that line one place the way the arrow points" },
     { how: "drag a piece sideways or up and down", what: "slide its row or column by as many places as you drag" },

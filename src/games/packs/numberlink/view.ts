@@ -1,11 +1,11 @@
-import { bindCommands, type BindingSchema } from "../../core/commands";
+import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
 import { s, style } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
 import { DOWN, LEFT, RIGHT, UP, edgeAt, edgeGrid, otherEnd, pieces, step } from "../../lib/edges";
 import type { Focus } from "../../lib/grid-kit/names";
 import { KIT_CSS, SIZE, cursorBindings, cursorHandlers, cursorRect, drawFocus, focusCells, focusLegend, frame, sample, sampleCell, type BoardPrefs } from "../../lib/grid-kit/view";
-import { CROSS, LINE, NONE, lineColors, pairColor, type NumberlinkAction, type NumberlinkFocus, type NumberlinkInteraction, type NumberlinkPuzzle, type NumberlinkState } from "./logic";
+import { numberlink, CROSS, LINE, NONE, lineColors, pairColor, type NumberlinkAction, type NumberlinkFocus, type NumberlinkInteraction, type NumberlinkPuzzle, type NumberlinkState } from "./logic";
 import { CONFLICTS_KEY } from "./plugins";
 import type { NumberlinkTarget } from "./techniques";
 
@@ -26,7 +26,7 @@ const settings = defineSchema({
   longPressMs: { type: "int", label: "touch hold for a cross (ms)", default: 400, min: 150, max: 1500, step: 50 },
 });
 
-const BINDINGS: BindingSchema = {
+const BINDINGS = {
   "numberlink.line-up": { label: "line up", category: "numberlink", keys: ["shift+ArrowUp", "shift+w"], description: "draw (or erase) the line from the selected cell upwards, and move there" },
   "numberlink.line-right": { label: "line right", category: "numberlink", keys: ["shift+ArrowRight", "shift+d"], description: "draw (or erase) the line to the right, and move there" },
   "numberlink.line-down": { label: "line down", category: "numberlink", keys: ["shift+ArrowDown", "shift+s"], description: "draw (or erase) the line downwards, and move there" },
@@ -37,7 +37,11 @@ const BINDINGS: BindingSchema = {
   "numberlink.cross-left": { label: "cross left", category: "numberlink", keys: ["alt+ArrowLeft"], description: "cross off the edge to the left, or remove the cross" },
   "numberlink.clear-cell": { label: "clear cell", category: "numberlink", keys: ["Backspace", "Delete"], description: "erase every line and cross around the selected cell" },
   ...cursorBindings("numberlink", "numberlink"),
-};
+} satisfies BindingSchema;
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof BINDINGS> {}
+}
 
 function legend(): { sample: string; meaning: string }[] {
   const dot = `<circle cx="5" cy="5" r="3.4" fill="${pairColor(1)}" stroke="var(--text)" stroke-width="0.4"/><text x="5" y="5.2" font-size="3.6" font-weight="700" font-family="var(--font)" text-anchor="middle" dominant-baseline="central" fill="rgb(0 0 0 / 0.7)">1</text>`;
@@ -54,11 +58,11 @@ function legend(): { sample: string; meaning: string }[] {
 
 const DIRS = [UP, RIGHT, DOWN, LEFT];
 
-export function numberlinkView(board: BoardPrefs): View<NumberlinkPuzzle, NumberlinkState, NumberlinkAction, NumberlinkInteraction> {
+export function numberlinkView(board: BoardPrefs): View<NumberlinkPuzzle, NumberlinkState, NumberlinkAction, NumberlinkInteraction, typeof settings> {
   return {
     id: "numberlink.svg",
     name: "grid",
-    puzzle: "numberlink",
+    puzzle: numberlink,
     settings,
     controls: [
       { how: "drag from a dot", what: "draw its line (starting again from a dot redraws its line; drawing over another line cuts it)" },
@@ -238,7 +242,7 @@ export function numberlinkView(board: BoardPrefs): View<NumberlinkPuzzle, Number
             navigator.vibrate?.(15);
             toggleEdge(pen.at.edge, CROSS);
             pen = null;
-          }, settings.longPressMs as number);
+          }, settings.longPressMs);
         }
       };
       const onMove = (e: PointerEvent) => {

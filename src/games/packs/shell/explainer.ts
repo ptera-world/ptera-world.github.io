@@ -1,6 +1,6 @@
 import { randomSeed } from "../../core/rng";
 import { clear, h, style } from "../../core/dom";
-import { namespace } from "../../core/storage";
+import { namespace, prefs } from "../../core/storage";
 import type { Session } from "../../core/session";
 import type { AnyPuzzleDef, Step, Technique, View, ViewHandle } from "../../core/types";
 import { SessionCtor, applyStep, colorOf, findPracticePosition, hintFrom } from "./engine";
@@ -26,7 +26,6 @@ interface Scene {
 }
 
 const positions = new Map<string, { puzzle: unknown; state: unknown; step: Step }>();
-const prefs = namespace("prefs");
 
 /**
  * A short, replayable scene that shows one technique on a small live board (its own session,

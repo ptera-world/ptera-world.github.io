@@ -2,7 +2,7 @@ import type { Technique } from "../../core/types";
 import { bit, type Deduction } from "../../lib/grid-kit/csp";
 import { cellList, cellName, technique, type Focus, type Reading } from "../../lib/grid-kit/names";
 import {
-  BLACK, DOT, NONE, SHADED, WHITE, model, readMarks,
+  range, BLACK, DOT, NONE, SHADED, WHITE, model, readMarks,
   type Mark, type RangeAction, type RangePuzzle, type RangeState,
 } from "./logic";
 
@@ -32,7 +32,7 @@ function step(p: RangePuzzle, d: Deduction, vars: number[], why: string, nudge: 
 }
 
 const num = (p: RangePuzzle, q: number) => `the ${p.nums[q]} on ${cellName(p, q)}`;
-const base = { puzzle: "range", read, changes };
+const base = { puzzle: range, read, changes };
 const EASY = { width: 9, height: 6, difficulty: "easy" };
 
 export const blackNeighbour: RangeTechnique = technique<RangePuzzle, RangeState, RangeAction>({

@@ -1,12 +1,12 @@
 import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
 import { HOLD_MS } from "../../core/gestures";
-import { bindCommands, type BindingSchema, type CommandHandler } from "../../core/commands";
+import { bindCommands, type BindingSchema, type CommandHandler, type Ids } from "../../core/commands";
 import { colName, rowName } from "../../core/names";
-import { s, style } from "../../core/dom";
+import { s, style, inputIs } from "../../core/dom";
 import { KEYS } from "./assists";
 import { D, DIRS, L, R, U, degree, orientations, turnsBetween, type NetPuzzle } from "./grid";
-import type { NetAction, NetHintFocus, NetInteraction, NetState, TapMode } from "./logic";
+import { net, type NetAction, type NetHintFocus, type NetInteraction, type NetState, type TapMode } from "./logic";
 
 const SIZE = 10;
 const MID = SIZE / 2;
@@ -57,7 +57,7 @@ const CSS = `
 .net-board .pv .pv-lock { fill: color-mix(in srgb, var(--text) 18%, transparent); stroke: none; }
 .net-board .label { fill: var(--text-dim); font-size: 3.2px; font-family: var(--mono, monospace); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
 .net-board .cursor { fill: none; stroke: var(--focus); stroke-width: 0.6; pointer-events: none; }
-[data-input="pointer"] .net-board .cursor { display: none; }
+${inputIs("pointer")} .net-board .cursor { display: none; }
 [data-solved] .net-board .pipe { stroke: var(--accent); fill: var(--accent); }
 `;
 
@@ -66,7 +66,7 @@ const settings = defineSchema({
 });
 
 /** Acting on "the tile": the cursor, which a pointer press also moves, so these work from the board menu too. */
-const bindings: BindingSchema = {
+const bindings = {
   "net.tap-at": { label: "click a tile", category: "net", mouse: ["click"], description: "do what the tap buttons say: turn the tile clockwise (the default), counterclockwise, or lock it" },
   "net.rotate-ccw-at": { label: "turn counterclockwise (pointer)", category: "net", mouse: ["rightclick"], description: "turn the clicked tile counterclockwise" },
   "net.lock-at": { label: "lock / unlock (pointer)", category: "net", mouse: ["middleclick", "shift+click"], description: "lock or unlock the clicked tile; keep the button down and drag to lock or unlock several" },
@@ -84,19 +84,20 @@ const bindings: BindingSchema = {
   "net.tap-cw": { label: "tap turns clockwise", category: "net", description: "a tap or click on a tile turns it clockwise" },
   "net.tap-ccw": { label: "tap turns counterclockwise", category: "net", description: "a tap or click on a tile turns it counterclockwise" },
   "net.tap-lock": { label: "tap locks", category: "net", description: "a tap or click on a tile locks or unlocks it; drag across tiles to lock or unlock them all" },
-};
-
-/** On the board menu (long-press on touch): only what acts on the pressed tile. */
-const BOARD_MENU = ["net.rotate-cw", "net.rotate-ccw", "net.rotate-half", "net.lock", "net.source"];
+} satisfies BindingSchema;
 
 /** Only meaningful on wrapping boards. */
-const wrapBindings: BindingSchema = {
+const wrapBindings = {
   "net.shift-left": { label: "scroll left", category: "net", keys: ["shift+arrowleft"], description: "slide the whole wrapping board one tile left; tiles leaving one edge come back on the other" },
   "net.shift-right": { label: "scroll right", category: "net", keys: ["shift+arrowright"], description: "slide the whole wrapping board one tile right; tiles leaving one edge come back on the other" },
   "net.shift-up": { label: "scroll up", category: "net", keys: ["shift+arrowup"], description: "slide the whole wrapping board one tile up; tiles leaving one edge come back on the other" },
   "net.shift-down": { label: "scroll down", category: "net", keys: ["shift+arrowdown"], description: "slide the whole wrapping board one tile down; tiles leaving one edge come back on the other" },
   "net.recentre": { label: "center the source", category: "net", keys: ["c"], description: "scroll the wrapping board so the source sits in the middle" },
-};
+} satisfies BindingSchema;
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof bindings>, Ids<typeof wrapBindings> {}
+}
 
 /** A tile-sized sample in the board's own colors (the board's CSS classes are scoped to it, so styles are inline). */
 const tile = (bg: string, body: string, extra = "") =>
@@ -158,11 +159,11 @@ export interface NetViewDeps {
   holdMs?: number;
 }
 
-export function netView({ look = (_id, fallback) => fallback, labelSides = () => new Set(), holdMs = HOLD_MS }: NetViewDeps = {}): View<NetPuzzle, NetState, NetAction, NetInteraction> {
+export function netView({ look = (_id, fallback) => fallback, labelSides = () => new Set(), holdMs = HOLD_MS }: NetViewDeps = {}): View<NetPuzzle, NetState, NetAction, NetInteraction, typeof settings> {
   return {
     id: "net.svg",
     name: "grid",
-    puzzle: "net",
+    puzzle: net,
     settings,
     controls,
     legend,
@@ -436,7 +437,7 @@ export function netView({ look = (_id, fallback) => fallback, labelSides = () =>
       render();
 
       const rects = (list: Iterable<number>) => [...new Set(list)].filter((i) => i >= 0 && i < n).map((i) => cells[i]!.bg.getBoundingClientRect());
-      const playing = (c: Record<string, unknown>) => !c.solved;
+      const playing = () => !session.solved;
       const tapMenu = (mode: TapMode): Partial<CommandDef> => ({ checked: () => tapMode() === mode });
 
       const commands: CommandDef[] = [
@@ -463,6 +464,12 @@ export function netView({ look = (_id, fallback) => fallback, labelSides = () =>
           "net.lock-at": pointerCell(startPaint),
           "net.source-at": pointerCell(setSource),
         }, {
+          // the board menu (long-press on touch) holds only what acts on the pressed tile
+          "net.rotate-cw": { menu: "board" },
+          "net.rotate-ccw": { menu: "board" },
+          "net.rotate-half": { menu: "board" },
+          "net.lock": { menu: "board" },
+          "net.source": { menu: "board" },
           "net.jumble": { when: playing },
           "net.tap-cw": tapMenu("cw"),
           "net.tap-ccw": tapMenu("ccw"),
@@ -482,7 +489,7 @@ export function netView({ look = (_id, fallback) => fallback, labelSides = () =>
             }));
           },
         }) : []),
-      ].map((c) => (BOARD_MENU.includes(c.id) ? { ...c, menu: "board" } : c));
+      ];
 
       return {
         aspect: vbW / vbH,

@@ -1,8 +1,7 @@
-import { namespace } from "../../core/storage";
+import { prefs } from "../../core/storage";
 import type { CommandHub } from "./commands";
 import { h, style } from "../../core/dom";
 
-const prefs = namespace("prefs");
 
 const CSS = `
 .tip { position: fixed; z-index: 2000; pointer-events: none; max-width: min(320px, calc(100vw - 16px)); padding: 7px 10px; border-radius: 7px; background: var(--surface-2); color: var(--text); border: 1px solid var(--border); box-shadow: 0 8px 24px rgba(0,0,0,.35); font: 13px/1.4 var(--font); opacity: 0; transition: opacity 120ms; }
@@ -13,7 +12,7 @@ const CSS = `
 
 /** -1 = off. */
 export function tipDelay(): number {
-  return prefs.get<number>("tipDelay", 450);
+  return prefs.get("tipDelay", 450);
 }
 
 export function setTipDelay(ms: number): void {

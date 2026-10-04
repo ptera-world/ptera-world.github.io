@@ -1,12 +1,12 @@
 import { h, style } from "../../core/dom";
 import type { WidgetDef } from "../../core/types";
-import { type TwiddleAction, type TwiddleInteraction, type TwiddlePuzzle, type TwiddleState } from "./logic";
+import { twiddle, type TwiddleAction, type TwiddleInteraction, type TwiddlePuzzle, type TwiddleState } from "./logic";
 
 export const movesWidget: WidgetDef<TwiddlePuzzle, TwiddleState, TwiddleAction, TwiddleInteraction> = {
   id: "twiddle.moves",
   name: "moves",
   description: "how many moves so far",
-  puzzles: ["twiddle"],
+  puzzles: [twiddle],
   defaultSlot: "top",
   order: 10,
   mount(el, { session, owner }) {

@@ -1,6 +1,6 @@
 import type { Step, Technique } from "../../core/types";
 import {
-  COLOUR_NAMES, REASON_LIMIT, bestGuess, candidates, codeCount, isOver,
+  guess, COLOUR_NAMES, REASON_LIMIT, bestGuess, candidates, codeCount, isOver,
   type GuessAction, type GuessFocus, type GuessPuzzle, type GuessState,
 } from "./logic";
 
@@ -15,7 +15,7 @@ const allRows = (s: GuessState) => s.done.map((_, i) => i);
 export const knownPeg: GuessTechnique = {
   id: "guess.known-peg",
   name: "known peg",
-  puzzles: ["guess"],
+  puzzles: [guess],
   level: 1,
   description: "go through every code that fits all the marks so far. if they all have the same color in some position, that peg is settled.",
   find: (p, s) => knownPegStep(p, s),
@@ -42,7 +42,7 @@ function knownPegStep(p: GuessPuzzle, s: GuessState, only?: number): Step<GuessA
 export const lastCode: GuessTechnique = {
   id: "guess.last-code",
   name: "only one code left",
-  puzzles: ["guess"],
+  puzzles: [guess],
   level: 2,
   description: "when exactly one code fits all the marks so far, it must be the answer: guess it.",
   find(p, s) {
@@ -63,7 +63,7 @@ export const lastCode: GuessTechnique = {
 export const narrowDown: GuessTechnique = {
   id: "guess.narrow-down",
   name: "narrow it down",
-  puzzles: ["guess"],
+  puzzles: [guess],
   level: 3,
   description: "pick the guess that, whatever marks it gets, leaves the fewest codes still possible. it may even be a code that can't be the answer, if it splits the rest more evenly.",
   find(p, s) {

@@ -1,6 +1,6 @@
 import { cellName as at } from "../../lib/grid-kit/names";
 import type { Step, Technique } from "../../core/types";
-import { describeShift, hintFor, type SixteenAction, type SixteenFocus, type SixteenPuzzle, type SixteenState } from "./logic";
+import { sixteen, describeShift, hintFor, type SixteenAction, type SixteenFocus, type SixteenPuzzle, type SixteenState } from "./logic";
 import type { PermStep, StepKind } from "../../lib/perm";
 
 type SixteenTechnique = Technique<SixteenPuzzle, SixteenState, SixteenAction>;
@@ -25,7 +25,7 @@ function step(p: SixteenPuzzle, s: SixteenState, kinds: StepKind[], explain: (h:
 export const slideHome: SixteenTechnique = {
   id: "sixteen.slide-home",
   name: "slide it home",
-  puzzles: ["sixteen"],
+  puzzles: [sixteen],
   level: 1,
   description: "fill the grid in reading order. to bring the next number to its spot, slide rows and columns that hold nothing already finished.",
   find: (p, s) => step(p, s, ["move"], (h) => {
@@ -41,7 +41,7 @@ export const slideHome: SixteenTechnique = {
 export const threeCycle: SixteenTechnique = {
   id: "sixteen.cycle",
   name: "three-tile cycle",
-  puzzles: ["sixteen"],
+  puzzles: [sixteen],
   level: 2,
   description: "slide a column, then a row, then the column back, then the row back. almost everything returns to where it was; just three tiles have swapped round. that lets you move a number next to finished ones without disturbing them.",
   find: (p, s) => step(p, s, ["cycle"], (h) => {
@@ -57,7 +57,7 @@ export const threeCycle: SixteenTechnique = {
 export const lastTiles: SixteenTechnique = {
   id: "sixteen.last-tiles",
   name: "last tiles",
-  puzzles: ["sixteen"],
+  puzzles: [sixteen],
   level: 3,
   description: "the last few numbers are sorted together, using row slides and three-tile cycles that stay inside them. on some sizes an arrangement can be 'odd': no amount of three-tile cycles can finish it. one slide of a whole line flips that, and is best done before anything is finished.",
   find: (p, s) => step(p, s, ["endgame", "parity"], (h) => h.kind === "parity"

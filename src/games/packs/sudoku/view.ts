@@ -1,7 +1,7 @@
 import { Event as HookEvent } from "../../core/hooks";
 import { defineSchema } from "../../core/schema";
-import type { View } from "../../core/types";
-import { clear, s, style } from "../../core/dom";
+import type { PuzzleRef, View } from "../../core/types";
+import { clear, s, style, inputIs } from "../../core/dom";
 import { digits } from "./engine/bits";
 import { insetOutline } from "./engine/constraints/draw";
 import { modelOf } from "./engine/model";
@@ -50,7 +50,7 @@ const CSS = `
 .sdk-board .ghost-elim { font: 700 ${S * 0.24}px var(--font); fill: var(--text-dim); text-anchor: middle; dominant-baseline: central; text-decoration: line-through; opacity: 0.7; pointer-events: none; }
 .sdk-board .sel-outline { fill: none; stroke: var(--focus); stroke-width: 5; stroke-linejoin: round; pointer-events: none; }
 .sdk-board .cursor { fill: none; stroke: var(--focus); stroke-width: 3; stroke-dasharray: 8 6; pointer-events: none; }
-[data-input="pointer"] .sdk-board .cursor { display: none; }
+${inputIs("pointer")} .sdk-board .cursor { display: none; }
 .sdk-board .color { pointer-events: none; }
 .sdk-board .sdk-diagonal { stroke: var(--text-dim); stroke-width: 2; opacity: 0.45; }
 .sdk-board .sdk-cage { fill: none; stroke: var(--text); stroke-width: 1.6; stroke-dasharray: 7 5; opacity: 0.85; }
@@ -148,11 +148,11 @@ const CONTROLS = [
   { how: "shift + a digit key", what: "write a corner mark, whatever the input mode" },
 ];
 
-export function latinView(board: BoardPrefs = noLabels, puzzleId = "sudoku"): View<LatinPuzzle, GridState, GridAction, GridInteraction> {
+export function latinView(def: PuzzleRef, board: BoardPrefs = noLabels): View<LatinPuzzle, GridState, GridAction, GridInteraction, typeof settings> {
   return {
-    id: `${puzzleId}.svg`,
+    id: `${def.id}.svg`,
     name: "grid",
-    puzzle: puzzleId,
+    puzzle: def,
     settings,
     controls: CONTROLS,
     legend: legendFor,
@@ -488,6 +488,6 @@ export function latinView(board: BoardPrefs = noLabels, puzzleId = "sudoku"): Vi
 }
 
 /** The same view registered for each puzzle on the engine. */
-export function viewFor(puzzleId: string, board?: BoardPrefs): View<LatinPuzzle, GridState, GridAction, GridInteraction> {
-  return latinView(board, puzzleId);
+export function viewFor(def: PuzzleRef, board?: BoardPrefs): View<LatinPuzzle, GridState, GridAction, GridInteraction, typeof settings> {
+  return latinView(def, board);
 }

@@ -1,3 +1,4 @@
+import type { CommandId } from "./commands";
 import type { Rng } from "./rng";
 import type { Schema, Values } from "./schema";
 import type { Session } from "./session";
@@ -9,6 +10,21 @@ import type { Session } from "./session";
  * plain JSON-serializable data and are treated as immutable. Reducers return a new object for
  * any change and the *same* object for a no-op; the session relies on that identity.
  */
+
+/**
+ * Names a registered puzzle. Built-in code passes the def itself; matching is by `id`, so a mod
+ * that re-registers the id (or wraps it through resolvePuzzle) still matches.
+ */
+export interface PuzzleRef {
+  readonly id: string;
+}
+
+/**
+ * Feature names, declared by the packs that provide or require them:
+ * `declare module "…/core/types" { interface FeatureNames { boxes: true } }`.
+ */
+export interface FeatureNames {}
+export type Feature = keyof FeatureNames & string;
 
 export interface Action {
   type: string;
@@ -67,10 +83,9 @@ export interface Technique<Pz = any, S = any, A extends Action = any> {
   /** Globally unique; convention "<puzzle>.<name>". */
   id: string;
   name: string;
-  /** Puzzle ids this technique works on. */
-  puzzles: readonly string[];
+  puzzles: readonly PuzzleRef[];
   /** Features the loaded puzzle must have (see PuzzleDef.features), e.g. ["cages"]. */
-  requires?: readonly string[];
+  requires?: readonly Feature[];
   /** Ordering and difficulty: lower is easier and is tried first. Comparable within one puzzle. */
   level: number;
   /** Plain-language explanation for the guide. */
@@ -128,11 +143,11 @@ export interface CommandDef {
 /** "overlay" sits over the board (results, tutorials); its size never affects layout. */
 export type SlotId = "top" | "side" | "bottom" | "panel" | "overlay" | "off";
 
-export interface WidgetContext<Pz = any, S = any, A extends Action = any, I = any> {
+export interface WidgetContext<Pz = any, S = any, A extends Action = any, I = any, P extends Schema = {}> {
   session: Session<Pz, S, A, I>;
-  settings: Readonly<Record<string, unknown>>;
-  /** Run any registered command by id (returns false if unknown or unavailable). */
-  run(commandId: string): boolean;
+  settings: Readonly<Values<P>>;
+  /** Run a registered command (returns false if unknown or unavailable). */
+  run(commandId: CommandId): boolean;
   /** All currently registered commands. */
   commands(): CommandDef[];
   /** Mounted view, if any (for view-level hooks). */
@@ -147,19 +162,18 @@ export interface WidgetContext<Pz = any, S = any, A extends Action = any, I = an
  * A movable piece of UI. The player decides which slot each widget lives in (or hides it);
  * defaults come from here. Widgets must keep a stable height in "top" so the board never moves.
  */
-export interface WidgetDef<Pz = any, S = any, A extends Action = any, I = any> {
+export interface WidgetDef<Pz = any, S = any, A extends Action = any, I = any, P extends Schema = {}> {
   id: string;
   name: string;
   description?: string;
-  /** Puzzle ids, or "*". */
-  puzzles: readonly string[] | "*";
+  puzzles: readonly PuzzleRef[] | "*";
   /** Features the loaded puzzle must have (see PuzzleDef.features). */
-  requires?: readonly string[];
+  requires?: readonly Feature[];
   defaultSlot: SlotId;
   /** Position within a slot; lower first. */
   order?: number;
-  settings?: Schema;
-  mount(el: HTMLElement, ctx: WidgetContext<Pz, S, A, I>): Teardown;
+  settings?: P;
+  mount(el: HTMLElement, ctx: WidgetContext<Pz, S, A, I, P>): Teardown;
 }
 
 export interface Rating {
@@ -214,7 +228,7 @@ export interface PuzzleDef<Pz = unknown, S = unknown, A extends Action = Action,
    * techniques that require a feature only appear when the loaded puzzle has it, so engines
    * shared between puzzles never leak settings that make no sense for one of them.
    */
-  features?(puzzle: Pz): readonly string[];
+  features?(puzzle: Pz): readonly Feature[];
   /** Catalogue labels (genre, mechanics), used to group and filter the game list. */
   tags?: readonly string[];
   /** Other names people know it by (e.g. "nonogram", "picross"); searchable on the game list. */
@@ -229,16 +243,19 @@ export interface PuzzleDef<Pz = unknown, S = unknown, A extends Action = Action,
   describe?(puzzle: Pz): string;
 }
 
-export interface PluginApi<Pz, S, A extends Action, I> {
+export interface PluginApi<Pz, S, A extends Action, I, P extends Schema = {}> {
   session: Session<Pz, S, A, I>;
-  settings: Readonly<Record<string, unknown>>;
+  settings: Readonly<Values<P>>;
   /** Pass as `{ owner }` to every tap so teardown is automatic. */
   owner: string;
 }
 
-export interface PluginUiApi<Pz, S, A extends Action, I> extends PluginApi<Pz, S, A, I> {
+export interface PluginUiApi<Pz, S, A extends Action, I, P extends Schema = {}> extends PluginApi<Pz, S, A, I, P> {
   view: ViewHandle;
+  /** Element the view is mounted in. */
   root: HTMLElement;
+  /** The frontend's board area around `root` (`root` itself if the frontend has none). */
+  frame: HTMLElement;
 }
 
 export type Teardown = void | (() => void);
@@ -248,27 +265,26 @@ export type Teardown = void | (() => void);
  * Re-setup (teardown then setup) happens whenever its settings change, so setup may treat
  * settings as constant.
  */
-export interface Plugin<Pz = any, S = any, A extends Action = any, I = any> {
+export interface Plugin<Pz = any, S = any, A extends Action = any, I = any, P extends Schema = {}> {
   id: string;
   name: string;
   description?: string;
   /** Grouping label in the settings UI. */
   category?: string;
-  /** Puzzle ids this applies to, or "*". */
-  appliesTo: readonly string[] | "*";
+  appliesTo: readonly PuzzleRef[] | "*";
   /** Features the loaded puzzle must have (see PuzzleDef.features), e.g. ["boxes"] or ["candidates"]. */
-  requires?: readonly string[];
+  requires?: readonly Feature[];
   enabledByDefault?: boolean;
-  settings?: Schema;
-  setup?(api: PluginApi<Pz, S, A, I>): Teardown;
+  settings?: P;
+  setup?(api: PluginApi<Pz, S, A, I, P>): Teardown;
   /** DOM-side extension, run after the view mounts. */
-  ui?(api: PluginUiApi<Pz, S, A, I>): Teardown;
-  commands?(api: PluginApi<Pz, S, A, I>): CommandDef[];
+  ui?(api: PluginUiApi<Pz, S, A, I, P>): Teardown;
+  commands?(api: PluginApi<Pz, S, A, I, P>): CommandDef[];
 }
 
-export interface ViewContext<Pz, S, A extends Action, I> {
+export interface ViewContext<Pz, S, A extends Action, I, P extends Schema = {}> {
   session: Session<Pz, S, A, I>;
-  settings: Readonly<Record<string, unknown>>;
+  settings: Readonly<Values<P>>;
   /** Persistent per-view scratch storage (namespaced). */
   storage: KeyValue;
 }
@@ -306,12 +322,12 @@ export interface ViewHandle {
 }
 
 /** The only layer that touches the DOM. Remounted when its settings change. */
-export interface View<Pz = any, S = any, A extends Action = any, I = any> {
+export interface View<Pz = any, S = any, A extends Action = any, I = any, P extends Schema = {}> {
   id: string;
   name: string;
-  /** Puzzle id this renders. */
-  puzzle: string;
-  settings?: Schema;
+  /** Puzzle this renders. */
+  puzzle: PuzzleRef;
+  settings?: P;
   /**
    * Pointer gestures handled directly on the board (not bindable commands), for the how-to-play
    * card and tooltips, e.g. { how: "click a cell", what: "press it" }. Mouse and touch both.
@@ -322,7 +338,7 @@ export interface View<Pz = any, S = any, A extends Action = any, I = any> {
    * (or HTML) drawn with the same theme tokens the board uses, so it matches the current theme.
    */
   legend?: readonly { sample: string; meaning: string }[] | ((puzzle: Pz) => readonly { sample: string; meaning: string }[]);
-  mount(root: HTMLElement, ctx: ViewContext<Pz, S, A, I>): ViewHandle;
+  mount(root: HTMLElement, ctx: ViewContext<Pz, S, A, I, P>): ViewHandle;
 }
 
 export interface KeyValue {
@@ -332,6 +348,9 @@ export interface KeyValue {
 }
 
 export type AnyPuzzleDef = PuzzleDef<any, any, any, any, any>;
+export type AnyPlugin = Plugin<any, any, any, any, Schema>;
+export type AnyView = View<any, any, any, any, Schema>;
+export type AnyWidget = WidgetDef<any, any, any, any, Schema>;
 
 /**
  * The page itself (chrome, panels, how games are presented). Exactly one runs: the one the player

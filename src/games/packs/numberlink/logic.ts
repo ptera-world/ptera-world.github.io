@@ -357,3 +357,12 @@ export const numberlink: PuzzleDef<NumberlinkPuzzle, NumberlinkState, Numberlink
   ],
   describe: (p) => `${p.w}×${p.h}${p.fill ? "" : ", empty cells allowed"}`,
 };
+
+declare module "../../core/types" {
+  interface FeatureNames {
+    /** Every cell must be on a line. */
+    fill: true;
+    /** Cells may stay empty. */
+    gaps: true;
+  }
+}

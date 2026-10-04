@@ -1,5 +1,5 @@
 import { checkMarksPlugin, conflictsPlugin } from "../../lib/grid-kit/plugins";
-import { findConflicts, wrongMarksHint, type NumberlinkPuzzle, type NumberlinkState } from "./logic";
+import { numberlink, findConflicts, wrongMarksHint, type NumberlinkPuzzle, type NumberlinkState } from "./logic";
 
 /** Derived: Conflicts to flag on the board. */
 export const CONFLICTS_KEY = "numberlink.conflicts";
@@ -7,7 +7,7 @@ export const CONFLICTS_KEY = "numberlink.conflicts";
 export const numberlinkPlugins = [
   conflictsPlugin<NumberlinkPuzzle, NumberlinkState>({
     id: "numberlink.conflicts",
-    puzzle: "numberlink",
+    puzzle: numberlink,
     description: "marks rule breaks you can see without knowing the answer in red: cells with too many lines or a line that can't go on, lines joining two colors, and loops",
     key: CONFLICTS_KEY,
     kinds: [
@@ -19,7 +19,7 @@ export const numberlinkPlugins = [
   }),
   checkMarksPlugin({
     id: "numberlink.check-marks",
-    puzzle: "numberlink",
+    puzzle: numberlink,
     description: "asking for a hint points out lines and crosses that don't match the solution before suggesting anything else",
     wrong: wrongMarksHint,
   }),

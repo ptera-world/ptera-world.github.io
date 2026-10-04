@@ -235,7 +235,7 @@ test("mistake checks only exist when the puzzle has one solution", async () => {
   expect(loopy.features!(unique)).toContain("solution");
   expect(loopy.features!(ambiguous)).not.toContain("solution");
   expect(loopy.features!(unique)).toContain("tiling:square");
-  const ids = (p: LoopyPuzzle) => registry.pluginsFor("loopy", p).map((x) => x.id);
+  const ids = (p: LoopyPuzzle) => registry.pluginsFor(loopy, p).map((x) => x.id);
   expect(ids(unique)).toContain("loopy.mistakes");
   expect(ids(ambiguous)).not.toContain("loopy.mistakes");
   expect(ids(ambiguous)).not.toContain("loopy.mistake-hints");

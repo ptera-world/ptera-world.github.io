@@ -2,7 +2,7 @@ import type { Technique } from "../../core/types";
 import { valueOf, type Deduction } from "../../lib/grid-kit/csp";
 import { cellName, technique, type Focus, type Reading } from "../../lib/grid-kit/names";
 import {
-  BACK, NONE, markOf, model, pointCell, pointName, readMarks,
+  slant, BACK, NONE, markOf, model, pointCell, pointName, readMarks,
   type SlantAction, type SlantPuzzle, type SlantState,
 } from "./logic";
 
@@ -35,7 +35,7 @@ function step(p: SlantPuzzle, d: Deduction, vars: number[], why: string, nudge: 
 const aim = (p: SlantPuzzle, d: Deduction, vars: number[], target: unknown) =>
   typeof target === "number" && (vars.includes(target) || d.because.some((pt) => pointCell(p, pt) === target));
 
-const base = { puzzle: "slant", read, changes, aim };
+const base = { puzzle: slant, read, changes, aim };
 const at = (p: SlantPuzzle, d: Deduction) => ({ because: [pointCell(p, d.because[0]!)], points: [d.because[0]!] });
 
 export const full: SlantTechnique = technique<SlantPuzzle, SlantState, SlantAction>({

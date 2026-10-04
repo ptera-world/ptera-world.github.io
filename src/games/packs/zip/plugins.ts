@@ -1,5 +1,5 @@
 import { checkMarksPlugin, conflictsPlugin } from "../../lib/grid-kit/plugins";
-import { findConflicts, wrongPathHint, type ZipPuzzle, type ZipState } from "./logic";
+import { zip, findConflicts, wrongPathHint, type ZipPuzzle, type ZipState } from "./logic";
 
 /** Derived: Conflicts to flag on the board. */
 export const CONFLICTS_KEY = "zip.conflicts";
@@ -7,7 +7,7 @@ export const CONFLICTS_KEY = "zip.conflicts";
 export const zipPlugins = [
   conflictsPlugin<ZipPuzzle, ZipState>({
     id: "zip.conflicts",
-    puzzle: "zip",
+    puzzle: zip,
     description: "marks in red what you can see won't work: the path's end when it can't go on, cells left with too few ways in, and cells cut off from the path",
     key: CONFLICTS_KEY,
     kinds: [
@@ -19,7 +19,7 @@ export const zipPlugins = [
   }),
   checkMarksPlugin({
     id: "zip.check-path",
-    puzzle: "zip",
+    puzzle: zip,
     description: "asking for a hint first says where the path went wrong, if it has, before suggesting anything else",
     wrong: wrongPathHint,
   }),

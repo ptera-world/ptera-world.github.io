@@ -195,4 +195,3 @@ export const unequal = latinDef({
 });
 
 export const latinDefs = [sudoku, keen, towers, unequal];
-export const LATIN_IDS = latinDefs.map((d) => d.id);

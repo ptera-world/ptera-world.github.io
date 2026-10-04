@@ -183,7 +183,16 @@ export const net: PuzzleDef<NetPuzzle, NetState, NetAction, NetInteraction, type
     "the small filled square marks the source: pipes joined to it light up, so you can see what's connected so far. it doesn't change the answer.",
     "lock a tile once you're sure of it, so it can't be turned by accident. locked tiles are shaded.",
   ],
-  features: (p) => [...(p.wrap ? ["wrap"] : []), ...(p.barriers.some((b) => b) ? ["walls"] : [])],
+  features: (p) => [...(p.wrap ? ["wrap" as const] : []), ...(p.barriers.some((b) => b) ? ["walls" as const] : [])],
   rate,
   describe: (p) => `${p.w}×${p.h}${p.wrap ? " wrapping" : ""}${p.barriers.some((b) => b) ? " with walls" : ""}`,
 };
+
+declare module "../../core/types" {
+  interface FeatureNames {
+    /** The board's edges wrap round. */
+    wrap: true;
+    /** The board has walls between some tiles. */
+    walls: true;
+  }
+}

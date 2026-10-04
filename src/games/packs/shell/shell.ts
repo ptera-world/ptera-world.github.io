@@ -3,7 +3,7 @@ import type { LoadedPack, ModLoadResult } from "../../core/mods";
 import type { PluginHost } from "../../core/plugins";
 import type { Registry } from "../../core/registry";
 import { randomSeed } from "../../core/rng";
-import { canonical, fromQuery, resolve, toQuery } from "../../core/schema";
+import { canonical, fromQuery, resolve, toQuery, type Schema, type Values } from "../../core/schema";
 import type { Origin, Session, SharedHistory, Snapshot } from "../../core/session";
 import { PluginHostCtor, SessionCtor, TechniqueHostCtor, applyStep, colorOf, findStepAt, rememberPosition, cycleLabels, findPracticePosition, generate, hintFrom, isPartOfStep, isStepDone, loadPluginConfig, onBoardPrefsChange, onThemeChange } from "./engine";
 import { packJson, unpackJson, type Patch } from "../../core/patch";
@@ -15,20 +15,20 @@ interface Shared {
   state?: Patch | null;
   history?: SharedHistory;
 }
-import { namespace } from "../../core/storage";
+import { namespace, prefs } from "../../core/storage";
+import { HOWTO_TOGGLE, HOWTO_WIDGET, command, techniqueCommand, type ShellCommandDef, type ShellContext } from "./names";
 import type { TechniqueHost } from "../../core/techniques";
-import type { Step, AnyPuzzleDef, CommandDef, Format, Hint, Technique, View, ViewHandle, WidgetDef, SlotId } from "../../core/types";
+import type { Step, AnyPuzzleDef, AnyView, AnyWidget, CommandDef, Format, Hint, Technique, ViewHandle, SlotId } from "../../core/types";
 import { CommandHub } from "./commands";
-import { add, clear, formatTime, h, style } from "../../core/dom";
+import { add, clear, formatTime, h, setInputKind, style } from "../../core/dom";
 import { arrange, loadLayout, saveLayout, type LayoutConfig } from "./layout";
 import { builtinWidgets } from "./widgets";
 import { installTooltips } from "./tooltips";
 import { sessionList } from "./session-list";
 import { tagStyle } from "./tags";
-import { popup, type SurfaceItem, type SurfaceStyle } from "./surfaces";
+import { popup, type SurfaceItem } from "./surfaces";
 import { SAVE_PREFIX, INDEX_KEY, findSession, listSessions, loadSession, newSessionId, removeSession, saveSession } from "./sessions";
 
-const prefs = namespace("prefs");
 
 /** Board zoom also takes the browser's own zoom gestures (ctrl ±, ctrl+0, ctrl+scroll). Off by default. */
 export const zoomTakeover = (): boolean => prefs.get("zoomTakeover", false);
@@ -59,7 +59,7 @@ function originKey(def: AnyPuzzleDef, origin: Origin): string {
 
 
 interface MountedWidget {
-  def: WidgetDef;
+  def: AnyWidget;
   owner: string;
   el: HTMLElement;
   teardown?: () => void;
@@ -91,7 +91,7 @@ export class Shell {
   host: PluginHost | null = null;
   techniques: TechniqueHost | null = null;
   readonly hub: CommandHub;
-  view: { def: View; handle: ViewHandle } | null = null;
+  view: { def: AnyView; handle: ViewHandle } | null = null;
   private sessionCleanup: (() => void)[] = [];
   private generating: AbortController | null = null;
   private saveTimer = 0;
@@ -151,12 +151,11 @@ export class Shell {
       this.openBoardMenu(e.clientX, e.clientY, "mouse");
     });
     setInterval(() => this.tick(), 250);
-    // keyboard-only affordances (cursors) show while the keyboard is in use; views style off [data-input]
-    this.root.dataset.input = "pointer";
+    setInputKind(this.root, "pointer");
     document.addEventListener("keydown", (e) => {
-      if (!["Shift", "Control", "Alt", "Meta"].includes(e.key)) this.root.dataset.input = "keyboard";
+      if (!["Shift", "Control", "Alt", "Meta"].includes(e.key)) setInputKind(this.root, "keyboard");
     }, { capture: true });
-    document.addEventListener("pointerdown", () => { this.root.dataset.input = "pointer"; }, { capture: true });
+    document.addEventListener("pointerdown", () => { setInputKind(this.root, "pointer"); }, { capture: true });
     onThemeChange(() => { if (this.session) this.mountView(); });
     onBoardPrefsChange(() => { if (this.session) this.mountView(); });
     installTooltips(this.hub);
@@ -197,7 +196,7 @@ export class Shell {
 
   // --- context ---
 
-  private context(): Record<string, unknown> {
+  private context(): ShellContext {
     const s = this.session;
     return {
       hasSession: !!s,
@@ -225,7 +224,7 @@ export class Shell {
     if (q.get("tab")) this.activeTab = q.get("tab")!;
     const practice = q.get("practice");
     if (practice) {
-      const t = this.registry.techniquesFor(def.id).find((x) => x.id === practice);
+      const t = this.registry.techniquesFor(def).find((x) => x.id === practice);
       if (t) {
         await this.startPractice(def, t, q.get("seed") ?? randomSeed(), false);
         return;
@@ -321,7 +320,7 @@ export class Shell {
     this.generating = ac;
     this.showBusy(`finding a ${t.name}…`, ac);
     try {
-      const pos = await findPracticePosition(def, this.registry.techniquesFor(def.id), t, seed, ac.signal);
+      const pos = await findPracticePosition(def, this.registry.techniquesFor(def), t, seed, ac.signal);
       if (ac.signal.aborted) return;
       if (!pos) {
         this.showError(`couldn't find a ${t.name} to practice in time. try again for a different board.`);
@@ -465,17 +464,17 @@ export class Shell {
     this.techniques = null;
   }
 
-  private chosenView(def: AnyPuzzleDef): View | undefined {
-    const views = this.registry.viewsFor(def.id);
-    const want = prefs.get<string | null>(`view:${def.id}`, null);
+  private chosenView(def: AnyPuzzleDef): AnyView | undefined {
+    const views = this.registry.viewsFor(def);
+    const want = prefs.get(`view:${def.id}`, null);
     return views.find((v) => v.id === want) ?? views[views.length - 1];
   }
 
-  viewSettings(v: View): Record<string, unknown> {
+  viewSettings(v: AnyView): Values<Schema> {
     return v.settings ? resolve(v.settings, prefs.get(`viewcfg:${v.id}`, {})) : {};
   }
 
-  setViewSettings(v: View, values: Record<string, unknown>): void {
+  setViewSettings(v: AnyView, values: Record<string, unknown>): void {
     prefs.set(`viewcfg:${v.id}`, values);
     this.mountView();
   }
@@ -503,7 +502,7 @@ export class Shell {
     try {
       const handle = v.mount(mount, { session, settings: this.viewSettings(v), storage: namespace(`view:${v.id}`) });
       this.view = { def: v, handle };
-      this.host!.attachView(handle, mount);
+      this.host!.attachView(handle, mount, this.els.boardbox);
     } catch (e) {
       console.error(e);
       this.els.boardbox.append(h("p", { class: "error" }, `view failed: ${e instanceof Error ? e.message : e}`));
@@ -530,8 +529,8 @@ export class Shell {
 
   // --- widgets & layout ---
 
-  widgetDefs(): WidgetDef[] {
-    return this.session ? this.registry.widgetsFor(this.session.def.id, this.session.puzzle) : [];
+  widgetDefs(): AnyWidget[] {
+    return this.session ? this.registry.widgetsFor(this.session.def, this.session.puzzle) : [];
   }
 
   layoutConfig(): LayoutConfig {
@@ -552,11 +551,11 @@ export class Shell {
     this.mountWidgets();
   }
 
-  widgetSettings(w: WidgetDef): Record<string, unknown> {
+  widgetSettings(w: AnyWidget): Values<Schema> {
     return w.settings ? resolve(w.settings, prefs.get(`widget:${w.id}`, {})) : {};
   }
 
-  setWidgetSettings(w: WidgetDef, values: Record<string, unknown>): void {
+  setWidgetSettings(w: AnyWidget, values: Record<string, unknown>): void {
     prefs.set(`widget:${w.id}`, values);
     this.mountWidgets();
   }
@@ -656,9 +655,9 @@ export class Shell {
 
   /** Toggle the how-to card (placing its widget over the board if the player had hidden it). */
   showHowTo(): void {
-    const w = this.widgets.find((m) => m.def.id === "howto");
-    if (w) w.el.dispatchEvent(new CustomEvent("howto-toggle"));
-    else this.setPlacement("howto", "overlay");
+    const w = this.widgets.find((m) => m.def.id === HOWTO_WIDGET);
+    if (w) w.el.dispatchEvent(new CustomEvent(HOWTO_TOGGLE));
+    else this.setPlacement(HOWTO_WIDGET, "overlay");
   }
 
   openTab(id: string): void {
@@ -705,7 +704,7 @@ export class Shell {
     // minimum cell size or the zoom asks for more, and the window scrolls
     const fitW = Math.max(120, a.boardW), fitH = Math.max(120, a.boardH);
     const cells = this.view?.handle.cells;
-    const minCell = prefs.get<number>("minCell", 18);
+    const minCell = prefs.get("minCell", 18);
     const atLeast = cells && minCell > 0 ? Math.max(1, (minCell * cells.cols) / fitW, (minCell * cells.rows) / fitH) : 1;
     const scale = atLeast * this.zoom;
     e.boardwrap.style.width = `${fitW}px`;
@@ -725,7 +724,7 @@ export class Shell {
 
   /** Open the board menu in the player's chosen style for this input (defaults: list for mouse, radial for touch). */
   openBoardMenu(x: number, y: number, input: "mouse" | "touch"): void {
-    const style = prefs.get<SurfaceStyle>(`menuStyle:${input}`, input === "touch" ? "radial" : "list");
+    const style = prefs.get(`menuStyle:${input}`, input === "touch" ? "radial" : "list");
     if (style === "list") {
       this.hub.openMenu("board", x, y);
       return;
@@ -740,7 +739,7 @@ export class Shell {
   rearmHold(): void {
     this.stopHold?.();
     this.stopHold = null;
-    const delay = prefs.get<number>("holdShortcuts", 450);
+    const delay = prefs.get("holdShortcuts", 450);
     if (delay < 0) return;
     this.stopHold = onModifierHold(/Mac|iPhone|iPad/.test(navigator.platform) ? "Meta" : "Control", (on) => {
       if (on && !this.hub.cheatsheet.open) { this.holdOpened = true; this.hub.cheatsheet.open = true; }
@@ -805,7 +804,7 @@ export class Shell {
 
   private shellCommands(): CommandDef[] {
     const s = this.session;
-    const base: CommandDef[] = [
+    const base: ShellCommandDef[] = [
       { id: "shell.palette", label: "commands", category: "general", keys: ["$mod+k"], captureInput: true, run: () => this.hub.openPalette() },
       { id: "shell.shortcuts", label: "keyboard shortcuts", category: "general", keys: ["$mod+slash"], run: () => { this.hub.cheatsheet.open = !this.hub.cheatsheet.open; } },
       { id: "shell.rebind", label: "change key bindings", category: "general", run: () => { this.hub.settings.open = true; } },
@@ -931,20 +930,20 @@ export class Shell {
         if (!list.length) { this.setStatus("no technique applies here right now"); return; }
         const pe = ev as MouseEvent | undefined;
         const x = pe?.clientX ?? innerWidth / 2, y = pe?.clientY ?? innerHeight / 2;
-        const items = list.map((t) => ({ cmd: { id: `technique.here.${t.id}`, label: t.name, description: t.description, run: () => this.applySkill(t) } as CommandDef, enabled: true, keys: [] as string[] }));
-        void popup("tiles", x, y, items, (id) => { const t = list.find((x) => `technique.here.${x.id}` === id); if (t) this.applySkill(t); });
+        const items = list.map((t) => ({ cmd: { id: techniqueCommand("here", t), label: t.name, description: t.description, run: () => this.applySkill(t) } as CommandDef, enabled: true, keys: [] as string[] }));
+        void popup("tiles", x, y, items, (id) => { const t = list.find((x) => techniqueCommand("here", x) === id); if (t) this.applySkill(t); });
       },
     }] : [];
-    return [...here, ...th.list.flatMap((t): CommandDef[] => [
-      ...(t.findAt ? [{ id: `technique.here.${t.id}`, label: `${t.name} here`, category: "techniques", description: `apply ${t.name} to what you are pointing at`, run: () => this.applySkill(t) } satisfies CommandDef] : []),
-      { id: `technique.find.${t.id}`, label: `find ${t.name}`, category: "techniques", description: t.description, run: () => this.findTechnique(t) },
-      { id: `technique.apply.${t.id}`, label: `apply ${t.name}`, category: "techniques", run: () => { if (!th.apply(t)) this.setStatus(`no ${t.name} right now`); } },
+    return [...here, ...th.list.flatMap((t): ShellCommandDef[] => [
+      ...(t.findAt ? [{ id: techniqueCommand("here", t), label: `${t.name} here`, category: "techniques", description: `apply ${t.name} to what you are pointing at`, run: () => this.applySkill(t) } satisfies ShellCommandDef] : []),
+      { id: techniqueCommand("find", t), label: `find ${t.name}`, category: "techniques", description: t.description, run: () => this.findTechnique(t) },
+      { id: techniqueCommand("apply", t), label: `apply ${t.name}`, category: "techniques", run: () => { if (!th.apply(t)) this.setStatus(`no ${t.name} right now`); } },
       {
-        id: `technique.auto.${t.id}`, label: `auto-apply ${t.name}`, category: "techniques",
+        id: techniqueCommand("auto", t), label: `auto-apply ${t.name}`, category: "techniques",
         checked: () => th.config(t).auto,
         run: () => { th.setConfig(t, { ...th.config(t), auto: !th.config(t).auto }); this.hub.refresh(); },
       },
-      ...(t.practice === false ? [] : [{ id: `technique.practice.${t.id}`, label: `practice ${t.name}`, category: "practice", run: () => void this.startPractice(s.def, t, randomSeed()) } satisfies CommandDef]),
+      ...(t.practice === false ? [] : [{ id: techniqueCommand("practice", t), label: `practice ${t.name}`, category: "practice", run: () => void this.startPractice(s.def, t, randomSeed()) } satisfies ShellCommandDef]),
     ])];
   }
 
@@ -1135,8 +1134,8 @@ export class Shell {
       els.title, els.meta, h("span", { class: "spacer" }),
       this.safe ? h("a", { class: "safe-mark", href: location.pathname, title: "safe mode: only the built-in packs are loaded, all switched on. your pack settings are untouched" }, "safe mode · leave") : null,
       els.pauseMark, els.timer,
-      h("button", { class: "howto-btn", "data-command": "shell.howto", "aria-label": "how to play", onclick: () => this.hub.run("shell.howto") }, "?"),
-      h("button", { class: "palette-btn", "data-command": "shell.palette", onclick: () => this.hub.openPalette() }, "commands"));
+      h("button", { class: "howto-btn", "data-command": command("shell.howto"), "aria-label": "how to play", onclick: () => this.hub.run(command("shell.howto")) }, "?"),
+      h("button", { class: "palette-btn", "data-command": command("shell.palette"), onclick: () => this.hub.openPalette() }, "commands"));
     els.scroller.append(els.boardbox);
     els.boardwrap.append(els.scroller, els.overlay);
     els.middle.append(els.boardwrap, els.side);
@@ -1167,7 +1166,7 @@ export class Shell {
     };
     const all = this.registry.listPuzzles();
     const tags = [...new Set(all.flatMap((d) => d.tags ?? []))].sort();
-    let active = prefs.get<string | null>("indexTag", null);
+    let active = prefs.get("indexTag", null);
     if (active && !tags.includes(active)) active = null;
     const filters = h("div", { class: "index-tags", role: "group", "aria-label": "filter by tag" });
     const search = h("input", { type: "search", placeholder: "search games", "aria-label": "search games", class: "index-search", oninput: () => render() });
@@ -1188,7 +1187,7 @@ export class Shell {
       for (const li of items.filter((x) => (!active || (x.def.tags ?? []).includes(active)) && (!q || hay(x.def).includes(q)))) list.append(li.el);
     };
     const items = all.map((def) => {
-      const n = this.registry.techniquesFor(def.id).length;
+      const n = this.registry.techniquesFor(def).length;
       const p = encodeURIComponent(def.id);
       return h("li", null,
         h("a", { href: `?p=${p}`, class: "card", onclick: go(`p=${p}`) },
@@ -1212,7 +1211,7 @@ export class Shell {
     this.els.title.textContent = s.def.name;
     const bits: string[] = [];
     if (s.origin.kind === "practice") {
-      const t = this.registry.techniquesFor(s.def.id).find((x) => x.id === (s.origin as { technique: string }).technique);
+      const t = this.registry.techniquesFor(s.def).find((x) => x.id === (s.origin as { technique: string }).technique);
       bits.push(`practice: ${t?.name ?? "technique"}`);
     }
     const desc = s.def.describe?.(s.puzzle);

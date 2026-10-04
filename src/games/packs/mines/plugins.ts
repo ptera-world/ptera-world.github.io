@@ -1,30 +1,30 @@
+import { definePlugins } from "../../core/define";
 import { defineSchema } from "../../core/schema";
-import type { Plugin } from "../../core/types";
-import { chordCells, numbers, openIn, wrongFlagHint, type MinesAction, type MinesInteraction, type MinesPuzzle, type MinesState } from "./logic";
+import { mines, chordCells, numbers, openIn, wrongFlagHint, type MinesAction, type MinesInteraction, type MinesPuzzle, type MinesState } from "./logic";
 import { provable } from "./techniques";
 import { DEDUCED_KEY } from "./view";
 
-type MinesPlugin = Plugin<MinesPuzzle, MinesState, MinesAction, MinesInteraction>;
+const plugin = definePlugins<MinesPuzzle, MinesState, MinesAction, MinesInteraction>();
 
 /** Runs ahead of technique hints (priority 100), so a wrong flag is pointed out before any move. */
-export const checkFlags: MinesPlugin = {
+export const checkFlags = plugin({
   id: "mines.check-flags",
   name: "hints check your flags first",
   description: "asking for a hint points out flags that aren't on mines before suggesting anything else",
   category: "assists",
-  appliesTo: ["mines"],
+  appliesTo: [mines],
   enabledByDefault: true,
   setup({ session, owner }) {
     session.hooks.hint.tap(({ puzzle, state }) => wrongFlagHint(puzzle, state) ?? undefined, { owner, priority: 90 });
   },
-};
+});
 
-export const showDeducible: MinesPlugin = {
+export const showDeducible = plugin({
   id: "mines.deducible",
   name: "highlight provable cells",
   description: "tint hidden cells that can already be proven safe (green) or mined (red)",
   category: "assists",
-  appliesTo: ["mines"],
+  appliesTo: [mines],
   enabledByDefault: false,
   settings: defineSchema({
     level: {
@@ -43,15 +43,15 @@ export const showDeducible: MinesPlugin = {
       return { ...d, [DEDUCED_KEY]: provable(puzzle, state, level) };
     }, { owner });
   },
-};
+});
 
 /** Opens around every number that has all its flags, as part of the move that completed it (one undo step). */
-export const autoChord: MinesPlugin = {
+export const autoChord = plugin({
   id: "mines.auto-chord",
   name: "open around finished numbers by themselves",
   description: "once a number touches as many flags as it shows, its other hidden neighbors open without clicking it. a wrong flag sets off a mine this way, just like clicking the number would",
   category: "assists",
-  appliesTo: ["mines"],
+  appliesTo: [mines],
   enabledByDefault: false,
   setup({ session, owner }) {
     session.hooks.apply.tap((next, { puzzle, note }) => {
@@ -65,6 +65,6 @@ export const autoChord: MinesPlugin = {
       return out;
     }, { owner });
   },
-};
+});
 
 export const minesPlugins = [checkFlags, showDeducible, autoChord];

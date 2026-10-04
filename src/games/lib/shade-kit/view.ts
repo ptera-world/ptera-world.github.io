@@ -1,7 +1,7 @@
 import { bindCommands, type BindingSchema } from "../../core/commands";
 import { s, style } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
-import type { View } from "../../core/types";
+import type { PuzzleRef, View } from "../../core/types";
 import type { Focus } from "../grid-kit/names";
 import {
   KIT_CSS, SIZE, Strokes, cursorBindings, cursorHandlers, cursorRect, drawFocus, focusCells, frame,
@@ -25,8 +25,8 @@ export interface Flags {
 export const NO_FLAGS: Flags = { marks: new Set(), texts: new Set(), cells: new Set() };
 
 export interface ShadeViewSpec<Pz extends { w: number; h: number }> {
-  /** Puzzle id; also the command and CSS class prefix. */
-  puzzle: string;
+  /** Its id is also the command and CSS class prefix. */
+  puzzle: PuzzleRef;
   /** Text naming a BLACK mark in commands and controls ("shade", "star", "queen"). */
   shadeWord: string;
   glyph: Glyph;
@@ -78,8 +78,8 @@ const settings = defineSchema({
 });
 
 /** A board of cells that are marked BLACK or DOT, with optional regions, region colors and cell texts. */
-export function shadeView<Pz extends { w: number; h: number }>(spec: ShadeViewSpec<Pz>, board: BoardPrefs): View<Pz, ShadeState, ShadeAction, ShadeInteraction> {
-  const id = spec.puzzle, word = spec.shadeWord;
+export function shadeView<Pz extends { w: number; h: number }>(spec: ShadeViewSpec<Pz>, board: BoardPrefs): View<Pz, ShadeState, ShadeAction, ShadeInteraction, typeof settings> {
+  const id = spec.puzzle.id, word = spec.shadeWord;
   const BINDINGS: BindingSchema = {
     [`${id}.shade`]: { label: `${word} on / off`, category: id, keys: ["space", "b"], description: `${word} the selected cell, or take it away` },
     [`${id}.dot`]: { label: "dot on / off", category: id, keys: ["Enter", "period"], description: `put a dot on the selected cell: your note that it gets no ${word}. press again to remove it` },
@@ -89,7 +89,7 @@ export function shadeView<Pz extends { w: number; h: number }>(spec: ShadeViewSp
   return {
     id: `${id}.svg`,
     name: "grid",
-    puzzle: id,
+    puzzle: spec.puzzle,
     settings,
     controls: [
       { how: "click or tap a cell", what: `${word} it, or take it away. drag to do several` },
@@ -149,7 +149,7 @@ export function shadeView<Pz extends { w: number; h: number }>(spec: ShadeViewSp
         },
         commit: (cells, value) => void session.dispatch({ type: "set", cells, value: value as Mark }),
         redraw: () => render(),
-        holdMs: () => settings.longPressMs as number,
+        holdMs: () => settings.longPressMs,
       });
 
       const render = () => {

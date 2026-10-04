@@ -1,6 +1,6 @@
 import type { WidgetDef } from "../../core/types";
 import { h, style } from "../../core/dom";
-import type { LightupAction, LightupInteraction, LightupPuzzle, LightupState } from "./logic";
+import { lightup, type LightupAction, type LightupInteraction, type LightupPuzzle, type LightupState } from "./logic";
 
 type LightupWidget = WidgetDef<LightupPuzzle, LightupState, LightupAction, LightupInteraction>;
 
@@ -19,7 +19,7 @@ export const markMode: LightupWidget = {
   id: "lightup.mode",
   name: "light / mark switch",
   description: "choose whether tapping a cell places a light or a no-light mark (a dot noting that a cell can't hold a light)",
-  puzzles: ["lightup"],
+  puzzles: [lightup],
   defaultSlot: coarse() ? "bottom" : "off",
   order: 15,
   mount(el, { session, owner, run }) {

@@ -1,10 +1,11 @@
 import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
-import { bindCommands, type BindingSchema } from "../../core/commands";
-import { s, style } from "../../core/dom";
+import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
+import { s, style, inputIs } from "../../core/dom";
+import { themedAssets } from "../../lib/assets";
 import { colName, rowName, type Side } from "../../core/names";
 import {
-  chordCells, numbers, type MinesAction, type MinesFocus, type MinesInteraction, type MinesPuzzle, type MinesState,
+  mines, chordCells, numbers, type MinesAction, type MinesFocus, type MinesInteraction, type MinesPuzzle, type MinesState,
 } from "./logic";
 
 /** Derived: { safe: number[]; mines: number[] } cells provable from what's open. */
@@ -45,7 +46,7 @@ const CSS = `
 .mines-board .source { fill: none; stroke: var(--hint); stroke-width: 0.6; stroke-dasharray: 1.2 0.8; pointer-events: none; }
 .mines-board .edge { fill: var(--text-dim); font-size: 4.2px; font-weight: 400; }
 .mines-board .cursor { fill: none; stroke: var(--focus); stroke-width: 0.8; pointer-events: none; }
-[data-input="pointer"] .mines-board .cursor { display: none; }
+${inputIs("pointer")} .mines-board .cursor { display: none; }
 `;
 
 const settings = defineSchema({
@@ -81,7 +82,7 @@ function sample(fill: string, inner = ""): string {
   return `<svg viewBox="0 0 10 10" width="22" height="22"><rect width="10" height="10" rx="1.2" fill="${fill}"/>${inner}</svg>`;
 }
 
-const BINDINGS: BindingSchema = {
+const BINDINGS = {
   "mines.left": { label: "cursor left", category: "minesweeper", keys: ["ArrowLeft", "a"] },
   "mines.right": { label: "cursor right", category: "minesweeper", keys: ["ArrowRight", "d"] },
   "mines.up": { label: "cursor up", category: "minesweeper", keys: ["ArrowUp", "w"] },
@@ -91,16 +92,20 @@ const BINDINGS: BindingSchema = {
   "mines.chord": { label: "open around number", category: "minesweeper", keys: ["Enter", "c"], description: "on an open number that already has that many flags around it, open all its other neighbors at once" },
   "mines.mode": { label: "flag mode", category: "minesweeper", keys: ["m"], description: "while on, clicking or tapping a hidden cell flags it instead of opening it. for touch screens, where there is no right click" },
   "mines.flag-at": { label: "flag / unflag (pointer)", category: "minesweeper", mouse: ["rightclick"], description: "flag the cell under the pointer, or take its flag off. on an open number, opens its other neighbors instead when its flags are all there (if right-click chording is on)" },
-};
+} satisfies BindingSchema;
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof BINDINGS> {}
+}
 
 /** Flag-or-unflag as an explicit action, so unflagging is recognizably a retraction. */
 export const toggleFlag = (st: MinesState, cell: number): MinesAction => ({ type: "flag", cells: [cell], on: !st.flags[cell] });
 
-export function minesView(look: Look, labelSides: () => ReadonlySet<Side>): View<MinesPuzzle, MinesState, MinesAction, MinesInteraction> {
+export function minesView(look: Look, labelSides: () => ReadonlySet<Side>): View<MinesPuzzle, MinesState, MinesAction, MinesInteraction, typeof settings> {
   return {
     id: "mines.svg",
     name: "grid",
-    puzzle: "mines",
+    puzzle: mines,
     settings,
     legend: [
       { sample: sample(CLOSED), meaning: "hidden cell: could be a mine" },
@@ -127,9 +132,10 @@ export function minesView(look: Look, labelSides: () => ReadonlySet<Side>): View
       const p = session.puzzle;
       const n = p.w * p.h;
       const nums = numbers(p);
-      const flagNode = assetNode(look.asset("mines.flag", ASSETS.flag));
-      const mineNode = assetNode(look.asset("mines.mine", ASSETS.mine));
-      const wrongNode = assetNode(look.asset("mines.wrong", ASSETS.wrong));
+      const art = themedAssets(look, "mines", ASSETS);
+      const flagNode = assetNode(art("flag"));
+      const mineNode = assetNode(art("mine"));
+      const wrongNode = assetNode(art("wrong"));
       const sides = labelSides();
       const pad = { top: sides.has("top") ? EDGE : 0, right: sides.has("right") ? EDGE : 0, bottom: sides.has("bottom") ? EDGE : 0, left: sides.has("left") ? EDGE : 0 };
       const vw = p.w * SIZE + pad.left + pad.right, vh = p.h * SIZE + pad.top + pad.bottom;
@@ -291,7 +297,7 @@ export function minesView(look: Look, labelSides: () => ReadonlySet<Side>): View
             navigator.vibrate?.(15);
           }
           render();
-        }, settings.longPressMs as number);
+        }, settings.longPressMs);
         down = { cell, button: e.button, id: e.pointerId, x: e.clientX, y: e.clientY, timer, consumed: false };
         showPressed(cell, e.button);
       };

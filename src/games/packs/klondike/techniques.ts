@@ -91,7 +91,7 @@ function stepFor(p: KlondikePuzzle, s: KlondikeState, path: readonly Move[]): St
 function solverTechnique(kind: Kind, t: Omit<KlondikeTechnique, "find" | "puzzles">): KlondikeTechnique {
   return {
     ...t,
-    puzzles: ["klondike"],
+    puzzles: [klondike],
     find(p, s) {
       const path = plan(p, s).path;
       if (!path?.length || kindOf(s, path[0]!) !== kind) return null;
@@ -103,7 +103,7 @@ function solverTechnique(kind: Kind, t: Omit<KlondikeTechnique, "find" | "puzzle
 export const safeHome: KlondikeTechnique = {
   id: "klondike.safe-home",
   name: "safe home",
-  puzzles: ["klondike"],
+  puzzles: [klondike],
   level: 1,
   color: "#3fa34d",
   description: "a card can go home for good once nothing could ever need to sit on it: aces and twos always, and any other card once both foundations of the other color have reached one rank below it.",
@@ -151,7 +151,7 @@ export const checkWinnable: Plugin<KlondikePuzzle, KlondikeState, KlondikeAction
   name: "hints check the game can still be won",
   description: "asking for a hint first says so if no sequence of moves can win from here any more",
   category: "assists",
-  appliesTo: ["klondike"],
+  appliesTo: [klondike],
   enabledByDefault: true,
   setup({ session, owner }) {
     session.hooks.hint.tap(({ puzzle, state }) => {

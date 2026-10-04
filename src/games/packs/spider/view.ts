@@ -1,7 +1,7 @@
 import type { View } from "../../core/types";
 import { CARD_H, CARD_W, cardSample } from "../../lib/cards/draw";
 import { mountTable, tableLegend, tableSettings, type Slot } from "../../lib/cards/table";
-import { canLift, moveAction, pileName, tapAction, type SpiderAction, type SpiderInteraction, type SpiderPuzzle, type SpiderState } from "./logic";
+import { spider, canLift, moveAction, pileName, tapAction, type SpiderAction, type SpiderInteraction, type SpiderPuzzle, type SpiderState } from "./logic";
 import { STOCK } from "./solver";
 
 const GAP = 1.5;
@@ -18,10 +18,10 @@ const SLOTS: Slot[] = [
   ...Array.from({ length: 10 }, (_, j): Slot => ({ x: x(j), y: ROW, fan: "down", bottom: ROW + FAN_ROOM, name: pileName(9 + j) })),
 ];
 
-export const spiderView: View<SpiderPuzzle, SpiderState, SpiderAction, SpiderInteraction> = {
+export const spiderView: View<SpiderPuzzle, SpiderState, SpiderAction, SpiderInteraction, typeof tableSettings> = {
   id: "spider.table",
   name: "table",
-  puzzle: "spider",
+  puzzle: spider,
   settings: tableSettings,
   controls: [
     { how: "click or tap the stock", what: "deal one card onto every column" },

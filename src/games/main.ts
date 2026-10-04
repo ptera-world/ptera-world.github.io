@@ -2,7 +2,7 @@ import { api } from "./api";
 import { h, style } from "./core/dom";
 import { disabledPacks, loadPacks, setPackEnabled } from "./core/mods";
 import { registry } from "./core/registry";
-import { namespace } from "./core/storage";
+import { prefs } from "./core/storage";
 import { watchTheme } from "./core/themes";
 
 /**
@@ -22,7 +22,7 @@ watchTheme(registry);
 
 const root = document.getElementById("games")!;
 const fronts = registry.listFrontends();
-const chosen = namespace("prefs").get<string | null>("frontend", null);
+const chosen = prefs.get("frontend", null);
 const front = fronts.find((f) => f.id === chosen) ?? fronts[fronts.length - 1];
 
 try {
@@ -51,4 +51,11 @@ function fallback(reason: string): void {
     off.length
       ? h("button", { onclick: () => { for (const k of off) setPackEnabled(k, true); location.reload(); } }, `turn ${off.length} switched-off pack${off.length > 1 ? "s" : ""} back on`)
       : null));
+}
+
+declare module "./core/storage" {
+  interface Prefs {
+    /** Id of the frontend to mount; the last registered one when unset or unknown. */
+    frontend: string | null;
+  }
 }

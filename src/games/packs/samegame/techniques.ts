@@ -1,5 +1,5 @@
 import type { Plugin, Technique } from "../../core/types";
-import { COLOUR_NAMES, cellAt, group, isEmpty, type SamegameAction, type SamegameFocus, type SamegameInteraction, type SamegamePuzzle, type SamegameState } from "./logic";
+import { samegame, COLOUR_NAMES, cellAt, group, isEmpty, type SamegameAction, type SamegameFocus, type SamegameInteraction, type SamegamePuzzle, type SamegameState } from "./logic";
 import { clearFrom, loneColour } from "./solver";
 
 type SamegameTechnique = Technique<SamegamePuzzle, SamegameState, SamegameAction>;
@@ -7,7 +7,7 @@ type SamegameTechnique = Technique<SamegamePuzzle, SamegameState, SamegameAction
 export const keepClearable: SamegameTechnique = {
   id: "samegame.keep-clearable",
   name: "keep it clearable",
-  puzzles: ["samegame"],
+  puzzles: [samegame],
   level: 1,
   description: "some removals leave a board that can still be cleared and some don't (a color left with one lone tile is stuck for good). this searches ahead for a whole clearing order and suggests its first removal.",
   find(p, s) {
@@ -37,7 +37,7 @@ export const checkClearable: Plugin<SamegamePuzzle, SamegameState, SamegameActio
   name: "hints check the board can still be cleared",
   description: "asking for a hint first says so if no order of removals can clear the board any more",
   category: "assists",
-  appliesTo: ["samegame"],
+  appliesTo: [samegame],
   enabledByDefault: true,
   setup({ session, owner }) {
     session.hooks.hint.tap(({ puzzle, state }) => {

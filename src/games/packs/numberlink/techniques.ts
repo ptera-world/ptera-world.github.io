@@ -1,7 +1,7 @@
 import type { Step, Technique } from "../../core/types";
 import { LINE, NO, edgeGrid } from "../../lib/edges";
 import { cellName } from "../../lib/grid-kit/names";
-import { CROSS, edgeList, pairName, type NumberlinkAction, type NumberlinkFocus, type NumberlinkPuzzle, type NumberlinkState } from "./logic";
+import { numberlink, CROSS, edgeList, pairName, type NumberlinkAction, type NumberlinkFocus, type NumberlinkPuzzle, type NumberlinkState } from "./logic";
 import { EMPTY_BIT, analyze, closeObvious, freshKnowledge, pairOf, scanSteps, type Knowledge, type Step as SolverStep, type StepKind } from "./solver";
 
 type NumberlinkTechnique = Technique<NumberlinkPuzzle, NumberlinkState, NumberlinkAction>;
@@ -74,7 +74,7 @@ function build(s: NumberlinkState, st: SolverStep, message: string, nudge: strin
 type Finder = (p: NumberlinkPuzzle, s: NumberlinkState, target?: NumberlinkTarget) => Step<NumberlinkAction> | null;
 
 function technique(def: Omit<NumberlinkTechnique, "find" | "findAt" | "puzzles">, find: Finder): NumberlinkTechnique {
-  return { ...def, puzzles: ["numberlink"], find: (p, s) => find(p, s), findAt: (p, s, t) => find(p, s, t as NumberlinkTarget) };
+  return { ...def, puzzles: [numberlink], find: (p, s) => find(p, s), findAt: (p, s, t) => find(p, s, t as NumberlinkTarget) };
 }
 
 const EASY = { width: 6, height: 6, difficulty: "easy" };

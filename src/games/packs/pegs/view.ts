@@ -1,7 +1,7 @@
-import { bindCommands, type BindingSchema } from "../../core/commands";
-import { h, s, style } from "../../core/dom";
+import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
+import { h, s, style, inputIs } from "../../core/dom";
 import type { View, WidgetDef } from "../../core/types";
-import { pegCount, type PegsAction, type PegsFocus, type PegsInteraction, type PegsPuzzle, type PegsState } from "./logic";
+import { pegs, pegCount, type PegsAction, type PegsFocus, type PegsInteraction, type PegsPuzzle, type PegsState } from "./logic";
 import { HOLE, OBST, PEG, jumps } from "./solver";
 
 const SIZE = 10;
@@ -22,18 +22,22 @@ const CSS = `
 .pegs-board .mark.to { stroke-width: 0.7; }
 .pegs-board .arrow { stroke: var(--hint); stroke-width: 0.7; fill: none; pointer-events: none; }
 .pegs-board .cursor { fill: none; stroke: var(--focus); stroke-width: 0.6; pointer-events: none; }
-[data-input="pointer"] .pegs-board .cursor { display: none; }
+${inputIs("pointer")} .pegs-board .cursor { display: none; }
 .pegs-count { font-family: var(--mono); color: var(--text-dim); min-height: 1.4em; }
 `;
 
-const BINDINGS: BindingSchema = {
+const BINDINGS = {
   "pegs.left": { label: "cursor left", category: "pegs", keys: ["ArrowLeft", "a"] },
   "pegs.right": { label: "cursor right", category: "pegs", keys: ["ArrowRight", "d"] },
   "pegs.up": { label: "cursor up", category: "pegs", keys: ["ArrowUp", "w"] },
   "pegs.down": { label: "cursor down", category: "pegs", keys: ["ArrowDown", "s"] },
   "pegs.select": { label: "pick up / jump", category: "pegs", keys: ["space", "Enter"], description: "pick up the peg under the cursor, or jump the picked-up peg into the hole under the cursor" },
   "pegs.drop": { label: "put the peg back", category: "pegs", keys: ["Escape"], description: "let go of the picked-up peg without jumping" },
-};
+} satisfies BindingSchema;
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof BINDINGS> {}
+}
 
 const swatch = (body: string) => `<svg viewBox="-0.5 -0.5 11 11"><rect width="10" height="10" rx="1.5" fill="var(--surface-2)" stroke="var(--border)" stroke-width="0.3"/>${body}</svg>`;
 const pegSvg = (fill = "var(--accent)") => `<circle cx="5" cy="5" r="3.4" fill="${fill}" stroke="color-mix(in srgb, var(--accent) 60%, var(--text))" stroke-width="0.5"/>`;
@@ -42,7 +46,7 @@ const holeSvg = `<circle cx="5" cy="5" r="1.6" fill="color-mix(in srgb, var(--te
 export const pegsView: View<PegsPuzzle, PegsState, PegsAction, PegsInteraction> = {
   id: "pegs.svg",
   name: "board",
-  puzzle: "pegs",
+  puzzle: pegs,
   controls: [
     { how: "drag a peg into a hole two places away", what: "jump it over the peg between, which is removed" },
     { how: "or click a peg, then the hole to jump into", what: "the same jump; click the peg again to put it back" },
@@ -219,7 +223,7 @@ export const countWidget: WidgetDef<PegsPuzzle, PegsState, PegsAction, PegsInter
   id: "pegs.count",
   name: "pegs left",
   description: "how many pegs are still on the board",
-  puzzles: ["pegs"],
+  puzzles: [pegs],
   defaultSlot: "top",
   order: 10,
   mount(el, { session, owner }) {

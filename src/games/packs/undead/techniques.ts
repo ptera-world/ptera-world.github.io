@@ -1,7 +1,7 @@
 import type { Step, Technique } from "../../core/types";
 import { ALL, GHOST, VAMPIRE, ZOMBIE, bit, geometry } from "./grid";
 import {
-  MONSTER_NAMES, MONSTER_PLURALS, cellList, cellName, clueName, monstersText,
+  undead, MONSTER_NAMES, MONSTER_PLURALS, cellList, cellName, clueName, monstersText,
   type UndeadAction, type UndeadFocus, type UndeadPuzzle, type UndeadState,
 } from "./logic";
 import { analyze, freshKnowledge, scanSteps, type Knowledge, type Step as SolverStep, type StepKind } from "./solver";
@@ -82,7 +82,7 @@ function outcome(p: UndeadPuzzle, s: UndeadState, raw: SolverStep, cells: readon
 type Finder = (p: UndeadPuzzle, s: UndeadState, target?: UndeadTarget) => Step<UndeadAction> | null;
 
 function technique(def: Omit<UndeadTechnique, "find" | "findAt" | "puzzles">, find: Finder): UndeadTechnique {
-  return { ...def, puzzles: ["undead"], find: (p, s) => find(p, s), findAt: (p, s, t) => find(p, s, t as UndeadTarget) };
+  return { ...def, puzzles: [undead], find: (p, s) => find(p, s), findAt: (p, s, t) => find(p, s, t as UndeadTarget) };
 }
 
 const EASY = { width: 5, height: 5, difficulty: "easy" };

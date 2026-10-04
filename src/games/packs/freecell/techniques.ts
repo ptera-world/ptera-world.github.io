@@ -82,7 +82,7 @@ function stepFor(p: FreecellPuzzle, s: FreecellState, path: readonly Move[]): St
 function solverTechnique(kind: Kind, t: Omit<FreecellTechnique, "find" | "puzzles">): FreecellTechnique {
   return {
     ...t,
-    puzzles: ["freecell"],
+    puzzles: [freecell],
     find(p, s) {
       const path = plan(p, s).path;
       if (!path?.length || kindOf(p, s, path[0]!) !== kind) return null;
@@ -94,7 +94,7 @@ function solverTechnique(kind: Kind, t: Omit<FreecellTechnique, "find" | "puzzle
 export const safeHome: FreecellTechnique = {
   id: "freecell.safe-home",
   name: "safe home",
-  puzzles: ["freecell"],
+  puzzles: [freecell],
   level: 1,
   color: "#3fa34d",
   description: "a card can go home for good once nothing could ever need to sit on it: aces and twos always, and any other card once both foundations of the other color have reached one rank below it.",
@@ -139,7 +139,7 @@ export const checkWinnable: Plugin<FreecellPuzzle, FreecellState, FreecellAction
   name: "hints check the game can still be won",
   description: "asking for a hint first says so if no sequence of moves can win from here any more",
   category: "assists",
-  appliesTo: ["freecell"],
+  appliesTo: [freecell],
   enabledByDefault: true,
   setup({ session, owner }) {
     session.hooks.hint.tap(({ puzzle, state }) => {

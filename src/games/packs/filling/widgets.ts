@@ -1,6 +1,6 @@
 import { h, style } from "../../core/dom";
 import type { WidgetDef } from "../../core/types";
-import { geometry, type FillingAction, type FillingInteraction, type FillingPuzzle, type FillingState } from "./logic";
+import { filling, geometry, type FillingAction, type FillingInteraction, type FillingPuzzle, type FillingState } from "./logic";
 import { digitCommand } from "./view";
 
 type FillingWidget = WidgetDef<FillingPuzzle, FillingState, FillingAction, FillingInteraction>;
@@ -21,7 +21,7 @@ export const pad: FillingWidget = {
   id: "filling.pad",
   name: "number pad",
   description: "numbers, notes and erase for the selected cells, for touch screens",
-  puzzles: ["filling"],
+  puzzles: [filling],
   defaultSlot: coarse() ? "bottom" : "off",
   order: 10,
   mount(el, { session, run, owner }) {

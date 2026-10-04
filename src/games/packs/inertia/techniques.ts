@@ -1,12 +1,12 @@
 import type { Plugin, Technique } from "../../core/types";
-import { DIR_NAMES, canCollectAll, cellAt, gemCount, nextGemRoute, unreachableGems, type InertiaAction, type InertiaFocus, type InertiaInteraction, type InertiaPuzzle, type InertiaState } from "./logic";
+import { inertia, DIR_NAMES, canCollectAll, cellAt, gemCount, nextGemRoute, unreachableGems, type InertiaAction, type InertiaFocus, type InertiaInteraction, type InertiaPuzzle, type InertiaState } from "./logic";
 
 type InertiaTechnique = Technique<InertiaPuzzle, InertiaState, InertiaAction>;
 
 export const nextGem: InertiaTechnique = {
   id: "inertia.next-gem",
   name: "nearest safe gem",
-  puzzles: ["inertia"],
+  puzzles: [inertia],
   level: 1,
   description: "some rolls lead to places you can never roll back from, cutting gems off for good. head for the nearest gem by the fewest rolls, only ever stopping where every remaining gem can still be reached.",
   find(p, s) {
@@ -38,7 +38,7 @@ export const checkReachable: Plugin<InertiaPuzzle, InertiaState, InertiaAction, 
   name: "hints check every gem can still be reached",
   description: "asking for a hint first says so if some gems can no longer be collected from where the ball is",
   category: "assists",
-  appliesTo: ["inertia"],
+  appliesTo: [inertia],
   enabledByDefault: true,
   setup({ session, owner }) {
     session.hooks.hint.tap(({ puzzle, state }) => {

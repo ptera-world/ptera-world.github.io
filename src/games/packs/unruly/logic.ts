@@ -542,3 +542,10 @@ export const unruly: PuzzleDef<UnrulyPuzzle, UnrulyState, UnrulyAction, UnrulyIn
   describe: (p) => `${p.w}×${p.h}${p.unique ? " all different" : ""}`,
 };
 
+
+declare module "../../core/types" {
+  interface FeatureNames {
+    /** No two rows, and no two columns, may be the same. */
+    "unique-lines": true;
+  }
+}

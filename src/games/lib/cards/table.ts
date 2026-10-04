@@ -1,6 +1,6 @@
 import { animate, ease, type Animation } from "../../core/anim";
-import { bindCommands, type BindingSchema } from "../../core/commands";
-import { s, style } from "../../core/dom";
+import { bindCommands, type BindingSchema, type CommandHandler, type Ids } from "../../core/commands";
+import { s, style, inputIs } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
 import type { Action, CommandDef, ViewContext, ViewHandle } from "../../core/types";
 import type { Face } from "./deck";
@@ -80,7 +80,7 @@ const CSS = `
 .cards-table .mark.dest { stroke-dasharray: 1.6 0.8; }
 .cards-table .held { fill: none; stroke: var(--accent); stroke-width: 0.7; pointer-events: none; }
 .cards-table .cursor { fill: none; stroke: var(--focus); stroke-width: 0.6; pointer-events: none; }
-[data-input="pointer"] .cards-table .cursor { display: none; }
+${inputIs("pointer")} .cards-table .cursor { display: none; }
 ${CARD_CSS}
 `;
 
@@ -123,7 +123,7 @@ export function layout(slots: readonly Slot[], piles: readonly Pile[]): Map<numb
   return out;
 }
 
-const BINDINGS: BindingSchema = {
+const BINDINGS = {
   "cards.left": { label: "cursor to the pile on the left", category: "cards", keys: ["ArrowLeft", "a"] },
   "cards.right": { label: "cursor to the pile on the right", category: "cards", keys: ["ArrowRight", "d"] },
   "cards.up": { label: "cursor one card up the column", category: "cards", keys: ["ArrowUp", "w"], description: "to pick up more of a column at once" },
@@ -131,7 +131,11 @@ const BINDINGS: BindingSchema = {
   "cards.pick": { label: "pick up or put down", category: "cards", keys: ["space"], description: "pick up the cards from the cursor down, then put them on the pile under the cursor" },
   "cards.auto": { label: "move to the best place", category: "cards", keys: ["Enter"], description: "does what clicking the card under the cursor does" },
   "cards.draw": { label: "draw from the stock", category: "cards", keys: ["n"] },
-};
+} satisfies BindingSchema;
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof BINDINGS> {}
+}
 
 export interface TableOptions {
   /** Extra commands the game adds to the table's own. */
@@ -141,7 +145,7 @@ export interface TableOptions {
 /** Mounts the shared card table: drawing, dragging, clicking, keyboard, animation, hints and previews. */
 export function mountTable<Pz, S, A extends Action, I extends { cursor: CardCursor }>(
   root: HTMLElement,
-  { session, settings }: ViewContext<Pz, S, A, I>,
+  { session, settings }: ViewContext<Pz, S, A, I, typeof tableSettings>,
   rules: TableRules<Pz, S, A>,
   opts: TableOptions = {},
 ): ViewHandle {
@@ -447,7 +451,7 @@ export function mountTable<Pz, S, A extends Action, I extends { cursor: CardCurs
     const c = session.interaction.cursor;
     if (act(rules.tap(p, session.state, c.pile, Math.min(c.index, topIndex(c.pile))))) session.setInteraction((i) => ({ ...i, cursor: { ...i.cursor, index: topIndex(i.cursor.pile), held: null } }));
   };
-  const handlers: Record<string, () => void> = {
+  const handlers: { [K in keyof typeof BINDINGS]?: CommandHandler } = {
     "cards.left": moveCursor(-1),
     "cards.right": moveCursor(1),
     "cards.up": moveDepth(-1),
@@ -492,7 +496,7 @@ export function mountTable<Pz, S, A extends Action, I extends { cursor: CardCurs
   return {
     aspect: W / H,
     cells: { cols: Math.round(W / 4), rows: Math.round(H / 4) },
-    commands: [...bindCommands(BINDINGS, handlers), ...(opts.commands ?? [])].map((c) => (c.id === "cards.draw" && rules.drawLabel ? { ...c, label: rules.drawLabel } : c)),
+    commands: [...bindCommands(BINDINGS, handlers, rules.drawLabel ? { "cards.draw": { label: rules.drawLabel } } : {}), ...(opts.commands ?? [])],
     target: () => session.interaction.cursor,
     preview: (st) => {
       preview = st as S | null;

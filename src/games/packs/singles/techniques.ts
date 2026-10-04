@@ -2,7 +2,7 @@ import type { Technique } from "../../core/types";
 import { bit, type Deduction } from "../../lib/grid-kit/csp";
 import { cellList, cellName, technique, type Focus, type Reading } from "../../lib/grid-kit/names";
 import {
-  BLACK, CIRCLE, NONE, SHADED, WHITE, model, readMarks,
+  singles, BLACK, CIRCLE, NONE, SHADED, WHITE, model, readMarks,
   type SinglesAction, type SinglesPuzzle, type SinglesState,
 } from "./logic";
 
@@ -46,7 +46,7 @@ const EASY = { width: 6, height: 6, difficulty: "easy" };
 const TRICKY = { width: 8, height: 8, difficulty: "tricky" };
 const HARD = { width: 8, height: 8, difficulty: "hard" };
 
-const base = { puzzle: "singles", read, changes };
+const base = { puzzle: singles, read, changes };
 
 export const sandwich: SinglesTechnique = technique<SinglesPuzzle, SinglesState, SinglesAction>({
   ...base,

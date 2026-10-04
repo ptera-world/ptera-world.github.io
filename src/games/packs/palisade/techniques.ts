@@ -2,7 +2,7 @@ import type { Step, Technique } from "../../core/types";
 import { bit, type Deduction } from "../../lib/grid-kit/csp";
 import { cellList, cellName, technique, type Focus, type Reading } from "../../lib/grid-kit/names";
 import {
-  GAP, LINE, NONE, OPEN, WALL, edgeCells, geometry, model, readMarks,
+  palisade, GAP, LINE, NONE, OPEN, WALL, edgeCells, geometry, model, readMarks,
   type PalisadeAction, type PalisadePuzzle, type PalisadeState,
 } from "./logic";
 
@@ -43,7 +43,7 @@ function step(p: PalisadePuzzle, d: Deduction, vars: number[], why: string, nudg
 const aim = (p: PalisadePuzzle, d: Deduction, vars: number[], target: unknown) =>
   typeof target === "number" && (edgeCells(p, vars).includes(target) || d.because.includes(target));
 
-const base = { puzzle: "palisade", read, changes, aim };
+const base = { puzzle: palisade, read, changes, aim };
 const NORMAL = { width: 6, height: 5, size: 5, difficulty: "normal" };
 
 export const done: PalisadeTechnique = technique<PalisadePuzzle, PalisadeState, PalisadeAction>({

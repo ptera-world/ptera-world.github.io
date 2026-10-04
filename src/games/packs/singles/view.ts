@@ -1,4 +1,4 @@
-import { bindCommands, type BindingSchema } from "../../core/commands";
+import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
 import { s, style } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
 import type { View } from "../../core/types";
@@ -9,7 +9,7 @@ import {
 } from "../../lib/grid-kit/view";
 import { fades } from "../../lib/grid-kit/fade";
 import {
-  BLACK, CIRCLE, NONE,
+  singles, BLACK, CIRCLE, NONE,
   type SinglesAction, type SinglesConflicts, type SinglesInteraction, type SinglesPuzzle, type SinglesState,
 } from "./logic";
 
@@ -31,12 +31,16 @@ const settings = defineSchema({
   longPressMs: { type: "int", label: "touch hold for a circle (ms)", default: 400, min: 150, max: 1500, step: 50 },
 });
 
-const BINDINGS: BindingSchema = {
+const BINDINGS = {
   "singles.black": { label: "black on / off", category: "singles", keys: ["space", "b"], description: "black out the selected cell, or bring it back" },
   "singles.circle": { label: "circle on / off", category: "singles", keys: ["Enter", "c", "o"], description: "circle the selected cell: your note that it stays white. press again to remove it" },
   "singles.clear": { label: "clear cell", category: "singles", keys: ["Backspace", "Delete"], description: "remove the black or circle from the selected cell" },
   ...cursorBindings("singles", "singles"),
-};
+} satisfies BindingSchema;
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof BINDINGS> {}
+}
 
 function legend(): { sample: string; meaning: string }[] {
   const num = (fill: string, extra = "") => `<text x="5" y="5.3" fill="${fill}" font-size="5.6" font-weight="600" font-family="var(--font)" text-anchor="middle" dominant-baseline="central" ${extra}>3</text>`;
@@ -53,11 +57,11 @@ function legend(): { sample: string; meaning: string }[] {
   ];
 }
 
-export function singlesView(board: BoardPrefs): View<SinglesPuzzle, SinglesState, SinglesAction, SinglesInteraction> {
+export function singlesView(board: BoardPrefs): View<SinglesPuzzle, SinglesState, SinglesAction, SinglesInteraction, typeof settings> {
   return {
     id: "singles.svg",
     name: "grid",
-    puzzle: "singles",
+    puzzle: singles,
     settings,
     controls: [
       { how: "click or tap a cell", what: "black it out, or bring it back. drag to do several" },
@@ -100,7 +104,7 @@ export function singlesView(board: BoardPrefs): View<SinglesPuzzle, SinglesState
         },
         commit: (cells, value) => void session.dispatch({ type: "set", cells, value: value as SinglesAction["value"] }),
         redraw: () => render(),
-        holdMs: () => settings.longPressMs as number,
+        holdMs: () => settings.longPressMs,
       });
 
       const render = () => {

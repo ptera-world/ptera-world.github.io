@@ -1,9 +1,9 @@
-import { bindCommands, type BindingSchema } from "../../core/commands";
-import { s, style } from "../../core/dom";
+import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
+import { s, style, inputIs } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
 import { DOWN, LEFT, RIGHT, UP, edgeAt, edgeGrid, step } from "../../lib/edges";
-import { CROSS, LINE, NONE, toggle, type Conflicts, type PearlAction, type PearlFocus, type PearlInteraction, type PearlPuzzle, type PearlState } from "./logic";
+import { pearl, CROSS, LINE, NONE, toggle, type Conflicts, type PearlAction, type PearlFocus, type PearlInteraction, type PearlPuzzle, type PearlState } from "./logic";
 import { BLACK, WHITE } from "./solver";
 import type { PearlTarget } from "./techniques";
 
@@ -30,7 +30,7 @@ const CSS = `
 .pearl-board .focus-edge { stroke: var(--hint); stroke-width: 3; stroke-linecap: round; opacity: 0.45; pointer-events: none; }
 .pearl-board .labels text { fill: var(--text-dim); font: 500 3.6px var(--font); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
 .pearl-board .cursor { fill: none; stroke: var(--focus); stroke-width: 0.6; pointer-events: none; }
-[data-input="pointer"] .pearl-board .cursor { display: none; }
+${inputIs("pointer")} .pearl-board .cursor { display: none; }
 `;
 
 const settings = defineSchema({
@@ -41,7 +41,7 @@ const SIZE = 10;
 const PAD = 0.25;
 const LABEL = 6;
 
-const BINDINGS: BindingSchema = {
+const BINDINGS = {
   "pearl.line-up": { label: "line up", category: "pearl", keys: ["shift+ArrowUp", "shift+w"], description: "draw (or erase) the loop from the selected cell upwards, and move there" },
   "pearl.line-right": { label: "line right", category: "pearl", keys: ["shift+ArrowRight", "shift+d"], description: "draw (or erase) the loop to the right, and move there" },
   "pearl.line-down": { label: "line down", category: "pearl", keys: ["shift+ArrowDown", "shift+s"], description: "draw (or erase) the loop downwards, and move there" },
@@ -54,7 +54,11 @@ const BINDINGS: BindingSchema = {
   "pearl.right": { label: "cursor right", category: "pearl", keys: ["ArrowRight", "d"] },
   "pearl.up": { label: "cursor up", category: "pearl", keys: ["ArrowUp", "w"] },
   "pearl.down": { label: "cursor down", category: "pearl", keys: ["ArrowDown", "s"] },
-};
+} satisfies BindingSchema;
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof BINDINGS> {}
+}
 
 export type Side = "top" | "right" | "bottom" | "left";
 export type Board = { labelSides(): Set<Side>; colName(col: number): string; rowName(row: number): string };
@@ -79,11 +83,11 @@ function legend(): { sample: string; meaning: string }[] {
   ];
 }
 
-export function pearlView(board: Board): View<PearlPuzzle, PearlState, PearlAction, PearlInteraction> {
+export function pearlView(board: Board): View<PearlPuzzle, PearlState, PearlAction, PearlInteraction, typeof settings> {
   return {
     id: "pearl.svg",
     name: "grid",
-    puzzle: "pearl",
+    puzzle: pearl,
     settings,
     controls: [
       { how: "drag from cell to cell", what: "draw the loop (dragging over a line you drew erases it)" },

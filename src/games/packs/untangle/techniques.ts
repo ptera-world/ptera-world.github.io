@@ -1,5 +1,5 @@
 import type { Step, Technique } from "../../core/types";
-import { crossings, crossingsAt, type Pt, type UntangleAction, type UntangleFocus, type UntanglePuzzle, type UntangleState } from "./logic";
+import { untangle, crossings, crossingsAt, type Pt, type UntangleAction, type UntangleFocus, type UntanglePuzzle, type UntangleState } from "./logic";
 
 type UntangleTechnique = Technique<UntanglePuzzle, UntangleState, UntangleAction>;
 
@@ -50,7 +50,7 @@ const plural = (n: number) => `${n} crossing${n === 1 ? "" : "s"}`;
 type Finder = (p: UntanglePuzzle, s: UntangleState, only?: number) => Step<UntangleAction> | null;
 
 function technique(def: Omit<UntangleTechnique, "find" | "findAt" | "puzzles">, find: Finder): UntangleTechnique {
-  return { ...def, puzzles: ["untangle"], find: (p, s) => find(p, s), findAt: (p, s, t) => find(p, s, (t as UntangleTarget).point) };
+  return { ...def, puzzles: [untangle], find: (p, s) => find(p, s), findAt: (p, s, t) => find(p, s, (t as UntangleTarget).point) };
 }
 
 export const toNeighbours = technique({

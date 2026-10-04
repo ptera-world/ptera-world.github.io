@@ -28,3 +28,17 @@ export function namespace(prefix: string): KeyValue {
     },
   };
 }
+
+/**
+ * Keys of the shared "prefs" store and their value types, declared by the modules that use them:
+ * `declare module "…/core/storage" { interface Prefs { minCell: number } }`.
+ */
+export interface Prefs {}
+
+export interface TypedStore<T> {
+  get<K extends keyof T & string>(key: K, fallback: T[K]): T[K];
+  set<K extends keyof T & string>(key: K, value: T[K]): void;
+  remove(key: keyof T & string): void;
+}
+
+export const prefs: TypedStore<Prefs> = namespace("prefs");

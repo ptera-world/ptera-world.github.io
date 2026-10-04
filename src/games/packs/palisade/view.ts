@@ -1,4 +1,4 @@
-import { bindCommands, type BindingSchema } from "../../core/commands";
+import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
 import { s, style } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
 import type { View } from "../../core/types";
@@ -8,7 +8,7 @@ import {
 } from "../../lib/grid-kit/view";
 import { fades } from "../../lib/grid-kit/fade";
 import {
-  GAP, LINE, NONE, geometry, regions,
+  palisade, GAP, LINE, NONE, geometry, regions,
   type Mark, type PalisadeAction, type PalisadeConflicts, type PalisadeInteraction, type PalisadePuzzle, type PalisadeState,
 } from "./logic";
 import type { PalisadeFocus } from "./techniques";
@@ -33,7 +33,7 @@ const settings = defineSchema({
   shadeDone: { type: "bool", label: "shade regions that are walled off at the right size", default: true },
 });
 
-const BINDINGS: BindingSchema = {
+const BINDINGS = {
   "palisade.wall-up": { label: "wall above on / off", category: "palisade", keys: ["shift+ArrowUp"], description: "draw or rub out the wall on the top side of the selected cell" },
   "palisade.wall-left": { label: "wall left on / off", category: "palisade", keys: ["shift+ArrowLeft"], description: "draw or rub out the wall on the left side of the selected cell" },
   "palisade.wall-right": { label: "wall right on / off", category: "palisade", keys: ["shift+ArrowRight"], description: "draw or rub out the wall on the right side of the selected cell" },
@@ -43,7 +43,11 @@ const BINDINGS: BindingSchema = {
   "palisade.gap-right": { label: "gap right on / off", category: "palisade", keys: ["alt+ArrowRight"], description: "mark the right side of the selected cell as having no wall, or clear it" },
   "palisade.gap-down": { label: "gap below on / off", category: "palisade", keys: ["alt+ArrowDown"], description: "mark the bottom side of the selected cell as having no wall, or clear it" },
   ...cursorBindings("palisade", "palisade"),
-};
+} satisfies BindingSchema;
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof BINDINGS> {}
+}
 
 function legend(): { sample: string; meaning: string }[] {
   const num = (fill: string) => `<text x="5" y="5.3" fill="${fill}" font-size="5.6" font-weight="600" font-family="var(--font)" text-anchor="middle" dominant-baseline="central">2</text>`;
@@ -63,11 +67,11 @@ function legend(): { sample: string; meaning: string }[] {
 /** Within this distance of a cell's side (in SVG units), a press picks that side. */
 const PICK = 3.5;
 
-export function palisadeView(board: BoardPrefs): View<PalisadePuzzle, PalisadeState, PalisadeAction, PalisadeInteraction> {
+export function palisadeView(board: BoardPrefs): View<PalisadePuzzle, PalisadeState, PalisadeAction, PalisadeInteraction, typeof settings> {
   return {
     id: "palisade.svg",
     name: "grid",
-    puzzle: "palisade",
+    puzzle: palisade,
     settings,
     controls: [
       { how: "click or tap near a cell's side", what: "draw a wall there, or rub it out. drag along the lines to draw several" },
@@ -148,7 +152,7 @@ export function palisadeView(board: BoardPrefs): View<PalisadePuzzle, PalisadeSt
             navigator.vibrate?.(15);
             stroke = { value: from === GAP ? NONE : GAP, from, edges: [e] };
             render();
-          }, settings.longPressMs as number);
+          }, settings.longPressMs);
         }
         render();
       };

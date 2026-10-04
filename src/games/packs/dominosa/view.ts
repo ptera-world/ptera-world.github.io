@@ -1,10 +1,10 @@
-import { bindCommands, type BindingSchema } from "../../core/commands";
-import { s, style } from "../../core/dom";
+import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
+import { s, style, inputIs } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
 import { geometry } from "./grid";
 import {
-  DOMINO, LINE, toggle,
+  dominosa, DOMINO, LINE, toggle,
   type Conflicts, type DominosaAction, type DominosaFocus, type DominosaInteraction, type DominosaPuzzle, type DominosaState,
 } from "./logic";
 import type { DominosaTarget } from "./techniques";
@@ -31,7 +31,7 @@ const CSS = `
 .dominosa-board .focus.why { stroke-dasharray: 1.2 0.8; stroke-width: 0.6; }
 .dominosa-board .labels text { fill: var(--text-dim); font: 500 3.6px var(--font); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
 .dominosa-board .cursor { fill: none; stroke: var(--focus); stroke-width: 0.6; pointer-events: none; }
-[data-input="pointer"] .dominosa-board .cursor { display: none; }
+${inputIs("pointer")} .dominosa-board .cursor { display: none; }
 `;
 
 const settings = defineSchema({
@@ -45,7 +45,7 @@ const LABEL = 6;
 /** Inset of a domino from its cells' edges. */
 const INSET = 1.1;
 
-const BINDINGS: BindingSchema = {
+const BINDINGS = {
   "dominosa.domino": { label: "domino on / off", category: "dominosa", keys: ["Enter"], description: "put a domino across the selected edge, or take it away" },
   "dominosa.line": { label: "line on / off", category: "dominosa", keys: ["space"], description: "draw a line on the selected edge: your note that those two cells aren't one domino. press again to remove it" },
   "dominosa.highlight": { label: "highlight this number", category: "dominosa", keys: ["h"], description: "highlight every cell with the selected cell's number (up to two numbers at once); again to stop" },
@@ -53,7 +53,11 @@ const BINDINGS: BindingSchema = {
   "dominosa.right": { label: "cursor right", category: "dominosa", keys: ["ArrowRight", "d"], description: "move the keyboard selection half a cell right" },
   "dominosa.up": { label: "cursor up", category: "dominosa", keys: ["ArrowUp", "w"], description: "move the keyboard selection half a cell up" },
   "dominosa.down": { label: "cursor down", category: "dominosa", keys: ["ArrowDown", "s"], description: "move the keyboard selection half a cell down" },
-};
+} satisfies BindingSchema;
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof BINDINGS> {}
+}
 
 /** Number keys 0-9 toggle highlighting of that number. */
 const DIGIT_BINDINGS: BindingSchema = Object.fromEntries(Array.from({ length: 10 }, (_, d) => [
@@ -84,11 +88,11 @@ function legend(): { sample: string; meaning: string }[] {
   ];
 }
 
-export function dominosaView(board: Board): View<DominosaPuzzle, DominosaState, DominosaAction, DominosaInteraction> {
+export function dominosaView(board: Board): View<DominosaPuzzle, DominosaState, DominosaAction, DominosaInteraction, typeof settings> {
   return {
     id: "dominosa.svg",
     name: "grid",
-    puzzle: "dominosa",
+    puzzle: dominosa,
     settings,
     controls: [
       { how: "click or tap between two cells", what: "put a domino on them, or take it away. a new domino replaces any it overlaps" },
@@ -306,7 +310,7 @@ export function dominosaView(board: Board): View<DominosaPuzzle, DominosaState, 
 
       const rects = (cells: Iterable<number>) => [...new Set(cells)].map((c) => tiles[c]!.getBoundingClientRect());
       const cellsOf = (qs: readonly number[]) => qs.flatMap((q) => [g.pa[q]!, g.pb[q]!]);
-      const commands: CommandDef[] = bindCommands({ ...BINDINGS, ...DIGIT_BINDINGS }, {
+      const commands: CommandDef[] = [...bindCommands(BINDINGS, {
         "dominosa.domino": atCursor(DOMINO),
         "dominosa.line": atCursor(LINE),
         "dominosa.highlight": () => toggleHighlight(p.numbers[cursorCell()]!),
@@ -314,12 +318,11 @@ export function dominosaView(board: Board): View<DominosaPuzzle, DominosaState, 
         "dominosa.right": move(1, 0),
         "dominosa.up": move(0, -1),
         "dominosa.down": move(0, 1),
-        ...Object.fromEntries(Array.from({ length: 10 }, (_, d) => [`dominosa.number-${d}`, () => { if (d <= p.n) toggleHighlight(d); }])),
       }, {
         "dominosa.domino": { menu: "board" },
         "dominosa.line": { menu: "board" },
         "dominosa.highlight": { menu: "board" },
-      });
+      }), ...bindCommands(DIGIT_BINDINGS, Object.fromEntries(Array.from({ length: 10 }, (_, d) => [`dominosa.number-${d}`, () => { if (d <= p.n) toggleHighlight(d); }])))];
       return {
         gestures: { secondaryClick: true, hold: true },
         aspect: vbW / vbH,

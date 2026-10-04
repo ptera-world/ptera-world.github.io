@@ -1,8 +1,8 @@
-import type { WidgetDef } from "../../core/types";
+import { defineWidgets } from "../../core/define";
 import { h, style } from "../../core/dom";
-import type { PatternAction, PatternInteraction, PatternPuzzle, PatternState } from "./logic";
+import { pattern, type PatternAction, type PatternInteraction, type PatternPuzzle, type PatternState } from "./logic";
 
-type PatternWidget = WidgetDef<PatternPuzzle, PatternState, PatternAction, PatternInteraction>;
+const widget = defineWidgets<PatternPuzzle, PatternState, PatternAction, PatternInteraction>();
 
 const CSS = `
 .pattern-mode { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
@@ -13,11 +13,11 @@ const CSS = `
 const coarse = (): boolean => typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
 
 /** Visible by default only on touch screens, where there is no right click. */
-export const crossMode: PatternWidget = {
+export const crossMode = widget({
   id: "pattern.mode",
   name: "fill / cross switch",
   description: "choose whether tapping a cell fills it or crosses it out",
-  puzzles: ["pattern"],
+  puzzles: [pattern],
   defaultSlot: coarse() ? "bottom" : "off",
   order: 15,
   mount(el, { session, owner, run }) {
@@ -32,6 +32,6 @@ export const crossMode: PatternWidget = {
     session.hooks.interaction.tap(render, { owner });
     render();
   },
-};
+});
 
 export const patternWidgets = [crossMode];

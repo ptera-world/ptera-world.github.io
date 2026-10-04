@@ -1,6 +1,6 @@
 import type { Step, Technique } from "../../core/types";
 import { LINE, NO, UNK, edgeGrid } from "../../lib/edges";
-import { CROSS, EMPTY, NONE, TRACK, cellList, cellName, countName, edgeList, type TracksAction, type TracksFocus, type TracksPuzzle, type TracksState } from "./logic";
+import { tracks, CROSS, EMPTY, NONE, TRACK, cellList, cellName, countName, edgeList, type TracksAction, type TracksFocus, type TracksPuzzle, type TracksState } from "./logic";
 import { analyze, closeObvious, freshKnowledge, scanSteps, sides, target, type Knowledge, type Step as SolverStep, type StepKind } from "./solver";
 
 type TracksTechnique = Technique<TracksPuzzle, TracksState, TracksAction>;
@@ -93,7 +93,7 @@ function build(raw: SolverStep, ch: Changes, message: string, nudge: string, nud
 type Finder = (p: TracksPuzzle, s: TracksState, target?: TracksTarget) => Step<TracksAction> | null;
 
 function technique(def: Omit<TracksTechnique, "find" | "findAt" | "puzzles">, find: Finder): TracksTechnique {
-  return { ...def, puzzles: ["tracks"], find: (p, s) => find(p, s), findAt: (p, s, t) => find(p, s, t as TracksTarget) };
+  return { ...def, puzzles: [tracks], find: (p, s) => find(p, s), findAt: (p, s, t) => find(p, s, t as TracksTarget) };
 }
 
 const EASY = { width: 6, height: 6, difficulty: "easy" };

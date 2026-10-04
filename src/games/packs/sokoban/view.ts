@@ -1,10 +1,11 @@
 import { animate, ease, lerp, type Animation } from "../../core/anim";
-import { bindCommands, type BindingSchema } from "../../core/commands";
+import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
 import { h, s, style } from "../../core/dom";
 import type { View, WidgetDef } from "../../core/types";
 import type { SokoAction, SokoFocus, SokoInteraction, SokoPuzzle, SokoState } from "./logic";
 import { STUCK_KEY } from "./plugins";
 import { FLOOR, boxRoute, stepFrom, walkPath, walkable } from "./solver";
+import { sokoban } from "./logic";
 
 const SIZE = 10;
 const MS_PER_STEP = 60;
@@ -29,12 +30,16 @@ const CSS = `
 .sokoban-count { font-family: var(--mono); color: var(--text-dim); min-height: 1.4em; }
 `;
 
-const BINDINGS: BindingSchema = {
+const BINDINGS = {
   "sokoban.up": { label: "step up", category: "sokoban", keys: ["ArrowUp", "w"], description: "step up, pushing a box if one is there" },
   "sokoban.right": { label: "step right", category: "sokoban", keys: ["ArrowRight", "d"], description: "step right, pushing a box if one is there" },
   "sokoban.down": { label: "step down", category: "sokoban", keys: ["ArrowDown", "s"], description: "step down, pushing a box if one is there" },
   "sokoban.left": { label: "step left", category: "sokoban", keys: ["ArrowLeft", "a"], description: "step left, pushing a box if one is there" },
-};
+} satisfies BindingSchema;
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof BINDINGS> {}
+}
 
 const swatch = (body: string) => `<svg viewBox="-0.5 -0.5 11 11"><rect width="10" height="10" fill="var(--cell)" stroke="var(--border)" stroke-width="0.2"/>${body}</svg>`;
 const BOX = (fill: string) => `<rect x="1.2" y="1.2" width="7.6" height="7.6" rx="1" fill="${fill}" stroke="var(--text)" stroke-width="0.6"/>`;
@@ -42,7 +47,7 @@ const BOX = (fill: string) => `<rect x="1.2" y="1.2" width="7.6" height="7.6" rx
 export const sokoView: View<SokoPuzzle, SokoState, SokoAction, SokoInteraction> = {
   id: "sokoban.svg",
   name: "warehouse",
-  puzzle: "sokoban",
+  puzzle: sokoban,
   controls: [
     { how: "click or tap a floor cell", what: "walk there" },
     { how: "click or tap a box next to the keeper", what: "push it one cell away" },
@@ -260,7 +265,7 @@ export const countWidget: WidgetDef<SokoPuzzle, SokoState, SokoAction, SokoInter
   id: "sokoban.count",
   name: "moves and pushes",
   description: "steps walked and boxes pushed so far",
-  puzzles: ["sokoban"],
+  puzzles: [sokoban],
   defaultSlot: "top",
   order: 10,
   mount(el, { session, owner }) {

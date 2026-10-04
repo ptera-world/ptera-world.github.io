@@ -1,8 +1,9 @@
 import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
-import { bindCommands, type BindingSchema } from "../../core/commands";
-import { s, style } from "../../core/dom";
-import type { ClueRef, PatternAction, PatternFocus, PatternInteraction, PatternPuzzle, PatternState, PatternTarget } from "./logic";
+import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
+import { s, style, inputIs, inputKind } from "../../core/dom";
+import { themedAssets } from "../../lib/assets";
+import { pattern, type ClueRef, type PatternAction, type PatternFocus, type PatternInteraction, type PatternPuzzle, type PatternState, type PatternTarget } from "./logic";
 import { EMPTY, FILLED, UNKNOWN, type Cell } from "./solver";
 
 /** Derived: per-line flags for clue numbers already satisfied. */
@@ -69,7 +70,7 @@ const CSS = `
 .pattern-board .count { fill: var(--accent); font-family: var(--mono); font-size: 7px; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
 .pattern-board .cursor { fill: none; stroke: var(--focus); stroke-width: 0.9; pointer-events: none; }
 .pattern-board .edge-label { fill: var(--text-dim); font-family: var(--mono); font-size: 4px; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
-[data-input="pointer"] .pattern-board .cursor { display: none; }
+${inputIs("pointer")} .pattern-board .cursor { display: none; }
 .pattern-board .g-hint { fill: none; stroke: var(--hint); stroke-width: 1.2; pointer-events: none; }
 .pattern-board .g-source { fill: none; stroke: var(--hint); stroke-width: 0.6; stroke-dasharray: 1.2 0.8; pointer-events: none; }
 .pattern-board .g-mistake { fill: color-mix(in srgb, var(--danger) 25%, transparent); stroke: var(--danger); stroke-width: 1; pointer-events: none; }
@@ -133,7 +134,7 @@ function targetFor(from: number, secondary: boolean): Cell {
   return from === FILLED ? UNKNOWN : FILLED;
 }
 
-const BINDINGS: BindingSchema = {
+const BINDINGS = {
   "pattern.left": { label: "cursor left", category: "nonogram", description: "move the keyboard cursor one cell left", keys: ["ArrowLeft", "a"] },
   "pattern.right": { label: "cursor right", category: "nonogram", description: "move the keyboard cursor one cell right", keys: ["ArrowRight", "d"] },
   "pattern.up": { label: "cursor up", category: "nonogram", description: "move the keyboard cursor one cell up", keys: ["ArrowUp", "w"] },
@@ -146,7 +147,11 @@ const BINDINGS: BindingSchema = {
   "pattern.cross": { label: "cross / uncross", category: "nonogram", description: "cross out the selected cell (mark it as empty), or clear the cross", keys: ["x", "period"] },
   "pattern.clear": { label: "clear cell", category: "nonogram", description: "remove the fill or cross from the selected cell", keys: ["Backspace", "Delete"] },
   "pattern.mode": { label: "cross mode", category: "nonogram", description: "when on, a tap or left-click crosses cells out instead of filling them (right-click does the opposite)", keys: ["m"] },
-};
+} satisfies BindingSchema;
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof BINDINGS> {}
+}
 
 /** A 10×10 cell sample on the board background; the same colors the board CSS uses. */
 const cellSample = (inner: string) =>
@@ -163,9 +168,10 @@ const barSample = (y: number, h: number, style: string) => cellSample(`<rect x="
 const boxSample = (style: string) => cellSample(`<rect x="0.6" y="0.6" width="8.8" height="8.8" rx="0.8" style="${style}"/>`);
 
 function legendFor(look: Look): { sample: string; meaning: string }[] {
-  const filled = assetInner(look.asset("pattern.filled", ASSETS.filled));
-  const cross = assetInner(look.asset("pattern.cross", ASSETS.cross));
-  const dot = assetInner(look.asset("pattern.dot", ASSETS.dot));
+  const art = themedAssets(look, "pattern", ASSETS);
+  const filled = assetInner(art("filled"));
+  const cross = assetInner(art("cross"));
+  const dot = assetInner(art("dot"));
   return [
     { sample: cellSample(filled), meaning: "filled cell: part of the picture" },
     { sample: cellSample(cross), meaning: "crossed-out cell: you've decided it's empty (crosses don't count toward the answer)" },
@@ -197,11 +203,11 @@ function legendFor(look: Look): { sample: string; meaning: string }[] {
 export type Board = Pick<typeof import("../../core/board"), "labelSides" | "colName" | "rowName">;
 
 /** `menuHoldMs` is the shell's board-menu hold time (games.HOLD_MS). */
-export function patternView(look: Look, board: Board, menuHoldMs: number): View<PatternPuzzle, PatternState, PatternAction, PatternInteraction> {
+export function patternView(look: Look, board: Board, menuHoldMs: number): View<PatternPuzzle, PatternState, PatternAction, PatternInteraction, typeof settings> {
   return {
     id: "pattern.svg",
     name: "grid",
-    puzzle: "pattern",
+    puzzle: pattern,
     settings,
     controls: [
       { how: "click or tap a cell", what: "fill it; again to clear it" },
@@ -219,10 +225,11 @@ export function patternView(look: Look, board: Board, menuHoldMs: number): View<
       style("pattern", CSS);
       const p = session.puzzle;
       const n = p.w * p.h;
-      const filledNode = assetNode(look.asset("pattern.filled", ASSETS.filled));
+      const art = themedAssets(look, "pattern", ASSETS);
+      const filledNode = assetNode(art("filled"));
       const markNode = settings.marks === "dot"
-        ? assetNode(look.asset("pattern.dot", ASSETS.dot))
-        : assetNode(look.asset("pattern.cross", ASSETS.cross));
+        ? assetNode(art("dot"))
+        : assetNode(art("cross"));
       const numW = (num: number) => String(num).length * 3.3 + 2.4;
       const rowW = (clue: readonly number[]) => (clue.length ? clue : [0]).reduce((a, num) => a + numW(num), 0);
       const colLen = Math.max(1, ...p.cols.map((c) => c.length));
@@ -362,7 +369,7 @@ export function patternView(look: Look, board: Board, menuHoldMs: number): View<
       let aim: PatternTarget = lineTarget(session.interaction.cursor);
       let lastKeyValue: Cell = FILLED;
       const drawn: string[] = Array.from({ length: n }, () => "");
-      const keyboardInput = () => root.closest("[data-input]")?.getAttribute("data-input") === "keyboard";
+      const keyboardInput = () => inputKind(root) === "keyboard";
 
       const dragCells = (d: Drag): number[] => {
         const sx = d.start % p.w, sy = Math.floor(d.start / p.w);
@@ -543,7 +550,7 @@ export function patternView(look: Look, board: Board, menuHoldMs: number): View<
         const from = session.state.cells[cell]!;
         const target: Cell = e.button === 1 ? UNKNOWN : targetFor(from, secondary);
         drag = { pointerId: e.pointerId, start: cell, cur: cell, from, target, secondary, prior: session.state.cells, timer: 0 };
-        const lp = settings.longPressMs as number;
+        const lp = settings.longPressMs;
         if (e.pointerType !== "mouse" && lp > 0 && e.button === 0) {
           drag.timer = window.setTimeout(() => {
             if (!drag || drag.cur !== drag.start) return;
@@ -651,7 +658,7 @@ export function patternView(look: Look, board: Board, menuHoldMs: number): View<
           render();
         },
         // right-click crosses; a touch hold crosses unless hold-to-cross is off, then it is the shell menu
-        gestures: { secondaryClick: true, hold: (settings.longPressMs as number) > 0 },
+        gestures: { secondaryClick: true, hold: (settings.longPressMs) > 0 },
         commands,
         context: () => ({ patternCrossMode: session.interaction.crossMode }),
         locate: (f) => {

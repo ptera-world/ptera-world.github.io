@@ -1,8 +1,9 @@
-import { bindCommands, type BindingSchema } from "../../core/commands";
-import { s, style } from "../../core/dom";
+import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
+import { s, style, inputIs } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
 import type { View } from "../../core/types";
 import type { SixteenAction, SixteenFocus, SixteenInteraction, SixteenPuzzle, SixteenState } from "./logic";
+import { sixteen } from "./logic";
 
 const SIZE = 10;
 /** Space for the arrow strip on each side. */
@@ -29,7 +30,7 @@ const CSS = `
 .sixteen-board .ghost rect { fill: color-mix(in srgb, var(--cell) 70%, transparent); stroke: var(--text-dim); stroke-width: 0.35; stroke-dasharray: 1 0.7; }
 .sixteen-board .ghost text { fill: var(--text-dim); font: 600 4.4px var(--font); text-anchor: middle; dominant-baseline: central; }
 .sixteen-board .cursor { fill: none; stroke: var(--focus); stroke-width: 0.6; pointer-events: none; }
-[data-input="pointer"] .sixteen-board .cursor { display: none; }
+${inputIs("pointer")} .sixteen-board .cursor { display: none; }
 @media (prefers-reduced-motion: reduce) { .sixteen-board .tile { transition: none; } }
 `;
 
@@ -37,7 +38,7 @@ const settings = defineSchema({
   tintHome: { type: "bool", label: "tint numbers that are in their final spot", default: true },
 });
 
-const BINDINGS: BindingSchema = {
+const BINDINGS = {
   "sixteen.left": { label: "cursor left", category: "sixteen", keys: ["ArrowLeft", "a"] },
   "sixteen.right": { label: "cursor right", category: "sixteen", keys: ["ArrowRight", "d"] },
   "sixteen.up": { label: "cursor up", category: "sixteen", keys: ["ArrowUp", "w"] },
@@ -46,7 +47,11 @@ const BINDINGS: BindingSchema = {
   "sixteen.row-right": { label: "slide row right", category: "sixteen", keys: ["shift+ArrowRight", "shift+d"], description: "slide the selected tile's row one place right" },
   "sixteen.col-up": { label: "slide column up", category: "sixteen", keys: ["shift+ArrowUp", "shift+w"], description: "slide the selected tile's column one place up" },
   "sixteen.col-down": { label: "slide column down", category: "sixteen", keys: ["shift+ArrowDown", "shift+s"], description: "slide the selected tile's column one place down" },
-};
+} satisfies BindingSchema;
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof BINDINGS> {}
+}
 
 const swatch = (body: string, vb = "-0.5 -0.5 11 11") => `<svg viewBox="${vb}">${body}</svg>`;
 const tileSample = (fill: string) =>
@@ -62,10 +67,10 @@ function tri(cx: number, cy: number, dir: number): string {
   return pts.join(" ");
 }
 
-export const sixteenView: View<SixteenPuzzle, SixteenState, SixteenAction, SixteenInteraction> = {
+export const sixteenView: View<SixteenPuzzle, SixteenState, SixteenAction, SixteenInteraction, typeof settings> = {
   id: "sixteen.svg",
   name: "tiles",
-  puzzle: "sixteen",
+  puzzle: sixteen,
   settings,
   controls: [
     { how: "click or tap an arrow at the end of a row or column", what: "slide that line one place the way the arrow points" },

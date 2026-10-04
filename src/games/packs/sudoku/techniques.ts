@@ -1,4 +1,4 @@
-import type { Step as CoreStep, Technique } from "../../core/types";
+import type { Feature, Step as CoreStep, Technique } from "../../core/types";
 import {
   findChain, findLocked, findRuleStep, fish, fullHouse, hiddenSingle, hiddenSubset, nakedSingle, nakedSubset, trial,
   type Grid, type Step as EngineStep, type Technique as EngineTechnique,
@@ -6,8 +6,8 @@ import {
 import { modelOf } from "./engine/model";
 import { constraintTypes } from "./engine/registry";
 import type { ConstraintType } from "./engine/types";
-import { LATIN_IDS } from "./defs";
-import { gridOf, type GridAction, type GridState, type HintFocus, type LatinPuzzle } from "./puzzle";
+import { latinDefs } from "./defs";
+import { constraintFeature, gridOf, type GridAction, type GridState, type HintFocus, type LatinPuzzle } from "./puzzle";
 
 export type LatinTechnique = Technique<LatinPuzzle, GridState, GridAction>;
 
@@ -28,7 +28,7 @@ export interface LatinTechniqueSpec {
   name: string;
   level: number;
   description: string;
-  requires?: readonly string[];
+  requires?: readonly Feature[];
   /** Generation params for practice boards. */
   practice?: Record<string, unknown>;
   find(g: Grid, p: LatinPuzzle): EngineStep | null;
@@ -39,7 +39,7 @@ export function latinTechnique(spec: LatinTechniqueSpec): LatinTechnique {
   return {
     id: `sudoku.${spec.key}`,
     name: spec.name,
-    puzzles: LATIN_IDS,
+    puzzles: latinDefs,
     requires: spec.requires,
     level: spec.level,
     description: spec.description,
@@ -71,13 +71,13 @@ export function clueTechnique(t: ConstraintType): LatinTechnique | null {
     name: t.logic.name,
     level: t.logic.level ?? 2,
     description: t.rule ? `${t.rule}. ${t.logic.description}` : t.logic.description,
-    requires: [t.type],
+    requires: [constraintFeature(t.type)],
     practice: { variants: [t.type], difficulty: "any" },
     find: (g, p) => findRuleStep(g, (r) => typeOfRule(p, r) === t.type),
   });
 }
 
-const otherClues = latinTechnique({
+export const otherClues = latinTechnique({
   key: "clue.other",
   name: "other clue logic",
   level: 2.2,
@@ -86,22 +86,28 @@ const otherClues = latinTechnique({
   find: (g, p) => findRuleStep(g, (r) => !constraintTypes.get(typeOfRule(p, r))?.logic),
 });
 
+export const fullHouseTechnique = latinTechnique({
+  key: "full-house", name: "full house", level: 1, practice: EASY,
+  description: "a row, column or box with only one empty cell left: that cell gets the one missing digit.",
+  find: of(fullHouse),
+});
+
+export const hiddenSingleTechnique = latinTechnique({
+  key: "hidden-single", name: "hidden single", level: 1.2, practice: EASY,
+  description: "pick a digit and a row, column or box that still needs it. if every other spot there is blocked (it already sees that digit), the digit goes in the one spot left.",
+  find: of(hiddenSingle),
+});
+
+export const nakedSingleTechnique = latinTechnique({
+  key: "naked-single", name: "naked single", level: 1.5, practice: EASY,
+  description: "a cell whose row, column, box (and any other group it belongs to) already contain every digit but one. that last digit is the only thing it can be.",
+  find: of(nakedSingle),
+});
+
 const core: LatinTechnique[] = [
-  latinTechnique({
-    key: "full-house", name: "full house", level: 1, practice: EASY,
-    description: "a row, column or box with only one empty cell left: that cell gets the one missing digit.",
-    find: of(fullHouse),
-  }),
-  latinTechnique({
-    key: "hidden-single", name: "hidden single", level: 1.2, practice: EASY,
-    description: "pick a digit and a row, column or box that still needs it. if every other spot there is blocked (it already sees that digit), the digit goes in the one spot left.",
-    find: of(hiddenSingle),
-  }),
-  latinTechnique({
-    key: "naked-single", name: "naked single", level: 1.5, practice: EASY,
-    description: "a cell whose row, column, box (and any other group it belongs to) already contain every digit but one. that last digit is the only thing it can be.",
-    find: of(nakedSingle),
-  }),
+  fullHouseTechnique,
+  hiddenSingleTechnique,
+  nakedSingleTechnique,
   latinTechnique({
     key: "pointing", name: "pointing", level: 2.6, requires: ["boxes"], practice: MEDIUM,
     description: "inside a box, a digit's possible cells all lie on one row (or column). it must end up on that line inside this box, so it can't go anywhere else on that line.",

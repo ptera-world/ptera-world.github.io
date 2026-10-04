@@ -1,10 +1,10 @@
-import { bindCommands, type BindingSchema } from "../../core/commands";
-import { s, style } from "../../core/dom";
+import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
+import { s, style, inputIs } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
 import { geometry } from "./grid";
 import {
-  canLink, prevOf, stateChains,
+  signpost, canLink, prevOf, stateChains,
   type Conflicts, type SignpostAction, type SignpostFocus, type SignpostInteraction, type SignpostPuzzle, type SignpostState,
 } from "./logic";
 import type { SignpostTarget } from "./techniques";
@@ -37,7 +37,7 @@ const CSS = `
 .signpost-board .focus.related { stroke-width: 0.4; stroke-opacity: 0.7; }
 .signpost-board .labels text { fill: var(--text-dim); font: 500 3.6px var(--font); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
 .signpost-board .cursor { fill: none; stroke: var(--focus); stroke-width: 0.6; pointer-events: none; }
-[data-input="pointer"] .signpost-board .cursor { display: none; }
+${inputIs("pointer")} .signpost-board .cursor { display: none; }
 `;
 
 const settings = defineSchema({
@@ -51,7 +51,7 @@ const PAD = 0.25;
 const LABEL = 6;
 const HUES = [200, 30, 140, 300, 60, 250, 0, 170];
 
-const BINDINGS: BindingSchema = {
+const BINDINGS = {
   "signpost.link": { label: "link from here / to here", category: "signpost", keys: ["Enter"], description: "start a link at the selected cell, then press again on the cell it leads to" },
   "signpost.link-back": { label: "link into here / from here", category: "signpost", keys: ["space"], description: "start a link into the selected cell, then press again on the cell that leads to it" },
   "signpost.cancel": { label: "cancel link", category: "signpost", keys: ["Escape"], description: "forget the link you started" },
@@ -61,7 +61,11 @@ const BINDINGS: BindingSchema = {
   "signpost.right": { label: "cursor right", category: "signpost", keys: ["ArrowRight", "d"] },
   "signpost.up": { label: "cursor up", category: "signpost", keys: ["ArrowUp", "w"] },
   "signpost.down": { label: "cursor down", category: "signpost", keys: ["ArrowDown", "s"] },
-};
+} satisfies BindingSchema;
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof BINDINGS> {}
+}
 
 export type Side = "top" | "right" | "bottom" | "left";
 export type Board = { labelSides(): Set<Side>; colName(col: number): string; rowName(row: number): string };
@@ -99,11 +103,11 @@ function legend(): { sample: string; meaning: string }[] {
   ];
 }
 
-export function signpostView(board: Board): View<SignpostPuzzle, SignpostState, SignpostAction, SignpostInteraction> {
+export function signpostView(board: Board): View<SignpostPuzzle, SignpostState, SignpostAction, SignpostInteraction, typeof settings> {
   return {
     id: "signpost.svg",
     name: "grid",
-    puzzle: "signpost",
+    puzzle: signpost,
     settings,
     controls: [
       { how: "drag from a cell to the cell it leads to", what: "link them (replacing either end's old link)" },

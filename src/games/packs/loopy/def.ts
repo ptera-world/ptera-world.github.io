@@ -184,7 +184,7 @@ export const loopy: PuzzleDef<LoopyPuzzle, LoopyState, LoopyAction, LoopyInterac
     "crosses are notes you make for edges you know aren't part of the loop. they don't count toward anything.",
     ...(gridOf(p).cells ? ["hints name cells by column letter and row number, like C5. the \"board labels\" command writes them along the edges."] : []),
   ],
-  features: (p) => [`tiling:${p.tiling}`, ...(analysisOf(p).count === 1 ? ["solution"] : [])],
+  features: (p) => [`tiling:${p.tiling}` as const, ...(analysisOf(p).count === 1 ? ["solution" as const] : [])],
   rate(p) {
     const a = analysisOf(p);
     if (a.count === 0) return { label: "no solution", score: 100 };
@@ -195,3 +195,12 @@ export const loopy: PuzzleDef<LoopyPuzzle, LoopyState, LoopyAction, LoopyInterac
   },
   describe: (p) => `${p.w}×${p.h} ${getTiling(p.tiling)?.label ?? p.tiling}`,
 };
+
+declare module "../../core/types" {
+  interface FeatureNames {
+    /** The puzzle has exactly one solution, so moves can be checked against it. */
+    solution: true;
+    /** Which tiling the board uses. */
+    [k: `tiling:${string}`]: true;
+  }
+}

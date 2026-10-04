@@ -2,7 +2,7 @@ import { bindCommands, type BindingSchema } from "../../core/commands";
 import { h, s, style } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
 import type { View, WidgetDef } from "../../core/types";
-import { DIR_NAMES, GEM, MINE, STOP, WALL, gemCount, roll, type InertiaAction, type InertiaFocus, type InertiaInteraction, type InertiaPuzzle, type InertiaState } from "./logic";
+import { inertia, DIR_NAMES, GEM, MINE, STOP, WALL, gemCount, roll, type InertiaAction, type InertiaFocus, type InertiaInteraction, type InertiaPuzzle, type InertiaState } from "./logic";
 
 const SIZE = 10;
 const MS_PER_CELL = 45;
@@ -41,10 +41,10 @@ const MINE_SVG = `<circle cx="5" cy="5" r="2.2" fill="var(--danger)"/><path d="M
 const STOP_SVG = `<circle cx="5" cy="5" r="3.4" fill="none" stroke="var(--text-dim)" stroke-width="0.8"/>`;
 const BALL_SVG = (fill: string) => `<circle cx="5" cy="5" r="3" fill="${fill}" stroke="color-mix(in srgb, var(--accent) 50%, var(--text))" stroke-width="0.6"/>`;
 
-export const inertiaView: View<InertiaPuzzle, InertiaState, InertiaAction, InertiaInteraction> = {
+export const inertiaView: View<InertiaPuzzle, InertiaState, InertiaAction, InertiaInteraction, typeof settings> = {
   id: "inertia.svg",
   name: "grid",
-  puzzle: "inertia",
+  puzzle: inertia,
   settings,
   controls: [
     { how: "click or tap anywhere", what: "roll the ball toward that point (straight or diagonal, whichever of the eight directions is closest)" },
@@ -190,7 +190,7 @@ export const gemsWidget: WidgetDef<InertiaPuzzle, InertiaState, InertiaAction, I
   id: "inertia.gems",
   name: "gems left",
   description: "gems still to collect",
-  puzzles: ["inertia"],
+  puzzles: [inertia],
   defaultSlot: "top",
   order: 10,
   mount(el, { session, owner }) {

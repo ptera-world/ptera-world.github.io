@@ -2,7 +2,7 @@ import type { Technique } from "../../core/types";
 import { bit, type Deduction } from "../../lib/grid-kit/csp";
 import { cellList, cellName, technique, type Focus, type Reading } from "../../lib/grid-kit/names";
 import {
-  GRASS, NONE, TENT, TREE, YES, lineName, model, readMarks,
+  tents, GRASS, NONE, TENT, TREE, YES, lineName, model, readMarks,
   type Mark, type TentsAction, type TentsPuzzle, type TentsState,
 } from "./logic";
 
@@ -34,7 +34,7 @@ function step(p: TentsPuzzle, d: Deduction, vars: number[], why: string, nudge: 
 }
 
 const lineOf = (p: TentsPuzzle, d: Deduction) => lineName(p, (d.data as { line: number }).line);
-const base = { puzzle: "tents", read, changes };
+const base = { puzzle: tents, read, changes };
 const EASY = { width: 8, height: 8, difficulty: "easy" };
 const TRICKY = { width: 8, height: 8, difficulty: "tricky" };
 

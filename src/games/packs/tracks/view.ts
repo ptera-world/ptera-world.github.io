@@ -1,10 +1,10 @@
-import { bindCommands, type BindingSchema } from "../../core/commands";
-import { s, style } from "../../core/dom";
+import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
+import { s, style, inputIs } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
 import { DOWN, LEFT, RIGHT, UP, edgeAt, edgeGrid, step } from "../../lib/edges";
 import {
-  CROSS, EMPTY, LINE, NONE, TRACK, trackCells,
+  tracks, CROSS, EMPTY, LINE, NONE, TRACK, trackCells,
   type Conflicts, type TracksAction, type TracksFocus, type TracksInteraction, type TracksPuzzle, type TracksState,
 } from "./logic";
 import { BIT, countCells, entryCell, exitCell, target } from "./solver";
@@ -38,7 +38,7 @@ const CSS = `
 .tracks-board .focus-edge { stroke: var(--hint); stroke-width: 3.4; stroke-linecap: round; opacity: 0.45; pointer-events: none; }
 .tracks-board .labels text { fill: var(--text-dim); font: 500 3.4px var(--font); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
 .tracks-board .cursor { fill: none; stroke: var(--focus); stroke-width: 0.6; pointer-events: none; }
-[data-input="pointer"] .tracks-board .cursor { display: none; }
+${inputIs("pointer")} .tracks-board .cursor { display: none; }
 `;
 
 const settings = defineSchema({
@@ -50,7 +50,7 @@ const LABEL = 5;
 /** Margins: counts above and to the right, the entrance's A on the left, the exit's B below. */
 const TOP = 7, RIGHT_M = 7, LEFT_M = 6, BOTTOM_M = 6;
 
-const BINDINGS: BindingSchema = {
+const BINDINGS = {
   "tracks.has-track": { label: "track here mark", category: "tracks", keys: ["space", "t"], description: "mark the selected cell as having track (before you know which way it runs), or remove the mark" },
   "tracks.no-track": { label: "no track here mark", category: "tracks", keys: ["x", "period"], description: "mark the selected cell as having no track, or remove the mark" },
   "tracks.line-up": { label: "track up", category: "tracks", keys: ["shift+ArrowUp", "shift+w"], description: "lay (or remove) track from the selected cell upwards, and move there" },
@@ -65,7 +65,11 @@ const BINDINGS: BindingSchema = {
   "tracks.right": { label: "cursor right", category: "tracks", keys: ["ArrowRight", "d"] },
   "tracks.up": { label: "cursor up", category: "tracks", keys: ["ArrowUp", "w"] },
   "tracks.down": { label: "cursor down", category: "tracks", keys: ["ArrowDown", "s"] },
-};
+} satisfies BindingSchema;
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof BINDINGS> {}
+}
 
 export type Side = "top" | "right" | "bottom" | "left";
 export type Board = { labelSides(): Set<Side>; colName(col: number): string; rowName(row: number): string };
@@ -92,11 +96,11 @@ function legend(): { sample: string; meaning: string }[] {
   ];
 }
 
-export function tracksView(board: Board): View<TracksPuzzle, TracksState, TracksAction, TracksInteraction> {
+export function tracksView(board: Board): View<TracksPuzzle, TracksState, TracksAction, TracksInteraction, typeof settings> {
   return {
     id: "tracks.svg",
     name: "grid",
-    puzzle: "tracks",
+    puzzle: tracks,
     settings,
     controls: [
       { how: "drag from cell to cell", what: "lay track (dragging over track you laid removes it)" },

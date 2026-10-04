@@ -26,7 +26,7 @@ const modeWidget: BridgesWidget = {
   id: "bridges.mode",
   name: "what a tap does",
   description: "choose whether tapping (or clicking) the board adds bridges or takes them away and puts ✕. mostly for touch, where there's no right-click",
-  puzzles: ["bridges"],
+  puzzles: [bridges],
   defaultSlot: "bottom",
   order: 5,
   mount(el, ctx) {
@@ -49,7 +49,7 @@ const progressWidget: BridgesWidget = {
   id: "bridges.progress",
   name: "progress",
   description: "islands still open and how many separate groups the bridges form",
-  puzzles: ["bridges"],
+  puzzles: [bridges],
   defaultSlot: "top",
   order: 10,
   mount(el, ctx) {

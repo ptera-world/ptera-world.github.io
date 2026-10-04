@@ -1,5 +1,5 @@
 import type { Step, Technique } from "../../core/types";
-import { direction, type CubeAction, type CubeFocus, type CubePuzzle, type CubeState } from "./logic";
+import { cube, direction, type CubeAction, type CubeFocus, type CubePuzzle, type CubeState } from "./logic";
 import { plan, type Plan } from "./solver";
 
 type CubeTechnique = Technique<CubePuzzle, CubeState, CubeAction>;
@@ -24,7 +24,7 @@ function step(p: CubePuzzle, s: CubeState, drops: boolean, say: (pl: Plan, d: st
 export const fetchBlue: CubeTechnique = {
   id: "cube.fetch",
   name: "fetch a blue square",
-  puzzles: ["cube"],
+  puzzles: [cube],
   level: 1,
   description: "roll toward a blue square along a route that lands a plain face on it, without setting a blue face down on a plain square on the way.",
   find: (p, s) => step(p, s, false, (pl, d) => ({
@@ -38,7 +38,7 @@ export const fetchBlue: CubeTechnique = {
 export const makeRoom: CubeTechnique = {
   id: "cube.make-room",
   name: "put one down to pick two up",
-  puzzles: ["cube"],
+  puzzles: [cube],
   level: 2,
   description: "sometimes no blue square can be reached without setting a blue face down first. drop it where it can be picked up again later: a search for a whole route to every face blue decides where.",
   find: (p, s) => step(p, s, true, (pl, d) => ({

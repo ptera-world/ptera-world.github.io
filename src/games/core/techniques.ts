@@ -113,7 +113,7 @@ export class TechniqueHost {
   private offs: (() => void)[] = [];
 
   constructor(registry: Registry, private session: Session<any, any, any, any>) {
-    this.list = registry.techniquesFor(session.def.id, session.puzzle);
+    this.list = registry.techniquesFor(session.def, session.puzzle);
     const def = session.def;
 
     session.hooks.apply.tap((next, { puzzle, action, note }) => {

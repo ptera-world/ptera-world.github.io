@@ -1,5 +1,5 @@
 import type { Step, Technique } from "../../core/types";
-import { carName, describeSlide, type RushAction, type RushFocus, type RushPuzzle, type RushState } from "./logic";
+import { rushhour, carName, describeSlide, type RushAction, type RushFocus, type RushPuzzle, type RushState } from "./logic";
 import { cellsOf, exitAt, occupancy, plan, reach, type Slide } from "./solver";
 
 type RushTechnique = Technique<RushPuzzle, RushState, RushAction>;
@@ -32,7 +32,7 @@ function step(s: RushState, m: Slide, message: string, nudge: string, focus: Rus
 export const driveOut: RushTechnique = {
   id: "rushhour.drive-out",
   name: "drive out",
-  puzzles: ["rushhour"],
+  puzzles: [rushhour],
   level: 1,
   description: "once nothing stands between the red car and the exit, drive it out.",
   find(p, s) {
@@ -48,7 +48,7 @@ export const driveOut: RushTechnique = {
 export const clearWay: RushTechnique = {
   id: "rushhour.clear-way",
   name: "clear the way",
-  puzzles: ["rushhour"],
+  puzzles: [rushhour],
   level: 2,
   description: "when a shortest way out starts by shifting a car out of the red car's row, do that.",
   find(p, s) {
@@ -67,7 +67,7 @@ export const clearWay: RushTechnique = {
 export const makeRoom: RushTechnique = {
   id: "rushhour.make-room",
   name: "make room",
-  puzzles: ["rushhour"],
+  puzzles: [rushhour],
   level: 3,
   description: "work backwards from the red car: what blocks it, what blocks that, and so on. a shortest way out begins by moving a car that makes room for another; this finds one by searching every position.",
   find(p, s) {

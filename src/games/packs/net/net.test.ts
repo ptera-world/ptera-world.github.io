@@ -292,8 +292,8 @@ test("features and wrap-only widget", async () => {
   expect(net.features!(flat)).toEqual(["walls"]);
   const registry = new Registry();
   register(registry);
-  expect(registry.widgetsFor("net", wrap).map((w) => w.id)).toContain("net.scroll");
-  expect(registry.widgetsFor("net", flat).map((w) => w.id)).not.toContain("net.scroll");
+  expect(registry.widgetsFor(net, wrap).map((w) => w.id)).toContain("net.scroll");
+  expect(registry.widgetsFor(net, flat).map((w) => w.id)).not.toContain("net.scroll");
 });
 
 test("every technique has a practice position", async () => {

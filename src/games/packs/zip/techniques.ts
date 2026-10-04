@@ -1,6 +1,6 @@
 import type { Step, Technique } from "../../core/types";
 import { cellList, cellName } from "../../lib/grid-kit/names";
-import { troubleText, type ZipAction, type ZipFocus, type ZipPuzzle, type ZipState } from "./logic";
+import { zip, troubleText, type ZipAction, type ZipFocus, type ZipPuzzle, type ZipState } from "./logic";
 import { KIND_LEVEL, analyze, headOf, nextStep, walkOf, type Elimination, type StepKind, type ZipStep } from "./solver";
 
 type ZipTechnique = Technique<ZipPuzzle, ZipState, ZipAction>;
@@ -37,7 +37,7 @@ function technique(def: Omit<ZipTechnique, "find" | "puzzles" | "level"> & { kin
   const { kind, ...rest } = def;
   return {
     ...rest,
-    puzzles: ["zip"],
+    puzzles: [zip],
     level: KIND_LEVEL[kind],
     find(p, s) {
       if (!onTrack(p, s)) return null;

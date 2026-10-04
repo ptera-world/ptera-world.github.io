@@ -1,5 +1,5 @@
 import type { Step, Technique } from "../../core/types";
-import { DIR_NAMES, best, canSlide, slide, tileValue, type Action2048, type Focus2048, type Puzzle2048, type State2048 } from "./logic";
+import { game2048, DIR_NAMES, best, canSlide, slide, tileValue, type Action2048, type Focus2048, type Puzzle2048, type State2048 } from "./logic";
 
 type Technique2048 = Technique<Puzzle2048, State2048, Action2048>;
 
@@ -95,7 +95,7 @@ function step(p: Puzzle2048, s: State2048, d: number, message: string, nudge: st
 export const onlyMove: Technique2048 = {
   id: "2048.only-move",
   name: "only move",
-  puzzles: ["2048"],
+  puzzles: [game2048],
   level: 1,
   description: "when sliding just one way moves anything, that's the move.",
   find(p, s) {
@@ -110,7 +110,7 @@ export const onlyMove: Technique2048 = {
 export const reachGoal: Technique2048 = {
   id: "2048.goal",
   name: "make the goal tile",
-  puzzles: ["2048"],
+  puzzles: [game2048],
   level: 2,
   description: "when a slide merges two tiles into the goal tile, make it.",
   find(p, s) {
@@ -127,7 +127,7 @@ export const reachGoal: Technique2048 = {
 export const lookAhead: Technique2048 = {
   id: "2048.look-ahead",
   name: "look ahead",
-  puzzles: ["2048"],
+  puzzles: [game2048],
   level: 3,
   description: "try each slide, then every place the next tile could appear and your best reply to it, and average. a good board keeps its biggest tile in a corner, its rows and columns in order, and plenty of empty cells.",
   find(p, s) {

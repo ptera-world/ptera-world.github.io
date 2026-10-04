@@ -1,5 +1,5 @@
 import type { Step, Technique } from "../../core/types";
-import { cellList, cellName, dotName, type GalaxiesAction, type GalaxiesFocus, type GalaxiesPuzzle, type GalaxiesState } from "./logic";
+import { galaxies, cellList, cellName, dotName, type GalaxiesAction, type GalaxiesFocus, type GalaxiesPuzzle, type GalaxiesState } from "./logic";
 import { analyze, freshOwners, geometry, scanSteps, type Owners, type Step as SolverStep, type StepKind } from "./solver";
 
 type GalaxiesTechnique = Technique<GalaxiesPuzzle, GalaxiesState, GalaxiesAction>;
@@ -40,7 +40,7 @@ function build(raw: SolverStep, tiles: number[], message: string, nudge: string,
 type Finder = (p: GalaxiesPuzzle, s: GalaxiesState, target?: GalaxiesTarget) => Step<GalaxiesAction> | null;
 
 function technique(def: Omit<GalaxiesTechnique, "find" | "findAt" | "puzzles">, find: Finder): GalaxiesTechnique {
-  return { ...def, puzzles: ["galaxies"], find: (p, s) => find(p, s), findAt: (p, s, t) => find(p, s, t as GalaxiesTarget) };
+  return { ...def, puzzles: [galaxies], find: (p, s) => find(p, s), findAt: (p, s, t) => find(p, s, t as GalaxiesTarget) };
 }
 
 const EASY = { width: 5, height: 5, difficulty: "easy" };

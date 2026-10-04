@@ -2,7 +2,7 @@ import type { Step, Technique } from "../../core/types";
 import { bit, valueOf, type Deduction } from "../../lib/grid-kit/csp";
 import { cellList, cellName, technique, type Focus, type Reading } from "../../lib/grid-kit/names";
 import {
-  A_MINUS, A_PLUS, FULL, MAGNET, NEUTRAL, SIGN_WORD, analyze, geometry, lineName, model, readMasks, signAt,
+  magnets, A_MINUS, A_PLUS, FULL, MAGNET, NEUTRAL, SIGN_WORD, analyze, geometry, lineName, model, readMasks, signAt,
   type MagnetsAction, type MagnetsPuzzle, type MagnetsState,
 } from "./logic";
 
@@ -63,7 +63,7 @@ const aim = (p: MagnetsPuzzle, d: Deduction, vars: number[], target: unknown): b
 };
 
 const dataOf = (d: Deduction) => d.data as { line: number; sign: number; cell?: number };
-const base = { puzzle: "magnets", read, changes, aim };
+const base = { puzzle: magnets, read, changes, aim };
 
 export const poles: MagnetsTechnique = technique<MagnetsPuzzle, MagnetsState, MagnetsAction>({
   ...base,

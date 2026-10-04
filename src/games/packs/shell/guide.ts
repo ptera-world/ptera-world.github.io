@@ -1,11 +1,11 @@
 import { add, clear, h, style } from "../../core/dom";
-import { namespace } from "../../core/storage";
+import { prefs } from "../../core/storage";
 import type { WidgetContext } from "../../core/types";
 import { colorOf } from "./engine";
 import { explainer } from "./explainer";
+import { techniqueCommand } from "./names";
 import type { Shell } from "./shell";
 
-const prefs = namespace("prefs");
 
 const CSS = `
 .gd { display: flex; flex-direction: column; gap: 10px; }
@@ -121,7 +121,7 @@ export function guideWidget(shell: Shell, el: HTMLElement, ctx: WidgetContext): 
           `the easiest one is ${t.name}. press play to watch it on a small board:`,
           ex,
           act(
-            h("button", { class: "primary", onclick: () => ctx.run(`technique.practice.${t.id}`) }, "try it myself"),
+            h("button", { class: "primary", onclick: () => ctx.run(techniqueCommand("practice", t)) }, "try it myself"),
             h("button", { onclick: () => goTab("techniques", `[data-technique="${t.id}"]`) }, `all ${techniques.length} techniques`)),
         ];
       },

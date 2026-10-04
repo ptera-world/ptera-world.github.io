@@ -3,7 +3,7 @@ import { formats } from "./formats";
 import { generate, params } from "./generate";
 import { emptyState, graph, isValidSolution, islandName, pos, type BridgesPuzzle, type BridgesState, type Graph } from "./graph";
 import { TIER_NAMES, analyze, domainFromState, isContradiction, search } from "./solver";
-import { boardProblem } from "./techniques";
+import { boardProblem } from "./board";
 
 export type BridgesAction =
   /** Exact bridge count on an edge; n > 0 clears its mark. Ignored if a placed bridge crosses it. */
@@ -228,10 +228,19 @@ export const bridges: PuzzleDef<BridgesPuzzle, BridgesState, BridgesAction, Brid
    * may join a pair. "unique": exactly one solution is known.
    */
   features: (p) => [
-    p.loops ? "loops" : "no-loops",
-    ...(p.maxb > 1 ? ["multi"] : []),
-    ...(analyze(p).unique === true ? ["unique"] : []),
+    p.loops ? "loops" as const : "no-loops" as const,
+    ...(p.maxb > 1 ? ["multi" as const] : []),
+    ...(analyze(p).unique === true ? ["unique" as const] : []),
   ],
   rate,
   describe: (p) => `${p.w}×${p.h}, max ${p.maxb}${p.loops ? "" : ", no loops"}`,
 };
+
+declare module "../../core/types" {
+  interface FeatureNames {
+    loops: true;
+    "no-loops": true;
+    multi: true;
+    unique: true;
+  }
+}

@@ -89,7 +89,7 @@ function stepFor(p: SpiderPuzzle, s: SpiderState, path: readonly Move[]): Step<S
 function solverTechnique(kind: Kind, t: Omit<SpiderTechnique, "find" | "puzzles">): SpiderTechnique {
   return {
     ...t,
-    puzzles: ["spider"],
+    puzzles: [spider],
     find(p, s) {
       const path = plan(p, s).path;
       if (!path?.length || kindOf(p, s, path[0]!) !== kind) return null;
@@ -128,7 +128,7 @@ export const checkWinnable: Plugin<SpiderPuzzle, SpiderState, SpiderAction, Spid
   name: "hints check the game can still be won",
   description: "asking for a hint first says so if no sequence of moves can win from here any more",
   category: "assists",
-  appliesTo: ["spider"],
+  appliesTo: [spider],
   enabledByDefault: true,
   setup({ session, owner }) {
     session.hooks.hint.tap(({ puzzle, state }) => {

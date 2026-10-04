@@ -1,8 +1,8 @@
-import { bindCommands, type BindingSchema } from "../../core/commands";
-import { s, style } from "../../core/dom";
+import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
+import { s, style, inputIs } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
-import { COLOUR_NAMES, canSubmit, isOver, type GuessAction, type GuessFocus, type GuessInteraction, type GuessPuzzle, type GuessState } from "./logic";
+import { guess, COLOUR_NAMES, canSubmit, isOver, type GuessAction, type GuessFocus, type GuessInteraction, type GuessPuzzle, type GuessState } from "./logic";
 
 const FILLS = [
   "var(--cell)",
@@ -39,7 +39,7 @@ const CSS = `
 .guess-board .cursor { fill: none; stroke: var(--focus); stroke-width: 0.6; pointer-events: none; }
 .guess-board .preview { opacity: 0.5; }
 .guess-board .faded { opacity: 0.25; }
-[data-input="pointer"] .guess-board .cursor { display: none; }
+${inputIs("pointer")} .guess-board .cursor { display: none; }
 `;
 
 const settings = defineSchema({
@@ -51,7 +51,7 @@ const R = 3.6;
 const TRAY = 12;
 const GAP = 3;
 
-const BINDINGS: BindingSchema = {
+const BINDINGS = {
   "guess.place": { label: "place color", category: "guess", keys: ["space"], description: "put the selected color in the selected position of your guess (again to take it out)" },
   "guess.submit": { label: "mark guess", category: "guess", keys: ["Enter"], description: "hand in the guess to be marked" },
   "guess.clear": { label: "clear peg", category: "guess", keys: ["Backspace", "Delete", "d"], description: "take the peg out of the selected position" },
@@ -60,7 +60,11 @@ const BINDINGS: BindingSchema = {
   "guess.next-colour": { label: "next color", category: "guess", keys: ["ArrowDown", "s"] },
   "guess.left": { label: "previous position", category: "guess", keys: ["ArrowLeft", "a"] },
   "guess.right": { label: "next position", category: "guess", keys: ["ArrowRight"] },
-};
+} satisfies BindingSchema;
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof BINDINGS> {}
+}
 
 /** Digit keys put that color straight into the selected position (0 is color 10). */
 const DIGIT_BINDINGS: BindingSchema = Object.fromEntries(Array.from({ length: 10 }, (_, i) => [
@@ -82,11 +86,11 @@ function legend(): { sample: string; meaning: string }[] {
   ];
 }
 
-export function guessView(): View<GuessPuzzle, GuessState, GuessAction, GuessInteraction> {
+export function guessView(): View<GuessPuzzle, GuessState, GuessAction, GuessInteraction, typeof settings> {
   return {
     id: "guess.svg",
     name: "board",
-    puzzle: "guess",
+    puzzle: guess,
     settings,
     controls: [
       { how: "click or tap a color in the tray, then a position in your guess", what: "put that color there (again to take it out)" },
@@ -268,7 +272,7 @@ export function guessView(): View<GuessPuzzle, GuessState, GuessAction, GuessInt
       render();
 
       const slot = () => session.interaction.slot;
-      const commands: CommandDef[] = bindCommands({ ...BINDINGS, ...DIGIT_BINDINGS }, {
+      const commands: CommandDef[] = [...bindCommands(BINDINGS, {
         "guess.place": () => place(slot(), session.state.row[slot()] === session.interaction.colour ? 0 : session.interaction.colour),
         "guess.submit": () => session.dispatch({ type: "submit" }),
         "guess.clear": () => place(slot(), 0),
@@ -277,17 +281,16 @@ export function guessView(): View<GuessPuzzle, GuessState, GuessAction, GuessInt
         "guess.next-colour": () => session.setInteraction((i) => ({ ...i, colour: Math.min(p.colours, i.colour + 1) })),
         "guess.left": () => session.setInteraction((i) => ({ ...i, slot: Math.max(0, i.slot - 1) })),
         "guess.right": () => session.setInteraction((i) => ({ ...i, slot: Math.min(p.pegs - 1, i.slot + 1) })),
-        ...Object.fromEntries(Array.from({ length: 10 }, (_, i) => [`guess.colour-${i + 1}`, () => {
-          if (i + 1 > p.colours) return;
-          session.setInteraction((x) => ({ ...x, colour: i + 1 }));
-          place(slot(), i + 1);
-          session.setInteraction((x) => ({ ...x, slot: Math.min(p.pegs - 1, x.slot + 1) }));
-        }])),
       }, {
         "guess.submit": { menu: "board", when: () => canSubmit(p, session.state.row) && !isOver(p, session.state) },
         "guess.hold": { menu: "board" },
         "guess.clear": { menu: "board" },
-      });
+      }), ...bindCommands(DIGIT_BINDINGS, Object.fromEntries(Array.from({ length: 10 }, (_, i) => [`guess.colour-${i + 1}`, () => {
+        if (i + 1 > p.colours) return;
+        session.setInteraction((x) => ({ ...x, colour: i + 1 }));
+        place(slot(), i + 1);
+        session.setInteraction((x) => ({ ...x, slot: Math.min(p.pegs - 1, x.slot + 1) }));
+      }])))];
       return {
         gestures: { secondaryClick: true, hold: true },
         aspect: width / height,

@@ -1,6 +1,6 @@
 import type { Step, Technique } from "../../core/types";
 import { LINE, NO, UNK, around, edgeGrid } from "../../lib/edges";
-import { CROSS, NONE, cellList, cellName, edgeList, type PearlAction, type PearlFocus, type PearlPuzzle, type PearlState } from "./logic";
+import { pearl, CROSS, NONE, cellList, cellName, edgeList, type PearlAction, type PearlFocus, type PearlPuzzle, type PearlState } from "./logic";
 import { analyze, freshKnowledge, scanSteps, type Knowledge, type Step as SolverStep, type StepKind } from "./solver";
 
 type PearlTechnique = Technique<PearlPuzzle, PearlState, PearlAction>;
@@ -72,7 +72,7 @@ function outcome(p: PearlPuzzle, lines: readonly number[], crosses: readonly num
 type Finder = (p: PearlPuzzle, s: PearlState, target?: PearlTarget) => Step<PearlAction> | null;
 
 function technique(def: Omit<PearlTechnique, "find" | "findAt" | "puzzles">, find: Finder): PearlTechnique {
-  return { ...def, puzzles: ["pearl"], find: (p, s) => find(p, s), findAt: (p, s, t) => find(p, s, t as PearlTarget) };
+  return { ...def, puzzles: [pearl], find: (p, s) => find(p, s), findAt: (p, s, t) => find(p, s, t as PearlTarget) };
 }
 
 const EASY = { width: 6, height: 6, difficulty: "easy" };

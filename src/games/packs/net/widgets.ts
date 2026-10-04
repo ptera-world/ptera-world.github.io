@@ -1,8 +1,9 @@
+import type { CommandId } from "../../core/commands";
 import type { WidgetDef } from "../../core/types";
 import { h } from "../../core/dom";
-import type { NetInteraction } from "./logic";
+import { net, type NetInteraction } from "./logic";
 
-const button = (id: string, label: string, run: (id: string) => boolean) =>
+const button = (id: CommandId, label: string, run: (id: CommandId) => boolean) =>
   h("button", { "data-command": id, onclick: () => run(id) }, label);
 
 /** What a tap or plain click on a tile does; the only way to turn counterclockwise or lock on a touch screen without the menu. */
@@ -10,7 +11,7 @@ export const tapModes: WidgetDef = {
   id: "net.tap",
   name: "tap does",
   description: "choose what tapping or clicking a tile does: turn it clockwise, counterclockwise, or lock it",
-  puzzles: ["net"],
+  puzzles: [net],
   defaultSlot: "bottom",
   order: 25,
   mount(el, ctx) {
@@ -32,7 +33,7 @@ export const scrollPad: WidgetDef = {
   id: "net.scroll",
   name: "scroll",
   description: "slide a wrapping board around, so the part you're working on isn't split across an edge",
-  puzzles: ["net"],
+  puzzles: [net],
   requires: ["wrap"],
   defaultSlot: "bottom",
   order: 30,

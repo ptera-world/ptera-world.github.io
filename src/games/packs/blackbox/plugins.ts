@@ -1,5 +1,5 @@
 import type { Plugin } from "../../core/types";
-import { cellList, type BlackboxAction, type BlackboxFocus, type BlackboxInteraction, type BlackboxPuzzle, type BlackboxState } from "./logic";
+import { blackbox, cellList, type BlackboxAction, type BlackboxFocus, type BlackboxInteraction, type BlackboxPuzzle, type BlackboxState } from "./logic";
 import { certain } from "./techniques";
 
 type BlackboxPlugin = Plugin<BlackboxPuzzle, BlackboxState, BlackboxAction, BlackboxInteraction>;
@@ -10,7 +10,7 @@ export const checkMarks: BlackboxPlugin = {
   name: "hints check your balls first",
   description: "asking for a hint first points out balls you've placed where the lasers so far rule a ball out, and locks on cells the lasers prove hold one (judged only from the lasers you've fired)",
   category: "assists",
-  appliesTo: ["blackbox"],
+  appliesTo: [blackbox],
   enabledByDefault: true,
   setup({ session, owner }) {
     session.hooks.hint.tap(({ puzzle, state }) => {

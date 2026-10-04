@@ -2,7 +2,7 @@ import type { Technique } from "../../core/types";
 import { bit, type Deduction } from "../../lib/grid-kit/csp";
 import { cellList, cellName, technique, type Focus, type Reading } from "../../lib/grid-kit/names";
 import {
-  BLACK, DOT, NONE, SHADED, WHITE, model, readMarks,
+  mosaic, BLACK, DOT, NONE, SHADED, WHITE, model, readMarks,
   type Mark, type MosaicAction, type MosaicPuzzle, type MosaicState,
 } from "./logic";
 
@@ -32,7 +32,7 @@ function step(p: MosaicPuzzle, d: Deduction, vars: number[], why: string, nudge:
 }
 
 const num = (p: MosaicPuzzle, q: number) => `the ${p.clues[q]} on ${cellName(p, q)}`;
-const base = { puzzle: "mosaic", read, changes };
+const base = { puzzle: mosaic, read, changes };
 
 export const done: MosaicTechnique = technique<MosaicPuzzle, MosaicState, MosaicAction>({
   ...base,

@@ -1,4 +1,4 @@
-import { bindCommands, type BindingSchema } from "../../core/commands";
+import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
 import { s, style } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
 import type { View } from "../../core/types";
@@ -9,7 +9,7 @@ import {
 } from "../../lib/grid-kit/view";
 import { fades } from "../../lib/grid-kit/fade";
 import {
-  BLACK, DOT, NONE,
+  range, BLACK, DOT, NONE,
   type Mark, type RangeAction, type RangeConflicts, type RangeInteraction, type RangePuzzle, type RangeState,
 } from "./logic";
 
@@ -29,12 +29,16 @@ const settings = defineSchema({
   longPressMs: { type: "int", label: "touch hold for a dot (ms)", default: 400, min: 150, max: 1500, step: 50 },
 });
 
-const BINDINGS: BindingSchema = {
+const BINDINGS = {
   "range.black": { label: "black on / off", category: "range", keys: ["space", "b"], description: "black out the selected cell, or bring it back" },
   "range.dot": { label: "dot on / off", category: "range", keys: ["Enter", "period"], description: "put a dot on the selected cell: your note that it stays white. press again to remove it" },
   "range.clear": { label: "clear cell", category: "range", keys: ["Backspace", "Delete"], description: "remove the black or dot from the selected cell" },
   ...cursorBindings("range", "range"),
-};
+} satisfies BindingSchema;
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof BINDINGS> {}
+}
 
 function legend(): { sample: string; meaning: string }[] {
   const num = (fill: string) => `<text x="5" y="5.3" fill="${fill}" font-size="5.6" font-weight="600" font-family="var(--font)" text-anchor="middle" dominant-baseline="central">4</text>`;
@@ -50,11 +54,11 @@ function legend(): { sample: string; meaning: string }[] {
   ];
 }
 
-export function rangeView(board: BoardPrefs): View<RangePuzzle, RangeState, RangeAction, RangeInteraction> {
+export function rangeView(board: BoardPrefs): View<RangePuzzle, RangeState, RangeAction, RangeInteraction, typeof settings> {
   return {
     id: "range.svg",
     name: "grid",
-    puzzle: "range",
+    puzzle: range,
     settings,
     controls: [
       { how: "click or tap a cell", what: "black it out, or bring it back. drag to do several" },
@@ -94,7 +98,7 @@ export function rangeView(board: BoardPrefs): View<RangePuzzle, RangeState, Rang
         },
         commit: (cells, value) => void session.dispatch({ type: "set", cells, value: value as Mark }),
         redraw: () => render(),
-        holdMs: () => settings.longPressMs as number,
+        holdMs: () => settings.longPressMs,
       });
 
       const render = () => {

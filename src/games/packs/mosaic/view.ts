@@ -1,4 +1,4 @@
-import { bindCommands, type BindingSchema } from "../../core/commands";
+import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
 import { s, style } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
 import type { View } from "../../core/types";
@@ -9,7 +9,7 @@ import {
 } from "../../lib/grid-kit/view";
 import { fades } from "../../lib/grid-kit/fade";
 import {
-  BLACK, DOT, NONE, finishedClues,
+  mosaic, BLACK, DOT, NONE, finishedClues,
   type Mark, type MosaicAction, type MosaicConflicts, type MosaicInteraction, type MosaicPuzzle, type MosaicState,
 } from "./logic";
 
@@ -30,12 +30,16 @@ const settings = defineSchema({
   dimDone: { type: "bool", label: "fade numbers whose block is finished", default: true },
 });
 
-const BINDINGS: BindingSchema = {
+const BINDINGS = {
   "mosaic.black": { label: "black on / off", category: "mosaic", keys: ["space", "b"], description: "black out the selected cell, or bring it back" },
   "mosaic.dot": { label: "dot on / off", category: "mosaic", keys: ["Enter", "period"], description: "put a dot on the selected cell: your note that it stays white. press again to remove it" },
   "mosaic.clear": { label: "clear cell", category: "mosaic", keys: ["Backspace", "Delete"], description: "remove the black or dot from the selected cell" },
   ...cursorBindings("mosaic", "mosaic"),
-};
+} satisfies BindingSchema;
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof BINDINGS> {}
+}
 
 function legend(): { sample: string; meaning: string }[] {
   const num = (fill: string, extra = "") => `<text x="5" y="5.3" fill="${fill}" font-size="5.6" font-weight="600" font-family="var(--font)" text-anchor="middle" dominant-baseline="central" ${extra}>4</text>`;
@@ -51,11 +55,11 @@ function legend(): { sample: string; meaning: string }[] {
   ];
 }
 
-export function mosaicView(board: BoardPrefs): View<MosaicPuzzle, MosaicState, MosaicAction, MosaicInteraction> {
+export function mosaicView(board: BoardPrefs): View<MosaicPuzzle, MosaicState, MosaicAction, MosaicInteraction, typeof settings> {
   return {
     id: "mosaic.svg",
     name: "grid",
-    puzzle: "mosaic",
+    puzzle: mosaic,
     settings,
     controls: [
       { how: "click or tap a cell", what: "black it out, or bring it back. drag to do several" },
@@ -100,7 +104,7 @@ export function mosaicView(board: BoardPrefs): View<MosaicPuzzle, MosaicState, M
         },
         commit: (cells, value) => void session.dispatch({ type: "set", cells, value: value as Mark }),
         redraw: () => render(),
-        holdMs: () => settings.longPressMs as number,
+        holdMs: () => settings.longPressMs,
       });
 
       const render = () => {

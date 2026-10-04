@@ -1,4 +1,4 @@
-import { bindCommands, type BindingSchema } from "../../core/commands";
+import { bindCommands, type Binding, type CommandHandler } from "../../core/commands";
 import { s, style } from "../../core/dom";
 import type { CommandDef, View } from "../../core/types";
 import { bit, isSingle, valueOf } from "../../lib/grid-kit/csp";
@@ -9,7 +9,7 @@ import {
 } from "../../lib/grid-kit/view";
 import { fades } from "../../lib/grid-kit/fade";
 import {
-  geometry, shownNumbers,
+  filling, geometry, shownNumbers,
   type FillingAction, type FillingConflicts, type FillingInteraction, type FillingPuzzle, type FillingState,
 } from "./logic";
 
@@ -27,19 +27,37 @@ const CSS = `
 .filling-board .rim { fill: none; stroke: var(--text); stroke-width: 0.9; }
 `;
 
-/** Commands the number pad widget runs; ids are `filling.d<n>`, `filling.clear`, `filling.notes`. */
-export const digitCommand = (n: number): string => `filling.d${n}`;
+type Dir = "left" | "right" | "up" | "down";
+type MoveCommand = `filling.${Dir}` | `filling.extend-${Dir}`;
+type FillingCommand = `filling.d${number}` | "filling.clear" | "filling.notes" | MoveCommand;
 
-function bindings(top: number): BindingSchema {
-  const out: BindingSchema = {};
-  for (let n = 1; n <= top; n++) out[digitCommand(n)] = { label: `${n}`, category: "filling", keys: [String(n)], description: `put ${n} in the selected cells (or toggle it as a note while notes are on)` };
-  out["filling.clear"] = { label: "clear cells", category: "filling", keys: ["Backspace", "Delete", "0"], description: "rub out the numbers and notes in the selected cells" };
-  out["filling.notes"] = { label: "notes on / off", category: "filling", keys: ["n"], description: "while on, typing a number toggles it as a small note instead of placing it" };
-  for (const [id, label, key] of [["left", "cursor left", "ArrowLeft"], ["right", "cursor right", "ArrowRight"], ["up", "cursor up", "ArrowUp"], ["down", "cursor down", "ArrowDown"]] as const) {
-    out[`filling.${id}`] = { label, category: "filling", keys: [key], description: `move the selection one cell ${id}` };
-    out[`filling.extend-${id}`] = { label: `extend selection ${id}`, category: "filling", keys: [`shift+${key}`], description: `add the cell ${id === "up" ? "above" : id === "down" ? "below" : `to the ${id}`} to the selection` };
+declare module "../../core/commands" {
+  interface CommandNames extends Record<MoveCommand, true> {
+    "filling.clear": true;
+    "filling.notes": true;
+    [id: `filling.d${number}`]: true;
   }
-  return out;
+}
+
+export const digitCommand = (n: number): `filling.d${number}` => `filling.d${n}`;
+
+const MOVES = [["left", "cursor left", "ArrowLeft"], ["right", "cursor right", "ArrowRight"], ["up", "cursor up", "ArrowUp"], ["down", "cursor down", "ArrowDown"]] as const;
+
+function bindings(top: number): Record<FillingCommand, Binding> {
+  const digits: Record<`filling.d${number}`, Binding> = {};
+  for (let n = 1; n <= top; n++) digits[digitCommand(n)] = { label: `${n}`, category: "filling", keys: [String(n)], description: `put ${n} in the selected cells (or toggle it as a note while notes are on)` };
+  // MOVES covers every Dir, so every MoveCommand gets an entry
+  const moves = {} as Record<MoveCommand, Binding>;
+  for (const [id, label, key] of MOVES) {
+    moves[`filling.${id}`] = { label, category: "filling", keys: [key], description: `move the selection one cell ${id}` };
+    moves[`filling.extend-${id}`] = { label: `extend selection ${id}`, category: "filling", keys: [`shift+${key}`], description: `add the cell ${id === "up" ? "above" : id === "down" ? "below" : `to the ${id}`} to the selection` };
+  }
+  return {
+    ...digits,
+    ...moves,
+    "filling.clear": { label: "clear cells", category: "filling", keys: ["Backspace", "Delete", "0"], description: "rub out the numbers and notes in the selected cells" },
+    "filling.notes": { label: "notes on / off", category: "filling", keys: ["n"], description: "while on, typing a number toggles it as a small note instead of placing it" },
+  };
 }
 
 function legend(): { sample: string; meaning: string }[] {
@@ -59,7 +77,7 @@ export function fillingView(board: BoardPrefs): View<FillingPuzzle, FillingState
   return {
     id: "filling.svg",
     name: "grid",
-    puzzle: "filling",
+    puzzle: filling,
     controls: [
       { how: "click or tap a cell", what: "select it; drag to select several. type a number (or use the number pad) to fill them" },
       { how: "shift-click", what: "add a cell to the selection" },
@@ -166,7 +184,7 @@ export function fillingView(board: BoardPrefs): View<FillingPuzzle, FillingState
         const sel = session.interaction.selection;
         return (sel.length ? sel : [session.interaction.cursor]).filter((c) => p.clues[c] === 0);
       };
-      const handlers: Record<string, () => void> = {};
+      const handlers: Partial<Record<FillingCommand, CommandHandler>> = {};
       for (let n = 1; n <= g.top; n++) {
         handlers[digitCommand(n)] = () => {
           const cells = targets();

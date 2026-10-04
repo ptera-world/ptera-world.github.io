@@ -2,7 +2,7 @@ import type { Step, Technique } from "../../core/types";
 import { plural } from "../../lib/grid-kit/names";
 import { EMPTY, geometry, litCounts } from "./grid";
 import {
-  BULB, DOT, NONE, cellList, cellName,
+  BULB, DOT, NONE, cellList, cellName, lightup,
   type LightupAction, type LightupFocus, type LightupPuzzle, type LightupState,
 } from "./logic";
 import {
@@ -81,7 +81,7 @@ const HARD = { width: 8, height: 8, difficulty: "hard" };
 export const finished: LightupTechnique = {
   id: "lightup.finished",
   name: "finished number",
-  puzzles: ["lightup"],
+  puzzles: [lightup],
   level: 1,
   description: "a number that already touches as many lights as it shows can't take any more, so its other open neighbors get no-light marks. a 0 is finished from the start.",
   find(p, s) {
@@ -99,7 +99,7 @@ export const finished: LightupTechnique = {
 export const needsAll: LightupTechnique = {
   id: "lightup.needs-all",
   name: "no room to spare",
-  puzzles: ["lightup"],
+  puzzles: [lightup],
   level: 2,
   description: "a number with exactly as many neighbors that could still take a light as lights it still needs: every one of them is a light. a 4 always is, and so is a 3 against an edge.",
   find(p, s) {
@@ -119,7 +119,7 @@ export const needsAll: LightupTechnique = {
 export const onlySource: LightupTechnique = {
   id: "lightup.only-source",
   name: "only one way to light it",
-  puzzles: ["lightup"],
+  puzzles: [lightup],
   level: 3,
   description: "a dark cell that only one cell can still light (itself, or a cell with a clear view of it along its row or column): that cell is a light.",
   find(p, s) {
@@ -138,7 +138,7 @@ export const onlySource: LightupTechnique = {
 export const leavesDark: LightupTechnique = {
   id: "lightup.leaves-dark",
   name: "would leave a cell dark",
-  puzzles: ["lightup"],
+  puzzles: [lightup],
   level: 4,
   description: "a cell that can see every spot that could still light some dark cell: a light there would block them all and leave that cell dark forever, so it can't hold one.",
   find(p, s) {
@@ -158,7 +158,7 @@ export const leavesDark: LightupTechnique = {
 export const crowds: LightupTechnique = {
   id: "lightup.crowds",
   name: "would crowd a number",
-  puzzles: ["lightup"],
+  puzzles: [lightup],
   level: 5,
   description: "a light that would shine on so many of a number's open neighbors that the number couldn't get its lights any more can't go there. the classic cases: the corners diagonal to a 3, or the corner between a 1's only two open neighbors.",
   find(p, s) {
@@ -184,7 +184,7 @@ export const crowds: LightupTechnique = {
 export const trial: LightupTechnique = {
   id: "lightup.trial",
   name: "try it both ways",
-  puzzles: ["lightup"],
+  puzzles: [lightup],
   level: 6,
   description: "pretend a cell is a light (or stays dark) and follow the first three techniques from there. if that runs into a clash (two lights seeing each other, a number that can't be met, a cell nothing can light), the cell must be the other way.",
   find(p, s) {

@@ -17,9 +17,8 @@ import type { CommandDef } from "../../core/types";
 import { bindCommands, type BindingSchema } from "../../core/commands";
 import { confirmDialog } from "./dialog";
 import { style } from "../../core/dom";
-import { namespace } from "../../core/storage";
+import { prefs } from "../../core/storage";
 
-const prefs = namespace("prefs");
 
 const KEY_GLYPHS: Record<string, string> = { SLASH: "/", COMMA: ",", PERIOD: ".", MINUS: "-", EQUAL: "=", SEMICOLON: ";", QUOTE: "'", BACKQUOTE: "`", BRACKETLEFT: "[", BRACKETRIGHT: "]", BACKSLASH: "\\" };
 const prettyKey = (p: string): string => KEY_GLYPHS[p.toUpperCase()] ?? p;
@@ -30,7 +29,7 @@ export const isDanger = (c: CommandDef): boolean => (typeof c.danger === "functi
 
 /** Whether a command's confirm question is asked, per the player's setting. */
 function shouldConfirm(c: CommandDef): string | null {
-  const policy = prefs.get<ConfirmPolicy>("confirm", "danger");
+  const policy = prefs.get("confirm", "danger");
   if (policy === "never" || !c.confirm) return null;
   const q = c.confirm();
   if (!q) return null;

@@ -1,8 +1,8 @@
 import { bindCommands, type BindingSchema } from "../../core/commands";
-import { h, s, style } from "../../core/dom";
+import { h, s, style, inputIs } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
 import type { View, WidgetDef } from "../../core/types";
-import { COLOUR_NAMES, MAX_COLOURS, region, type FloodAction, type FloodFocus, type FloodPuzzle, type FloodState } from "./logic";
+import { flood, COLOUR_NAMES, MAX_COLOURS, region, type FloodAction, type FloodFocus, type FloodPuzzle, type FloodState } from "./logic";
 
 const SIZE = 10;
 
@@ -18,7 +18,7 @@ const CSS = `
 .flood-board .mark { fill: none; stroke: var(--hint); stroke-width: 0.8; pointer-events: none; }
 .flood-board .ghost { pointer-events: none; opacity: 0.75; stroke: var(--bg); stroke-width: 0.5; stroke-dasharray: 1 0.7; }
 .flood-board .cursor { fill: none; stroke: var(--focus); stroke-width: 0.6; pointer-events: none; }
-[data-input="pointer"] .flood-board .cursor { display: none; }
+${inputIs("pointer")} .flood-board .cursor { display: none; }
 .flood-moves { font-family: var(--mono); color: var(--text-dim); min-height: 1.4em; }
 .flood-moves.over { color: var(--danger); }
 @media (prefers-reduced-motion: reduce) { .flood-board .cell { transition: none; } }
@@ -47,10 +47,10 @@ function legend(p: FloodPuzzle) {
   ];
 }
 
-export const floodView: View<FloodPuzzle, FloodState, FloodAction, null> = {
+export const floodView: View<FloodPuzzle, FloodState, FloodAction, null, typeof settings> = {
   id: "flood.svg",
   name: "grid",
-  puzzle: "flood",
+  puzzle: flood,
   settings,
   controls: [{ how: "click or tap any cell", what: "flood with that cell's color" }],
   legend,
@@ -136,7 +136,7 @@ export const movesWidget: WidgetDef<FloodPuzzle, FloodState, FloodAction, null> 
   id: "flood.moves",
   name: "moves",
   description: "moves made and the limit",
-  puzzles: ["flood"],
+  puzzles: [flood],
   defaultSlot: "top",
   order: 10,
   mount(el, { session, owner }) {

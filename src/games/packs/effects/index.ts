@@ -1,6 +1,7 @@
 import type { GamesApi } from "../../api";
 import type { FxEvent } from "../../core/session";
-import type { Plugin, PluginUiApi, ViewHandle } from "../../core/types";
+import type { Schema } from "../../core/schema";
+import type { AnyPlugin, Plugin, PluginUiApi, ViewHandle } from "../../core/types";
 
 /**
  * Effects pack: every effect is a plugin reacting to session fx events. Game-agnostic: it only
@@ -38,14 +39,14 @@ function tone(freq: number, ms: number, volume: number, type: OscillatorType = "
 }
 
 type Fx = FxEvent<unknown>;
-function effect(
+function effect<P extends Schema = {}>(
   id: string,
   name: string,
   description: string,
   enabledByDefault: boolean,
-  settings: ReturnType<typeof defineSchema> | undefined,
-  on: (e: Fx, api: PluginUiApi<any, any, any, any>) => void,
-): Plugin {
+  settings: P | undefined,
+  on: (e: Fx, api: PluginUiApi<any, any, any, any, P>) => void,
+): Plugin<any, any, any, any, P> {
   return {
     id: `fx.${id}`,
     name,
@@ -60,9 +61,7 @@ function effect(
   };
 }
 
-const boardEl = (api: PluginUiApi<any, any, any, any>): Element | null => api.root.closest(".boardbox") ?? api.root;
-
-const effects: Plugin[] = [
+const effects: AnyPlugin[] = [
   effect("steps", "show which rule did it", "flash the cells each technique changes, labelled with the technique's name (for auto-applied and button-applied steps)", true,
     defineSchema({
       label: { type: "bool", label: "show the technique name", default: true },
@@ -74,10 +73,10 @@ const effects: Plugin[] = [
       const s = api.settings;
       if (!e.auto && !s.manual) return;
       const rects = rectsOf(api.view, undefined, e.prev, e.state);
-      const list = games.registry.techniquesFor(api.session.def.id, api.session.puzzle);
+      const list = games.registry.techniquesFor(api.session.def, api.session.puzzle);
       const tech = list.find((x) => x.id === e.technique);
       const color = tech ? games.techniques.colorOf(tech, list) : "var(--hint)";
-      fx.flash(rects.length ? rects : rectsOf(api.view, e.focus), { ms: s.ms as number, label: s.label ? (e.name as string) : undefined, color });
+      fx.flash(rects.length ? rects : rectsOf(api.view, e.focus), { ms: s.ms, label: s.label ? (e.name as string) : undefined, color });
     }),
   effect("pop", "placement pop", "a quick ring where your move landed", true, undefined, (e, api) => {
     if (e.kind === "change" && (e.source as { kind: string }).kind === "player") fx.pop(rectsOf(api.view, undefined, e.prev, e.state));
@@ -85,7 +84,7 @@ const effects: Plugin[] = [
   effect("glow", "solve glow", "the board pulses when you finish", true, undefined, (e, api) => {
     if (e.kind !== "solved" || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const accent = (pct: number) => `color-mix(in srgb, var(--accent) ${pct}%, transparent)`;
-    boardEl(api)?.animate([
+    api.frame.animate([
       { boxShadow: `0 0 0 0 ${accent(70)}` },
       { boxShadow: `0 0 0 14px ${accent(25)}`, offset: 0.4 },
       { boxShadow: "0 0 0 28px transparent" },
@@ -95,19 +94,19 @@ const effects: Plugin[] = [
     defineSchema({ amount: { type: "int", label: "amount", default: 50, min: 5, max: 300 } }),
     (e, api) => {
       if (e.kind !== "solved" && !(e.kind === "practice" && e.done)) return;
-      const r = boardEl(api)?.getBoundingClientRect();
-      if (r) fx.burst(r.left + r.width / 2, r.top + r.height / 2, e.kind === "solved" ? api.settings.amount as number : 18);
+      const r = api.frame.getBoundingClientRect();
+      fx.burst(r.left + r.width / 2, r.top + r.height / 2, e.kind === "solved" ? api.settings.amount : 18);
     }),
   effect("shake", "shake on mistakes", "the board shakes when a move is wrong", true, undefined, (e, api) => {
     if (e.kind === "mistake" || (e.kind === "practice" && !e.correct)) {
-      fx.shake(boardEl(api));
+      fx.shake(api.frame);
       if (e.kind === "mistake" && e.focus !== undefined) fx.flash(rectsOf(api.view, e.focus), { color: "var(--danger)", ms: 700 });
     }
   }),
   effect("sound", "sounds", "soft tones for moves, deductions, mistakes and solving", false,
     defineSchema({ volume: { type: "int", label: "volume (%)", default: 30, min: 1, max: 100 } }),
     (e, api) => {
-      const v = (api.settings.volume as number) / 100 * 0.2;
+      const v = api.settings.volume / 100 * 0.2;
       if (e.kind === "change" && (e.source as { kind: string }).kind === "player") tone(520, 60, v, "triangle");
       else if (e.kind === "step") tone(e.auto ? 700 : 620, 90, v * 0.8);
       else if (e.kind === "mistake" || (e.kind === "practice" && !e.correct)) tone(160, 220, v, "sawtooth");

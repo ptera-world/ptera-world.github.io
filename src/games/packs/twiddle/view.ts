@@ -1,8 +1,8 @@
-import { bindCommands, type BindingSchema } from "../../core/commands";
-import { s, style } from "../../core/dom";
+import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
+import { s, style, inputIs } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
 import type { View } from "../../core/types";
-import { goalTile, type TwiddleAction, type TwiddleFocus, type TwiddleInteraction, type TwiddlePuzzle, type TwiddleState } from "./logic";
+import { twiddle, goalTile, type TwiddleAction, type TwiddleFocus, type TwiddleInteraction, type TwiddlePuzzle, type TwiddleState } from "./logic";
 
 const SIZE = 10;
 
@@ -24,7 +24,7 @@ const CSS = `
 .twiddle-board .mark.tile { stroke-width: 1; }
 .twiddle-board .mark.block { stroke-width: 0.8; stroke-dasharray: 2 1; }
 .twiddle-board .cursor { fill: none; stroke: var(--focus); stroke-width: 0.6; pointer-events: none; }
-[data-input="pointer"] .twiddle-board .cursor { display: none; }
+${inputIs("pointer")} .twiddle-board .cursor { display: none; }
 @media (prefers-reduced-motion: reduce) { .twiddle-board .tile, .twiddle-board .tile .face { transition: none; } }
 `;
 
@@ -33,7 +33,7 @@ const settings = defineSchema({
   showBlock: { type: "bool", label: "outline the block a click would turn", default: true },
 });
 
-const BINDINGS: BindingSchema = {
+const BINDINGS = {
   "twiddle.left": { label: "select block left", category: "twiddle", keys: ["ArrowLeft", "a"] },
   "twiddle.right": { label: "select block right", category: "twiddle", keys: ["ArrowRight", "d"] },
   "twiddle.up": { label: "select block up", category: "twiddle", keys: ["ArrowUp", "w"] },
@@ -41,7 +41,11 @@ const BINDINGS: BindingSchema = {
   "twiddle.ccw": { label: "turn counterclockwise", category: "twiddle", keys: ["space", "Enter"], description: "turn the selected block a quarter turn counterclockwise" },
   "twiddle.cw": { label: "turn clockwise", category: "twiddle", keys: ["shift+space", "shift+Enter", "x"], description: "turn the selected block a quarter turn clockwise" },
   "twiddle.cw-at": { label: "turn clockwise (pointer)", category: "twiddle", mouse: ["rightclick"], description: "turn the block under the pointer clockwise" },
-};
+} satisfies BindingSchema;
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof BINDINGS> {}
+}
 
 const swatch = (body: string) => `<svg viewBox="-0.5 -0.5 11 11">${body}</svg>`;
 const tileSample = (fill: string, extra = "") =>
@@ -61,10 +65,10 @@ function legend(p: TwiddlePuzzle) {
   ];
 }
 
-export const twiddleView: View<TwiddlePuzzle, TwiddleState, TwiddleAction, TwiddleInteraction> = {
+export const twiddleView: View<TwiddlePuzzle, TwiddleState, TwiddleAction, TwiddleInteraction, typeof settings> = {
   id: "twiddle.svg",
   name: "tiles",
-  puzzle: "twiddle",
+  puzzle: twiddle,
   settings,
   controls: [
     { how: "click or tap where four tiles meet", what: "turn that 2×2 block counterclockwise" },

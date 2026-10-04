@@ -1,9 +1,9 @@
 import { animate, ease, type Animation } from "../../core/anim";
-import { bindCommands, type BindingSchema } from "../../core/commands";
-import { s, style } from "../../core/dom";
+import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
+import { s, style, inputIs } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
 import type { View } from "../../core/types";
-import { canMatch, type MahjongAction, type MahjongFocus, type MahjongInteraction, type MahjongPuzzle, type MahjongState } from "./logic";
+import { mahjong, canMatch, type MahjongAction, type MahjongFocus, type MahjongInteraction, type MahjongPuzzle, type MahjongState } from "./logic";
 import { boardOf, isFree } from "./solver";
 import { faceSvg, KINDS, tileName } from "./tiles";
 
@@ -27,7 +27,7 @@ const CSS = `
 .mj-board .mark { fill: none; stroke: var(--hint); stroke-width: 0.6; pointer-events: none; }
 .mj-board .mark.look { stroke-dasharray: 1 0.7; stroke-width: 0.45; }
 .mj-board .cursor { fill: none; stroke: var(--focus); stroke-width: 0.5; pointer-events: none; }
-[data-input="pointer"] .mj-board .cursor { display: none; }
+${inputIs("pointer")} .mj-board .cursor { display: none; }
 `;
 
 const settings = defineSchema({
@@ -35,21 +35,25 @@ const settings = defineSchema({
   labels: { type: "bool", label: "corner labels on tiles", default: false, description: "a short code (3D for 3 dots, EW for east wind…) for telling tiles apart without the pictures" },
 });
 
-const BINDINGS: BindingSchema = {
+const BINDINGS = {
   "mahjong.left": { label: "cursor left", category: "mahjong", keys: ["ArrowLeft", "a"] },
   "mahjong.right": { label: "cursor right", category: "mahjong", keys: ["ArrowRight", "d"] },
   "mahjong.up": { label: "cursor up", category: "mahjong", keys: ["ArrowUp", "w"] },
   "mahjong.down": { label: "cursor down", category: "mahjong", keys: ["ArrowDown", "s"] },
   "mahjong.pick": { label: "pick tile", category: "mahjong", keys: ["space", "Enter"], description: "pick the tile under the cursor; picking a second matching free tile takes the pair" },
-};
+} satisfies BindingSchema;
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof BINDINGS> {}
+}
 
 const sample = (k: number, extra = "") =>
   `<svg viewBox="-0.3 -0.3 ${TW + D + 0.6} ${TH + D + 0.6}" style="height: 2.4em"><rect x="${D}" y="${D}" width="${TW}" height="${TH}" rx="0.7" fill="var(--mahjong-side, #c9bc9c)"/><rect width="${TW}" height="${TH}" rx="0.7" fill="var(--mahjong-face, #f4efe2)" stroke="rgb(0 0 0 / 0.35)" stroke-width="0.12"/><g transform="scale(${TW / 10} ${TH / 13})">${faceSvg(k, false)}</g>${extra}</svg>`;
 
-export const mahjongView: View<MahjongPuzzle, MahjongState, MahjongAction, MahjongInteraction> = {
+export const mahjongView: View<MahjongPuzzle, MahjongState, MahjongAction, MahjongInteraction, typeof settings> = {
   id: "mahjong.svg",
   name: "tiles",
-  puzzle: "mahjong",
+  puzzle: mahjong,
   settings,
   controls: [
     { how: "click or tap a free tile", what: "pick it; then click a free tile that matches it to take the pair" },

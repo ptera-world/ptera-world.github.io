@@ -2,7 +2,7 @@ import type { Technique } from "../../core/types";
 import { valueOf, type Deduction } from "../../lib/grid-kit/csp";
 import { cellList, cellName, technique, type Focus, type Reading } from "../../lib/grid-kit/names";
 import {
-  NONE, colourWord, lineName, markOf, model, readMarks,
+  unruly, NONE, colourWord, lineName, markOf, model, readMarks,
   type UnrulyAction, type UnrulyPuzzle, type UnrulyState,
 } from "./logic";
 
@@ -37,7 +37,7 @@ function step(p: UnrulyPuzzle, d: Deduction, vars: number[], why: string, nudge:
 const lineOf = (d: Deduction) => (d.data as { line: number }).line;
 const colourIn = (d: Deduction) => (d.data as { colour: number }).colour;
 
-const base = { puzzle: "unruly", read, changes };
+const base = { puzzle: unruly, read, changes };
 
 export const three: UnrulyTechnique = technique<UnrulyPuzzle, UnrulyState, UnrulyAction>({
   ...base,

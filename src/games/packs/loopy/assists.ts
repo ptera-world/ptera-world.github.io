@@ -1,26 +1,27 @@
 import { defineSchema } from "../../core/schema";
-import type { Hint, Plugin } from "../../core/types";
+import { definePlugins } from "../../core/define";
+import type { Hint } from "../../core/types";
 import { LINE, UNKNOWN, check } from "./board";
-import { gridOf, wrongMarks, type LoopyAction, type LoopyFocus, type LoopyInteraction, type LoopyPuzzle, type LoopyState } from "./def";
+import { gridOf, loopy, wrongMarks, type LoopyAction, type LoopyFocus, type LoopyInteraction, type LoopyPuzzle, type LoopyState } from "./def";
 import type { Grid } from "./grid";
 import { edgeRef } from "./names";
 import { KEYS } from "./keys";
 import { sidesOf } from "./solver";
 
-type LoopyPlugin = Plugin<LoopyPuzzle, LoopyState, LoopyAction, LoopyInteraction>;
+const plugin = definePlugins<LoopyPuzzle, LoopyState, LoopyAction, LoopyInteraction>();
 
-const clueErrors: LoopyPlugin = {
+const clueErrors = plugin({
   id: "loopy.clue-errors",
   name: "highlight broken numbers",
   description: "numbers turn red when they have too many lines around them",
   category: "checks",
-  appliesTo: ["loopy"],
+  appliesTo: [loopy],
   enabledByDefault: true,
   settings: defineSchema({
     crosses: { type: "bool", label: "also when crosses leave too few edges", default: true, description: "a number also turns red when there aren't enough uncrossed edges left around it to reach its count" },
   }),
   setup({ session, settings, owner }) {
-    const crosses = settings.crosses as boolean;
+    const crosses = settings.crosses;
     session.hooks.derive.tap((d, { puzzle, state }) => {
       const g = gridOf(puzzle);
       const bad: number[] = [];
@@ -37,30 +38,30 @@ const clueErrors: LoopyPlugin = {
       return { ...d, [KEYS.badFaces]: bad };
     }, { owner });
   },
-};
+});
 
-const dotErrors: LoopyPlugin = {
+const dotErrors = plugin({
   id: "loopy.dot-errors",
   name: "highlight branches and dead ends",
   description: "dots turn red when three or more lines meet there, or when a line ends there with no edge left to carry on",
   category: "checks",
-  appliesTo: ["loopy"],
+  appliesTo: [loopy],
   enabledByDefault: true,
   setup({ session, owner }) {
     session.hooks.derive.tap((d, { puzzle, state }) => ({
       ...d, [KEYS.badVertices]: check(gridOf(puzzle), puzzle.clues, state.edges).badVertices,
     }), { owner });
   },
-};
+});
 
 const PALETTE_SIZE = 6;
 
-const loopStatus: LoopyPlugin = {
+const loopStatus = plugin({
   id: "loopy.loop-status",
   name: "loop status",
   description: "a loop closed while other lines are still outside it turns orange, and dots where a line stops are marked",
   category: "checks",
-  appliesTo: ["loopy"],
+  appliesTo: [loopy],
   enabledByDefault: true,
   settings: defineSchema({
     stray: { type: "bool", label: "flag loops closed too early", default: true },
@@ -78,7 +79,7 @@ const loopStatus: LoopyPlugin = {
       return out;
     }, { owner });
   },
-};
+});
 
 function segments(g: Grid, edges: number[]): number[] {
   const out = edges.map(() => -1);
@@ -103,12 +104,12 @@ function segments(g: Grid, edges: number[]): number[] {
   return out;
 }
 
-const insideOutside: LoopyPlugin = {
+const insideOutside = plugin({
   id: "loopy.inside-outside",
   name: "shade inside and outside",
   description: "shades the cells your lines and crosses already prove are inside the loop (everything beyond the outer edge counts as outside)",
   category: "assists",
-  appliesTo: ["loopy"],
+  appliesTo: [loopy],
   enabledByDefault: false,
   settings: defineSchema({
     outside: { type: "bool", label: "shade outside cells too", default: false },
@@ -126,14 +127,14 @@ const insideOutside: LoopyPlugin = {
       return { ...d, [KEYS.sides]: sides };
     }, { owner });
   },
-};
+});
 
-const dimDone: LoopyPlugin = {
+const dimDone = plugin({
   id: "loopy.dim-done",
   name: "dim finished numbers",
   description: "fades a number once it's done, so the ones still needing work stand out",
   category: "assists",
-  appliesTo: ["loopy"],
+  appliesTo: [loopy],
   enabledByDefault: true,
   settings: defineSchema({
     early: { type: "bool", label: "dim once the count is reached", default: false, description: "otherwise wait until every edge around it is decided" },
@@ -155,14 +156,14 @@ const dimDone: LoopyPlugin = {
       return { ...d, [KEYS.doneFaces]: done };
     }, { owner });
   },
-};
+});
 
-const mistakes: LoopyPlugin = {
+const mistakes = plugin({
   id: "loopy.mistakes",
   name: "show mistakes",
   description: "mark lines and crosses that disagree with the solution",
   category: "checks",
-  appliesTo: ["loopy"],
+  appliesTo: [loopy],
   requires: ["solution"],
   enabledByDefault: false,
   setup({ session, owner }) {
@@ -171,15 +172,15 @@ const mistakes: LoopyPlugin = {
       return wrong ? { ...d, [KEYS.wrong]: wrong } : d;
     }, { owner });
   },
-};
+});
 
 /** Runs before technique hints (priority 100), so a hint never builds on a wrong mark. */
-const mistakeHints: LoopyPlugin = {
+const mistakeHints = plugin({
   id: "loopy.mistake-hints",
   name: "hints point out mistakes first",
   description: "if a line or cross disagrees with the solution, the hint shows it before any deduction",
   category: "checks",
-  appliesTo: ["loopy"],
+  appliesTo: [loopy],
   requires: ["solution"],
   enabledByDefault: true,
   setup({ session, owner }) {
@@ -197,6 +198,6 @@ const mistakeHints: LoopyPlugin = {
       };
     }, { owner, priority: 50 });
   },
-};
+});
 
-export const assists: LoopyPlugin[] = [clueErrors, dotErrors, loopStatus, insideOutside, dimDone, mistakes, mistakeHints];
+export const assists = [clueErrors, dotErrors, loopStatus, insideOutside, dimDone, mistakes, mistakeHints];

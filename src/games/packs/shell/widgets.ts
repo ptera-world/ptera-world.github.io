@@ -3,8 +3,10 @@ import { COLOR_TOKENS, checkForUpdate, firstStep, hintFrom, labelSides, listMods
 import { randomSeed } from "../../core/rng";
 import { defineSchema, resolve } from "../../core/schema";
 import type { Source, TimelineEntry } from "../../core/session";
-import { namespace } from "../../core/storage";
-import type { Action, Plugin, SlotId, Technique, WidgetContext, WidgetDef } from "../../core/types";
+import { defineWidgets } from "../../core/define";
+import { prefs } from "../../core/storage";
+import type { Action, AnyPlugin, AnyWidget, SlotId, Technique, WidgetContext, WidgetDef } from "../../core/types";
+import { HOWTO_TOGGLE, HOWTO_WIDGET, command, techniqueCommand } from "./names";
 import { isDanger, type ConfirmPolicy } from "./commands";
 import { confirmDialog } from "./dialog";
 import { add, clear, formatTime, h, style } from "../../core/dom";
@@ -16,7 +18,6 @@ import { sessionList } from "./session-list";
 import type { Shell, ShareLevel } from "./shell";
 import { trySerialize } from "./shell";
 
-const prefs = namespace("prefs");
 
 const CSS = `
 .widget:empty { display: none; }
@@ -110,7 +111,9 @@ function describe(sources: readonly Source[]): { who: string; kind: string } {
 /** Solves whose result strip has already animated in (session id : solve time). */
 const announced = new Set<string>();
 
-export function builtinWidgets(shell: Shell): WidgetDef[] {
+const widget = defineWidgets<any, any>();
+
+export function builtinWidgets(shell: Shell): AnyWidget[] {
   style("widgets", CSS);
 
   const status: WidgetDef = {
@@ -122,12 +125,15 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
     },
   };
 
-  const toolbar: WidgetDef = {
+  const toolbar = widget({
     id: "toolbar", name: "buttons", description: "a row of command buttons", puzzles: "*", defaultSlot: "bottom", order: 20,
     settings: defineSchema({
       commands: {
         type: "string", label: "buttons (command ids, comma separated)",
-        default: "shell.undo,shell.redo,shell.hint,shell.apply-hint,shell.pause,shell.new,shell.restart,shell.reveal",
+        default: [
+          command("shell.undo"), command("shell.redo"), command("shell.hint"), command("shell.apply-hint"),
+          command("shell.pause"), command("shell.new"), command("shell.restart"), command("shell.reveal"),
+        ].join(","),
         description: "any command from the palette works here",
       },
     }),
@@ -144,18 +150,18 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
           const keys = shell.hub.keysFor(id);
           bar.append(h("button", {
             "data-command": id,
-            class: [isDanger(cmd) ? "danger" : "", c.solved && id === "shell.new" ? "primary" : ""].join(" ").trim() || undefined,
+            class: [isDanger(cmd) ? "danger" : "", c.solved && id === command("shell.new") ? "primary" : ""].join(" ").trim() || undefined,
             disabled: cmd.when ? !cmd.when(c) : false,
             "aria-pressed": cmd.checked ? String(cmd.checked()) : undefined,
             title: keys.length ? `${cmd.label} (${keys.join(", ")})` : cmd.label,
-            onclick: () => ctx.run(id),
+            onclick: () => shell.hub.run(id),
           }, cmd.label));
         }
       };
       sessionTaps(ctx, render);
       render();
     },
-  };
+  });
 
   const game: WidgetDef = {
     id: "game", name: "new", description: "start a new puzzle", puzzles: "*", defaultSlot: "panel", order: 10,
@@ -174,7 +180,7 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
       const seedInput = h("input", { type: "text", placeholder: "random", spellcheck: "false", "aria-label": "seed" });
       const start = async () => {
         const s = ctx.session;
-        if (s.canUndo && !s.solved && prefs.get<ConfirmPolicy>("confirm", "danger") !== "never"
+        if (s.canUndo && !s.solved && prefs.get("confirm", "danger") !== "never"
           && !(await confirmDialog("start a new game? this one's progress will be lost.", "new game"))) return;
         void shell.newGame(def, params, seedInput.value.trim() || randomSeed());
       };
@@ -216,7 +222,7 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
       const toggle = (checked: boolean, label: string, onChange: (v: boolean) => void) =>
         h("label", { class: "head" }, h("input", { type: "checkbox", checked, onchange: (e: Event) => onChange((e.target as HTMLInputElement).checked) }), h("span", { class: "name" }, label));
 
-      const pluginRows = (sec: HTMLElement, plugins: Plugin[]) => {
+      const pluginRows = (sec: HTMLElement, plugins: AnyPlugin[]) => {
         for (const p of plugins) {
           const cfg = loadPluginConfig(p);
           const form = p.settings ? schemaForm(p.settings, cfg.settings, (v) => {
@@ -277,7 +283,7 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
         h("input", { type: "range", min: 0, max: 100, value: Math.round(done * 100), "aria-label": "finished opacity", oninput: (e: Event) => setTokenOverride(shell.registry, "done-opacity", String(Number((e.target as HTMLInputElement).value) / 100)) }))));
 
       const disp = section("display");
-      const views = shell.registry.viewsFor(s.def.id);
+      const views = shell.registry.viewsFor(s.def);
       const v = shell.view?.def;
       if (views.length > 1) {
         disp.append(row("view board style", h("div", { class: "w-inline" }, h("span", null, "board style"),
@@ -325,10 +331,10 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
 
       const surf = section("menus");
       for (const input of ["mouse", "touch"] as const) {
-        const cur = prefs.get<SurfaceStyle>(`menuStyle:${input}`, input === "touch" ? "radial" : "list");
+        const cur = prefs.get(`menuStyle:${input}`, input === "touch" ? "radial" : "list");
         surf.append(row(`board menu style ${input} right-click hold radial tiles list`, h("div", { class: "w-inline" },
           h("span", { style: "flex: 1" }, input === "mouse" ? "board menu on right-click" : "board menu on touch hold"),
-          h("select", { onchange: (e: Event) => prefs.set(`menuStyle:${input}`, (e.target as HTMLSelectElement).value) },
+          h("select", { onchange: (e: Event) => prefs.set(`menuStyle:${input}`, (e.target as HTMLSelectElement).value as SurfaceStyle) },
             ([["list", "list"], ["radial", "radial"], ["tiles", "tiles"]] as const).map(([v, lab]) => h("option", { value: v, selected: v === cur }, lab))))));
       }
       surf.append(row("board actions buttons always visible", h("small", null, "for buttons without any menu, place the \"board actions\" widget under layout")));
@@ -337,7 +343,7 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
         h("small", null, "off: those keep zooming the whole page, and = / − zoom the board")));
 
       const beh = section("behavior");
-      const holdNow = prefs.get<number>("holdShortcuts", 450);
+      const holdNow = prefs.get("holdShortcuts", 450);
       beh.append(row("hold ctrl cmd shortcuts cheatsheet keys", h("div", { class: "w-inline" },
         h("span", { style: "flex: 1" }, "hold ctrl (cmd on mac) to see shortcuts"),
         h("select", { onchange: (e: Event) => { prefs.set("holdShortcuts", Number((e.target as HTMLSelectElement).value)); shell.rearmHold(); } },
@@ -350,7 +356,7 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
       beh.append(row("lock solved board finished frozen unlock", toggle(prefs.get("lockSolved", true), "lock boards once solved", (on) => { prefs.set("lockSolved", on); shell.hub.refresh(); }),
         h("small", null, "a finished board ignores moves until you unlock it")));
       beh.append(row("confirm restart reveal new game dangerous ask", h("div", { class: "w-inline" }, h("span", null, "ask before"),
-        h("select", { onchange: (e: Event) => prefs.set("confirm", (e.target as HTMLSelectElement).value) },
+        h("select", { onchange: (e: Event) => prefs.set("confirm", (e.target as HTMLSelectElement).value as ConfirmPolicy) },
           ([["danger", "restart, reveal, losing progress"], ["always", "anything that asks"], ["never", "never ask"]] as const)
             .map(([val, lab]) => h("option", { value: val, selected: prefs.get("confirm", "danger") === val }, lab))))));
 
@@ -410,8 +416,8 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
           h("details", null, h("summary", null, "how it works"), h("p", null, t.description)),
           h("div", { class: "w-inline buttons" },
             h("button", { onclick: () => shell.findTechnique(t), title: "show one on the board" }, "find"),
-            h("button", { onclick: () => ctx.run(`technique.apply.${t.id}`), title: "carry one out" }, "apply"),
-            t.practice === false ? null : h("button", { onclick: () => ctx.run(`technique.practice.${t.id}`), title: "a board where this is the next step" }, "practice"),
+            h("button", { onclick: () => ctx.run(techniqueCommand("apply", t)), title: "carry one out" }, "apply"),
+            t.practice === false ? null : h("button", { onclick: () => ctx.run(techniqueCommand("practice", t)), title: "a board where this is the next step" }, "practice"),
             h("label", { class: "w-inline", title: "offer as a hint" }, h("input", { type: "checkbox", checked: cfg.hints, onchange: (e: Event) => th.setConfig(t, { ...th.config(t), hints: (e.target as HTMLInputElement).checked }) }), "hints"),
             h("label", { class: "w-inline", title: "apply automatically" }, h("input", { type: "checkbox", checked: cfg.auto, onchange: (e: Event) => { th.setConfig(t, { ...th.config(t), auto: (e.target as HTMLInputElement).checked }); assisted(); shell.hub.refresh(); } }), "auto"))));
       }
@@ -506,7 +512,7 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
       const s = ctx.session;
       if (s.origin.kind !== "practice") return;
       const origin = s.origin;
-      const all = shell.registry.techniquesFor(s.def.id).filter((t) => t.practice !== false);
+      const all = shell.registry.techniquesFor(s.def).filter((t) => t.practice !== false);
       const idx = all.findIndex((x) => x.id === origin.technique);
       const t: Technique | undefined = all[idx];
       if (!t) return;
@@ -737,7 +743,7 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
           h("div", { class: "w-inline" },
             h("button", { class: "primary", onclick: () => ctx.run("shell.new") }, "new game"),
             h("button", { onclick: () => shell.openTab("share") }, "share"),
-            !shell.unlocked && prefs.get("lockSolved", true) ? h("button", { "data-command": "shell.unlock", onclick: () => { ctx.run("shell.unlock"); dismissed = true; render(); } }, "unlock board") : null,
+            !shell.unlocked && prefs.get("lockSolved", true) ? h("button", { "data-command": command("shell.unlock"), onclick: () => { ctx.run("shell.unlock"); dismissed = true; render(); } }, "unlock board") : null,
             h("button", { onclick: () => { dismissed = true; render(); } }, "close"))));
       };
       sessionTaps(ctx, () => { if (!s.solved && !s.lost) dismissed = false; render(); });
@@ -756,13 +762,13 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
   };
 
   const howto: WidgetDef = {
-    id: "howto", name: "how to play", description: "what this puzzle is and how to play it; shows the first time you open each puzzle", puzzles: "*", defaultSlot: "overlay", order: 10,
+    id: HOWTO_WIDGET, name: "how to play", description: "what this puzzle is and how to play it; shows the first time you open each puzzle", puzzles: "*", defaultSlot: "overlay", order: 10,
     mount(el, ctx) {
       const s = ctx.session;
-      const seenKey = `howtoSeen:${s.def.id}`;
+      const seenKey = `howtoSeen:${s.def.id}` as const;
       let open = !prefs.get(seenKey, false) && s.origin.kind !== "practice";
       const close = () => { open = false; prefs.set(seenKey, true); render(); };
-      el.addEventListener("howto-toggle", () => { if (open) close(); else { open = true; render(); } });
+      el.addEventListener(HOWTO_TOGGLE, () => { if (open) close(); else { open = true; render(); } });
       const render = () => {
         clear(el);
         if (!open) return;
@@ -781,7 +787,7 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
         const g = shell.view?.handle.gestures ?? {};
         const hasMenu = ctx.commands().some((c) => [c.menu].flat().includes("board"));
         const menuWays = [g.secondaryClick ? "" : "right-click the board", g.hold ? "" : "hold on it (touch)"].filter(Boolean);
-        const shortcut = shell.hub.keysFor("shell.shortcuts")[0];
+        const shortcut = shell.hub.keysFor(command("shell.shortcuts"))[0];
         const menuLine = (hasMenu && menuWays.length ? `${menuWays.join(" or ")} for more. ` : "") + "every action is in the commands list, top right."
           + (keyCount ? ` ${keyCount} keyboard shortcuts${shortcut ? ` (${shortcut} lists them)` : ""}.` : "");
         const lg = shell.view?.def.legend;
@@ -810,10 +816,10 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
       const pct = h("span", { class: "w-dim", style: "min-width: 4ch; text-align: center" });
       const show = () => { pct.textContent = `${Math.round(shell.zoom * 100)}%`; };
       el.append(h("div", { class: "w-inline" },
-        h("button", { "data-command": "shell.zoom-out", "aria-label": "zoom out", onclick: () => ctx.run("shell.zoom-out") }, "−"),
+        h("button", { "data-command": command("shell.zoom-out"), "aria-label": "zoom out", onclick: () => ctx.run("shell.zoom-out") }, "−"),
         pct,
-        h("button", { "data-command": "shell.zoom-in", "aria-label": "zoom in", onclick: () => ctx.run("shell.zoom-in") }, "+"),
-        h("button", { "data-command": "shell.zoom-fit", onclick: () => ctx.run("shell.zoom-fit") }, "fit")));
+        h("button", { "data-command": command("shell.zoom-in"), "aria-label": "zoom in", onclick: () => ctx.run("shell.zoom-in") }, "+"),
+        h("button", { "data-command": command("shell.zoom-fit"), onclick: () => ctx.run("shell.zoom-fit") }, "fit")));
       show();
       return shell.hooks.zoom.tap(show);
     },
@@ -822,7 +828,7 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
   const actions: WidgetDef = {
     id: "board-actions", name: "board actions", description: "the board menu as buttons, always visible (no right-click or hold needed)", puzzles: "*", defaultSlot: "off", order: 35,
     mount(el, ctx) {
-      const render = () => { clear(el); el.append(tiles(shell.boardItems(), (id) => ctx.run(id))); };
+      const render = () => { clear(el); el.append(tiles(shell.boardItems(), (id) => shell.hub.run(id))); };
       sessionTaps(ctx, render);
       render();
     },

@@ -1,4 +1,4 @@
-import { bindCommands, type BindingSchema } from "../../core/commands";
+import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
 import { s, style } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
 import type { View } from "../../core/types";
@@ -9,7 +9,7 @@ import {
 } from "../../lib/grid-kit/view";
 import { fades } from "../../lib/grid-kit/fade";
 import {
-  GRASS, NONE, TENT, TREE, geometry, lineTarget,
+  tents, GRASS, NONE, TENT, TREE, geometry, lineTarget,
   type Mark, type TentsAction, type TentsConflicts, type TentsInteraction, type TentsPuzzle, type TentsState,
 } from "./logic";
 
@@ -32,12 +32,16 @@ const settings = defineSchema({
   longPressMs: { type: "int", label: "touch hold for grass (ms)", default: 400, min: 150, max: 1500, step: 50 },
 });
 
-const BINDINGS: BindingSchema = {
+const BINDINGS = {
   "tents.tent": { label: "tent on / off", category: "tents", keys: ["space", "t"], description: "put a tent on the selected cell, or take it away" },
   "tents.grass": { label: "grass on / off", category: "tents", keys: ["Enter", "g"], description: "mark the selected cell as grass: your note that it has no tent. press again to remove it" },
   "tents.clear": { label: "clear cell", category: "tents", keys: ["Backspace", "Delete"], description: "remove the tent or grass from the selected cell" },
   ...cursorBindings("tents", "tents"),
-};
+} satisfies BindingSchema;
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof BINDINGS> {}
+}
 
 const treeSvg = (x: number, y: number, bad = false) =>
   `<rect x="${x + 4.3}" y="${y + 5.5}" width="1.4" height="3.2" fill="var(--text-dim)"/><circle cx="${x + 5}" cy="${y + 4.3}" r="3" fill="${bad ? "var(--danger)" : "var(--accent)"}"/>`;
@@ -55,11 +59,11 @@ function legend(): { sample: string; meaning: string }[] {
   ];
 }
 
-export function tentsView(board: BoardPrefs): View<TentsPuzzle, TentsState, TentsAction, TentsInteraction> {
+export function tentsView(board: BoardPrefs): View<TentsPuzzle, TentsState, TentsAction, TentsInteraction, typeof settings> {
   return {
     id: "tents.svg",
     name: "grid",
-    puzzle: "tents",
+    puzzle: tents,
     settings,
     controls: [
       { how: "click or tap a cell", what: "put a tent there, or take it away. drag to do several" },
@@ -111,7 +115,7 @@ export function tentsView(board: BoardPrefs): View<TentsPuzzle, TentsState, Tent
         },
         commit: (cells, value) => void session.dispatch({ type: "set", cells, value: value as Mark }),
         redraw: () => render(),
-        holdMs: () => settings.longPressMs as number,
+        holdMs: () => settings.longPressMs,
       });
 
       const render = () => {

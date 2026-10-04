@@ -1,17 +1,17 @@
 import { defineSchema } from "../../core/schema";
-import type { Plugin } from "../../core/types";
-import { findConflicts, wrongMarksHint, type Conflicts, type PearlAction, type PearlFocus, type PearlInteraction, type PearlPuzzle, type PearlState } from "./logic";
+import { definePlugins } from "../../core/define";
+import { pearl, findConflicts, wrongMarksHint, type Conflicts, type PearlAction, type PearlFocus, type PearlInteraction, type PearlPuzzle, type PearlState } from "./logic";
 import { CONFLICTS_KEY } from "./view";
 
-type PearlPlugin = Plugin<PearlPuzzle, PearlState, PearlAction, PearlInteraction>;
+const plugin = definePlugins<PearlPuzzle, PearlState, PearlAction, PearlInteraction>();
 
 /** Shows visible rule breaks, and reports the ones a player move just made as a mistake fx. */
-export const conflicts: PearlPlugin = {
+export const conflicts = plugin({
   id: "pearl.conflicts",
   name: "show conflicts",
   description: "marks rule breaks you can see without knowing the answer in red: cells with three lines or a dead end, pearls the lines break, and a closed loop that isn't the whole answer",
   category: "assists",
-  appliesTo: ["pearl"],
+  appliesTo: [pearl],
   enabledByDefault: true,
   settings: defineSchema({
     cells: { type: "bool", label: "cells with too many lines or a dead end", default: true },
@@ -32,19 +32,19 @@ export const conflicts: PearlPlugin = {
       if (because.length) session.hooks.fx.call({ kind: "mistake", focus: { edges: [], because } satisfies PearlFocus });
     }, { owner });
   },
-};
+});
 
 /** Runs ahead of technique hints (priority 100), so a wrong line or cross is pointed out before any move. */
-export const checkMarks: PearlPlugin = {
+export const checkMarks = plugin({
   id: "pearl.check-marks",
   name: "hints check your lines first",
   description: "asking for a hint points out lines and crosses that don't match the solution before suggesting anything else",
   category: "assists",
-  appliesTo: ["pearl"],
+  appliesTo: [pearl],
   enabledByDefault: true,
   setup({ session, owner }) {
     session.hooks.hint.tap(({ puzzle, state }) => wrongMarksHint(puzzle, state) ?? undefined, { owner, priority: 90 });
   },
-};
+});
 
-export const pearlPlugins: PearlPlugin[] = [conflicts, checkMarks];
+export const pearlPlugins = [conflicts, checkMarks];

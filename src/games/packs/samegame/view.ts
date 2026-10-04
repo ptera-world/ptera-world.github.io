@@ -1,8 +1,8 @@
-import { bindCommands, type BindingSchema } from "../../core/commands";
-import { h, s, style } from "../../core/dom";
+import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
+import { h, s, style, inputIs } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
 import type { View, WidgetDef } from "../../core/types";
-import { COLOUR_NAMES, group, type SamegameAction, type SamegameFocus, type SamegameInteraction, type SamegamePuzzle, type SamegameState } from "./logic";
+import { samegame, COLOUR_NAMES, group, type SamegameAction, type SamegameFocus, type SamegameInteraction, type SamegamePuzzle, type SamegameState } from "./logic";
 
 const SIZE = 10;
 const INSET = 0.6;
@@ -23,7 +23,7 @@ const CSS = `
 .samegame-board .ghost .gone { fill: var(--surface-2); opacity: 0.7; }
 .samegame-board .mark.nudge { stroke-width: 0.5; stroke-dasharray: 1.2 0.8; }
 .samegame-board .cursor { fill: none; stroke: var(--focus); stroke-width: 0.6; pointer-events: none; }
-[data-input="pointer"] .samegame-board .cursor { display: none; }
+${inputIs("pointer")} .samegame-board .cursor { display: none; }
 .samegame-score { font-family: var(--mono); color: var(--text-dim); min-height: 1.4em; }
 `;
 
@@ -40,13 +40,17 @@ const settings = defineSchema({
   numbers: { type: "bool", label: "show a number on each color", default: false, description: "for telling colors apart without relying on hue" },
 });
 
-const BINDINGS: BindingSchema = {
+const BINDINGS = {
   "samegame.left": { label: "cursor left", category: "same game", keys: ["ArrowLeft", "a"] },
   "samegame.right": { label: "cursor right", category: "same game", keys: ["ArrowRight", "d"] },
   "samegame.up": { label: "cursor up", category: "same game", keys: ["ArrowUp", "w"] },
   "samegame.down": { label: "cursor down", category: "same game", keys: ["ArrowDown", "s"] },
   "samegame.remove": { label: "remove group", category: "same game", keys: ["space", "Enter"], description: "remove the group under the keyboard cursor" },
-};
+} satisfies BindingSchema;
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof BINDINGS> {}
+}
 
 const swatch = (body: string) => `<svg viewBox="-0.5 -0.5 11 11">${body}</svg>`;
 
@@ -61,10 +65,10 @@ function legend(p: SamegamePuzzle) {
   ];
 }
 
-export const samegameView: View<SamegamePuzzle, SamegameState, SamegameAction, SamegameInteraction> = {
+export const samegameView: View<SamegamePuzzle, SamegameState, SamegameAction, SamegameInteraction, typeof settings> = {
   id: "samegame.svg",
   name: "tiles",
-  puzzle: "samegame",
+  puzzle: samegame,
   settings,
   controls: [
     { how: "point at a tile", what: "outline the group it belongs to" },
@@ -219,7 +223,7 @@ export const scoreWidget: WidgetDef<SamegamePuzzle, SamegameState, SamegameActio
   id: "samegame.score",
   name: "score",
   description: "points so far and tiles left",
-  puzzles: ["samegame"],
+  puzzles: [samegame],
   defaultSlot: "top",
   order: 10,
   mount(el, { session, owner }) {

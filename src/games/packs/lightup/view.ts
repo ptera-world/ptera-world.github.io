@@ -1,10 +1,11 @@
-import { bindCommands, type BindingSchema } from "../../core/commands";
+import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
 import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
-import { s, style } from "../../core/dom";
+import { s, style, inputIs } from "../../core/dom";
+import { themedAssets } from "../../lib/assets";
 import { EMPTY, geometry, litCounts } from "./grid";
 import {
-  BULB, DOT, NONE, clueMet, toggleMark, type Conflicts, type Mark,
+  BULB, DOT, NONE, clueMet, lightup, toggleMark, type Conflicts, type Mark,
   type LightupAction, type LightupFocus, type LightupInteraction, type LightupPuzzle, type LightupState,
 } from "./logic";
 
@@ -40,7 +41,7 @@ const CSS = `
 .lightup-board .focus.related { stroke-width: 0.4; stroke-opacity: 0.7; }
 .lightup-board .labels text { fill: var(--text-dim); font: 500 3.6px var(--font); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
 .lightup-board .cursor { fill: none; stroke: var(--focus); stroke-width: 0.6; pointer-events: none; }
-[data-input="pointer"] .lightup-board .cursor { display: none; }
+${inputIs("pointer")} .lightup-board .cursor { display: none; }
 @media (prefers-reduced-motion: reduce) { .lightup-board .glow { transition: none; } }
 `;
 
@@ -72,7 +73,7 @@ function assetNode(markup: string): () => Element {
 }
 
 /** Ordered by how much a first-time player needs them; the how-to-play card lists them in this order. */
-const BINDINGS: BindingSchema = {
+const BINDINGS = {
   "lightup.light": { label: "light on / off", category: "light up", keys: ["space", "Enter"], description: "put a light on the selected cell, or take it away" },
   "lightup.mark": { label: "no-light mark on / off", category: "light up", keys: ["x", "period"], description: "put a small dot on the selected cell: your note that it can't hold a light. press again to remove it" },
   "lightup.clear": { label: "clear cell", category: "light up", keys: ["Backspace", "Delete"], description: "remove the light or no-light mark from the selected cell" },
@@ -81,7 +82,11 @@ const BINDINGS: BindingSchema = {
   "lightup.right": { label: "cursor right", category: "light up", keys: ["ArrowRight", "d"], description: "move the keyboard selection one cell right" },
   "lightup.up": { label: "cursor up", category: "light up", keys: ["ArrowUp", "w"], description: "move the keyboard selection one cell up" },
   "lightup.down": { label: "cursor down", category: "light up", keys: ["ArrowDown", "s"], description: "move the keyboard selection one cell down" },
-};
+} satisfies BindingSchema;
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof BINDINGS> {}
+}
 
 /** Inline markup for an asset inside a 10×10 sample. */
 function assetMarkup(markup: string): string {
@@ -91,8 +96,9 @@ function assetMarkup(markup: string): string {
 
 /** Every color and mark the board draws, with the same tokens and the current theme's assets. */
 function legend(look: Look): { sample: string; meaning: string }[] {
-  const bulb = assetMarkup(look.asset("lightup.bulb", ASSETS.bulb));
-  const dot = assetMarkup(look.asset("lightup.dot", ASSETS.dot));
+  const art = themedAssets(look, "lightup", ASSETS);
+  const bulb = assetMarkup(art("bulb"));
+  const dot = assetMarkup(art("dot"));
   const svg = (body: string) => `<svg viewBox="-0.5 -0.5 11 11">${body}</svg>`;
   const cell = `<rect width="10" height="10" fill="var(--cell)" stroke="var(--border)" stroke-width="0.25"/>`;
   const glow = (opacity: number, fill = "var(--cell-lit)") => `<rect x="0.15" y="0.15" width="9.7" height="9.7" fill="${fill}" opacity="${opacity}"/>`;
@@ -125,11 +131,11 @@ export type Board = { labelSides(): Set<Side>; colName(col: number): string; row
 /** Space for edge labels, in cell units of SIZE. */
 const LABEL = 6;
 
-export function lightupView(look: Look, board: Board): View<LightupPuzzle, LightupState, LightupAction, LightupInteraction> {
+export function lightupView(look: Look, board: Board): View<LightupPuzzle, LightupState, LightupAction, LightupInteraction, typeof settings> {
   return {
     id: "lightup.svg",
     name: "grid",
-    puzzle: "lightup",
+    puzzle: lightup,
     settings,
     controls: [
       { how: "click or tap an empty cell", what: "put a light there, or take it away" },
@@ -143,8 +149,9 @@ export function lightupView(look: Look, board: Board): View<LightupPuzzle, Light
       style("lightup", CSS);
       const p = session.puzzle;
       const g = geometry(p);
-      const bulbNode = assetNode(look.asset("lightup.bulb", ASSETS.bulb));
-      const dotNode = assetNode(look.asset("lightup.dot", ASSETS.dot));
+      const art = themedAssets(look, "lightup", ASSETS);
+      const bulbNode = assetNode(art("bulb"));
+      const dotNode = assetNode(art("dot"));
       const sides = board.labelSides();
       const m = (side: Side) => (sides.has(side) ? LABEL : PAD);
       const vbW = p.w * SIZE + m("left") + m("right"), vbH = p.h * SIZE + m("top") + m("bottom");
@@ -318,7 +325,7 @@ export function lightupView(look: Look, board: Board): View<LightupPuzzle, Light
               pressCell = -1;
               navigator.vibrate?.(15);
               startPaint(c);
-            }, settings.longPressMs as number);
+            }, settings.longPressMs);
           }
         } else if (e.button === 2 || (e.button === 0 && markMode)) startPaint(c);
         else if (e.button === 0) toggleLight(c);
