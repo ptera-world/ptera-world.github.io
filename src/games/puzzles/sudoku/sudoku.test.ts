@@ -10,7 +10,9 @@ import { constraintTypes } from "./engine/registry";
 import { initialState, propagate, solve } from "./engine/solver";
 import type { LatinPuzzle } from "./engine/types";
 import { latinFormats } from "./formats";
-import { hint, initState, reduce, type GridAction, type GridState } from "./puzzle";
+import { CANDIDATES } from "./keys";
+import { latinPlugins } from "./plugins";
+import { hint, initState, reduce, type GridAction, type GridState, type HintFocus } from "./puzzle";
 
 const CLASSIC = [{ type: "latin" }, { type: "boxes", w: 3, h: 3 }];
 const sig = () => new AbortController().signal;
@@ -121,4 +123,47 @@ test("hints point out mistakes first, then a logical step", async () => {
     session.dispatch(next.action);
   }
   expect(session.solved).toBe(true);
+});
+
+function withPlugins(p: LatinPuzzle, ids: string[], settings: Record<string, Record<string, unknown>> = {}) {
+  const session = new Session(sudoku, p, { kind: "imported" });
+  for (const plugin of latinPlugins.filter((x) => ids.includes(x.id))) {
+    plugin.setup?.({ session, settings: settings[plugin.id] ?? Object.fromEntries(Object.entries(plugin.settings ?? {}).map(([k, f]) => [k, f.default])), owner: plugin.id });
+  }
+  return session;
+}
+
+test("assists: mark cleanup, auto candidates strike, auto-fill in one undo step", async () => {
+  const p = await generate(sudoku, { difficulty: "easy" }, "assist", sig()) as LatinPuzzle;
+  const sol = p.solution!;
+  const empty = p.givens.flatMap((v, c) => (v ? [] : [c]));
+  const [a] = empty;
+  const m = modelOf(p);
+  const peer = m.peers[a!]!.find((c) => !p.givens[c])!;
+
+  const s1 = withPlugins(p, ["sudoku.auto-remove"]);
+  s1.dispatch({ type: "mark", layer: "center", cells: [peer], digit: sol[a!]!, on: true });
+  s1.dispatch({ type: "set", cells: [a!], digit: sol[a!]! });
+  expect(s1.state.center[peer]! & bit(sol[a!]!)).toBe(0);
+
+  const s2 = withPlugins(p, ["sudoku.auto-candidates"]);
+  const cands = s2.derived()[CANDIDATES] as number[];
+  expect(cands[a!]! & bit(sol[a!]!)).toBeTruthy();
+  const wrong = [1, 2, 3, 4, 5, 6, 7, 8, 9].find((d) => d !== sol[a!] && cands[a!]! & bit(d))!;
+  s2.dispatch({ type: "mark", layer: "center", cells: [a!], digit: wrong, on: false });
+  expect(s2.state.struck[a!]).toBe(bit(wrong));
+  expect((s2.derived()[CANDIDATES] as number[])[a!]! & bit(wrong)).toBe(0);
+
+  const s3 = withPlugins(p, ["sudoku.fill-naked", "sudoku.fill-hidden"]);
+  s3.dispatch({ type: "set", cells: [a!], digit: sol[a!]! });
+  expect(s3.solved).toBe(true);
+  s3.undo();
+  expect(s3.state.values).toEqual(p.givens);
+});
+
+test("progressive hints reveal more on repeat", async () => {
+  const p = await generate(sudoku, { difficulty: "medium" }, "prog", sig()) as LatinPuzzle;
+  const s = withPlugins(p, ["sudoku.hints"]);
+  const levels = [0, 1, 2, 2].map(() => (s.showHint()!.focus as HintFocus).level);
+  expect(levels).toEqual([0, 1, 2, 2]);
 });

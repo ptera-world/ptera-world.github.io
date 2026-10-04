@@ -38,10 +38,18 @@ const clone = (st: SearchState): SearchState => ({ masks: st.masks.slice(), done
  */
 export function propagate(m: Model, st: SearchState, seed?: readonly number[]): boolean {
   const { masks, done } = st;
-  const dirty = new Uint8Array(m.size);
+  const x = scratchOf(m);
+  const epoch = ++x.epoch;
+  const cellDirty = new Uint8Array(m.size);
+  const houseDirty = new Uint8Array(m.houses.length);
+  const dirtyCells: number[] = [];
   const stack: number[] = [];
   const touch = (c: number) => {
-    dirty[c] = 1;
+    if (!cellDirty[c]) {
+      cellDirty[c] = 1;
+      dirtyCells.push(c);
+    }
+    for (const h of m.houseOf[c]!) houseDirty[h] = 1;
     if (!done[c] && isSingle(masks[c]!)) stack.push(c);
   };
   if (seed) for (const c of seed) touch(c);
@@ -49,7 +57,7 @@ export function propagate(m: Model, st: SearchState, seed?: readonly number[]): 
     if (masks[c] === 0) return false;
     touch(c);
   }
-  const scratch: number[] = [];
+  let round = epoch;
   for (;;) {
     while (stack.length) {
       const c = stack.pop()!;
@@ -65,8 +73,9 @@ export function propagate(m: Model, st: SearchState, seed?: readonly number[]): 
         touch(p);
       }
     }
-    let changed = false;
     for (const h of m.full) {
+      if (!houseDirty[h]) continue;
+      houseDirty[h] = 0;
       const cells = m.houses[h]!.cells;
       let once = 0, twice = 0, fixed = 0;
       for (const c of cells) {
@@ -82,38 +91,60 @@ export function propagate(m: Model, st: SearchState, seed?: readonly number[]): 
         uniq ^= b;
         for (const c of cells) {
           if (masks[c]! & b) {
-            if (masks[c] !== b) {
-              masks[c] = b;
-              touch(c);
-              changed = true;
-            }
+            masks[c] = b;
+            touch(c);
             break;
           }
         }
       }
     }
     if (stack.length) continue;
-    const todo = new Set<number>();
-    for (let c = 0; c < m.size; c++) {
-      if (!dirty[c]) continue;
-      dirty[c] = 0;
-      for (const r of m.rulesOf[c]!) todo.add(r);
+    if (!dirtyCells.length) return true;
+    // Rules touching any changed cell, each once per round.
+    round = ++x.epoch;
+    const todo: number[] = [];
+    for (const c of dirtyCells) {
+      cellDirty[c] = 0;
+      for (const r of m.rulesOf[c]!) if (x.mark[r] !== round) {
+        x.mark[r] = round;
+        todo.push(r);
+      }
     }
+    dirtyCells.length = 0;
+    const buf = x.buf;
     for (const ri of todo) {
       const r = m.rules[ri]!;
-      scratch.length = 0;
-      for (const c of r.cells) scratch.push(masks[c]!);
-      if (!r.propagate(scratch)) return false;
-      r.cells.forEach((c, i) => {
-        if (masks[c] !== scratch[i]) {
-          masks[c] = scratch[i]!;
+      const cells = r.cells;
+      buf.length = cells.length;
+      for (let i = 0; i < cells.length; i++) buf[i] = masks[cells[i]!]!;
+      if (!r.propagate(buf)) return false;
+      for (let i = 0; i < cells.length; i++) {
+        const c = cells[i]!;
+        if (masks[c] !== buf[i]) {
+          masks[c] = buf[i]!;
           touch(c);
-          changed = true;
         }
-      });
+      }
     }
-    if (!changed && !stack.length) return true;
+    if (!stack.length && !dirtyCells.length && !m.full.some((h) => houseDirty[h])) return true;
   }
+}
+
+interface Scratch {
+  epoch: number;
+  mark: Int32Array;
+  buf: number[];
+}
+
+const scratches = new WeakMap<Model, Scratch>();
+
+function scratchOf(m: Model): Scratch {
+  let x = scratches.get(m);
+  if (!x) {
+    x = { epoch: 0, mark: new Int32Array(m.rules.length), buf: [] };
+    scratches.set(m, x);
+  }
+  return x;
 }
 
 function pickCell(m: Model, masks: Uint16Array): number {

@@ -133,7 +133,7 @@ function capDifficulty(d: Draft, rng: Rng, max: number): void {
 
 export async function generateLatin(o: GenerateOptions, rng: Rng, ctx: GenerateContext): Promise<LatinPuzzle> {
   const n = o.n;
-  const nodes = o.nodes ?? 20_000;
+  const nodes = o.nodes ?? 4000;
   const targetIdx = o.target ? BANDS.findIndex((b) => b.id === o.target) : -1;
   const attempts = o.attempts ?? (targetIdx < 0 ? 8 : o.clues.length ? 8 : 120);
   let best: { p: LatinPuzzle; distance: number } | null = null;
@@ -142,7 +142,7 @@ export async function generateLatin(o: GenerateOptions, rng: Rng, ctx: GenerateC
     const r = rng.fork(`attempt ${a}`);
     const globals = o.globals(r.fork("layout"));
     const base = compile(n, globals);
-    const sol = solve(base, Array.from({ length: n * n }, () => 0), { limit: 1, rng: r.fork("solution"), budget: 100_000 }).solutions[0];
+    const sol = solve(base, Array.from({ length: n * n }, () => 0), { limit: 1, rng: r.fork("solution"), budget: 20_000 }).solutions[0];
     if (!sol) continue;
     const clues = o.clues.flatMap((c) => {
       const t = constraintTypes.get(c.type);

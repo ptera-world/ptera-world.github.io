@@ -1,7 +1,7 @@
 import type { Rng } from "../../core/rng";
 import type { Schema, Values } from "../../core/schema";
 import type { GenerateContext, Hint, Preset, PuzzleDef } from "../../core/types";
-import { bit, digits } from "./engine/bits";
+import { bit } from "./engine/bits";
 import { findStep, grade, gridFrom, type Grade, type Step } from "./engine/human";
 import { conflicts, modelOf } from "./engine/model";
 import { constraintTypes } from "./engine/registry";
@@ -242,8 +242,4 @@ export function latinDef<P extends Schema>(cfg: LatinDefConfig<P>): PuzzleDef<La
       return [`${p.n}×${p.n}`, ...extra].join(" ") + (p.title ? ` · ${p.title}` : "");
     },
   };
-}
-
-export function displayCandidates(mask: number): string {
-  return digits(mask).join("");
 }
