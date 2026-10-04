@@ -8,7 +8,7 @@ import { affected, type FlipAction, type FlipInteraction, type FlipPuzzle, type 
 export const SOLUTION_KEY = "flip.solution";
 
 const CSS = `
-.flip-board { width: min(100%, 80vh); height: auto; max-height: 100%; touch-action: manipulation; user-select: none; }
+.flip-board { width: 100%; height: 100%; touch-action: manipulation; user-select: none; }
 .flip-board .cell { fill: var(--cell); stroke: var(--border); stroke-width: 0.3; cursor: pointer; transition: fill 120ms; }
 .flip-board .cell.lit { fill: var(--cell-lit); }
 .flip-board .cell.preview { stroke: var(--accent); stroke-width: 0.8; }
@@ -105,6 +105,7 @@ export const flipView: View<FlipPuzzle, FlipState, FlipAction, FlipInteraction> 
     const rects = (list: Iterable<number>) => [...list].map((i) => cells[i]!.getBoundingClientRect());
     return {
       aspect: p.w / p.h,
+      cells: { cols: (p.w * size + 2) / size, rows: (p.h * size + 2) / size },
       locate: (focus) => (Array.isArray(focus) ? rects(focus as number[]) : []),
       locateChange: (a, b) => {
         const x = (a as FlipState).lights, y = (b as FlipState).lights;
