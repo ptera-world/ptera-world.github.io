@@ -8,7 +8,7 @@ import { randomSeed } from "../core/rng";
 import { canonical, fromQuery, resolve, toQuery } from "../core/schema";
 import { Session, type Origin, type Snapshot } from "../core/session";
 import { namespace } from "../core/storage";
-import type { AnyPuzzleDef, BindingSchema, CommandHandler, Plugin, View, ViewHandle } from "../core/types";
+import type { AnyPuzzleDef, BindingSchema, CommandHandler, Format, Plugin, View, ViewHandle } from "../core/types";
 import { clear, formatTime, h } from "./dom";
 import { schemaForm } from "./form";
 
@@ -33,10 +33,22 @@ const SHELL_BINDINGS: BindingSchema = {
   undo: { label: "Undo", category: "Game", keys: ["$mod+z", "u"] },
   redo: { label: "Redo", category: "Game", keys: ["$mod+shift+z", "$mod+y", "r"] },
   hint: { label: "Hint", category: "Game", keys: ["shift+/"] },
+  "apply-hint": { label: "Apply hint (shows one first if none is up)", category: "Game", keys: ["shift+h"] },
   "new-game": { label: "New game", category: "Game", keys: ["$mod+Enter"] },
   pause: { label: "Pause / resume", category: "Game", keys: ["p"] },
   "show-keys": { label: "Show shortcuts", category: "Help", keys: ["$mod+/"] },
 };
+
+/** Serialized text, or null if the format can't write or throws on this puzzle. */
+function trySerialize(fmt: Format<unknown>, puzzle: unknown): string | null {
+  if (!fmt.serialize) return null;
+  try {
+    return fmt.serialize(puzzle);
+  } catch (e) {
+    console.error(`[games] ${fmt.id}.serialize failed`, e);
+    return null;
+  }
+}
 
 /** Identity of a puzzle source, used to decide whether a save belongs to the requested puzzle. */
 function originKey(def: AnyPuzzleDef, origin: Origin): string {
@@ -190,10 +202,12 @@ export class Shell {
       toQuery(def.params, resolve(def.params, o.params), q);
       q.set("v", String(o.generatorVersion));
     } else {
-      const fmt = def.formats.find((f) => f.serialize);
-      if (fmt) {
+      for (const fmt of def.formats) {
+        const data = trySerialize(fmt, session.puzzle);
+        if (data === null) continue;
         q.set("f", fmt.id);
-        q.set("d", fmt.serialize!(session.puzzle));
+        q.set("d", data);
+        break;
       }
     }
     return `${location.pathname}?${q}`;
@@ -361,6 +375,7 @@ export class Shell {
       undo: () => this.session?.undo(),
       redo: () => this.session?.redo(),
       hint: () => this.showHint(),
+      "apply-hint": () => this.applyHint(),
       "new-game": () => this.newGameSame(),
       pause: () => this.togglePause(),
       "show-keys": () => {
@@ -386,6 +401,22 @@ export class Shell {
     this.renderToolbar();
   }
 
+  /** Carry out the visible hint, or fetch one and carry it out if none is showing. */
+  private applyHint(): void {
+    const s = this.session;
+    if (!s || s.solved) return;
+    const hint = s.activeHint ?? s.showHint();
+    if (!hint) {
+      this.setStatus("no hint available");
+      return;
+    }
+    if (!hint.action) {
+      this.setStatus(hint.message);
+      return;
+    }
+    if (!s.dispatch(hint.action)) this.setStatus("that hint no longer applies");
+  }
+
   private showHint(): void {
     const s = this.session;
     if (!s) return;
@@ -395,6 +426,7 @@ export class Shell {
       return;
     }
     this.setStatus(hint.message);
+    this.renderToolbar();
   }
 
   // --- persistence ---
@@ -503,6 +535,7 @@ export class Shell {
       { id: "redo", label: "redo", disabled: !s.canRedo, run: () => s.redo() },
       { id: "restart", label: "restart", disabled: !s.canUndo, run: () => s.restart() },
       { id: "hint", label: "hint", disabled: s.solved, run: () => this.showHint() },
+      ...(s.activeHint?.action ? [{ id: "apply-hint", label: "apply hint", run: () => this.applyHint() }] : []),
       {
         id: "reveal", label: "reveal", disabled: s.solved || !s.def.solve, run: () => {
           if (!confirm("reveal the solution?")) return;
@@ -668,7 +701,7 @@ export class Shell {
     const fmtSelect = h("select", { "aria-label": "export format" }, exportable.map((f) => h("option", { value: f.id }, f.label)));
     const refresh = () => {
       const f = exportable.find((x) => x.id === fmtSelect.value);
-      out.value = f ? f.serialize!(s.puzzle) : "";
+      out.value = f ? trySerialize(f, s.puzzle) ?? "this puzzle can't be written in that format" : "";
     };
     fmtSelect.addEventListener("change", refresh);
     refresh();
@@ -688,7 +721,7 @@ export class Shell {
       for (const f of candidates) {
         try {
           const puzzle = f.parse(text);
-          const source = f.serialize ? f.serialize(puzzle) : text;
+          const source = trySerialize(f, puzzle) ?? text;
           this.loadPuzzle(def, puzzle, { kind: "imported", format: f.id, source });
           return;
         } catch (e) {
