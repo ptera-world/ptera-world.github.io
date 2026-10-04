@@ -23,13 +23,19 @@ import { add, clear, formatTime, h, style } from "../../core/dom";
 import { arrange, loadLayout, saveLayout, type LayoutConfig } from "./layout";
 import { builtinWidgets } from "./widgets";
 import { installTooltips } from "./tooltips";
+import { sessionList } from "./session-list";
+import { tagStyle } from "./tags";
 import { popup, type SurfaceItem, type SurfaceStyle } from "./surfaces";
 import { SAVE_PREFIX, INDEX_KEY, findSession, listSessions, loadSession, newSessionId, removeSession, saveSession } from "./sessions";
 
 const prefs = namespace("prefs");
 
+/** Board zoom also takes the browser's own zoom gestures (ctrl ±, ctrl+0, ctrl+scroll). Off by default. */
+export const zoomTakeover = (): boolean => prefs.get("zoomTakeover", false);
+
 export { HOLD_MS } from "../../core/gestures";
 import { HOLD_MS } from "../../core/gestures";
+import { onModifierHold } from "keybinds";
 
 /** Serialized text, or null if the format can't write or throws on this puzzle. */
 export function trySerialize(fmt: Format<unknown>, puzzle: unknown): string | null {
@@ -154,6 +160,7 @@ export class Shell {
     onThemeChange(() => { if (this.session) this.mountView(); });
     onBoardPrefsChange(() => { if (this.session) this.mountView(); });
     installTooltips(this.hub);
+    this.rearmHold();
     this.installZoom();
     this.installLongPress();
     this.hub.setSource("shell", () => this.shellCommands());
@@ -702,6 +709,21 @@ export class Shell {
     void popup(style, x, y, this.boardItems(), (id) => this.hub.run(id));
   }
 
+  private stopHold: (() => void) | null = null;
+  private holdOpened = false;
+
+  /** Holding ctrl (cmd on mac) on its own shows the shortcuts while held; using it in a shortcut never does. Re-reads its setting. */
+  rearmHold(): void {
+    this.stopHold?.();
+    this.stopHold = null;
+    const delay = prefs.get<number>("holdShortcuts", 450);
+    if (delay < 0) return;
+    this.stopHold = onModifierHold(/Mac|iPhone|iPad/.test(navigator.platform) ? "Meta" : "Control", (on) => {
+      if (on && !this.hub.cheatsheet.open) { this.holdOpened = true; this.hub.cheatsheet.open = true; }
+      else if (!on && this.holdOpened) { this.holdOpened = false; this.hub.cheatsheet.open = false; }
+    }, { delay });
+  }
+
   /** Board zoom on top of the fitted size (1 = fit). Not saved; resets with each game. */
   zoom = 1;
 
@@ -730,7 +752,7 @@ export class Shell {
   private installZoom(): void {
     const sc = this.els.scroller;
     sc.addEventListener("wheel", (e) => {
-      if (!e.ctrlKey) return;
+      if (!e.ctrlKey || !zoomTakeover()) return;
       e.preventDefault();
       this.zoomBy(Math.exp(-e.deltaY * 0.01), { x: e.clientX, y: e.clientY });
     }, { passive: false });
@@ -765,9 +787,9 @@ export class Shell {
       { id: "shell.rebind", label: "change key bindings", category: "general", run: () => { this.hub.settings.open = true; } },
       { id: "shell.howto", label: "how to play", category: "general", keys: ["f1"], description: "what this puzzle is, its rules, and how to play it", run: () => this.showHowTo() },
       { id: "shell.labels", label: "board labels", category: "view", keys: ["l"], description: "letters and numbers along the board edges, so cells named in hints (like C5) are easy to find. cycles off / top+left / all sides", run: () => cycleLabels() },
-      { id: "shell.zoom-in", label: "zoom in", category: "view", keys: ["$mod+equal", "$mod+shift+equal"], description: "make the board bigger (it scrolls when bigger than the screen). also ctrl+scroll or pinch", run: () => this.zoomBy(1.25) },
-      { id: "shell.zoom-out", label: "zoom out", category: "view", keys: ["$mod+minus"], description: "make the board smaller, down to fitting the screen", run: () => this.zoomBy(0.8) },
-      { id: "shell.zoom-fit", label: "fit board", category: "view", keys: ["$mod+0"], description: "show the whole board at once", run: () => this.zoomFit() },
+      { id: "shell.zoom-in", label: "zoom in", category: "view", keys: zoomTakeover() ? ["equal", "$mod+equal", "$mod+shift+equal"] : ["equal"], description: "make the board bigger (it scrolls when bigger than the screen). also pinch on the board", run: () => this.zoomBy(1.25) },
+      { id: "shell.zoom-out", label: "zoom out", category: "view", keys: zoomTakeover() ? ["minus", "$mod+minus"] : ["minus"], description: "make the board smaller, down to fitting the screen", run: () => this.zoomBy(0.8) },
+      { id: "shell.zoom-fit", label: "fit board", category: "view", keys: zoomTakeover() ? ["$mod+0"] : [], description: "show the whole board at once", run: () => this.zoomFit() },
       { id: "shell.zen", label: "zen mode", category: "view", keys: ["z"], description: "just the board; press again to bring everything back", checked: () => this.zen, run: () => this.toggleZen() },
       { id: "shell.index", label: "all puzzles", category: "general", run: () => this.goIndex() },
     ];
@@ -777,7 +799,7 @@ export class Shell {
     return [
       ...base,
       {
-        id: "shell.unlock", label: "unlock solved board", category: "game",
+        id: "shell.unlock", label: "unlock board", category: "game",
         description: "keep playing with a finished board (moves, undo). the solve time is kept as it was",
         when: (c) => !!c.locked && !c.lost,
         run: () => { this.unlocked = true; this.syncLock(); this.setStatus("unlocked: the board is yours to play with"); this.hub.refresh(); },
@@ -1036,10 +1058,16 @@ export class Shell {
 
   /** Forget a saved game; closing the open one returns to the game list. */
   closeSession(id: string): void {
-    removeSession(id);
-    if (id === this.sessionId) {
-      this.session?.pause();
+    this.deleteSessions([id]);
+  }
+
+  /** Delete saved games; if the open one is among them, go back to the game list. */
+  deleteSessions(ids: readonly string[]): void {
+    for (const id of ids) removeSession(id);
+    if (ids.includes(this.sessionId) && this.session) {
+      this.session.pause();
       this.session = null;
+      this.sessionId = "";
       this.goIndex();
     }
     this.hooks.sessions.call();
@@ -1123,7 +1151,7 @@ export class Shell {
       if (tags.length) {
         for (const tag of [null, ...tags]) {
           filters.append(h("button", {
-            "aria-pressed": String(tag === active),
+            "aria-pressed": String(tag === active), class: tag ? "tag" : undefined, style: tag ? tagStyle(tag) : undefined,
             onclick: () => { active = tag; prefs.set("indexTag", tag); render(); },
           }, tag ?? "all"));
         }
@@ -1141,15 +1169,13 @@ export class Shell {
           h("strong", null, def.name),
           def.aliases?.length ? h("em", { class: "aka" }, `also: ${def.aliases.join(", ")}`) : null,
           def.description ? h("span", null, def.description) : null),
-        def.tags?.length ? h("span", { class: "tags" }, def.tags.join(" · ")) : null,
+        def.tags?.length ? h("span", { class: "tags" }, def.tags.map((tag) => h("span", { class: "tag", style: tagStyle(tag) }, tag))) : null,
         n ? h("a", { href: `?p=${p}&tab=techniques`, class: "learn", onclick: go(`p=${p}&tab=techniques`) }, `learn · ${n} techniques`) : null);
     }).map((el, i) => ({ el, def: all[i]! }));
-    const going = listSessions().filter((m) => !m.solved && !m.practice).slice(0, 6);
-    const resumeRow = going.length
-      ? h("div", { class: "index-continue" }, h("span", { class: "w-dim" }, "continue:"), going.map((m) =>
-        h("button", { onclick: () => this.openSession(m.id) }, m.title, " ", h("span", { class: "w-dim" }, formatTime(m.elapsedMs)))))
-      : null;
-    this.els.index.append(h("div", { class: "index-inner" }, resumeRow, search, filters, list));
+    const going = listSessions().some((m) => !m.solved && !m.practice);
+    const resume = going ? h("section", { class: "index-continue" }, h("h2", null, "continue"),
+      sessionList(this, { filter: (m) => !m.solved && !m.practice, limit: 5, tools: false })) : null;
+    this.els.index.append(h("div", { class: "index-inner" }, resume, search, filters, list));
     render();
     this.hub.refresh();
   }
@@ -1294,9 +1320,11 @@ const SHELL_CSS = `
 .index-tags button { padding: 3px 10px; font-size: 13px; border-radius: 99px; }
 .index-tags button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); }
 .index-search { max-width: 320px; }
-.index-continue { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.index-continue { display: flex; flex-direction: column; gap: 6px; max-width: 520px; }
+.index-continue h2, .index-inner > h2 { font-size: 13px; color: var(--text-dim); letter-spacing: .06em; font-weight: normal; }
 .index .aka { font-size: 12px; color: var(--text-dim); font-style: normal; }
-.index .tags { font-size: 11px; padding: 0 14px 8px; color: var(--text-dim); }
+.index .tags { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 14px 10px; }
+.tag { font-size: 11px; padding: 1px 7px; border-radius: 99px; color: var(--tag-ink); background: var(--tag-bg); border: 1px solid var(--tag-line); }
 .index { list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; width: 100%; max-width: 960px; }
 .index li { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); overflow: hidden; }
 .index .card { display: flex; flex-direction: column; gap: 4px; padding: 14px; color: var(--text); flex: 1; }

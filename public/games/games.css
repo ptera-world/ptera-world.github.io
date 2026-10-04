@@ -34,7 +34,7 @@ button {
 button:hover:not(:disabled) { border-color: var(--accent); }
 button:disabled { opacity: 0.4; cursor: default; }
 button.primary { background: var(--accent-soft); border-color: var(--accent); }
-input[type="text"], input[type="number"], select, textarea {
+input[type="text"], input[type="search"], input[type="number"], select, textarea {
   background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; width: 100%;
 }
 textarea { font-family: var(--mono); font-size: 13px; resize: vertical; }

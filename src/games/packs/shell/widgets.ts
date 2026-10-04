@@ -12,6 +12,7 @@ import { schemaForm } from "./form";
 import { SLOTS, loadLayout } from "./layout";
 import { setTipDelay, tipDelay } from "./tooltips";
 import { tiles, type SurfaceStyle } from "./surfaces";
+import { sessionList } from "./session-list";
 import type { Shell, ShareLevel } from "./shell";
 import { trySerialize } from "./shell";
 
@@ -49,7 +50,8 @@ button.danger:hover:not(:disabled) { border-color: var(--danger); background: va
 .w-practice { display: flex; flex-direction: column; gap: 6px; align-items: center; text-align: center; max-width: 60ch; }
 .w-practice p { color: var(--text-dim); font-size: 13px; }
 .w-search { position: sticky; top: -12px; background: var(--bg); padding: 4px 0 8px; z-index: 1; }
-.w-results { background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(6px); border: 1px solid var(--accent); border-radius: 12px; padding: 10px 14px; box-shadow: 0 10px 30px rgba(0,0,0,.35); display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; justify-content: center; max-width: 100%; animation: results-in 420ms cubic-bezier(.2,.9,.3,1.3); }
+.w-results { background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(6px); border: 1px solid var(--accent); border-radius: 12px; padding: 10px 14px; box-shadow: 0 10px 30px rgba(0,0,0,.35); display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; justify-content: center; max-width: 100%; }
+.w-results.anim { animation: results-in 420ms cubic-bezier(.2,.9,.3,1.3); }
 .w-results .big { font-size: 18px; color: var(--accent); }
 .w-results.lost { border-color: var(--danger); }
 .w-results.lost .big { color: var(--danger); }
@@ -102,6 +104,9 @@ function describe(sources: readonly Source[]): { who: string; kind: string } {
   const rest = main?.kind === "technique" && main.auto ? "" : autoText ? ` + auto: ${autoText}` : "";
   return { who: who + rest, kind: main?.kind ?? "player" };
 }
+
+/** Solves whose result strip has already animated in (session id : solve time). */
+const announced = new Set<string>();
 
 export function builtinWidgets(shell: Shell): WidgetDef[] {
   style("widgets", CSS);
@@ -326,7 +331,15 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
       }
       surf.append(row("board actions buttons always visible", h("small", null, "for buttons without any menu, place the \"board actions\" widget under layout")));
 
+      brd.append(row("zoom browser ctrl plus minus scroll take over page zoom", toggle(prefs.get("zoomTakeover", false), "board zoom takes over ctrl +/−, ctrl+0 and ctrl+scroll", (on) => { prefs.set("zoomTakeover", on); shell.hub.refresh(); }),
+        h("small", null, "off: those keep zooming the whole page, and = / − zoom the board")));
+
       const beh = section("behaviour");
+      const holdNow = prefs.get<number>("holdShortcuts", 450);
+      beh.append(row("hold ctrl cmd shortcuts cheatsheet keys", h("div", { class: "w-inline" },
+        h("span", { style: "flex: 1" }, "hold ctrl (cmd on mac) to see shortcuts"),
+        h("select", { onchange: (e: Event) => { prefs.set("holdShortcuts", Number((e.target as HTMLSelectElement).value)); shell.rearmHold(); } },
+          ([[250, "quick"], [450, "normal"], [800, "slow"], [-1, "off"]] as const).map(([v, lab]) => h("option", { value: v, selected: v === holdNow }, lab))))));
       const delay = tipDelay();
       beh.append(row("tooltips tips hover delay explain buttons", h("div", { class: "w-inline" },
         h("span", { style: "flex: 1" }, "tooltips"),
@@ -525,19 +538,21 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
         }
         err.textContent = errors.length ? errors.join("\n") : "no format recognised this";
       };
-      const linkBox = h("input", { type: "text", readonly: true, "aria-label": "share link", style: "flex: 1" });
-      let level = prefs.get<ShareLevel>("shareLevel", "puzzle");
-      const update = async () => { linkBox.value = await shell.shareUrl(level); };
-      const levels: [ShareLevel, string][] = [["puzzle", "just the puzzle"], ["state", "+ where i am"], ["history", "+ every move"]];
-      const picker = h("div", { class: "w-inline", role: "radiogroup", "aria-label": "what the link includes" }, levels.map(([v, lab]) =>
-        h("label", { class: "w-inline" }, h("input", {
-          type: "radio", name: "share-level", value: v, checked: v === level,
-          onchange: () => { level = v; prefs.set("shareLevel", v); void update(); },
-        }), lab)));
-      void update();
+      const linkBox = h("input", { type: "text", readonly: true, "aria-label": "link to this puzzle", style: "flex: 1" });
+      void shell.shareUrl("puzzle").then((u) => { linkBox.value = u; });
+      const copied = h("span", { class: "w-dim", "aria-live": "polite", style: "min-width: 5ch" });
+      const levels: [ShareLevel, string, string][] = [
+        ["puzzle", "copy: just the puzzle", "a fresh start on this puzzle, no spoilers"],
+        ["state", "copy: where i am", "this puzzle with the board as it is now"],
+        ["history", "copy: every move", "this puzzle with every move so far, undoable and replayable (good for showing a bug)"],
+      ];
       add(el,
-        h("h3", { class: "w-dim" }, "link"), picker,
-        h("div", { class: "w-inline" }, linkBox, h("button", { onclick: async () => { await update(); void navigator.clipboard?.writeText(linkBox.value); } }, "copy")),
+        h("h3", { class: "w-dim" }, "link"),
+        h("div", { class: "w-inline" }, linkBox),
+        h("div", { class: "w-inline" }, levels.map(([v, lab, tip]) => h("button", {
+          "data-tip": tip,
+          onclick: async () => { await navigator.clipboard?.writeText(await shell.shareUrl(v)); copied.textContent = "copied"; setTimeout(() => { copied.textContent = ""; }, 1500); },
+        }, lab)), copied),
         exportable.length ? [h("h3", { class: "w-dim" }, "export"), fmtSelect, out, h("button", { onclick: () => void navigator.clipboard?.writeText(out.value) }, "copy")] : null,
         h("h3", { class: "w-dim" }, "import"), importFmt, input,
         h("button", { class: "primary", onclick: doImport }, "load"), err);
@@ -670,7 +685,11 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
         }
         const rating = (() => { try { return s.def.rate?.(s.puzzle)?.label; } catch { return undefined; } })();
         const time = s.origin.kind === "practice" ? null : formatTime(s.solvedAtMs ?? 0);
-        add(el, h("div", { class: "w-results", role: "status" },
+        // the strip animates in once per solve, not every time it is re-mounted (tab switches, layout changes)
+        const key = `${shell.sessionId}:${s.solvedAtMs}`;
+        const fresh = !announced.has(key);
+        announced.add(key);
+        add(el, h("div", { class: `w-results${fresh ? " anim" : ""}`, role: "status" },
           h("strong", { class: "big" }, revealed ? "revealed" : s.origin.kind === "practice" ? "nice!" : "solved!"),
           time ? h("div", { class: "time" }, time) : null,
           rating ? h("div", { class: "w-dim" }, rating) : null,
@@ -681,7 +700,7 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
           h("div", { class: "w-inline" },
             h("button", { class: "primary", onclick: () => ctx.run("shell.new") }, "new game"),
             h("button", { onclick: () => shell.openTab("share") }, "share"),
-            !shell.unlocked && prefs.get("lockSolved", true) ? h("button", { onclick: () => { ctx.run("shell.unlock"); dismissed = true; render(); } }, "unlock") : null,
+            !shell.unlocked && prefs.get("lockSolved", true) ? h("button", { "data-command": "shell.unlock", onclick: () => { ctx.run("shell.unlock"); dismissed = true; render(); } }, "unlock board") : null,
             h("button", { onclick: () => { dismissed = true; render(); } }, "close"))));
       };
       sessionTaps(ctx, () => { if (!s.solved && !s.lost) dismissed = false; render(); });
@@ -691,23 +710,11 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
   };
 
   const opened: WidgetDef = {
-    id: "games", name: "games", description: "every game you have going, across puzzles; switch or close them", puzzles: "*", defaultSlot: "panel", order: 5,
+    id: "games", name: "games", description: "every game you have going, across puzzles; switch to one, or delete them one by one, in a batch or all at once", puzzles: "*", defaultSlot: "panel", order: 5,
     mount(el) {
-      const render = () => {
-        clear(el);
-        const list = shell.savedGames();
-        if (!list.length) { el.append(h("p", { class: "w-dim" }, "no saved games yet.")); return; }
-        for (const m of list) {
-          el.append(h("div", { class: `w-row w-game${m.id === shell.sessionId ? " current" : ""}` },
-            h("div", { class: "head" },
-              h("button", { class: "name link", onclick: () => { if (m.id !== shell.sessionId) shell.openSession(m.id); } },
-                h("strong", null, m.title), " ", h("span", { class: "w-dim" }, m.detail)),
-              h("span", { class: "w-dim" }, m.solved ? `solved · ${formatTime(m.elapsedMs)}` : formatTime(m.elapsedMs)),
-              h("button", { title: "close this game", "aria-label": `close ${m.title}`, onclick: () => shell.closeSession(m.id) }, "×"))));
-        }
-      };
-      render();
-      return shell.hooks.sessions.tap(render);
+      const list = sessionList(shell);
+      el.append(list);
+      return shell.hooks.sessions.tap(() => list.refresh());
     },
   };
 
