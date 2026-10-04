@@ -5,8 +5,8 @@ import type { Format, GenerateContext, Hint, PuzzleDef } from "../../core/types"
 import {
   analyzeModel, bit, isDecided, propagate, solveLevel, trialRule,
   type Analysis, type Constraint, type Doms, type Model, type Rule,
-} from "./kit/csp";
-import { cellList, type Focus } from "./kit/names";
+} from "../../lib/grid-kit/csp";
+import { cellList, type Focus } from "../../lib/grid-kit/names";
 
 /** Cell contents in the puzzle. TENT_HINT / GRASS_HINT are setter-provided starting marks. */
 export const OPEN = 0, TREE = 1, TENT_HINT = 2, GRASS_HINT = 3;

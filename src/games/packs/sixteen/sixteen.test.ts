@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { generate } from "../../core/generate";
 import { applyStep, findPracticePosition, firstStep, rateByTechniques } from "../../core/techniques";
 import { goal, gridFormat, isReachable, sgtFormat, sixteen, spec, type SixteenPuzzle } from "./logic";
-import { solveAll } from "./perm";
+import { solveAll } from "../../lib/perm";
 import { sixteenTechniques } from "./techniques";
 
 const sig = () => new AbortController().signal;

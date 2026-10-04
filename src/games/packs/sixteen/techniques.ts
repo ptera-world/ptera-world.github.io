@@ -1,7 +1,7 @@
 import { cellName } from "../../core/names";
 import type { Step, Technique } from "../../core/types";
 import { describeShift, hintFor, type SixteenAction, type SixteenFocus, type SixteenPuzzle, type SixteenState } from "./logic";
-import type { PermStep, StepKind } from "./perm";
+import type { PermStep, StepKind } from "../../lib/perm";
 
 type SixteenTechnique = Technique<SixteenPuzzle, SixteenState, SixteenAction>;
 

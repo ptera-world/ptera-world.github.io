@@ -1,7 +1,7 @@
 import { cellName } from "../../core/names";
 import type { Step, Technique } from "../../core/types";
 import { GLYPHS, describeShift, hintFor, target, type NetslideAction, type NetslideFocus, type NetslidePuzzle, type NetslideState } from "./logic";
-import type { PermStep, StepKind } from "./perm";
+import type { PermStep, StepKind } from "../../lib/perm";
 
 type NetslideTechnique = Technique<NetslidePuzzle, NetslideState, NetslideAction>;
 

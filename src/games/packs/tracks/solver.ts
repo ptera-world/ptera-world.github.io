@@ -1,6 +1,6 @@
 import type { Rng } from "../../core/rng";
 import type { GenerateContext } from "../../core/types";
-import { DOWN, DX, DY, LEFT, LINE, NO, RIGHT, UNK, UP, edgeAt, edgeGrid, opposite, otherEnd, step, type EdgeGrid } from "./edges";
+import { DOWN, DX, DY, LEFT, LINE, NO, RIGHT, UNK, UP, edgeAt, edgeGrid, opposite, otherEnd, step, type EdgeGrid } from "../../lib/edges";
 
 /** Direction bits as in the game id. */
 export const BIT = [2, 1, 8, 4] as const;

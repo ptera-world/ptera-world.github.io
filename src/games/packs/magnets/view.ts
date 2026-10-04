@@ -2,12 +2,12 @@ import { bindCommands, type BindingSchema } from "../../core/commands";
 import { s, style } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
 import type { View } from "../../core/types";
-import { bit, isSingle, popcount } from "./kit/csp";
-import type { Focus } from "./kit/names";
+import { bit, isSingle, popcount } from "../../lib/grid-kit/csp";
+import type { Focus } from "../../lib/grid-kit/names";
 import {
   KIT_CSS, SIZE, Strokes, cursorBindings, cursorHandlers, cursorRect, drawFocus, focusCells, focusLegend, frame, sample, sampleCell,
   type BoardPrefs,
-} from "./kit/view";
+} from "../../lib/grid-kit/view";
 import {
   BLANK, FULL, MAGNET, MINUS, NEUTRAL, PLUS, cellSigns, geometry, shownSigns, targets, valueFor,
   type MagnetsAction, type MagnetsConflicts, type MagnetsInteraction, type MagnetsPuzzle, type MagnetsState,

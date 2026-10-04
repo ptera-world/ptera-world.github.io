@@ -3,7 +3,7 @@ import { cellName as boardCell } from "../../core/names";
 import { defineSchema, type Values } from "../../core/schema";
 import type { Format, PuzzleDef } from "../../core/types";
 import { fireAt, hitCode } from "./beam";
-import { obfuscateBitmap } from "./sha1";
+import { obfuscateBitmap } from "../../lib/sha1";
 
 export const params = defineSchema({
   width: { type: "int", label: "width", default: 8, min: 2, max: 16 },

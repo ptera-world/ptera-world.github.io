@@ -4,7 +4,7 @@ import { Registry } from "../../core/registry";
 import { createRng } from "../../core/rng";
 import { Session } from "../../core/session";
 import { TechniqueHost, applyStep, findPracticePosition, firstStep, rateByTechniques } from "../../core/techniques";
-import { LINE, edgeGrid } from "./edges";
+import { LINE, edgeGrid } from "../../lib/edges";
 import { CROSS, NONE, cellName, gridFormat, pearl, sgtFormat, type PearlAction, type PearlFocus } from "./logic";
 import { checkMarks } from "./plugins";
 import { BLACK, EMPTY, WHITE, analyze, countSolutions, freshKnowledge, logicSolve, loopEdges, pearlsFor, randomLoop, type Level, type PearlPuzzle } from "./solver";

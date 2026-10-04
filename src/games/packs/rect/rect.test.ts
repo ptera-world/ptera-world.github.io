@@ -4,7 +4,7 @@ import { createRng } from "../../core/rng";
 import { Registry } from "../../core/registry";
 import { Session } from "../../core/session";
 import { TechniqueHost, applyStep, findPracticePosition, firstStep, rateByTechniques } from "../../core/techniques";
-import { cellName, type Focus } from "./kit/names";
+import { cellName, type Focus } from "../../lib/grid-kit/names";
 import { analyze, isSolved, puzzleLayout, rect, sgtFormat, split, type Level, type RectAction, type RectPuzzle } from "./logic";
 import { checkMarks } from "./plugins";
 import { countSolutions, freshAlive, levelNeeded } from "./solver";

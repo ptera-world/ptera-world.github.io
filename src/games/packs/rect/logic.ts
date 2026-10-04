@@ -1,8 +1,8 @@
 import type { Rng } from "../../core/rng";
 import { defineSchema, type Values } from "../../core/schema";
 import type { Format, GenerateContext, Hint, PuzzleDef } from "../../core/types";
-import { neighbours } from "./kit/grid";
-import { cellList, type Focus } from "./kit/names";
+import { neighbours } from "../../lib/grid-kit/grid";
+import { cellList, type Focus } from "../../lib/grid-kit/names";
 import {
   chosen, countSolutions, decided, freshAlive, layout, levelNeeded, saturate,
   type Alive, type Layout,

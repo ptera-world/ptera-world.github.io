@@ -2,7 +2,7 @@ import { colName, rowName } from "../../core/names";
 import type { Rng } from "../../core/rng";
 import { defineSchema, type Values } from "../../core/schema";
 import type { Format, PuzzleDef, Rating } from "../../core/types";
-import { nextStep, solveAll, type PermMove, type PermSpec, type PermStep } from "./perm";
+import { nextStep, solveAll, type PermMove, type PermSpec, type PermStep } from "../../lib/perm";
 
 export const params = defineSchema({
   width: { type: "int", label: "width", default: 4, min: 2, max: 8 },

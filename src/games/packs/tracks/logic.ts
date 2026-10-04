@@ -2,7 +2,7 @@ import type { Rng } from "../../core/rng";
 import { cellName as boardCell, colName, rowName } from "../../core/names";
 import { defineSchema, type Values } from "../../core/schema";
 import type { Format, GenerateContext, Hint, PuzzleDef } from "../../core/types";
-import { LINE, NO, UNK, edgeAt, edgeGrid } from "./edges";
+import { LINE, NO, UNK, edgeAt, edgeGrid } from "../../lib/edges";
 import {
   EMPTY, LEVEL_NAMES, TRACK, analyze, countCells, entryCell, exitCell, freshKnowledge, generatePuzzle, sides, target, trackPieces,
   type Level, type TracksPuzzle,

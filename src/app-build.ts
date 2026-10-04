@@ -29,7 +29,11 @@ const PACK_SDK = new Set([
   "core/storage.ts",
 ]);
 
-/** Fails the build when a pack reaches into the engine outside PACK_SDK, or into another pack. */
+/**
+ * Fails the build when a pack reaches into the engine outside PACK_SDK, or into another pack.
+ * `lib/` holds shared code packs may bundle; like PACK_SDK it must not carry state that matters
+ * across packs (each pack gets its own copy; memo caches are fine).
+ */
 function packBoundary(root: string, packDir: string): BunPlugin {
   return {
     name: "pack-boundary",
@@ -40,8 +44,8 @@ function packBoundary(root: string, packDir: string): BunPlugin {
         const withExt = existsSync(target) ? target : `${target}.ts`;
         if (withExt.startsWith(packDir + "/")) return undefined;
         const rel = relative(root, withExt);
-        if (rel.startsWith("..") || PACK_SDK.has(rel)) return undefined;
-        throw new Error(`${relative(root, args.importer)} imports ${rel}: packs may only bundle ${[...PACK_SDK].join(", ")}; use the games object for anything else`);
+        if (rel.startsWith("..") || PACK_SDK.has(rel) || rel.startsWith("lib/")) return undefined;
+        throw new Error(`${relative(root, args.importer)} imports ${rel}: packs may only bundle lib/ and ${[...PACK_SDK].join(", ")}; use the games object for anything else`);
       });
     },
   };

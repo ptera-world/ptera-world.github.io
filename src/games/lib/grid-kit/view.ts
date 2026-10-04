@@ -1,7 +1,7 @@
-import type { BindingSchema } from "../../../core/commands";
-import { s } from "../../../core/dom";
-import type { Side } from "../../../core/names";
-import type { Session } from "../../../core/session";
+import type { BindingSchema } from "../../core/commands";
+import { s } from "../../core/dom";
+import type { Side } from "../../core/names";
+import type { Session } from "../../core/session";
 import type { Focus } from "./names";
 
 /** Cell box size in SVG units. Everything a grid view draws is in these units. */

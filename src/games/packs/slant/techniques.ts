@@ -1,6 +1,6 @@
 import type { Technique } from "../../core/types";
-import { valueOf, type Deduction } from "./kit/csp";
-import { cellName, technique, type Focus, type Reading } from "./kit/names";
+import { valueOf, type Deduction } from "../../lib/grid-kit/csp";
+import { cellName, technique, type Focus, type Reading } from "../../lib/grid-kit/names";
 import {
   BACK, NONE, markOf, model, pointCell, pointName, readMarks,
   type SlantAction, type SlantPuzzle, type SlantState,

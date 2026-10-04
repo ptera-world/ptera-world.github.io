@@ -1,5 +1,5 @@
-import { defineSchema } from "../../../core/schema";
-import type { Action, Hint, Plugin } from "../../../core/types";
+import { defineSchema } from "../../core/schema";
+import type { Action, Hint, Plugin } from "../../core/types";
 import type { Focus } from "./names";
 
 /** Rule breaks by kind; each kind lists what to flag (cells, unless the puzzle maps them with `cells`). */

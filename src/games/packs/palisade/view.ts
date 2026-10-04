@@ -5,7 +5,7 @@ import type { View } from "../../core/types";
 import {
   KIT_CSS, SIZE, cursorBindings, cursorHandlers, cursorRect, drawFocus, focusCells, focusLegend, frame, sample, sampleCell,
   type BoardPrefs,
-} from "./kit/view";
+} from "../../lib/grid-kit/view";
 import {
   GAP, LINE, NONE, geometry, regions,
   type Mark, type PalisadeAction, type PalisadeConflicts, type PalisadeInteraction, type PalisadePuzzle, type PalisadeState,

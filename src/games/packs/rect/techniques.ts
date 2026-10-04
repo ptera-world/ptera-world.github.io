@@ -1,5 +1,5 @@
 import type { Step, Technique } from "../../core/types";
-import { cellList, cellName, type Focus } from "./kit/names";
+import { cellList, cellName, type Focus } from "../../lib/grid-kit/names";
 import {
   edgeCells, geometry, puzzleLayout, readBoard, wallFacts,
   type RectAction, type RectPuzzle, type RectState,

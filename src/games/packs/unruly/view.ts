@@ -2,11 +2,11 @@ import { bindCommands, type BindingSchema } from "../../core/commands";
 import { s, style } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
 import type { View } from "../../core/types";
-import type { Focus } from "./kit/names";
+import type { Focus } from "../../lib/grid-kit/names";
 import {
   KIT_CSS, SIZE, Strokes, cursorBindings, cursorHandlers, cursorRect, drawFocus, focusCells, focusLegend, frame, sample, sampleCell,
   type BoardPrefs,
-} from "./kit/view";
+} from "../../lib/grid-kit/view";
 import {
   DARK, LIGHT, NONE, ONE, colours,
   type Mark, type UnrulyAction, type UnrulyConflicts, type UnrulyInteraction, type UnrulyPuzzle, type UnrulyState,

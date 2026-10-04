@@ -4,8 +4,8 @@ import type { Format, GenerateContext, Hint, PuzzleDef } from "../../core/types"
 import {
   analyzeModel, bit, decides, levelNeeded, trialRule,
   type Analysis, type Constraint, type Doms, type Model, type Rule,
-} from "./kit/csp";
-import { cellList, type Focus } from "./kit/names";
+} from "../../lib/grid-kit/csp";
+import { cellList, type Focus } from "../../lib/grid-kit/names";
 
 export interface PalisadePuzzle {
   w: number;

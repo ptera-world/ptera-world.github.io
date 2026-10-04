@@ -4,7 +4,7 @@ import { Registry } from "../../core/registry";
 import { createRng } from "../../core/rng";
 import { Session } from "../../core/session";
 import { TechniqueHost, applyStep, findPracticePosition, firstStep, rateByTechniques } from "../../core/techniques";
-import { edgeGrid } from "./edges";
+import { edgeGrid } from "../../lib/edges";
 import { CROSS, EMPTY, LINE, NONE, TRACK, cellName, sgtFormat, tracks, type TracksAction, type TracksFocus } from "./logic";
 import { checkMarks } from "./plugins";
 import { analyze, countSolutions, freshKnowledge, logicSolve, trackEdges, type Level, type TracksPuzzle } from "./solver";

@@ -1,12 +1,12 @@
 import { bindCommands, type BindingSchema } from "../../core/commands";
 import { s, style } from "../../core/dom";
 import type { CommandDef, View } from "../../core/types";
-import { bit, isSingle, valueOf } from "./kit/csp";
-import type { Focus } from "./kit/names";
+import { bit, isSingle, valueOf } from "../../lib/grid-kit/csp";
+import type { Focus } from "../../lib/grid-kit/names";
 import {
   KIT_CSS, SIZE, cursorRect, drawFocus, focusCells, focusLegend, frame, sample, sampleCell,
   type BoardPrefs,
-} from "./kit/view";
+} from "../../lib/grid-kit/view";
 import {
   geometry, shownNumbers,
   type FillingAction, type FillingConflicts, type FillingInteraction, type FillingPuzzle, type FillingState,

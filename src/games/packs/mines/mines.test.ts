@@ -7,7 +7,7 @@ import { Registry } from "../../core/registry";
 import { TechniqueHost, applyStep, firstStep, isPartOfStep, rateByTechniques } from "../../core/techniques";
 import { autoChord, checkFlags } from "./plugins";
 import { minesTechniques, satisfied } from "./techniques";
-import { obfuscateBitmap, sha1 } from "./sha1";
+import { obfuscateBitmap, sha1 } from "../../lib/sha1";
 import {
   MINE, UNKNOWN, countCompletions, deduceAt, deduceCount, deduceGlobal, deducePairs, neighbourTable,
   solveLayout, startKnowledge, type Deduction,

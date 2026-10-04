@@ -4,7 +4,7 @@ import type { View } from "../../core/types";
 import {
   KIT_CSS, SIZE, cursorRect, drawFocus, focusCells, focusLegend, frame, sample, sampleCell,
   type BoardPrefs,
-} from "./kit/view";
+} from "../../lib/grid-kit/view";
 import {
   boxEdges, edgeBetween, geometry, pieceRight, pieces,
   type RectAction, type RectConflicts, type RectInteraction, type RectPuzzle, type RectState,

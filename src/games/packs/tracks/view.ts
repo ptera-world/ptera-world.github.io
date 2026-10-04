@@ -2,7 +2,7 @@ import { bindCommands, type BindingSchema } from "../../core/commands";
 import { s, style } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
-import { DOWN, LEFT, RIGHT, UP, edgeAt, edgeGrid, step } from "./edges";
+import { DOWN, LEFT, RIGHT, UP, edgeAt, edgeGrid, step } from "../../lib/edges";
 import {
   CROSS, EMPTY, LINE, NONE, TRACK, trackCells,
   type Conflicts, type TracksAction, type TracksFocus, type TracksInteraction, type TracksPuzzle, type TracksState,

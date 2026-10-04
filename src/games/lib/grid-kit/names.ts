@@ -1,5 +1,5 @@
-import { cellName as boardCell } from "../../../core/names";
-import type { Action, Step, Technique } from "../../../core/types";
+import { cellName as boardCell } from "../../core/names";
+import type { Action, Step, Technique } from "../../core/types";
 import { scan, type Deduction, type Doms, type Model } from "./csp";
 
 /** A cell's name as the board's edge labels show it, e.g. "C5". */

@@ -4,8 +4,8 @@ import { createRng } from "../../core/rng";
 import { Registry } from "../../core/registry";
 import { Session } from "../../core/session";
 import { TechniqueHost, applyStep, findPracticePosition, firstStep, rateByTechniques } from "../../core/techniques";
-import { bit, countSolutions, solveLevel } from "./kit/csp";
-import { cellName, type Focus } from "./kit/names";
+import { bit, countSolutions, solveLevel } from "../../lib/grid-kit/csp";
+import { cellName, type Focus } from "../../lib/grid-kit/names";
 import {
   analyze, filling, geometry, groups, initialDoms, isSolved, makeBoard, maxNumber, model, sgtFormat,
   type FillingAction, type FillingPuzzle, type Level,

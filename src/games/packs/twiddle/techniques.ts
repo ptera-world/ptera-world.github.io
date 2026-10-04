@@ -1,7 +1,7 @@
 import { cellName } from "../../core/names";
 import type { Step, Technique } from "../../core/types";
 import { describeTurn, goalTile, hintFor, type TwiddleAction, type TwiddleFocus, type TwiddlePuzzle, type TwiddleState } from "./logic";
-import type { PermStep, StepKind } from "./perm";
+import type { PermStep, StepKind } from "../../lib/perm";
 
 type TwiddleTechnique = Technique<TwiddlePuzzle, TwiddleState, TwiddleAction>;
 

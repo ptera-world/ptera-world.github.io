@@ -1,6 +1,6 @@
 import type { Step, Technique } from "../../core/types";
-import { bit, valueOf, type Deduction } from "./kit/csp";
-import { cellList, cellName, technique, type Focus, type Reading } from "./kit/names";
+import { bit, valueOf, type Deduction } from "../../lib/grid-kit/csp";
+import { cellList, cellName, technique, type Focus, type Reading } from "../../lib/grid-kit/names";
 import {
   A_MINUS, A_PLUS, FULL, MAGNET, NEUTRAL, SIGN_WORD, analyze, geometry, lineName, model, readMasks, signAt,
   type MagnetsAction, type MagnetsPuzzle, type MagnetsState,

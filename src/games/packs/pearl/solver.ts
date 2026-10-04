@@ -1,6 +1,6 @@
 import type { Rng } from "../../core/rng";
 import type { GenerateContext } from "../../core/types";
-import { DOWN, LEFT, LINE, NO, RIGHT, UNK, UP, around, edgeAt, edgeGrid, opposite, pieces, stateAt, step, type EdgeGrid } from "./edges";
+import { DOWN, LEFT, LINE, NO, RIGHT, UNK, UP, around, edgeAt, edgeGrid, opposite, pieces, stateAt, step, type EdgeGrid } from "../../lib/edges";
 
 export const EMPTY = 0, BLACK = 1, WHITE = 2;
 

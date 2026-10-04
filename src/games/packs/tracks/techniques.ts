@@ -1,5 +1,5 @@
 import type { Step, Technique } from "../../core/types";
-import { LINE, NO, UNK, edgeGrid } from "./edges";
+import { LINE, NO, UNK, edgeGrid } from "../../lib/edges";
 import { CROSS, EMPTY, NONE, TRACK, cellList, cellName, countName, edgeList, type TracksAction, type TracksFocus, type TracksPuzzle, type TracksState } from "./logic";
 import { analyze, closeObvious, freshKnowledge, scanSteps, sides, target, type Knowledge, type Step as SolverStep, type StepKind } from "./solver";
 

@@ -4,8 +4,8 @@ import { createRng } from "../../core/rng";
 import { Registry } from "../../core/registry";
 import { Session } from "../../core/session";
 import { TechniqueHost, applyStep, findPracticePosition, firstStep, rateByTechniques } from "../../core/techniques";
-import { bit, countSolutions, solveLevel } from "./kit/csp";
-import { cellName, type Focus } from "./kit/names";
+import { bit, countSolutions, solveLevel } from "../../lib/grid-kit/csp";
+import { cellName, type Focus } from "../../lib/grid-kit/names";
 import {
   FULL, analyze, dominoLayout, geometry, initialDoms, isSolved, magnets, model, sgtFormat,
   type Level, type MagnetsAction, type MagnetsPuzzle,

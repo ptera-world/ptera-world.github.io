@@ -4,9 +4,9 @@ import type { Format, GenerateContext, Hint, PuzzleDef } from "../../core/types"
 import {
   analyzeModel, bit, decides, isSingle, levelNeeded, trialRule, valueOf, valuesOf,
   type Analysis, type Doms, type Model, type Rule,
-} from "./kit/csp";
-import { neighbours } from "./kit/grid";
-import { cellList, type Focus } from "./kit/names";
+} from "../../lib/grid-kit/csp";
+import { neighbours } from "../../lib/grid-kit/grid";
+import { cellList, type Focus } from "../../lib/grid-kit/names";
 
 export interface FillingPuzzle {
   w: number;

@@ -4,8 +4,8 @@ import { createRng } from "../../core/rng";
 import { Registry } from "../../core/registry";
 import { Session } from "../../core/session";
 import { TechniqueHost, applyStep, findPracticePosition, firstStep, rateByTechniques } from "../../core/techniques";
-import { countSolutions, solveLevel } from "./kit/csp";
-import { cellName, type Focus } from "./kit/names";
+import { countSolutions, solveLevel } from "../../lib/grid-kit/csp";
+import { cellName, type Focus } from "../../lib/grid-kit/names";
 import {
   GRASS, GRASS_HINT, NONE, OPEN, TENT, TENT_HINT, TREE, YES, analyze, geometry, initialDoms, isSolved, matchable, matchings, model, sgtFormat, tents,
   type Level, type TentsAction, type TentsPuzzle,

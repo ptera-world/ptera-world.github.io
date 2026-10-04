@@ -2,7 +2,7 @@ import type { Rng } from "../../core/rng";
 import { cellName as boardCell } from "../../core/names";
 import { defineSchema, type Values } from "../../core/schema";
 import type { Format, GenerateContext, Hint, PuzzleDef } from "../../core/types";
-import { DOWN, LEFT, LINE, NO, RIGHT, UP, around, edgeGrid, opposite, pieces, stateAt, step, type EdgeGrid } from "./edges";
+import { DOWN, LEFT, LINE, NO, RIGHT, UP, around, edgeGrid, opposite, pieces, stateAt, step, type EdgeGrid } from "../../lib/edges";
 import { BLACK, EMPTY, LEVEL_NAMES, WHITE, analyze, generatePuzzle, type Level, type PearlPuzzle } from "./solver";
 
 export type { PearlPuzzle } from "./solver";

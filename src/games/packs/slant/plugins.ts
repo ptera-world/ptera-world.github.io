@@ -1,4 +1,4 @@
-import { checkMarksPlugin, conflictsPlugin } from "./kit/plugins";
+import { checkMarksPlugin, conflictsPlugin } from "../../lib/grid-kit/plugins";
 import { findConflicts, pointCell, wrongMarksHint, type SlantPuzzle, type SlantState } from "./logic";
 import { CONFLICTS_KEY } from "./view";
 

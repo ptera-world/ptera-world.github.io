@@ -2,7 +2,7 @@ import { bindCommands, type BindingSchema } from "../../core/commands";
 import { s, style } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
-import { DOWN, LEFT, RIGHT, UP, edgeAt, edgeGrid, step } from "./edges";
+import { DOWN, LEFT, RIGHT, UP, edgeAt, edgeGrid, step } from "../../lib/edges";
 import { CROSS, LINE, NONE, toggle, type Conflicts, type PearlAction, type PearlFocus, type PearlInteraction, type PearlPuzzle, type PearlState } from "./logic";
 import { BLACK, WHITE } from "./solver";
 import type { PearlTarget } from "./techniques";

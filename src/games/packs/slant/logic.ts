@@ -4,8 +4,8 @@ import type { Format, GenerateContext, Hint, PuzzleDef } from "../../core/types"
 import {
   analyzeModel, bit, decides, solveLevel, trialRule,
   type Analysis, type Constraint, type Doms, type Model, type Rule,
-} from "./kit/csp";
-import { cellList, type Focus } from "./kit/names";
+} from "../../lib/grid-kit/csp";
+import { cellList, type Focus } from "../../lib/grid-kit/names";
 
 /** Model values per cell: BACK is \ (top-left to bottom-right), FWD is / (bottom-left to top-right). */
 export const BACK = 0, FWD = 1;

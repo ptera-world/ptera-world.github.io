@@ -4,8 +4,8 @@ import { createRng } from "../../core/rng";
 import { Registry } from "../../core/registry";
 import { Session } from "../../core/session";
 import { TechniqueHost, applyStep, findPracticePosition, firstStep, rateByTechniques } from "../../core/techniques";
-import { countSolutions, solveLevel } from "./kit/csp";
-import { cellName, type Focus } from "./kit/names";
+import { countSolutions, solveLevel } from "../../lib/grid-kit/csp";
+import { cellName, type Focus } from "../../lib/grid-kit/names";
 import {
   GAP, LINE, NONE, OPEN, WALL, analyze, divide, geometry, initialDoms, isSolved, model, palisade, sgtFormat,
   type Level, type PalisadeAction, type PalisadePuzzle,

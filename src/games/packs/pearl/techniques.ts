@@ -1,5 +1,5 @@
 import type { Step, Technique } from "../../core/types";
-import { LINE, NO, UNK, around, edgeGrid } from "./edges";
+import { LINE, NO, UNK, around, edgeGrid } from "../../lib/edges";
 import { CROSS, NONE, cellList, cellName, edgeList, type PearlAction, type PearlFocus, type PearlPuzzle, type PearlState } from "./logic";
 import { analyze, freshKnowledge, scanSteps, type Knowledge, type Step as SolverStep, type StepKind } from "./solver";
 

@@ -1,6 +1,6 @@
 import type { Step, Technique } from "../../core/types";
-import { bit, isSingle, valueOf, type Deduction } from "./kit/csp";
-import { cellList, cellName, technique, type Focus, type Reading } from "./kit/names";
+import { bit, isSingle, valueOf, type Deduction } from "../../lib/grid-kit/csp";
+import { cellList, cellName, technique, type Focus, type Reading } from "../../lib/grid-kit/names";
 import {
   analyze, model, readMasks,
   type FillingAction, type FillingPuzzle, type FillingState,

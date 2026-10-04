@@ -5,8 +5,8 @@ import type { Format, GenerateContext, Hint, PuzzleDef } from "../../core/types"
 import {
   analyzeModel, bit, decides, solveLevel, trialRule,
   type Analysis, type Constraint, type Doms, type Model, type Rule,
-} from "./kit/csp";
-import { cellList, type Focus } from "./kit/names";
+} from "../../lib/grid-kit/csp";
+import { cellList, type Focus } from "../../lib/grid-kit/names";
 
 /** Cell colours as model values: ZERO is the light colour, ONE the dark one. */
 export const ZERO = 0, ONE = 1;

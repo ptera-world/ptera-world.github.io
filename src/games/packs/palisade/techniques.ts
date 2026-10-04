@@ -1,6 +1,6 @@
 import type { Step, Technique } from "../../core/types";
-import { bit, type Deduction } from "./kit/csp";
-import { cellList, cellName, technique, type Focus, type Reading } from "./kit/names";
+import { bit, type Deduction } from "../../lib/grid-kit/csp";
+import { cellList, cellName, technique, type Focus, type Reading } from "../../lib/grid-kit/names";
 import {
   GAP, LINE, NONE, OPEN, WALL, edgeCells, geometry, model, readMarks,
   type PalisadeAction, type PalisadePuzzle, type PalisadeState,
