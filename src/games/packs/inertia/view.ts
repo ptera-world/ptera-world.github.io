@@ -22,6 +22,8 @@ const CSS = `
 .inertia-board .mark { fill: none; stroke: var(--hint); pointer-events: none; }
 .inertia-board .mark.path { stroke-width: 1; stroke-linecap: round; stroke-linejoin: round; }
 .inertia-board .mark.gem { stroke-width: 0.8; }
+.inertia-board .ghost-ball { fill: none; stroke: var(--accent); stroke-width: 0.6; stroke-dasharray: 1 0.7; pointer-events: none; }
+.inertia-board .faded { opacity: 0.35; }
 @media (prefers-reduced-motion: reduce) { .inertia-board .ball { transition: none; } }
 .inertia-count { font-family: var(--mono); color: var(--text-dim); min-height: 1.4em; }
 `;
@@ -75,14 +77,24 @@ export const inertiaView: View<InertiaPuzzle, InertiaState, InertiaAction, Inert
     const aim = s("path", { class: "aim", visibility: "hidden" });
     const overlay = s("g");
     const ball = s("circle", { cx: 0, cy: 0, r: 3, class: "ball" });
-    svg.append(aim, overlay, ball);
+    const ghostBall = s("circle", { cx: 0, cy: 0, r: 3, class: "ghost-ball", visibility: "hidden" });
+    svg.append(aim, overlay, ghostBall, ball);
+    let previewing: InertiaState | null = null;
     root.append(svg);
 
     const centre = (c: number) => [(c % p.w) * SIZE + SIZE / 2, Math.floor(c / p.w) * SIZE + SIZE / 2] as const;
     let lastPos = session.state.pos;
     const render = () => {
       const st = session.state;
-      gems.forEach((g, c) => { if (g) g.setAttribute("visibility", st.gems[c] ? "visible" : "hidden"); });
+      gems.forEach((g, c) => {
+        if (!g) return;
+        const ghosted = !!previewing && !!previewing.gems[c] !== !!st.gems[c];
+        g.setAttribute("visibility", st.gems[c] || ghosted ? "visible" : "hidden");
+        g.classList.toggle("faded", ghosted);
+      });
+      const away = previewing && previewing.pos !== st.pos ? centre(previewing.pos) : null;
+      ghostBall.setAttribute("visibility", away ? "visible" : "hidden");
+      if (away) { ghostBall.setAttribute("cx", String(away[0])); ghostBall.setAttribute("cy", String(away[1])); }
       const [bx, by] = centre(st.pos);
       const steps = Math.max(Math.abs((st.pos % p.w) - (lastPos % p.w)), Math.abs(Math.floor(st.pos / p.w) - Math.floor(lastPos / p.w)));
       ball.style.setProperty("--roll", `${steps * MS_PER_CELL}ms`);
@@ -152,6 +164,10 @@ export const inertiaView: View<InertiaPuzzle, InertiaState, InertiaAction, Inert
       aspect: (p.w * SIZE + 1) / (p.h * SIZE + 1),
       cells: { cols: p.w, rows: p.h },
       commands: bindCommands(BINDINGS, Object.fromEntries(DIR_NAMES.map((name, d) => [`inertia.${name}`, () => session.dispatch({ type: "move", dir: d })]))),
+      preview: (state) => {
+        previewing = state as InertiaState | null;
+        render();
+      },
       locate: (focus) => {
         const f = focus as InertiaFocus | undefined;
         return [...new Set([...(f?.path ?? []), ...(f?.gems ?? [])])].map(cellRect);

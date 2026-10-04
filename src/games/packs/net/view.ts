@@ -53,6 +53,8 @@ const CSS = `
 .net-board .wall { stroke: var(--text); stroke-width: 1.1; stroke-linecap: round; }
 .net-board .ghost { stroke: var(--hint); fill: var(--hint); stroke-width: 2; opacity: 0.85; pointer-events: none; }
 .net-board .tile.superseded { opacity: 0.3; }
+.net-board .pv { stroke: var(--text); fill: var(--text); stroke-width: 2; opacity: 0.5; pointer-events: none; }
+.net-board .pv .pv-lock { fill: color-mix(in srgb, var(--text) 18%, transparent); stroke: none; }
 .net-board .label { fill: var(--text-dim); font-size: 3.2px; font-family: var(--mono, monospace); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
 .net-board .cursor { fill: none; stroke: var(--focus); stroke-width: 0.6; pointer-events: none; }
 [data-input="pointer"] .net-board .cursor { display: none; }
@@ -211,7 +213,9 @@ export function netView({ look = (_id, fallback) => fallback, labelSides = () =>
       const ghostArms = DIRS.map((d) => armAt(d, "ghost-arm"));
       const ghost = s("g", { class: "ghost", visibility: "hidden" }, ghostArms);
       const cursor = s("rect", { width: SIZE, height: SIZE, rx: 1, class: "cursor" });
-      svg.append(...colLabels, ...rowLabels, ghost, cursor);
+      const pvLayer = s("g", { class: "pv" });
+      svg.append(...colLabels, ...rowLabels, pvLayer, ghost, cursor);
+      let previewing: NetState | null = null;
       root.append(svg);
 
       const shown = new Int8Array(n).fill(-1);
@@ -297,7 +301,17 @@ export function netView({ look = (_id, fallback) => fallback, labelSides = () =>
           bg.toggle("hint", hinted.has(i));
           bg.toggle("hint-main", focus?.cell === i);
           bg.toggle("paint", paint.has(i));
-          c.tile.classList.toggle("superseded", i === ghostCell);
+          c.tile.classList.toggle("superseded", i === ghostCell || (!!previewing && previewing.tiles[i] !== m));
+        }
+        pvLayer.replaceChildren();
+        for (let i = 0; previewing && i < n; i++) {
+          const m = previewing.tiles[i]!, lockChanged = previewing.locked[i] !== st.locked[i];
+          if (m === st.tiles[i] && !lockChanged) continue;
+          const [x, y] = displayPos(i, it);
+          const g = s("g", { transform: `translate(${x} ${y})` });
+          if (lockChanged && previewing.locked[i]) g.append(s("rect", { x: 0, y: 0, width: SIZE, height: SIZE, class: "pv-lock" }));
+          if (m !== st.tiles[i]) for (const dir of DIRS) if (m & dir) g.append(armAt(dir, "ghost-arm"));
+          pvLayer.append(g);
         }
         ghost.setAttribute("visibility", ghostCell >= 0 ? "visible" : "hidden");
         if (ghostCell >= 0) {
@@ -474,6 +488,10 @@ export function netView({ look = (_id, fallback) => fallback, labelSides = () =>
         aspect: vbW / vbH,
         cells: { cols: vbW / SIZE, rows: vbH / SIZE },
         gestures: { secondaryClick: true },
+        preview(state) {
+          previewing = state as NetState | null;
+          render();
+        },
         locate(focus) {
           const f = focus as Partial<NetHintFocus> | null;
           if (!f || !Array.isArray(f.cells)) return [];

@@ -16,6 +16,9 @@ const CSS = `
 .twiddle-board .tile .up { stroke: var(--text-dim); stroke-width: 0.5; stroke-linecap: round; pointer-events: none; }
 .twiddle-board .block { fill: none; stroke: var(--accent); stroke-width: 0.6; pointer-events: none; }
 .twiddle-board .mark { fill: none; stroke: var(--hint); pointer-events: none; }
+.twiddle-board .ghost { pointer-events: none; opacity: 0.7; }
+.twiddle-board .ghost rect { fill: color-mix(in srgb, var(--cell) 70%, transparent); stroke: var(--text-dim); stroke-width: 0.35; stroke-dasharray: 1 0.7; }
+.twiddle-board .ghost text { fill: var(--text-dim); font: 600 4.4px var(--font); text-anchor: middle; dominant-baseline: central; }
 .twiddle-board .mark.moving { stroke-width: 0.5; stroke-opacity: 0.8; }
 .twiddle-board .mark.home { stroke-width: 0.7; stroke-dasharray: 1.2 0.8; }
 .twiddle-board .mark.tile { stroke-width: 1; }
@@ -88,9 +91,11 @@ export const twiddleView: View<TwiddlePuzzle, TwiddleState, TwiddleAction, Twidd
       tileLayer.append(g);
     }
     const hover = s("rect", { width: 2 * SIZE, height: 2 * SIZE, rx: 1.4, class: "block", visibility: "hidden" });
+    const ghost = s("g", { class: "ghost" });
     const overlay = s("g");
     const cursor = s("rect", { width: 2 * SIZE, height: 2 * SIZE, rx: 1.4, class: "cursor" });
-    svg.append(tileLayer, hover, overlay, cursor);
+    svg.append(tileLayer, ghost, hover, overlay, cursor);
+    let previewing: TwiddleState | null = null;
     root.append(svg);
 
     /** ids[c] = element drawn at cell c; matched to the nearest equal tile on every change so turns animate. */
@@ -139,6 +144,14 @@ export const twiddleView: View<TwiddlePuzzle, TwiddleState, TwiddleAction, Twidd
         faces[id]!.style.transform = p.orientable ? `rotate(${-90 * spin[id]!}deg)` : "";
         g.classList.toggle("home", !!settings.tintHome && st.tiles[c] === goalTile(p, c) && (!p.orientable || st.turns[c] === 0));
       }
+      ghost.replaceChildren();
+      previewing?.tiles.forEach((t, c) => {
+        if (t === st.tiles[c] && (!p.orientable || previewing!.turns[c] === st.turns[c])) return;
+        const turn = p.orientable ? ` rotate(${-90 * previewing!.turns[c]!} ${SIZE / 2} ${SIZE / 2})` : "";
+        ghost.append(s("g", { transform: `translate(${(c % p.w) * SIZE} ${Math.floor(c / p.w) * SIZE})${turn}` },
+          s("rect", { x: 0.2, y: 0.2, width: SIZE - 0.4, height: SIZE - 0.4, rx: 1 }),
+          s("text", { x: SIZE / 2, y: SIZE / 2 + 0.3 }, String(t))));
+      });
       overlay.replaceChildren();
       const f = session.activeHint?.focus as TwiddleFocus | undefined;
       const mark = (c: number, cls: string, inset: number, span = 1) => overlay.append(s("rect", {
@@ -238,6 +251,10 @@ export const twiddleView: View<TwiddlePuzzle, TwiddleState, TwiddleAction, Twidd
           return true;
         },
       }),
+      preview: (state) => {
+        previewing = state as TwiddleState | null;
+        render();
+      },
       locate: (focus) => {
         const f = focus as TwiddleFocus | undefined;
         if (!f) return [];

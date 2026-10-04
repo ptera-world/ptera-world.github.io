@@ -15,6 +15,8 @@ const CSS = `
 .pegs-board .peg.dead { fill: var(--text-dim); stroke: var(--text-dim); }
 .pegs-board .target { fill: none; stroke: var(--accent); stroke-width: 0.6; stroke-dasharray: 1 0.8; pointer-events: none; }
 .pegs-board .mark { fill: none; stroke: var(--hint); pointer-events: none; }
+.pegs-board .ghost-peg { fill: color-mix(in srgb, var(--accent) 35%, transparent); stroke: var(--accent); stroke-width: 0.5; stroke-dasharray: 1 0.7; pointer-events: none; }
+.pegs-board .peg.faded { opacity: 0.35; }
 .pegs-board .mark.from { stroke-width: 1; }
 .pegs-board .mark.over { stroke-width: 0.5; stroke-dasharray: 1.2 0.8; }
 .pegs-board .mark.to { stroke-width: 0.7; }
@@ -68,9 +70,11 @@ export const pegsView: View<PegsPuzzle, PegsState, PegsAction, PegsInteraction> 
       svg.append(spot, hole, pin);
       spots.push(spot); pins.push(pin);
     }
+    const ghost = s("g");
     const overlay = s("g");
     const cursor = s("rect", { width: SIZE, height: SIZE, rx: 1.6, class: "cursor" });
-    svg.append(overlay, cursor);
+    svg.append(ghost, overlay, cursor);
+    let previewing: PegsState | null = null;
     root.append(svg);
 
     const centre = (c: number) => [(c % p.w) * SIZE + SIZE / 2, Math.floor(c / p.w) * SIZE + SIZE / 2] as const;
@@ -84,7 +88,14 @@ export const pegsView: View<PegsPuzzle, PegsState, PegsAction, PegsInteraction> 
         pin.setAttribute("visibility", g[c] === PEG ? "visible" : "hidden");
         pin.classList.toggle("held", c === held);
         pin.classList.toggle("dead", stuck);
+        pin.classList.toggle("faded", !!previewing && g[c] === PEG && previewing.grid[c] !== PEG);
       }
+      ghost.replaceChildren();
+      previewing?.grid.forEach((v, c) => {
+        if (v !== PEG || g[c] === PEG) return;
+        const [cx, cy] = centre(c);
+        ghost.append(s("circle", { cx, cy, r: 3.4, class: "ghost-peg" }));
+      });
       overlay.replaceChildren();
       if (held >= 0) {
         for (const j of jumps(p.w, p.h, g)) {
@@ -183,6 +194,10 @@ export const pegsView: View<PegsPuzzle, PegsState, PegsAction, PegsInteraction> 
         "pegs.drop": () => setHeld(-1),
       }),
       context: () => ({ pegsHolding: session.interaction.held >= 0 }),
+      preview: (state) => {
+        previewing = state as PegsState | null;
+        render();
+      },
       locate: (focus) => {
         const f = focus as PegsFocus | undefined;
         if (!f) return [];

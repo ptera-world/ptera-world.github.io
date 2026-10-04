@@ -44,6 +44,9 @@ const CSS = `
 .sdk-board .lit { fill: var(--warn); font-weight: 700; }
 .sdk-board .hint-place { font: 600 ${S * 0.62}px var(--font); fill: var(--hint); text-anchor: middle; dominant-baseline: central; opacity: 0.8; pointer-events: none; }
 .sdk-board .hint-elim { font: 700 ${S * 0.24}px var(--font); fill: var(--danger); text-anchor: middle; dominant-baseline: central; text-decoration: line-through; pointer-events: none; }
+.sdk-board .ghost-value { font: 600 ${S * 0.62}px var(--font); fill: var(--text); text-anchor: middle; dominant-baseline: central; opacity: 0.45; pointer-events: none; }
+.sdk-board .ghost-mark { font: 500 ${S * 0.22}px var(--font); fill: var(--text); text-anchor: middle; dominant-baseline: central; opacity: 0.5; pointer-events: none; }
+.sdk-board .ghost-elim { font: 700 ${S * 0.24}px var(--font); fill: var(--text-dim); text-anchor: middle; dominant-baseline: central; text-decoration: line-through; opacity: 0.7; pointer-events: none; }
 .sdk-board .sel-outline { fill: none; stroke: var(--focus); stroke-width: 5; stroke-linejoin: round; pointer-events: none; }
 .sdk-board .cursor { fill: none; stroke: var(--focus); stroke-width: 3; stroke-dasharray: 8 6; pointer-events: none; }
 [data-input="pointer"] .sdk-board .cursor { display: none; }
@@ -239,6 +242,7 @@ export function latinView(board: BoardPrefs = noLabels, puzzleId = "sudoku"): Vi
       root.append(svg);
 
       const hooks: SudokuViewHooks = { render: new HookEvent("render") };
+      let previewing: GridState | null = null;
 
       const render = () => {
         const st = session.state;
@@ -308,6 +312,22 @@ export function latinView(board: BoardPrefs = noLabels, puzzleId = "sudoku"): Vi
           for (const dg of digits(mask)) {
             const [fx, fy] = candidateSlot(dg, c);
             layers.hints.append(s("text", { x: x + fx * S, y: y + fy * S, class: "hint-elim" }, String(dg)));
+          }
+        }
+
+        if (previewing) {
+          const placed = new Set((hint?.place ?? []).map(([c, dg]) => c * 64 + dg));
+          const elim = new Map((hint?.eliminate ?? []).map(([c, m]) => [c, m]));
+          for (let c = 0; c < size; c++) {
+            const [x, y] = xy(c);
+            const pv = previewing.values[c]!;
+            if (pv && pv !== st.values[c] && !placed.has(c * 64 + pv)) layers.hints.append(s("text", { x: x + S / 2, y: y + S / 2 + 2, class: "ghost-value" }, String(pv)));
+            if (pv) continue;
+            for (const dg of digits(previewing.struck[c]! & ~st.struck[c]! & ~(elim.get(c) ?? 0))) {
+              const [fx, fy] = candidateSlot(dg, c);
+              layers.hints.append(s("text", { x: x + fx * S, y: y + fy * S, class: "ghost-elim" }, String(dg)));
+            }
+            if (previewing.center[c] !== st.center[c] && previewing.center[c]) layers.hints.append(s("text", { x: x + S / 2, y: y + S / 2 + 1, class: "ghost-mark" }, digits(previewing.center[c]!).join("")));
           }
         }
 
@@ -447,7 +467,11 @@ export function latinView(board: BoardPrefs = noLabels, puzzleId = "sudoku"): Vi
       return {
         aspect: vb[2]! / vb[3]!,
         cells: { cols: vb[2]! / S, rows: vb[3]! / S },
-          locate: (focus) => rects(focusCells(focus)),
+        locate: (focus) => rects(focusCells(focus)),
+        preview: (state) => {
+          previewing = state as GridState | null;
+          render();
+        },
         locateChange: (a, b) => rects(changedCells(a as GridState, b as GridState)),
         destroy() {
           offs.forEach((f) => f());

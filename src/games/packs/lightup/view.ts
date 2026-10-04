@@ -32,6 +32,8 @@ const CSS = `
 .lightup-board .num.bad { fill: var(--danger); opacity: 1; }
 .lightup-board .wall.bad { fill: var(--danger-soft); stroke: var(--danger); stroke-width: 0.5; }
 .lightup-board .mark { pointer-events: none; }
+.lightup-board .ghost { opacity: 0.5; pointer-events: none; }
+.lightup-board .ghost .glow { opacity: 0.4; transition: none; }
 .lightup-board .clash { fill: none; stroke: var(--danger); stroke-width: 0.9; pointer-events: none; }
 .lightup-board .focus { fill: none; stroke: var(--hint); stroke-width: 0.9; pointer-events: none; }
 .lightup-board .focus.why { stroke-dasharray: 1.2 0.8; stroke-width: 0.6; }
@@ -159,9 +161,9 @@ export function lightupView(look: Look, board: Board): View<LightupPuzzle, Light
         if (sides.has("left")) labels.append(s("text", { x: -LABEL / 2, y: y * SIZE + SIZE / 2 }, board.rowName(y)));
         if (sides.has("right")) labels.append(s("text", { x: p.w * SIZE + LABEL / 2, y: y * SIZE + SIZE / 2 }, board.rowName(y)));
       }
-      const base = s("g"), glowL = s("g"), marksL = s("g"), over = s("g");
+      const base = s("g"), glowL = s("g"), marksL = s("g"), ghostL = s("g", { class: "ghost" }), over = s("g");
       const cursor = s("rect", { width: SIZE - 0.6, height: SIZE - 0.6, rx: 1, class: "cursor" });
-      svg.append(labels, base, glowL, marksL, over, cursor);
+      svg.append(labels, base, glowL, marksL, ghostL, over, cursor);
       root.append(svg);
 
       const cx = (i: number) => (i % p.w) * SIZE;
@@ -183,6 +185,7 @@ export function lightupView(look: Look, board: Board): View<LightupPuzzle, Light
       }
 
       let hover = -1;
+      let previewing: LightupState | null = null;
       let paint: { from: number; value: Mark; cells: number[] } | null = null;
       /** Per-cell glow delay for the change being drawn; cleared once drawn. */
       let spread: Map<number, number> | null = null;
@@ -215,6 +218,17 @@ export function lightupView(look: Look, board: Board): View<LightupPuzzle, Light
           while (holder.firstChild) holder.firstChild.remove();
           if (mark === BULB) holder.append(bulbNode());
           else if (mark === DOT) holder.append(dotNode());
+        }
+        ghostL.replaceChildren();
+        if (previewing) {
+          const pm = previewing.marks, plit = litCounts(g, pm);
+          for (const c of g.empties) {
+            if (plit[c]! > 0 && !lit[c]) ghostL.append(s("rect", { x: cx(c) + 0.15, y: cy(c) + 0.15, width: SIZE - 0.3, height: SIZE - 0.3, class: "glow" }));
+            if (pm[c] === m[c] || pm[c] === NONE) continue;
+            const at = s("g", { transform: `translate(${cx(c)} ${cy(c)})` });
+            at.append(pm[c] === BULB ? bulbNode() : dotNode());
+            ghostL.append(at);
+          }
         }
         spread = null;
         for (const q of g.clues) {
@@ -402,6 +416,10 @@ export function lightupView(look: Look, board: Board): View<LightupPuzzle, Light
         cells: { cols: vbW / SIZE, rows: vbH / SIZE },
         commands,
         context: () => ({ lightupMarkMode: session.interaction.markMode }),
+        preview: (st) => {
+          previewing = st as LightupState | null;
+          render();
+        },
         locate: (focus) => {
           const f = focus as LightupFocus | undefined;
           return f ? rects([...(f.cells ?? []), ...(f.because ?? []), ...(f.related ?? [])]) : [];

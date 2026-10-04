@@ -27,6 +27,7 @@ const CSS = `
 .loopy-board .x { stroke: var(--text-dim); color: var(--text-dim); display: none; pointer-events: none; }
 .loopy-board .x.on { display: inline; }
 .loopy-board .x.wrong { stroke: var(--danger); color: var(--danger); }
+.loopy-board .x.ghost { display: inline; opacity: 0.6; }
 .loopy-board .dot { fill: var(--text-dim); }
 .loopy-board .dot.bad { fill: var(--danger); }
 .loopy-board .dot.end { fill: var(--warn); }
@@ -43,6 +44,7 @@ const CSS = `
 .loopy-board .over.preview { stroke: var(--accent); stroke-width: var(--lw); opacity: 0.75; }
 .loopy-board .over.preview.erase { stroke: var(--danger); stroke-width: var(--uw); }
 .loopy-board .over.preview.cross { stroke: var(--text-dim); stroke-width: var(--xw); }
+.loopy-board .over.preview.ghost { opacity: 0.45; }
 .loopy-board:focus { outline: none; }
 .loopy-board .label { fill: var(--text-dim); font-family: var(--mono); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
 `;
@@ -295,6 +297,7 @@ export function makeLoopyView(look: Look = plainLook, labels: Labels = noLabels,
       /** The mouse pointer that last went down on the board; mouse commands continue its drag. */
       let mousePointer = -1;
 
+      let previewing: LoopyState | null = null;
       const render = () => {
         const st = session.state;
         const d = session.derived();
@@ -336,6 +339,15 @@ export function makeLoopyView(look: Look = plainLook, labels: Labels = noLabels,
         }
         while (gOver.firstChild) gOver.firstChild.remove();
         for (const e of focus.edges ?? []) gOver.append(edgeLine(e, "hint"));
+        for (let e = 0; previewing && e < g.ne; e++) {
+          const v = previewing.edges[e];
+          if (v === st.edges[e]) continue;
+          if (v === CROSS) {
+            const x = xEls[e]!.cloneNode() as SVGUseElement;
+            x.setAttribute("class", "x ghost");
+            gOver.append(x);
+          } else gOver.append(edgeLine(e, v === LINE ? "preview ghost" : "preview erase ghost"));
+        }
         gOver.append(edgeLine(session.interaction.cursor, "cursor"));
         if (hover >= 0 && !gesture && !session.locked) gOver.append(edgeLine(hover, "hover"));
         if (gesture?.dragging && gesture.value !== null) {
@@ -581,6 +593,10 @@ export function makeLoopyView(look: Look = plainLook, labels: Labels = noLabels,
         gestures: { secondaryClick: true },
         aspect: vbW / vbH,
         cells: { cols: vbW / u, rows: vbH / u },
+        preview: (state) => {
+          previewing = state as LoopyState | null;
+          render();
+        },
         locate,
         locateChange: (a, b) => {
           const x = (a as LoopyState | undefined)?.edges, y = (b as LoopyState | undefined)?.edges;

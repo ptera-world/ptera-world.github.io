@@ -16,6 +16,7 @@ const CSS = `
 .flood-board .num { font: 600 4px var(--mono); text-anchor: middle; dominant-baseline: central; fill: rgb(0 0 0 / 0.55); pointer-events: none; }
 .flood-board .edge { stroke: var(--text); stroke-width: 0.7; stroke-linecap: square; pointer-events: none; }
 .flood-board .mark { fill: none; stroke: var(--hint); stroke-width: 0.8; pointer-events: none; }
+.flood-board .ghost { pointer-events: none; opacity: 0.75; stroke: var(--bg); stroke-width: 0.5; stroke-dasharray: 1 0.7; }
 .flood-board .cursor { fill: none; stroke: var(--focus); stroke-width: 0.6; pointer-events: none; }
 [data-input="pointer"] .flood-board .cursor { display: none; }
 .flood-moves { font-family: var(--mono); color: var(--text-dim); min-height: 1.4em; }
@@ -62,7 +63,9 @@ export const floodView: View<FloodPuzzle, FloodState, FloodAction, null> = {
     const nums = settings.numbers ? Array.from({ length: n }, (_, c) => s("text", { x: (c % p.w) * SIZE + SIZE / 2, y: Math.floor(c / p.w) * SIZE + SIZE / 2, class: "num" })) : [];
     const edges = s("g");
     const overlay = s("g");
-    svg.append(...cells, ...nums, edges, overlay);
+    const ghost = s("g", { class: "ghost" });
+    svg.append(...cells, ...nums, ghost, edges, overlay);
+    let previewing: FloodState | null = null;
     root.append(svg);
 
     const render = () => {
@@ -70,6 +73,10 @@ export const floodView: View<FloodPuzzle, FloodState, FloodAction, null> = {
       g.forEach((c, i) => {
         cells[i]!.setAttribute("fill", colourVar(c));
         if (nums[i]) nums[i]!.textContent = String(c + 1);
+      });
+      ghost.replaceChildren();
+      previewing?.grid.forEach((c, i) => {
+        if (c !== g[i]) ghost.append(s("rect", { x: (i % p.w) * SIZE + 1.5, y: Math.floor(i / p.w) * SIZE + 1.5, width: SIZE - 3, height: SIZE - 3, rx: 1, fill: colourVar(c) }));
       });
       edges.replaceChildren();
       if (settings.outline) {
@@ -108,6 +115,10 @@ export const floodView: View<FloodPuzzle, FloodState, FloodAction, null> = {
       aspect: (p.w * SIZE + 1) / (p.h * SIZE + 1),
       cells: { cols: p.w, rows: p.h },
       commands: bindCommands(BINDINGS, handlers),
+      preview: (state) => {
+        previewing = state as FloodState | null;
+        render();
+      },
       locate: (focus) => rects((focus as FloodFocus | undefined)?.gained ?? []),
       locateChange: (a, b) => {
         const x = (a as FloodState).grid, y = (b as FloodState).grid;

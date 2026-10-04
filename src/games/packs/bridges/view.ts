@@ -51,6 +51,9 @@ ${Array.from({ length: 8 }, (_, k) => `.bridges-board .island.g${k} .shape { str
 .bridges-board .guide { stroke: var(--text-dim); stroke-width: 0.3; stroke-dasharray: 0.6 0.9; opacity: 0.6; }
 .bridges-board .mark { fill: none; stroke: var(--danger); stroke-width: 0.45; stroke-linecap: round; opacity: 0.85; }
 .bridges-board .mark.wrong { stroke: var(--warn); }
+.bridges-board .bridge.ghost line { stroke-dasharray: 0.8 0.6; opacity: 0.6; }
+.bridges-board .bridge.faded { opacity: 0.3; }
+.bridges-board .mark.ghost { opacity: 0.5; }
 .bridges-board .focus { stroke: var(--hint-soft); stroke-width: 4.5; stroke-linecap: round; }
 .bridges-board .preview { stroke: var(--accent); stroke-width: 0.7; stroke-dasharray: 1 1; }
 .bridges-board .cursor { fill: none; stroke: var(--focus); stroke-width: 0.6; pointer-events: none; }
@@ -189,8 +192,10 @@ export function makeView(look: Look, board: BoardPrefs, holdMs: number): View<Br
         return s("line", { x1, y1, x2, y2, class: cls });
       };
 
+      let previewing: BridgesState | null = null;
       const render = () => {
         const st = session.state;
+        const pv = previewing;
         const ia = session.interaction;
         const deco = getDeco(session.derived());
         const focus = (session.activeHint?.focus as Focus | undefined) ?? { islands: [], edges: [] };
@@ -204,9 +209,22 @@ export function makeView(look: Look, board: BoardPrefs, holdMs: number): View<Br
           if (n > 0) {
             const grp = s("g", { class: ["bridge", ...classes].join(" ") });
             for (let k = 0; k < n; k++) grp.append(line(ed.id, (k - (n - 1) / 2) * GAP));
+            if (pv && pv.b[ed.id] !== n) grp.classList.add("faded");
             bridgeLayer.append(grp);
           } else if (classes.includes("guide")) {
             guideLayer.append(line(ed.id, 0, "guide"));
+          }
+          const pn = pv?.b[ed.id] ?? n;
+          if (pn !== n && pn > 0) {
+            const grp = s("g", { class: "bridge ghost" });
+            for (let k = 0; k < pn; k++) grp.append(line(ed.id, (k - (pn - 1) / 2) * GAP));
+            previewLayer.append(grp);
+          }
+          if (pv?.no[ed.id] === 1 && st.no[ed.id] !== 1) {
+            const [x1, y1, x2, y2] = endpoints(ed.id, 0);
+            const mark = graphic(markArt, 2, "mark ghost");
+            mark.setAttribute("transform", `translate(${(x1 + x2) / 2} ${(y1 + y2) / 2})`);
+            previewLayer.append(mark);
           }
           if (st.no[ed.id] === 1) {
             const [x1, y1, x2, y2] = endpoints(ed.id, 0);
@@ -429,6 +447,10 @@ export function makeView(look: Look, board: BoardPrefs, holdMs: number): View<Br
       return {
         aspect: vbW / vbH,
         cells: { cols: vbW / S, rows: vbH / S },
+        preview(state) {
+          previewing = state as BridgesState | null;
+          render();
+        },
         locate(focus) {
           const f = focus as Partial<Focus> | null;
           if (!f || typeof f !== "object") return [];

@@ -18,6 +18,9 @@ const CSS = `
 .samegame-board .sel { fill: none; stroke: var(--text); stroke-width: 0.9; pointer-events: none; }
 .samegame-board .num { font: 600 4px var(--mono); text-anchor: middle; dominant-baseline: central; fill: rgb(0 0 0 / 0.55); pointer-events: none; }
 .samegame-board .mark { fill: none; stroke: var(--hint); stroke-width: 0.9; pointer-events: none; }
+.samegame-board .ghost { pointer-events: none; }
+.samegame-board .ghost .add { opacity: 0.6; stroke: var(--text); stroke-width: 0.35; stroke-dasharray: 1 0.7; }
+.samegame-board .ghost .gone { fill: var(--surface-2); opacity: 0.7; }
 .samegame-board .mark.nudge { stroke-width: 0.5; stroke-dasharray: 1.2 0.8; }
 .samegame-board .cursor { fill: none; stroke: var(--focus); stroke-width: 0.6; pointer-events: none; }
 [data-input="pointer"] .samegame-board .cursor { display: none; }
@@ -78,7 +81,9 @@ export const samegameView: View<SamegamePuzzle, SamegameState, SamegameAction, S
     const nums = settings.numbers ? Array.from({ length: n }, (_, c) => s("text", { x: (c % p.w) * SIZE + SIZE / 2, y: Math.floor(c / p.w) * SIZE + SIZE / 2, class: "num" })) : [];
     const selLayer = s("g"), overlay = s("g");
     const cursor = s("rect", { width: SIZE, height: SIZE, rx: 1.4, class: "cursor" });
-    svg.append(...tiles, ...nums, selLayer, overlay, cursor);
+    const ghost = s("g", { class: "ghost" });
+    svg.append(...tiles, ...nums, ghost, selLayer, overlay, cursor);
+    let previewing: SamegameState | null = null;
     root.append(svg);
 
     let selected: number[] = [];
@@ -116,6 +121,14 @@ export const samegameView: View<SamegamePuzzle, SamegameState, SamegameAction, S
         t.setAttribute("visibility", "visible");
         if (nums[c]) nums[c]!.textContent = String(v);
       }
+      ghost.replaceChildren();
+      previewing?.grid.forEach((v, c) => {
+        if (v === g[c]) return;
+        const x = (c % p.w) * SIZE, y = Math.floor(c / p.w) * SIZE;
+        ghost.append(v
+          ? s("rect", { x: x + 1.2, y: y + 1.2, width: SIZE - 2.4, height: SIZE - 2.4, rx: 1.2, fill: colourVar(v), class: "add" })
+          : s("rect", { x, y, width: SIZE, height: SIZE, class: "gone" }));
+      });
       selLayer.replaceChildren();
       if (selected.length >= 2 && selected.every((c) => g[c] === g[selected[0]!])) outline(selected, "sel", selLayer);
       overlay.replaceChildren();
@@ -185,6 +198,10 @@ export const samegameView: View<SamegamePuzzle, SamegameState, SamegameAction, S
         "samegame.down": moveCursor(0, 1),
         "samegame.remove": () => remove(session.interaction.cursor),
       }),
+      preview: (state) => {
+        previewing = state as SamegameState | null;
+        render();
+      },
       locate: (focus) => rects((focus as SamegameFocus | undefined)?.cells ?? []),
       locateChange: (a, b) => {
         const x = (a as SamegameState).grid, y = (b as SamegameState).grid;

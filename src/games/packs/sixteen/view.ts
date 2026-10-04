@@ -25,6 +25,9 @@ const CSS = `
 .sixteen-board .mark.moving { stroke-width: 0.5; stroke-opacity: 0.8; }
 .sixteen-board .mark.home { stroke-width: 0.7; stroke-dasharray: 1.2 0.8; }
 .sixteen-board .mark.tile { stroke-width: 1; }
+.sixteen-board .ghost { pointer-events: none; opacity: 0.7; }
+.sixteen-board .ghost rect { fill: color-mix(in srgb, var(--cell) 70%, transparent); stroke: var(--text-dim); stroke-width: 0.35; stroke-dasharray: 1 0.7; }
+.sixteen-board .ghost text { fill: var(--text-dim); font: 600 4.4px var(--font); text-anchor: middle; dominant-baseline: central; }
 .sixteen-board .cursor { fill: none; stroke: var(--focus); stroke-width: 0.6; pointer-events: none; }
 [data-input="pointer"] .sixteen-board .cursor { display: none; }
 @media (prefers-reduced-motion: reduce) { .sixteen-board .tile { transition: none; } }
@@ -117,9 +120,11 @@ export const sixteenView: View<SixteenPuzzle, SixteenState, SixteenAction, Sixte
       arrow(cx, -EDGE / 2, 3, { type: "shift", line: "col", index: x, by: -1 });
       arrow(cx, H + EDGE / 2, 1, { type: "shift", line: "col", index: x, by: 1 });
     }
+    const ghost = s("g", { class: "ghost" });
     const overlay = s("g");
     const cursor = s("rect", { width: SIZE, height: SIZE, rx: 1.2, class: "cursor" });
-    svg.append(s("defs", {}, clip), ...slots, tileLayer, arrows, overlay, cursor);
+    svg.append(s("defs", {}, clip), ...slots, tileLayer, ghost, arrows, overlay, cursor);
+    let previewing: SixteenState | null = null;
     root.append(svg);
 
     const where: number[] = [];
@@ -137,6 +142,13 @@ export const sixteenView: View<SixteenPuzzle, SixteenState, SixteenAction, Sixte
         g.setAttribute("data-cell", String(c));
         g.classList.toggle("home", !!settings.tintHome && t === c + 1);
         where[t] = c;
+      });
+      ghost.replaceChildren();
+      previewing?.tiles.forEach((t, c) => {
+        if (t === st.tiles[c]) return;
+        ghost.append(s("g", { transform: `translate(${(c % p.w) * SIZE} ${Math.floor(c / p.w) * SIZE})` },
+          s("rect", { x: 0.2, y: 0.2, width: SIZE - 0.4, height: SIZE - 0.4, rx: 1 }),
+          s("text", { x: SIZE / 2, y: SIZE / 2 + 0.3 }, String(t))));
       });
       overlay.replaceChildren();
       const f = session.activeHint?.focus as SixteenFocus | undefined;
@@ -228,6 +240,10 @@ export const sixteenView: View<SixteenPuzzle, SixteenState, SixteenAction, Sixte
         "sixteen.col-up": slide("col", -1),
         "sixteen.col-down": slide("col", 1),
       }),
+      preview: (state) => {
+        previewing = state as SixteenState | null;
+        render();
+      },
       locate: (focus) => {
         const f = focus as SixteenFocus | undefined;
         if (!f) return [];

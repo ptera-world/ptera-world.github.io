@@ -26,6 +26,8 @@ const CSS = `
 .netslide-board .arrow:hover { fill: var(--accent); }
 .netslide-board .arrow-hit { fill: transparent; cursor: pointer; }
 .netslide-board .mark { fill: none; stroke: var(--hint); pointer-events: none; }
+.netslide-board .ghost { pointer-events: none; opacity: 0.55; }
+.netslide-board .ghost rect { fill: color-mix(in srgb, var(--cell) 60%, transparent); stroke: var(--text-dim); stroke-width: 0.35; stroke-dasharray: 1 0.7; }
 .netslide-board .mark.moving { stroke-width: 0.5; stroke-opacity: 0.8; }
 .netslide-board .mark.home { stroke-width: 0.7; stroke-dasharray: 1.2 0.8; }
 .netslide-board .mark.tile { stroke-width: 1; }
@@ -132,9 +134,11 @@ export const netslideView: View<NetslidePuzzle, NetslideState, NetslideAction, N
       arrow(x * SIZE + SIZE / 2, -EDGE / 2, 3, { type: "shift", line: "col", index: x, by: -1 });
       arrow(x * SIZE + SIZE / 2, H + EDGE / 2, 1, { type: "shift", line: "col", index: x, by: 1 });
     }
+    const ghost = s("g", { class: "ghost" });
     const overlay = s("g");
     const cursor = s("rect", { width: SIZE, height: SIZE, rx: 1.2, class: "cursor" });
-    svg.append(s("defs", {}, s("clipPath", { id: clipId }, s("rect", { x: 0, y: 0, width: W, height: H }))), ...slots, tileLayer, barriers, arrows, overlay, cursor);
+    svg.append(s("defs", {}, s("clipPath", { id: clipId }, s("rect", { x: 0, y: 0, width: W, height: H }))), ...slots, tileLayer, ghost, barriers, arrows, overlay, cursor);
+    let previewing: NetslideState | null = null;
     root.append(svg);
 
     let ids = Array.from({ length: n }, (_, c) => c);
@@ -179,6 +183,15 @@ export const netslideView: View<NetslidePuzzle, NetslideState, NetslideAction, N
         g.classList.toggle("on", !!on[c]);
         where[id] = c;
       }
+      ghost.replaceChildren();
+      previewing?.tiles.forEach((mask, c) => {
+        if (mask === session.state.tiles[c]) return;
+        const g = s("g", { transform: `translate(${(c % p.w) * SIZE} ${Math.floor(c / p.w) * SIZE})` }, s("rect", { x: 0.3, y: 0.3, width: SIZE - 0.6, height: SIZE - 0.6, rx: 0.8 }));
+        const art = s("g");
+        art.innerHTML = pipes(mask);
+        g.append(art);
+        ghost.append(g);
+      });
       overlay.replaceChildren();
       const f = session.activeHint?.focus as NetslideFocus | undefined;
       const mark = (c: number, cls: string, inset: number) => overlay.append(s("rect", {
@@ -266,6 +279,10 @@ export const netslideView: View<NetslidePuzzle, NetslideState, NetslideAction, N
         "netslide.col-up": slide("col", -1),
         "netslide.col-down": slide("col", 1),
       }),
+      preview: (state) => {
+        previewing = state as NetslideState | null;
+        render();
+      },
       locate: (focus) => {
         const f = focus as NetslideFocus | undefined;
         if (!f) return [];

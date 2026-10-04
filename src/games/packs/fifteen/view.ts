@@ -18,6 +18,9 @@ const CSS = `
 .fifteen-board .mark.press { stroke-width: 1; }
 .fifteen-board .mark.home { stroke-width: 0.6; stroke-dasharray: 1.2 0.8; }
 .fifteen-board .mark.tile { stroke-width: 0.4; stroke-opacity: 0.7; }
+.fifteen-board .ghost { pointer-events: none; opacity: 0.7; }
+.fifteen-board .ghost rect { fill: color-mix(in srgb, var(--cell) 70%, transparent); stroke: var(--text-dim); stroke-width: 0.35; stroke-dasharray: 1 0.7; }
+.fifteen-board .ghost text { fill: var(--text-dim); font: 600 4.6px var(--font); text-anchor: middle; dominant-baseline: central; }
 @media (prefers-reduced-motion: reduce) { .fifteen-board .tile { transition: none; } }
 `;
 
@@ -73,8 +76,10 @@ export const fifteenView: View<FifteenPuzzle, FifteenState, FifteenAction, null>
       tiles[t] = g;
       svg.append(g);
     }
+    const ghost = s("g", { class: "ghost" });
     const overlay = s("g");
-    svg.append(overlay);
+    svg.append(ghost, overlay);
+    let previewing: FifteenState | null = null;
     root.append(svg);
 
     const at = (c: number) => `translate(${(c % p.w) * SIZE}px, ${Math.floor(c / p.w) * SIZE}px)`;
@@ -86,6 +91,13 @@ export const fifteenView: View<FifteenPuzzle, FifteenState, FifteenAction, null>
         g.style.transform = at(c);
         g.setAttribute("data-cell", String(c));
         g.classList.toggle("home", !!settings.tintHome && t === solvedTile(n, c));
+      });
+      ghost.replaceChildren();
+      previewing?.tiles.forEach((t, c) => {
+        if (!t || t === st.tiles[c]) return;
+        ghost.append(s("g", { transform: `translate(${(c % p.w) * SIZE} ${Math.floor(c / p.w) * SIZE})` },
+          s("rect", { x: pad, y: pad, width: SIZE - GAP, height: SIZE - GAP, rx: 1 }),
+          s("text", { x: SIZE / 2, y: SIZE / 2 + 0.3 }, String(t))));
       });
       overlay.replaceChildren();
       const f = session.activeHint?.focus as FifteenFocus | undefined;
@@ -129,6 +141,10 @@ export const fifteenView: View<FifteenPuzzle, FifteenState, FifteenAction, null>
         "fifteen.up": slide(0, 1),
         "fifteen.down": slide(0, -1),
       }),
+      preview: (state) => {
+        previewing = state as FifteenState | null;
+        render();
+      },
       locate: (focus) => {
         const f = focus as FifteenFocus | undefined;
         return f ? rects([...(f.press ?? []), ...(f.homes ?? []), ...(f.tiles ?? [])]) : [];
