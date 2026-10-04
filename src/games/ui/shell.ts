@@ -32,7 +32,7 @@ const prefs = namespace("prefs");
 const SHELL_BINDINGS: BindingSchema = {
   undo: { label: "Undo", category: "Game", keys: ["$mod+z", "u"] },
   redo: { label: "Redo", category: "Game", keys: ["$mod+shift+z", "$mod+y", "r"] },
-  hint: { label: "Hint", category: "Game", keys: ["shift+/"] },
+  hint: { label: "Hint", category: "Game", keys: ["shift+slash"] },
   "apply-hint": { label: "Apply hint (shows one first if none is up)", category: "Game", keys: ["shift+h"] },
   "new-game": { label: "New game", category: "Game", keys: ["$mod+Enter"] },
   pause: { label: "Pause / resume", category: "Game", keys: ["p"] },
