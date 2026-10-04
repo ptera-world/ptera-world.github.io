@@ -3,7 +3,7 @@ import { colName, rowName } from "../../core/names";
 import { defineSchema, type Values } from "../../core/schema";
 import type { Format, GenerateContext, Hint, PuzzleDef } from "../../core/types";
 import {
-  analyzeModel, bit, solveLevel, trialRule,
+  analyzeModel, bit, decides, solveLevel, trialRule,
   type Analysis, type Constraint, type Doms, type Model, type Rule,
 } from "./kit/csp";
 import { cellList, type Focus } from "./kit/names";
@@ -486,7 +486,7 @@ export async function generatePuzzle(w: number, h: number, unique: boolean, leve
         const keep = cells[c]!;
         cells[c] = -1;
         const p = { w, h, unique, cells: cells.slice() };
-        if (solveLevel(model(p), initialDoms(p), pass) === null) cells[c] = keep;
+        if (!decides(model(p), initialDoms(p), pass)) cells[c] = keep;
       }
     }
     const p: UnrulyPuzzle = { w, h, unique, cells };

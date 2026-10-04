@@ -379,3 +379,9 @@ export function solveLevel(m: Model, start: Doms, maxLevel: number): number | nu
   if (!r.ok || !finished(k)) return null;
   return m.done || !m.complete || m.complete(k) ? r.used : null;
 }
+
+/** Deductions up to `level` decide every variable (so the solution is unique), in no particular order. */
+export function decides(m: Model, start: Doms, level: number): boolean {
+  const k = start.slice();
+  return saturate(m, k, level) && isDecided(k) && (!m.complete || m.complete(k));
+}

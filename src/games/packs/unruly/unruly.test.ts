@@ -73,6 +73,7 @@ test("logic never contradicts brute force on random boards", () => {
 
 function played(p: UnrulyPuzzle, auto: string[] = []) {
   const registry = new Registry();
+  registry.puzzle(unruly);
   for (const t of unrulyTechniques) registry.technique(auto.includes(t.id) ? { ...t, defaults: { auto: true } } : t);
   const s = new Session(unruly, p, { kind: "imported" });
   const host = new TechniqueHost(registry, s);

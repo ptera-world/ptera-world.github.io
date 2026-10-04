@@ -2,7 +2,7 @@ import type { Rng } from "../../core/rng";
 import { defineSchema, type Values } from "../../core/schema";
 import type { Format, GenerateContext, Hint, PuzzleDef } from "../../core/types";
 import {
-  analyzeModel, bit, isDecided, propagate, solveLevel, trialRule,
+  analyzeModel, bit, decides, solveLevel, trialRule,
   type Analysis, type Constraint, type Doms, type Model, type Rule,
 } from "./kit/csp";
 import { cutVertices, gridLines, neighbours, pieces } from "./kit/grid";
@@ -368,8 +368,7 @@ function chooseBlacks(g: Geometry, rng: Rng): Uint8Array {
 
 /** Logic up to `level` decides every cell, so the solution is unique. */
 function decidedBy(p: RangePuzzle, level: number): boolean {
-  const k = initialDoms(p);
-  return propagate(model(p), k, level).ok && isDecided(k);
+  return decides(model(p), initialDoms(p), level);
 }
 
 const EXACT_ATTEMPTS = 150;

@@ -3,7 +3,7 @@ import { colName, rowName } from "../../core/names";
 import { defineSchema, type Values } from "../../core/schema";
 import type { Format, GenerateContext, Hint, PuzzleDef } from "../../core/types";
 import {
-  analyzeModel, bit, isDecided, isSingle, isUnique, propagate, solveLevel, trialRule, valueOf,
+  analyzeModel, bit, decides, isSingle, isUnique, solveLevel, trialRule, valueOf,
   type Analysis, type Constraint, type Doms, type Model,
 } from "./kit/csp";
 import { cellList, type Focus } from "./kit/names";
@@ -523,8 +523,7 @@ export function layMagnets(g: Geometry, rng: Rng): number[] {
 
 /** Logic up to `level` decides every domino (so the solution is unique). */
 function decidedBy(p: MagnetsPuzzle, level: number): boolean {
-  const k = initialDoms(p);
-  return propagate(model(p), k, level).ok && isDecided(k);
+  return decides(model(p), initialDoms(p), level);
 }
 
 const EXACT_ATTEMPTS = 40;
