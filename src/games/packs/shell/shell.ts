@@ -5,7 +5,7 @@ import type { Registry } from "../../core/registry";
 import { randomSeed } from "../../core/rng";
 import { canonical, fromQuery, resolve, toQuery } from "../../core/schema";
 import type { Origin, Session, SharedHistory, Snapshot } from "../../core/session";
-import { PluginHostCtor, SessionCtor, TechniqueHostCtor, applyStep, colorOf, findStepAt, cycleLabels, findPracticePosition, generate, hintFrom, isPartOfStep, isStepDone, loadPluginConfig, onBoardPrefsChange, onThemeChange } from "./engine";
+import { PluginHostCtor, SessionCtor, TechniqueHostCtor, applyStep, colorOf, findStepAt, rememberPosition, cycleLabels, findPracticePosition, generate, hintFrom, isPartOfStep, isStepDone, loadPluginConfig, onBoardPrefsChange, onThemeChange } from "./engine";
 import { packJson, unpackJson, type Patch } from "../../core/patch";
 
 /** What a share link carries beyond the puzzle itself. */
@@ -397,6 +397,14 @@ export class Shell {
     delete this.root.dataset.mode;
     this.sessionCleanup.push(
       session.hooks.change.tap((ctx) => {
+        // every technique step the game makes is a real example of that technique
+        const list = this.techniques?.list ?? [];
+        const remember = (src: { kind: string; technique?: string } | undefined, before: unknown) => {
+          const t = src?.kind === "technique" ? list.find((x) => x.id === src.technique) : undefined;
+          if (t && session.origin.kind !== "practice") rememberPosition(t, session.def.id, session.puzzle, before);
+        };
+        remember(ctx.source as never, ctx.prev);
+        for (const n of ctx.notes) remember(n.source as never, n.before);
         const lost = session.lost;
         if (lost && !this.wasLost && ctx.cause === "action") {
           session.hooks.fx.call({ kind: "mistake", focus: session.lostFocus });
@@ -998,6 +1006,8 @@ export class Shell {
       this.setStatus("no hint available");
       return;
     }
+    const ht = hint.technique ? this.techniques?.list.find((x) => x.id === hint.technique) : undefined;
+    if (ht && s.origin.kind !== "practice") rememberPosition(ht, s.def.id, s.puzzle, s.state);
     s.hooks.fx.call({ kind: "hint", focus: hint.focus });
     this.setStatus(hint.message);
   }

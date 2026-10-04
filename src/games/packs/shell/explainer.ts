@@ -85,7 +85,7 @@ export function explainer(def: AnyPuzzleDef, t: Technique, all: readonly Techniq
   void (async () => {
     let pos = positions.get(t.id);
     if (!pos) {
-      const found = await findPracticePosition(def, all, t, `explain-${randomSeed()}`, ac.signal, 8).catch(() => null);
+      const found = await findPracticePosition(def, all, t, `explain-${randomSeed()}`, ac.signal, 24).catch(() => null);
       if (!found || ac.signal.aborted) {
         if (!ac.signal.aborted) { clear(stage); stage.append(h("span", { class: "ex-loading" }, `couldn't find a ${t.name} to show right now`)); }
         return;

@@ -237,6 +237,34 @@ export interface PracticePosition {
  * puzzles, solved forward with easier techniques until target is next. Deterministic in seed.
  * Returns null if none is found within `tries` puzzles.
  */
+const seen = namespace("technique-positions");
+const SEEN_PER_TECHNIQUE = 3;
+
+/**
+ * Remember a real position where `t` was the next move (from a hint, an auto step, a button or
+ * a skill in any game), so explainers and practice can show one even when random generation
+ * rarely produces it. Keeps the few most recent per technique.
+ */
+export function rememberPosition(t: Technique, puzzleId: string, puzzle: unknown, state: unknown): void {
+  const key = `${puzzleId}:${t.id}`;
+  const list = seen.get<{ puzzle: unknown; state: unknown }[]>(key, []);
+  const sig = JSON.stringify(state);
+  if (list.some((p) => JSON.stringify(p.state) === sig)) return;
+  seen.set(key, [{ puzzle, state }, ...list].slice(0, SEEN_PER_TECHNIQUE));
+}
+
+/** A remembered position where `t` still applies (its step is recomputed, so stale entries are skipped). */
+export function rememberedPosition(def: AnyPuzzleDef, t: Technique, all: readonly Technique[]): PracticePosition | null {
+  for (const p of seen.get<{ puzzle: unknown; state: unknown }[]>(`${def.id}:${t.id}`, [])) {
+    const hit = firstStep(def, all, p.puzzle, p.state);
+    if (hit?.technique.id !== t.id) continue;
+    const shown = (t.practice || undefined)?.prepare?.(p.puzzle, p.state) ?? p.state;
+    const step = findStep(def, t, p.puzzle, shown) ?? hit.step;
+    return { puzzle: p.puzzle, state: shown, step, seed: "remembered" };
+  }
+  return null;
+}
+
 export async function findPracticePosition(
   def: AnyPuzzleDef,
   all: readonly Technique[],
@@ -245,6 +273,8 @@ export async function findPracticePosition(
   signal: AbortSignal,
   tries = 12,
 ): Promise<PracticePosition | null> {
+  const known = rememberedPosition(def, target, all);
+  if (known) return known;
   const seeds = createRng(`practice|${target.id}|${seed}`);
   for (let i = 0; i < tries; i++) {
     if (signal.aborted) return null;

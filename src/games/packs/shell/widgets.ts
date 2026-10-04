@@ -436,7 +436,14 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
         const desc = s.def.describeAction;
         if (desc) {
           try {
-            const parts = e.actions.map((act) => desc(s.puzzle, act, e.before, e.after)).filter(Boolean);
+            // each move is named against the board just before it (replayed with the puzzle's own rules)
+            let cur = e.before;
+            const parts = e.actions.map((act) => {
+              const next = e.actions.length === 1 ? e.after : s.def.reduce(s.puzzle, cur, act);
+              const text = desc(s.puzzle, act, cur, next);
+              cur = next;
+              return text;
+            }).filter(Boolean);
             if (parts.length) return [...new Set(parts)].join(", ");
           } catch { /* fall through to a generic description */ }
         }
