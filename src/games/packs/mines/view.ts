@@ -72,6 +72,7 @@ const BINDINGS: BindingSchema = {
   "mines.flag": { label: "flag / unflag cell", category: "minesweeper", keys: ["f", "x"] },
   "mines.chord": { label: "open around number", category: "minesweeper", keys: ["Enter", "c"] },
   "mines.mode": { label: "flag mode (taps flag instead of open)", category: "minesweeper", keys: ["m"] },
+  "mines.flag-at": { label: "flag / unflag the cell under the pointer", category: "minesweeper", mouse: ["rightclick"] },
 };
 
 /** Flag-or-unflag as an explicit action, so unflagging is recognisably a retraction. */
@@ -183,7 +184,7 @@ export function minesView(look: Look): View<MinesPuzzle, MinesState, MinesAction
         else session.dispatch({ type: "open", cells: [cell] });
       };
       const setCursor = (cell: number) => session.setInteraction((i) => (i.cursor === cell ? i : { ...i, cursor: cell }));
-      const cellAt = (e: PointerEvent): number => {
+      const cellAt = (e: MouseEvent): number => {
         const el = document.elementFromPoint(e.clientX, e.clientY);
         const v = el?.getAttribute("data-cell");
         return v === null || v === undefined ? -1 : Number(v);
@@ -209,10 +210,6 @@ export function minesView(look: Look): View<MinesPuzzle, MinesState, MinesAction
         if (cell < 0) return;
         setCursor(cell);
         clearDown();
-        if (e.pointerType === "mouse" && e.button === 2) {
-          session.dispatch(toggleFlag(session.state, cell));
-          return;
-        }
         if (e.button !== 0 && e.button !== 1) return;
         e.preventDefault();
         const timer = e.pointerType === "mouse" ? 0 : window.setTimeout(() => {
@@ -289,6 +286,13 @@ export function minesView(look: Look): View<MinesPuzzle, MinesState, MinesAction
         "mines.flag": atCursor((c) => session.dispatch(toggleFlag(session.state, c))),
         "mines.chord": atCursor((c) => session.dispatch({ type: "chord", cell: c })),
         "mines.mode": () => session.setInteraction((i) => ({ ...i, flagMode: !i.flagMode })),
+        "mines.flag-at": (_ctx, e) => {
+          const cell = e instanceof MouseEvent ? cellAt(e) : -1;
+          if (cell < 0) return false;
+          setCursor(cell);
+          session.dispatch(toggleFlag(session.state, cell));
+          return true;
+        },
       }, {
         "mines.mode": { checked: () => session.interaction.flagMode },
       });
