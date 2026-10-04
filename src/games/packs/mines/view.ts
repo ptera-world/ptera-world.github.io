@@ -4,7 +4,7 @@ import { bindCommands, type BindingSchema } from "../../core/commands";
 import { s, style } from "../../core/dom";
 import { colName, rowName, type Side } from "../../core/names";
 import {
-  numbers, type MinesAction, type MinesFocus, type MinesInteraction, type MinesPuzzle, type MinesState,
+  chordCells, numbers, type MinesAction, type MinesFocus, type MinesInteraction, type MinesPuzzle, type MinesState,
 } from "./logic";
 
 /** Derived: { safe: number[]; mines: number[] } cells provable from what's open. */
@@ -27,6 +27,11 @@ const CSS = `
 .mines-board .closed.pressed { fill: var(--surface); }
 .mines-board .open { fill: var(--surface); }
 .mines-board .boom { fill: var(--danger); }
+.mines-board .open.chordable { cursor: pointer; }
+.mines-board .open.chordable:hover { fill: color-mix(in srgb, var(--accent) 14%, var(--surface)); }
+.mines-board .closed.around { fill: color-mix(in srgb, var(--accent) 22%, var(--surface)); }
+.mines-board .pv { opacity: 0.6; pointer-events: none; }
+.mines-board .pv-open { fill: var(--surface); }
 .mines-board .closed.safe-hint { fill: color-mix(in srgb, var(--accent) 40%, var(--surface)); }
 .mines-board .closed.mine-hint { fill: color-mix(in srgb, var(--danger) 40%, var(--surface)); }
 .mines-board text { font-family: var(--mono); font-weight: 700; font-size: 6.4px; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
@@ -44,7 +49,7 @@ const CSS = `
 
 const settings = defineSchema({
   longPressMs: { type: "int", label: "touch long-press for flag (ms)", default: 380, min: 150, max: 1500 },
-  chordOnClick: { type: "bool", label: "click a satisfied number to open its neighbours", default: true },
+  chordOnClick: { type: "bool", label: "click a number that has all its flags to open its other neighbours (chording)", default: true },
   dimDone: { type: "bool", label: "fade numbers whose neighbours are all decided", default: true },
 });
 
@@ -112,7 +117,7 @@ export function minesView(look: Look, labelSides: () => ReadonlySet<Side>): View
     controls: [
       { how: "click or tap a hidden cell", what: "open it" },
       { how: "right-click, or long-press on touch", what: "flag it as a mine (again to take the flag off)" },
-      { how: "click an open number that has all its flags", what: "open its other neighbours (middle-click does the same)" },
+      { how: "click an open number that has all its flags", what: "open its other neighbours: pointing at it shows which (middle-click or enter does the same; \"open around finished numbers\" in assists does it by itself)" },
       { how: "press, then drag off the cell before letting go", what: "change your mind: nothing happens" },
     ],
     mount(root, { session, settings }) {
@@ -156,6 +161,11 @@ export function minesView(look: Look, labelSides: () => ReadonlySet<Side>): View
       svg.append(overlay, cursor);
 
       let pressed: number[] = [];
+      /** Cell under the mouse, or -1. */
+      let hover = -1;
+      /** Last cell pointed at or moved to; what aimed techniques act on. */
+      let aim = session.interaction.cursor;
+      let ghost: MinesState | null = null;
       const drawn: string[] = Array.from({ length: n }, () => "");
       const neighbours = (cell: number) => {
         const out: number[] = [];
@@ -178,21 +188,26 @@ export function minesView(look: Look, labelSides: () => ReadonlySet<Side>): View
         const safeHint = new Set(ded?.safe ?? []);
         const mineHint = new Set(ded?.mines ?? []);
         const press = new Set(pressed);
+        const around = new Set(settings.chordOnClick && hover >= 0 && !pressed.length ? chordCells(p, st, hover) : []);
         for (let c = 0; c < n; c++) {
           const open = st.open[c] === 1;
           const isMine = p.mines[c] === 1;
           const flagged = st.flags[c] === 1;
           let cls = "c ";
           if (c === st.dead) cls += "boom";
-          else if (open) cls += settings.dimDone && nums[c] && isDone(st, c) ? "open done" : "open";
+          else if (open) {
+            cls += settings.dimDone && nums[c] && isDone(st, c) ? "open done" : "open";
+            if (settings.chordOnClick && nums[c] && !dead && chordCells(p, st, c).length) cls += " chordable";
+          }
           else {
             cls += "closed";
             if (press.has(c)) cls += " pressed";
+            else if (around.has(c)) cls += " around";
             else if (safeHint.has(c)) cls += " safe-hint";
             else if (mineHint.has(c) && !flagged) cls += " mine-hint";
           }
           cells[c]!.setAttribute("class", cls);
-          deco[c]!.classList.toggle("done", cls.endsWith("done"));
+          deco[c]!.classList.toggle("done", cls.includes("done"));
           let key = "";
           if (open) key = isMine ? "mine" : nums[c] ? `n${nums[c]}` : "";
           else if (flagged) key = dead && !isMine ? "wrong" : "flag";
@@ -212,6 +227,15 @@ export function minesView(look: Look, labelSides: () => ReadonlySet<Side>): View
         const box = (c: number, cls: string) => s("rect", {
           x: (c % p.w) * SIZE + 0.6, y: Math.floor(c / p.w) * SIZE + 0.6, width: SIZE - 1.2, height: SIZE - 1.2, rx: 1.2, class: cls,
         });
+        if (ghost) {
+          for (let c = 0; c < n; c++) {
+            const at = (node: Element) => { const g = s("g", { transform: `translate(${(c % p.w) * SIZE} ${Math.floor(c / p.w) * SIZE})`, class: "pv" }); g.append(node); overlay.append(g); };
+            if (ghost.open[c] && !st.open[c]) {
+              at(s("rect", { width: SIZE, height: SIZE, rx: 1.2, class: "pv-open" }));
+              if (nums[c] && !p.mines[c]) at(s("text", { x: 5, y: 5.4, class: `n${nums[c]}` }, String(nums[c])));
+            } else if (ghost.flags[c] && !st.flags[c]) at(flagNode());
+          }
+        }
         for (const c of focus?.sources ?? []) overlay.append(box(c, "source"));
         for (const c of focus?.cells ?? []) overlay.append(box(c, "hint"));
         const cur = session.interaction.cursor;
@@ -269,6 +293,15 @@ export function minesView(look: Look, labelSides: () => ReadonlySet<Side>): View
         showPressed(cell, e.button);
       };
       const onMove = (e: PointerEvent) => {
+        if (!down && e.pointerType === "mouse") {
+          const cell = cellAt(e);
+          if (cell !== hover) {
+            hover = cell;
+            if (cell >= 0) aim = cell;
+            render();
+          }
+          return;
+        }
         if (!down || e.pointerId !== down.id) return;
         if (e.pointerType !== "mouse") {
           if (Math.hypot(e.clientX - down.x, e.clientY - down.y) > 10) clearDown();
@@ -290,7 +323,12 @@ export function minesView(look: Look, labelSides: () => ReadonlySet<Side>): View
         if (d.button === 1) session.dispatch({ type: "chord", cell: d.cell });
         else primary(d.cell);
       };
-      const onLeave = (e: PointerEvent) => { if (e.pointerType === "mouse") clearDown(); };
+      const onLeave = (e: PointerEvent) => {
+        if (e.pointerType !== "mouse") return;
+        hover = -1;
+        clearDown();
+        render();
+      };
       svg.addEventListener("contextmenu", onContext);
       svg.addEventListener("pointerdown", onDown);
       svg.addEventListener("pointermove", onMove);
@@ -309,7 +347,10 @@ export function minesView(look: Look, labelSides: () => ReadonlySet<Side>): View
 
       const offs = [
         session.hooks.change.tap(render, { owner: "view" }),
-        session.hooks.interaction.tap(render, { owner: "view" }),
+        session.hooks.interaction.tap(({ prev, interaction }) => {
+          if (prev.cursor !== interaction.cursor) aim = interaction.cursor;
+          render();
+        }, { owner: "view" }),
         session.hooks.refresh.tap(render, { owner: "view" }),
       ];
       render();
@@ -336,6 +377,12 @@ export function minesView(look: Look, labelSides: () => ReadonlySet<Side>): View
       });
       return {
         aspect: vw / vh,
+        cells: { cols: p.w, rows: p.h },
+        target: () => aim,
+        preview: (state) => {
+          ghost = state as MinesState | null;
+          render();
+        },
         gestures: { secondaryClick: true, hold: true },
         commands,
         context: () => ({ minesFlagMode: session.interaction.flagMode, minesLost: session.state.dead >= 0 }),

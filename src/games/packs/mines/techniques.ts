@@ -39,6 +39,10 @@ function outcome(d: Deduction): string {
   return parts.join(" and ");
 }
 
+/** The deduction reasons from, or decides, cell `t` (a cell index). */
+const touches = (d: Deduction, t: unknown): boolean =>
+  typeof t === "number" && (d.sources.includes(t) || d.safe.includes(t) || d.mines.includes(t));
+
 const focusOf = (d: Deduction): MinesFocus => ({ cells: [...d.safe, ...d.mines], sources: d.sources });
 
 /** Every single-number deduction of the given kind, in cell order, already narrowed. */
@@ -80,22 +84,24 @@ export const forcedFlags: MinesTechnique = {
   puzzles: ["mines"],
   level: 1,
   description: "a number that has exactly as many hidden neighbours as mines it still needs: every one of those hidden neighbours is a mine. flag them.",
-  find(p, s) {
-    const d = singles(p, s, "mines")[0];
-    if (!d) return null;
-    const c = d.sources[0]!;
-    const v = numbers(p)[c]!;
-    const need = d.mines.length;
-    const at = cellName(p, c);
-    return {
-      message: `the ${v} at ${at} needs ${need} more ${plural(need, "mine", "mines")} and has exactly ${need} hidden ${plural(need, "neighbour", "neighbours")}, so ${outcome(d)}`,
-      nudge: `look at the ${v} at ${at}`,
-      focus: focusOf(d),
-      nudgeFocus: { cells: [], sources: [c] } satisfies MinesFocus,
-      actions: actionsOf(d),
-    };
-  },
+  find: (p, s) => forcedStep(p, singles(p, s, "mines")[0]),
+  findAt: (p, s, t) => forcedStep(p, singles(p, s, "mines").find((d) => touches(d, t))),
 };
+
+function forcedStep(p: MinesPuzzle, d: Deduction | undefined): Step<MinesAction> | null {
+  if (!d) return null;
+  const c = d.sources[0]!;
+  const v = numbers(p)[c]!;
+  const need = d.mines.length;
+  const at = cellName(p, c);
+  return {
+    message: `the ${v} at ${at} needs ${need} more ${plural(need, "mine", "mines")} and has exactly ${need} hidden ${plural(need, "neighbour", "neighbours")}, so ${outcome(d)}`,
+    nudge: `look at the ${v} at ${at}`,
+    focus: focusOf(d),
+    nudgeFocus: { cells: [], sources: [c] } satisfies MinesFocus,
+    actions: actionsOf(d),
+  };
+}
 
 export const satisfied: MinesTechnique = {
   id: "mines.satisfied",
@@ -103,22 +109,24 @@ export const satisfied: MinesTechnique = {
   puzzles: ["mines"],
   level: 2,
   description: "a number already touching as many flags as it shows has all its mines, so its other hidden neighbours are safe. opening them all at once is what clicking an open number (chording) does.",
-  find(p, s) {
-    const d = singles(p, s, "safe")[0];
-    if (!d) return null;
-    const c = d.sources[0]!;
-    const v = numbers(p)[c]!;
-    const at = cellName(p, c);
-    const has = v === 0 ? "touches no mines" : `already touches ${v} ${plural(v, "flag", "flags")}`;
-    return {
-      message: `the ${v} at ${at} ${has}, so ${outcome(d)}`,
-      nudge: `look at the ${v} at ${at}`,
-      focus: focusOf(d),
-      nudgeFocus: { cells: [], sources: [c] } satisfies MinesFocus,
-      actions: actionsOf(d),
-    };
-  },
+  find: (p, s) => satisfiedStep(p, singles(p, s, "safe")[0]),
+  findAt: (p, s, t) => satisfiedStep(p, singles(p, s, "safe").find((d) => touches(d, t))),
 };
+
+function satisfiedStep(p: MinesPuzzle, d: Deduction | undefined): Step<MinesAction> | null {
+  if (!d) return null;
+  const c = d.sources[0]!;
+  const v = numbers(p)[c]!;
+  const at = cellName(p, c);
+  const has = v === 0 ? "touches no mines" : `already touches ${v} ${plural(v, "flag", "flags")}`;
+  return {
+    message: `the ${v} at ${at} ${has}, so ${outcome(d)}`,
+    nudge: `look at the ${v} at ${at}`,
+    focus: focusOf(d),
+    nudgeFocus: { cells: [], sources: [c] } satisfies MinesFocus,
+    actions: actionsOf(d),
+  };
+}
 
 export const mineCountTechnique: MinesTechnique = {
   id: "mines.count",
@@ -148,21 +156,23 @@ export const overlap: MinesTechnique = {
   puzzles: ["mines"],
   level: 4,
   description: "two nearby numbers that share some hidden neighbours. the shared cells can hold only so many of either number's mines, which settles the cells only one of them touches (the classic 1-1 and 1-2 patterns).",
-  find(p, s) {
-    const d = pairDeductions(p, s)[0];
-    if (!d) return null;
-    const nums = numbers(p);
-    const [a, b] = d.sources as [number, number];
-    return {
-      message: `comparing the ${nums[a]} at ${cellName(p, a)} with the ${nums[b]} at ${cellName(p, b)}: ${outcome(d)}`,
-      nudge: `compare the ${nums[a]} at ${cellName(p, a)} with a number next to it`,
-      focus: focusOf(d),
-      nudgeFocus: { cells: [], sources: [a] } satisfies MinesFocus,
-      actions: actionsOf(d),
-    };
-  },
+  find: (p, s) => overlapStep(p, pairDeductions(p, s)[0]),
+  findAt: (p, s, t) => overlapStep(p, pairDeductions(p, s).find((d) => touches(d, t))),
   practice: { params: { difficulty: "normal" } },
 };
+
+function overlapStep(p: MinesPuzzle, d: Deduction | undefined): Step<MinesAction> | null {
+  if (!d) return null;
+  const nums = numbers(p);
+  const [a, b] = d.sources as [number, number];
+  return {
+    message: `comparing the ${nums[a]} at ${cellName(p, a)} with the ${nums[b]} at ${cellName(p, b)}: ${outcome(d)}`,
+    nudge: `compare the ${nums[a]} at ${cellName(p, a)} with a number next to it`,
+    focus: focusOf(d),
+    nudgeFocus: { cells: [], sources: [a] } satisfies MinesFocus,
+    actions: actionsOf(d),
+  };
+}
 
 export const region: MinesTechnique = {
   id: "mines.region",

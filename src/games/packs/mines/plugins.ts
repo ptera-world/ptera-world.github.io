@@ -1,6 +1,6 @@
 import { defineSchema } from "../../core/schema";
 import type { Plugin } from "../../core/types";
-import { wrongFlagHint, type MinesAction, type MinesInteraction, type MinesPuzzle, type MinesState } from "./logic";
+import { chordCells, numbers, openIn, wrongFlagHint, type MinesAction, type MinesInteraction, type MinesPuzzle, type MinesState } from "./logic";
 import { provable } from "./techniques";
 import { DEDUCED_KEY } from "./view";
 
@@ -45,4 +45,26 @@ export const showDeducible: MinesPlugin = {
   },
 };
 
-export const minesPlugins = [checkFlags, showDeducible];
+/** Opens around every number that has all its flags, as part of the move that completed it (one undo step). */
+export const autoChord: MinesPlugin = {
+  id: "mines.auto-chord",
+  name: "open around finished numbers by themselves",
+  description: "once a number touches as many flags as it shows, its other hidden neighbours open without clicking it. a wrong flag sets off a mine this way, just like clicking the number would",
+  category: "assists",
+  appliesTo: ["mines"],
+  enabledByDefault: false,
+  setup({ session, owner }) {
+    session.hooks.apply.tap((next, { puzzle, note }) => {
+      if (next.dead >= 0) return next;
+      const nums = numbers(puzzle);
+      const cells = new Set<number>();
+      for (let c = 0; c < nums.length; c++) if (next.open[c] && nums[c]) for (const d of chordCells(puzzle, next, c)) cells.add(d);
+      if (!cells.size) return next;
+      const out = openIn(puzzle, next, [...cells]);
+      if (out !== next) note({ kind: "assist", owner }, next, out);
+      return out;
+    }, { owner });
+  },
+};
+
+export const minesPlugins = [checkFlags, showDeducible, autoChord];

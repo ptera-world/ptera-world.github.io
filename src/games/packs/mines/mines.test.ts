@@ -5,8 +5,8 @@ import { Session } from "../../core/session";
 import { mines, numbers, type MinesPuzzle } from "./logic";
 import { Registry } from "../../core/registry";
 import { TechniqueHost, applyStep, firstStep, isPartOfStep, rateByTechniques } from "../../core/techniques";
-import { checkFlags } from "./plugins";
-import { minesTechniques } from "./techniques";
+import { autoChord, checkFlags } from "./plugins";
+import { minesTechniques, satisfied } from "./techniques";
 import { obfuscateBitmap, sha1 } from "./sha1";
 import {
   MINE, UNKNOWN, countCompletions, deduceAt, deduceCount, deduceGlobal, deducePairs, neighbourTable,
@@ -225,4 +225,28 @@ test("formats round-trip; sgt ids decode masked and unmasked", async () => {
     expect(q.start).toBe(5 * q.w + 4);
     expect(mines.formats[0]!.serialize!(q).replace(/n\d+/, "")).toBe(id);
   }
+});
+
+test("auto-chord opens around a number in the same step as the flag that finishes it", () => {
+  // 1 mine in the corner; the 1s around it chord once it is flagged
+  const p: MinesPuzzle = { w: 4, h: 4, mines: [1, ...Array(15).fill(0)], start: null };
+  const s = new Session(mines, p, { kind: "imported" });
+  autoChord.setup!({ session: s, settings: {}, owner: "auto" });
+  s.dispatch({ type: "open", cells: [1] });
+  expect(s.state.open.reduce((a, b) => a + b, 0)).toBe(1);
+  s.dispatch({ type: "flag", cells: [0], on: true });
+  expect(s.state.open[2]).toBe(1);
+  expect(s.state.open[5]).toBe(1);
+  s.undo();
+  expect(s.state.open.reduce((a, b) => a + b, 0)).toBe(1);
+  expect(s.state.flags[0]).toBe(0);
+});
+
+test("satisfied number aims at the pointed number or a cell it decides", () => {
+  const p: MinesPuzzle = { w: 4, h: 4, mines: [1, ...Array(15).fill(0)], start: null };
+  const st = { ...mines.init(p), open: Object.assign(Array(16).fill(0), { 1: 1, 4: 1 }), flags: Object.assign(Array(16).fill(0), { 0: 1 }) };
+  const at = (t: unknown) => satisfied.findAt!(p, st, t)?.focus as { sources: number[] } | undefined;
+  expect(at(4)?.sources).toEqual([4]);
+  expect(at(1)?.sources).toEqual([1]);
+  expect(at(15)).toBeUndefined();
 });
