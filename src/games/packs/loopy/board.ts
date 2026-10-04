@@ -185,6 +185,7 @@ export interface Deduction {
   tier: number;
   edges: number[];
   value: EdgeState;
+  /** `faces` and `vertices` are where the reasoning looks. */
   explain(): { message: string; faces?: number[]; vertices?: number[] };
 }
 
@@ -204,120 +205,124 @@ export function prematureClosure(b: Board, v: number): number {
 
 const n = (c: number) => String(c);
 
-/**
- * Apply the single-constraint rules (one clue, one dot, loop closure) to a fixpoint.
- * With `first`, stop at and return the first deduction instead of applying it.
- */
-export function propagateEasy(b: Board, first = false): Deduction | null {
+/** The single-clue rule at face f: "clue-full" or "clue-needs-all", or null. Broken clues give null. */
+export function faceRule(b: Board, f: number): Deduction | null {
+  const g = b.g;
+  const c = b.clues[f]!;
+  if (c < 0 || b.fUnk[f] === 0) return null;
+  const unk = g.fe[f]!.filter((e) => b.e[e] === UNKNOWN);
+  if (b.fLine[f] === c) {
+    return {
+      technique: "clue-full", tier: 0, edges: unk, value: CROSS,
+      explain: () => ({
+        message: c === 0
+          ? "a 0 has no lines around it, so all its edges are crossed"
+          : `this ${n(c)} already has ${c === 1 ? "its line" : `all ${n(c)} lines`}, so its other edges are crossed`,
+        faces: [f],
+      }),
+    };
+  }
+  if (b.fLine[f]! + b.fUnk[f]! === c) {
+    return {
+      technique: "clue-needs-all", tier: 0, edges: unk, value: LINE,
+      explain: () => ({ message: `this ${n(c)} needs every edge it has left to be a line`, faces: [f] }),
+    };
+  }
+  return null;
+}
+
+/** The single-dot rule at v: "dot-full", "dot-continue" or "dot-dead-end", or null. Broken dots give null. */
+export function dotRule(b: Board, v: number): Deduction | null {
+  if (b.vUnk[v] === 0) return null;
+  const unk = b.g.ve[v]!.filter((e) => b.e[e] === UNKNOWN);
+  const lines = b.vLine[v]!;
+  if (lines === 2) {
+    return {
+      technique: "dot-full", tier: 0, edges: unk, value: CROSS,
+      explain: () => ({ message: "this dot already has two lines, so its other edges are crossed", vertices: [v] }),
+    };
+  }
+  if (lines === 1 && unk.length === 1) {
+    return {
+      technique: "dot-continue", tier: 0, edges: unk, value: LINE,
+      explain: () => ({ message: "the line coming into this dot has only one way to go", vertices: [v] }),
+    };
+  }
+  if (lines === 0 && unk.length === 1) {
+    return {
+      technique: "dot-dead-end", tier: 0, edges: unk, value: CROSS,
+      explain: () => ({ message: "only one edge is left at this dot, and a line can't stop here, so it's crossed", vertices: [v] }),
+    };
+  }
+  return null;
+}
+
+/** Apply the single-constraint rules (one clue, one dot, loop closure) to a fixpoint. */
+export function propagateEasy(b: Board): void {
   const g = b.g;
   const seenF = new Int32Array(g.nf).fill(-1);
   const seenV = new Int32Array(g.nv).fill(-1);
   let pass = 0;
-  const scanAll = first;
   for (;;) {
     pass++;
     const faces: number[] = [], verts: number[] = [];
-    if (scanAll) {
-      for (let f = 0; f < g.nf; f++) faces.push(f);
-      for (let v = 0; v < g.nv; v++) verts.push(v);
-    } else {
-      const q = b.queue;
-      b.queue = [];
-      for (const e of q) {
-        for (const f of [g.ef[2 * e]!, g.ef[2 * e + 1]!]) {
-          if (f >= 0 && seenF[f] !== pass) {
-            seenF[f] = pass;
-            faces.push(f);
-          }
+    const q = b.queue;
+    b.queue = [];
+    for (const e of q) {
+      for (const f of [g.ef[2 * e]!, g.ef[2 * e + 1]!]) {
+        if (f >= 0 && seenF[f] !== pass) {
+          seenF[f] = pass;
+          faces.push(f);
         }
-        for (const v of [g.ev[2 * e]!, g.ev[2 * e + 1]!]) {
-          if (seenV[v] !== pass) {
-            seenV[v] = pass;
-            verts.push(v);
-          }
+      }
+      for (const v of [g.ev[2 * e]!, g.ev[2 * e + 1]!]) {
+        if (seenV[v] !== pass) {
+          seenV[v] = pass;
+          verts.push(v);
         }
       }
     }
     for (const f of faces) {
-      if (b.conflict) return null;
-      const c = b.clues[f]!;
-      if (c < 0 || b.fUnk[f] === 0) continue;
-      const unk = g.fe[f]!.filter((e) => b.e[e] === UNKNOWN);
-      let d: Deduction | null = null;
-      if (b.fLine[f] === c) {
-        d = {
-          technique: "clue-full", tier: 0, edges: unk, value: CROSS,
-          explain: () => ({
-            message: c === 0
-              ? "a 0 has no lines around it, so all its edges are crossed"
-              : `this ${n(c)} already has ${c === 1 ? "its line" : `all ${n(c)} lines`}, so its other edges are crossed`,
-            faces: [f],
-          }),
-        };
-      } else if (b.fLine[f]! + b.fUnk[f]! === c) {
-        d = {
-          technique: "clue-needs-all", tier: 0, edges: unk, value: LINE,
-          explain: () => ({
-            message: `this ${n(c)} needs every edge it has left to be a line`,
-            faces: [f],
-          }),
-        };
-      }
-      if (d) {
-        if (first) return d;
-        for (const e of d.edges) b.set(e, d.value);
-      }
+      if (b.conflict) return;
+      const d = faceRule(b, f);
+      if (d) for (const e of d.edges) b.set(e, d.value);
     }
     for (const v of verts) {
-      if (b.conflict) return null;
-      if (b.vUnk[v] === 0) continue;
-      const unk = g.ve[v]!.filter((e) => b.e[e] === UNKNOWN);
-      const lines = b.vLine[v]!;
-      let d: Deduction | null = null;
-      if (lines === 2) {
-        d = {
-          technique: "dot-full", tier: 0, edges: unk, value: CROSS,
-          explain: () => ({ message: "this dot already has two lines, so its other edges are crossed", vertices: [v] }),
-        };
-      } else if (lines === 1 && unk.length === 1) {
-        d = {
-          technique: "dot-continue", tier: 0, edges: unk, value: LINE,
-          explain: () => ({ message: "the line coming into this dot has only one way to go", vertices: [v] }),
-        };
-      } else if (lines === 0 && unk.length === 1) {
-        d = {
-          technique: "dot-dead-end", tier: 0, edges: unk, value: CROSS,
-          explain: () => ({ message: "only one edge is left at this dot, and a line can't stop here, so it's crossed", vertices: [v] }),
-        };
-      }
-      if (d) {
-        if (first) return d;
-        for (const e of d.edges) b.set(e, d.value);
-      }
+      if (b.conflict) return;
+      const d = dotRule(b, v);
+      if (d) for (const e of d.edges) b.set(e, d.value);
     }
-    if (b.conflict) return null;
-    if (!scanAll && b.queue.length) continue;
+    if (b.conflict) return;
+    if (b.queue.length) continue;
     const loopD = loopDeduction(b);
     if (loopD) {
-      if (first) return loopD;
       for (const e of loopD.edges) b.set(e, loopD.value);
-      if (b.conflict) return null;
+      if (b.conflict) return;
       continue;
     }
-    if (scanAll || !b.queue.length) return null;
+    return;
   }
 }
 
 function loopDeduction(b: Board): Deduction | null {
+  return loopClosed(b) ?? loopEarly(b);
+}
+
+/** Every unknown edge, once a loop has closed. */
+function loopClosed(b: Board): Deduction | null {
   const g = b.g;
-  if (b.closed && b.unknown > 0) {
-    const unk: number[] = [];
-    for (let e = 0; e < g.ne; e++) if (b.e[e] === UNKNOWN) unk.push(e);
-    return {
-      technique: "loop-closed", tier: 0, edges: unk, value: CROSS,
-      explain: () => ({ message: "the loop is closed, so every other edge is crossed" }),
-    };
-  }
+  if (!b.closed || b.unknown === 0) return null;
+  const unk: number[] = [];
+  for (let e = 0; e < g.ne; e++) if (b.e[e] === UNKNOWN) unk.push(e);
+  return {
+    technique: "loop-closed", tier: 0, edges: unk, value: CROSS,
+    explain: () => ({ message: "the loop is closed, so every other edge is crossed" }),
+  };
+}
+
+/** First edge that would close a loop too early. */
+export function loopEarly(b: Board): Deduction | null {
+  const g = b.g;
   for (let v = 0; v < g.nv; v++) {
     const e = prematureClosure(b, v);
     if (e < 0) continue;

@@ -1,82 +1,12 @@
 import { defineSchema } from "../../core/schema";
-import type { Plugin } from "../../core/types";
-import { CROSS, LINE, UNKNOWN, check } from "./board";
-import { analysisOf, gridOf, type LoopyAction, type LoopyInteraction, type LoopyPuzzle, type LoopyState } from "./def";
-import { otherEnd, type Grid } from "./grid";
+import type { Hint, Plugin } from "../../core/types";
+import { LINE, UNKNOWN, check } from "./board";
+import { gridOf, wrongMarks, type LoopyAction, type LoopyFocus, type LoopyInteraction, type LoopyPuzzle, type LoopyState } from "./def";
+import type { Grid } from "./grid";
 import { KEYS } from "./keys";
 import { sidesOf } from "./solver";
 
 type LoopyPlugin = Plugin<LoopyPuzzle, LoopyState, LoopyAction, LoopyInteraction>;
-
-/** Edges that differ from prev; every edge on a settle pass (no action), so the whole board is checked. */
-function changed(prev: LoopyState, next: LoopyState, settling: boolean): number[] {
-  if (settling) return next.edges.map((_, e) => e);
-  const out: number[] = [];
-  for (let e = 0; e < next.edges.length; e++) if (prev.edges[e] !== next.edges[e]) out.push(e);
-  return out;
-}
-
-const facesOf = (g: Grid, es: number[]) => new Set(es.flatMap((e) => [g.ef[2 * e]!, g.ef[2 * e + 1]!]).filter((f) => f >= 0));
-
-const autoCrossClues: LoopyPlugin = {
-  id: "loopy.auto-cross-clues",
-  name: "auto-cross finished clues",
-  description: "when a clue gets all its lines, cross out its other edges",
-  category: "assists",
-  appliesTo: ["loopy"],
-  enabledByDefault: false,
-  setup({ session, owner }) {
-    session.hooks.apply.tap((next, { prev, action, puzzle, reduce }) => {
-      const g = gridOf(puzzle);
-      let state = next;
-      for (const f of facesOf(g, changed(prev, next, !action))) {
-        const c = puzzle.clues[f]!;
-        if (c < 0) continue;
-        const es = g.fe[f]!;
-        if (es.filter((e) => state.edges[e] === LINE).length !== c) continue;
-        const todo = es.filter((e) => state.edges[e] === UNKNOWN);
-        if (todo.length) state = reduce(state, { type: "set", edges: todo, value: CROSS });
-      }
-      return state;
-    }, { owner });
-  },
-};
-
-const autoCrossDots: LoopyPlugin = {
-  id: "loopy.auto-cross-dots",
-  name: "auto-cross full dots",
-  description: "when a dot has two lines, cross out its other edges",
-  category: "assists",
-  appliesTo: ["loopy"],
-  enabledByDefault: false,
-  settings: defineSchema({
-    deadEnds: { type: "bool", label: "also cross dead ends", default: false, description: "a dot with only one edge left can't be used, so cross it (this can chain along)" },
-  }),
-  setup({ session, settings, owner }) {
-    const deadEnds = settings.deadEnds as boolean;
-    session.hooks.apply.tap((next, { prev, action, puzzle, reduce }) => {
-      const g = gridOf(puzzle);
-      let state = next;
-      const queue: number[] = [];
-      for (const e of changed(prev, next, !action)) queue.push(g.ev[2 * e]!, g.ev[2 * e + 1]!);
-      const seen = new Set<number>();
-      while (queue.length) {
-        const v = queue.pop()!;
-        const es = g.ve[v]!;
-        const lines = es.filter((e) => state.edges[e] === LINE).length;
-        const free = es.filter((e) => state.edges[e] === UNKNOWN);
-        let todo: number[] = [];
-        if (lines === 2) todo = free;
-        else if (deadEnds && lines === 0 && free.length === 1 && !seen.has(v)) todo = free;
-        seen.add(v);
-        if (!todo.length) continue;
-        state = reduce(state, { type: "set", edges: todo, value: CROSS });
-        if (deadEnds) for (const e of todo) queue.push(otherEnd(g, e, v));
-      }
-      return state;
-    }, { owner });
-  },
-};
 
 const clueErrors: LoopyPlugin = {
   id: "loopy.clue-errors",
@@ -230,16 +160,39 @@ const mistakes: LoopyPlugin = {
   description: "mark lines and crosses that disagree with the solution",
   category: "checks",
   appliesTo: ["loopy"],
+  requires: ["solution"],
   enabledByDefault: false,
   setup({ session, owner }) {
     session.hooks.derive.tap((d, { puzzle, state }) => {
-      const a = analysisOf(puzzle);
-      if (a.count !== 1 || !a.solution) return d;
-      const sol = a.solution;
-      const wrong = state.edges.flatMap((m, e) => ((m === LINE && sol[e] !== LINE) || (m === CROSS && sol[e] === LINE) ? [e] : []));
-      return { ...d, [KEYS.wrong]: wrong };
+      const wrong = wrongMarks(puzzle, state);
+      return wrong ? { ...d, [KEYS.wrong]: wrong } : d;
     }, { owner });
   },
 };
 
-export const assists: LoopyPlugin[] = [autoCrossClues, autoCrossDots, clueErrors, dotErrors, loopStatus, insideOutside, dimDone, mistakes];
+/** Runs before technique hints (priority 100), so a hint never builds on a wrong mark. */
+const mistakeHints: LoopyPlugin = {
+  id: "loopy.mistake-hints",
+  name: "hints point out mistakes first",
+  description: "if a line or cross disagrees with the solution, the hint shows it before any deduction",
+  category: "checks",
+  appliesTo: ["loopy"],
+  requires: ["solution"],
+  enabledByDefault: true,
+  setup({ session, owner }) {
+    session.hooks.hint.tap(({ puzzle, state }): Hint<LoopyAction> | undefined => {
+      const wrong = wrongMarks(puzzle, state);
+      if (!wrong?.length) return undefined;
+      const e = wrong[0]!;
+      const what = state.edges[e] === LINE ? "this line shouldn't be here" : "this edge shouldn't be crossed";
+      const more = wrong.length - 1;
+      return {
+        message: more ? `${what} (and ${more} more mark${more > 1 ? "s are" : " is"} wrong)` : what,
+        focus: { edges: [e] } satisfies LoopyFocus,
+        actions: [{ type: "set", edges: [e], value: UNKNOWN }],
+      };
+    }, { owner, priority: 50 });
+  },
+};
+
+export const assists: LoopyPlugin[] = [clueErrors, dotErrors, loopStatus, insideOutside, dimDone, mistakes, mistakeHints];

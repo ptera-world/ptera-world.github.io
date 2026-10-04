@@ -1,4 +1,4 @@
-import { Board, CROSS, LINE, UNKNOWN, boardFrom, check, propagateEasy, type Deduction, type EdgeState } from "./board";
+import { Board, CROSS, LINE, UNKNOWN, check, propagateEasy, type Deduction, type EdgeState } from "./board";
 import type { Grid } from "./grid";
 
 export const TIERS = ["easy", "normal", "tricky", "hard"] as const;
@@ -16,11 +16,13 @@ interface Window {
 }
 
 /**
- * A solving technique beyond the single-constraint rules. `run` either applies everything it
- * can find (returning whether anything changed) or, with `first`, returns its first deduction
- * without applying it. Deductions must be sound: true in every solution of the current marks.
+ * One step of the generator's and rater's solving engine, beyond the single-constraint rules.
+ * `run` either applies everything it can find (returning whether anything changed) or, with
+ * `first`, returns its first deduction without applying it. Deductions must be sound: true in
+ * every solution of the current marks. Hints and auto-apply use the techniques in
+ * techniques.ts, which find the same deductions one kind at a time.
  */
-export interface Technique {
+export interface Pass {
   id: string;
   tier: number;
   run(s: Solver, first: boolean): Deduction | boolean | null;
@@ -326,7 +328,7 @@ function windowDeductions(b: Board, w: Window, tier: number): Deduction[] | null
   return out;
 }
 
-function windowTechnique(tier: number): Technique {
+function windowPass(tier: number): Pass {
   return {
     id: tier === 1 ? "windows-single" : "windows-pair",
     tier,
@@ -400,115 +402,130 @@ export function sidesOf(g: Grid, edges: ArrayLike<number>): Sides {
   return s;
 }
 
-const parity: Technique = {
+/** Unknown edges whose two sides are already related. With `first`, returns the first without applying it. */
+export function parityDirect(b: Board, first: boolean): Deduction | boolean | null {
+  const g = b.g, out = g.nf;
+  const sides = sidesOf(g, b.e);
+  const node = (f: number) => (f < 0 ? out : f);
+  let progress = false;
+  for (let e = 0; e < g.ne; e++) {
+    if (b.e[e] !== UNKNOWN) continue;
+    const fa = g.ef[2 * e]!, fb = g.ef[2 * e + 1]!;
+    const [ra, pa] = sides.find(node(fa)), [rb, pb] = sides.find(node(fb));
+    if (ra !== rb) continue;
+    const value: EdgeState = pa !== pb ? LINE : CROSS;
+    const d: Deduction = {
+      technique: "inside-outside", tier: 2, edges: [e], value,
+      explain: () => ({
+        message: value === LINE
+          ? "following the lines and crosses, the cells on either side of this edge end up on opposite sides of the loop, so it's a line"
+          : "following the lines and crosses, the cells on either side of this edge end up on the same side of the loop, so it's crossed",
+        faces: [fa, fb].filter((f) => f >= 0),
+      }),
+    };
+    if (first) return d;
+    b.set(e, value);
+    progress = true;
+  }
+  return first ? null : progress;
+}
+
+/**
+ * Per clue and per dot: enumerate the unknown side of each group of related cells. Applies (or
+ * with `first`, returns) the first deduction found.
+ */
+export function parityGroup(b: Board, first: boolean): Deduction | boolean | null {
+  const g = b.g, out = g.nf;
+  const sides = sidesOf(g, b.e);
+  const node = (f: number) => (f < 0 ? out : f);
+  const [outRoot, outPar] = sides.find(out);
+  const groups = (es: number[]) => {
+    const roots: number[] = [];
+    const terms = es.map((e) => {
+      const fa = g.ef[2 * e]!, fb = g.ef[2 * e + 1]!;
+      const [ra, pa] = sides.find(node(fa)), [rb, pb] = sides.find(node(fb));
+      const ia = ra === outRoot ? -1 : (roots.includes(ra) ? roots.indexOf(ra) : roots.push(ra) - 1);
+      const ib = rb === outRoot ? -1 : (roots.includes(rb) ? roots.indexOf(rb) : roots.push(rb) - 1);
+      // line = side(a) xor side(b); side(x) = bit(root) xor par(x), outside's root bit is fixed
+      const k = pa ^ pb ^ (ia < 0 ? outPar : 0) ^ (ib < 0 ? outPar : 0);
+      return { ia, ib, k };
+    });
+    return { roots, terms };
+  };
+  const consider = (es: number[], base: number, isFace: boolean, label: () => { message: string; faces?: number[]; vertices?: number[] }): Deduction | null => {
+    if (es.length < 2) return null;
+    const { roots, terms } = groups(es);
+    if (roots.length > 10 || roots.length >= es.length) return null;
+    const seen = new Uint8Array(es.length);
+    let any = false;
+    for (let m = 0; m < 1 << roots.length; m++) {
+      let lines = 0;
+      const vals = terms.map((t) => {
+        const v = t.k ^ (t.ia >= 0 ? (m >> t.ia) & 1 : 0) ^ (t.ib >= 0 ? (m >> t.ib) & 1 : 0);
+        lines += v;
+        return v;
+      });
+      const total = base + lines;
+      if (isFace ? total !== 0 : total !== 0 && total !== 2) continue;
+      any = true;
+      vals.forEach((v, i) => { seen[i]! |= v ? 1 : 2; });
+    }
+    if (!any) {
+      b.fail({ why: "the inside/outside shading can't work here", ...label() });
+      return null;
+    }
+    for (const value of [LINE, CROSS] as const) {
+      const bit = value === LINE ? 1 : 2;
+      const edges = es.filter((_, i) => seen[i] === bit);
+      if (edges.length) {
+        return {
+          technique: "inside-outside-group", tier: 2, edges, value,
+          explain: () => {
+            const l = label();
+            return { ...l, message: `${l.message} ${value === LINE ? (edges.length > 1 ? "these edges are lines" : "this edge is a line") : (edges.length > 1 ? "these edges are crossed" : "this edge is crossed")}` };
+          },
+        };
+      }
+    }
+    return null;
+  };
+  for (let f = 0; f < g.nf; f++) {
+    const c = b.clues[f]!;
+    if (c < 0 || !b.fUnk[f]) continue;
+    const es = g.fe[f]!.filter((e) => b.e[e] === UNKNOWN);
+    const d = consider(es, b.fLine[f]! - c, true, () => ({
+      message: `shade the cells around this ${c} as inside or outside the loop: the neighbours already tied together on one side mean`,
+      faces: [f],
+    }));
+    if (b.conflict) return first ? null : false;
+    if (!d) continue;
+    if (first) return d;
+    for (const e of d.edges) b.set(e, d.value);
+    return true;
+  }
+  for (let v = 0; v < g.nv; v++) {
+    if (!b.vUnk[v]) continue;
+    const es = g.ve[v]!.filter((e) => b.e[e] === UNKNOWN);
+    const d = consider(es, b.vLine[v]!, false, () => ({
+      message: "shade the cells around this dot as inside or outside the loop: the cells already tied together mean",
+      vertices: [v],
+    }));
+    if (b.conflict) return first ? null : false;
+    if (!d) continue;
+    if (first) return d;
+    for (const e of d.edges) b.set(e, d.value);
+    return true;
+  }
+  return first ? null : false;
+}
+
+const parity: Pass = {
   id: "inside-outside",
   tier: 2,
   run(s, first) {
-    const b = s.b, g = b.g, out = g.nf;
-    const sides = sidesOf(g, b.e);
-    const node = (f: number) => (f < 0 ? out : f);
-    const [outRoot, outPar] = sides.find(out);
-    let progress = false;
-    // direct: both sides of an unknown edge already related
-    for (let e = 0; e < g.ne; e++) {
-      if (b.e[e] !== UNKNOWN) continue;
-      const fa = g.ef[2 * e]!, fb = g.ef[2 * e + 1]!;
-      const [ra, pa] = sides.find(node(fa)), [rb, pb] = sides.find(node(fb));
-      if (ra !== rb) continue;
-      const value: EdgeState = pa !== pb ? LINE : CROSS;
-      const d: Deduction = {
-        technique: "inside-outside", tier: 2, edges: [e], value,
-        explain: () => ({
-          message: value === LINE
-            ? "following the lines and crosses, the cells on either side of this edge end up on opposite sides of the loop, so it's a line"
-            : "following the lines and crosses, the cells on either side of this edge end up on the same side of the loop, so it's crossed",
-          faces: [fa, fb].filter((f) => f >= 0),
-        }),
-      };
-      if (first) return d;
-      b.set(e, value);
-      progress = true;
-    }
-    if (progress) return true;
-    // per clue and per dot: enumerate the unknown side of each group of related cells
-    const groups = (es: number[]) => {
-      const roots: number[] = [];
-      const terms = es.map((e) => {
-        const fa = g.ef[2 * e]!, fb = g.ef[2 * e + 1]!;
-        const [ra, pa] = sides.find(node(fa)), [rb, pb] = sides.find(node(fb));
-        const ia = ra === outRoot ? -1 : (roots.includes(ra) ? roots.indexOf(ra) : roots.push(ra) - 1);
-        const ib = rb === outRoot ? -1 : (roots.includes(rb) ? roots.indexOf(rb) : roots.push(rb) - 1);
-        // line = side(a) xor side(b); side(x) = bit(root) xor par(x), outside's root bit is fixed
-        const k = pa ^ pb ^ (ia < 0 ? outPar : 0) ^ (ib < 0 ? outPar : 0);
-        return { ia, ib, k };
-      });
-      return { roots, terms };
-    };
-    const consider = (es: number[], base: number, isFace: boolean, label: () => { message: string; faces?: number[]; vertices?: number[] }): Deduction | null => {
-      if (es.length < 2) return null;
-      const { roots, terms } = groups(es);
-      if (roots.length > 10 || roots.length >= es.length) return null;
-      const seen = new Uint8Array(es.length);
-      let any = false;
-      for (let m = 0; m < 1 << roots.length; m++) {
-        let lines = 0;
-        const vals = terms.map((t) => {
-          const v = t.k ^ (t.ia >= 0 ? (m >> t.ia) & 1 : 0) ^ (t.ib >= 0 ? (m >> t.ib) & 1 : 0);
-          lines += v;
-          return v;
-        });
-        const total = base + lines;
-        if (isFace ? total !== 0 : total !== 0 && total !== 2) continue;
-        any = true;
-        vals.forEach((v, i) => { seen[i]! |= v ? 1 : 2; });
-      }
-      if (!any) {
-        b.fail({ why: "the inside/outside shading can't work here", ...label() });
-        return null;
-      }
-      for (const value of [LINE, CROSS] as const) {
-        const bit = value === LINE ? 1 : 2;
-        const edges = es.filter((_, i) => seen[i] === bit);
-        if (edges.length) {
-          return {
-            technique: "inside-outside-group", tier: 2, edges, value,
-            explain: () => {
-              const l = label();
-              return { ...l, message: `${l.message} ${value === LINE ? (edges.length > 1 ? "these edges are lines" : "this edge is a line") : (edges.length > 1 ? "these edges are crossed" : "this edge is crossed")}` };
-            },
-          };
-        }
-      }
-      return null;
-    };
-    for (let f = 0; f < g.nf; f++) {
-      const c = b.clues[f]!;
-      if (c < 0 || !b.fUnk[f]) continue;
-      const es = g.fe[f]!.filter((e) => b.e[e] === UNKNOWN);
-      const d = consider(es, b.fLine[f]! - c, true, () => ({
-        message: `shade the cells around this ${c} as inside or outside the loop: the neighbours already tied together on one side mean`,
-        faces: [f],
-      }));
-      if (b.conflict) return progress;
-      if (!d) continue;
-      if (first) return d;
-      for (const e of d.edges) b.set(e, d.value);
-      return true;
-    }
-    for (let v = 0; v < g.nv; v++) {
-      if (!b.vUnk[v]) continue;
-      const es = g.ve[v]!.filter((e) => b.e[e] === UNKNOWN);
-      const d = consider(es, b.vLine[v]!, false, () => ({
-        message: "shade the cells around this dot as inside or outside the loop: the cells already tied together mean",
-        vertices: [v],
-      }));
-      if (b.conflict) return progress;
-      if (!d) continue;
-      if (first) return d;
-      for (const e of d.edges) b.set(e, d.value);
-      return true;
-    }
-    return first ? null : progress;
+    const direct = parityDirect(s.b, first);
+    if (direct || s.b.conflict) return direct;
+    return parityGroup(s.b, first);
   },
 };
 
@@ -517,7 +534,7 @@ const parity: Technique = {
 /** Tier whose techniques a trial may use to reach a contradiction. */
 const TRIAL_DEPTH = 1;
 
-const trial: Technique = {
+const trial: Pass = {
   id: "trial",
   tier: 3,
   run(s, first) {
@@ -556,8 +573,8 @@ const trial: Technique = {
   },
 };
 
-/** Techniques beyond the single-constraint rules, cheapest first. Mods may add to this list. */
-export const techniques: Technique[] = [windowTechnique(1), parity, windowTechnique(2), trial];
+/** Engine passes beyond the single-constraint rules, cheapest first. Mods may add to this list (it changes generation and rating). */
+export const passes: Pass[] = [windowPass(1), parity, windowPass(2), trial];
 
 /** Run every technique up to maxTier until stuck, finished or contradicted. */
 function run(s: Solver, maxTier: number): void {
@@ -566,7 +583,7 @@ function run(s: Solver, maxTier: number): void {
     propagateEasy(b);
     if (b.conflict || b.done) return;
     let progressed = false;
-    for (const t of techniques) {
+    for (const t of passes) {
       if (t.tier > maxTier) continue;
       const r = t.run(s, false);
       if (b.conflict) return;
@@ -598,22 +615,6 @@ export function solveLogic(g: Grid, clues: Int8Array, maxTier: number, start?: B
   let status: Status = b.conflict ? "contradiction" : b.done ? "solved" : "stuck";
   if (status === "solved" && b.lines === 0) status = "contradiction";
   return { status, tier: s.maxTierUsed, used: s.used, board: b };
-}
-
-/** The easiest single deduction from these marks, or null. Marks must not contradict the clues. */
-export function nextDeduction(g: Grid, clues: Int8Array, edges: ArrayLike<number>, maxTier = 3): Deduction | null {
-  const b = boardFrom(g, clues, edges);
-  if (b.conflict) return null;
-  const d = propagateEasy(b, true);
-  if (d || b.conflict) return d;
-  const s = new Solver(b);
-  for (const t of techniques) {
-    if (t.tier > maxTier) continue;
-    const r = t.run(s, true);
-    if (b.conflict) return null;
-    if (r && typeof r === "object") return r;
-  }
-  return null;
 }
 
 /**
@@ -677,4 +678,33 @@ export function analyse(g: Grid, clues: Int8Array): Analysis {
   const s = searchSolutions(g, clues, 2);
   const count = s.solutions.length >= 2 ? 2 : !s.exhausted ? -1 : s.solutions.length;
   return { solution: s.solutions[0] ?? null, count, tier: -1, used: r.used };
+}
+
+// --- one kind at a time, for techniques ---
+
+export type WindowKind = "face" | "dot" | "pair";
+
+/** First deduction from a window of this kind, or null. Never changes `b` except to record a conflict. */
+export function findWindow(b: Board, kind: WindowKind): Deduction | null {
+  const tier = kind === "pair" ? 2 : 1;
+  const s = new Solver(b);
+  for (const w of s.tier(tier).ws) {
+    if (w.kind !== kind) continue;
+    const ds = windowDeductions(b, w, tier);
+    if (b.conflict) return null;
+    if (ds?.length) return ds[0]!;
+  }
+  return null;
+}
+
+/** First edge whose opposite leads to a contradiction using the normal-tier passes, or null. */
+export function findTrial(b: Board): Deduction | null {
+  const r = trial.run(new Solver(b), true);
+  return r && typeof r === "object" && !b.conflict ? r : null;
+}
+
+/** First deduction of one inside/outside kind, or null. */
+export function findParity(b: Board, kind: "direct" | "group"): Deduction | null {
+  const r = kind === "direct" ? parityDirect(b, true) : parityGroup(b, true);
+  return r && typeof r === "object" && !b.conflict ? r : null;
 }

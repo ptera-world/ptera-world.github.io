@@ -5,7 +5,7 @@ import { CROSS, LINE, UNKNOWN, check, type EdgeState } from "./board";
 import { formats, type LoopyPuzzle } from "./formats";
 import { generateClues } from "./generator";
 import { getGrid, getTiling, listTilings, type Grid } from "./grid";
-import { TIERS, analyse, nextDeduction, type Analysis } from "./solver";
+import { TIERS, analyse, type Analysis } from "./solver";
 
 export type { LoopyPuzzle };
 
@@ -21,7 +21,7 @@ export interface LoopyInteraction {
   cursor: number;
 }
 
-/** What hint focus and assist annotations point at. */
+/** What hint focus and assist annotations point at. Also what view.locate() accepts. */
 export interface LoopyFocus {
   faces?: number[];
   vertices?: number[];
@@ -91,40 +91,25 @@ async function generate(v: LoopyParams, rng: Rng, ctx: GenerateContext): Promise
   return { tiling: t.id, w, h, clues: [...clues] };
 }
 
-function hint(p: LoopyPuzzle, s: LoopyState): Hint<LoopyAction> | null {
-  const g = gridOf(p);
+/** Marks that disagree with the unique solution, or null if there isn't one. */
+export function wrongMarks(p: LoopyPuzzle, s: LoopyState): number[] | null {
   const a = analysisOf(p);
-  const sol = a.count === 1 ? a.solution : null;
-  if (sol) {
-    const wrong = s.edges.flatMap((m, e) => ((m === LINE && sol[e] !== LINE) || (m === CROSS && sol[e] === LINE) ? [e] : []));
-    if (wrong.length) {
-      const e = wrong[0]!;
-      const what = s.edges[e] === LINE ? "this line shouldn't be here" : "this edge shouldn't be crossed";
+  if (a.count !== 1 || !a.solution) return null;
+  const sol = a.solution;
+  return s.edges.flatMap((m, e) => ((m === LINE && sol[e] !== LINE) || (m === CROSS && sol[e] === LINE) ? [e] : []));
+}
+
+/** Fallback when no hint-enabled technique applies: an edge of the solution. */
+function hint(p: LoopyPuzzle, s: LoopyState): Hint<LoopyAction> | null {
+  const sol = analysisOf(p).count === 1 ? analysisOf(p).solution : null;
+  if (!sol) return null;
+  for (let e = 0; e < s.edges.length; e++) {
+    if (s.edges[e] === UNKNOWN && sol[e] === LINE) {
       return {
-        message: wrong.length > 1 ? `${what} (and ${wrong.length - 1} more mark${wrong.length > 2 ? "s are" : " is"} wrong)` : what,
+        message: "none of your hint techniques apply here, but this edge is a line",
         focus: { edges: [e] } satisfies LoopyFocus,
-        actions: [{ type: "set", edges: [e], value: UNKNOWN }],
+        actions: [{ type: "set", edges: [e], value: LINE }],
       };
-    }
-  }
-  const d = nextDeduction(g, cluesOf(p), s.edges);
-  if (d) {
-    const x = d.explain();
-    return {
-      message: x.message,
-      focus: { faces: x.faces, vertices: x.vertices, edges: d.edges } satisfies LoopyFocus,
-      actions: [{ type: "set", edges: d.edges, value: d.value }],
-    };
-  }
-  if (sol) {
-    for (let e = 0; e < g.ne; e++) {
-      if (s.edges[e] === UNKNOWN && sol[e] === LINE) {
-        return {
-          message: "no step of logic found from here, but this edge is a line",
-          focus: { edges: [e] } satisfies LoopyFocus,
-          actions: [{ type: "set", edges: [e], value: LINE }],
-        };
-      }
     }
   }
   return null;
@@ -146,7 +131,9 @@ function centreEdge(g: Grid): number {
 
 export const loopy: PuzzleDef<LoopyPuzzle, LoopyState, LoopyAction, LoopyInteraction, typeof params> = {
   id: "loopy",
-  name: "loopy",
+  name: "slitherlink",
+  aliases: ["loopy", "fences", "loop the loop", "takegaki"],
+  tags: ["logic", "loop", "edges", "nikoli"],
   description: "draw one closed loop along the grid lines. each number says how many of its cell's edges the loop uses.",
   generatorVersion: 1,
   params,
@@ -180,6 +167,13 @@ export const loopy: PuzzleDef<LoopyPuzzle, LoopyState, LoopyAction, LoopyInterac
     return sol ? { edges: Array.from(sol, (m) => (m === LINE ? LINE : CROSS)) } : null;
   },
   hint,
+  isRetraction: (a) => a.value === UNKNOWN,
+  rules: () => [
+    "draw a single loop along the grid lines. it never branches or crosses itself, so every dot has two lines or none.",
+    "a number says how many of the edges around its cell are part of the loop. cells without a number can have any count.",
+    "crosses are your own notes for edges that aren't part of the loop.",
+  ],
+  features: (p) => [`tiling:${p.tiling}`, ...(analysisOf(p).count === 1 ? ["solution"] : [])],
   rate(p) {
     const a = analysisOf(p);
     if (a.count === 0) return { label: "no solution", score: 100 };
