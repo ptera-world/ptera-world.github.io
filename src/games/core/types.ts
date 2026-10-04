@@ -20,8 +20,8 @@ export interface PuzzleRef {
 }
 
 /**
- * Feature names, declared by the packs that provide or require them:
- * `declare module "…/core/types" { interface FeatureNames { boxes: true } }`.
+ * Feature names, derived from the tests that provide them (see `featureTests`):
+ * `declare module "…/core/types" { interface FeatureNames extends Ids<typeof FEATURES> {} }`.
  */
 export interface FeatureNames {}
 export type Feature = keyof FeatureNames & string;
@@ -110,6 +110,13 @@ export interface Technique<Pz = any, S = any, A extends Action = any> {
 }
 
 /**
+ * What `when` conditions see, declared by whatever provides the keys (the frontend, a view):
+ * `declare module "…/core/types" { interface CommandContext extends Partial<MinesContext> {} }`,
+ * where the provider returns exactly a `MinesContext`.
+ */
+export interface CommandContext {}
+
+/**
  * Anything the player can do. One definition yields its keybinding (rebindable), its command
  * palette entry, context-menu entry, cheatsheet line and any button showing it.
  */
@@ -128,7 +135,7 @@ export interface CommandDef {
   /** Left out of the palette and cheatsheet (still bindable). */
   hidden?: boolean;
   /** Command is available only when this returns true for the shell context. */
-  when?(ctx: Record<string, unknown>): boolean;
+  when?(ctx: CommandContext): boolean;
   /** For toggles: current on/off, shown as a checkmark / pressed state. */
   checked?(): boolean;
   /** Typing into an input does not block this command. */
@@ -137,7 +144,7 @@ export interface CommandDef {
   danger?: boolean | (() => boolean);
   /** Question to confirm first, or null to skip. Asked however the command is triggered (subject to the player's confirmation setting). */
   confirm?(): string | null;
-  run(ctx: Record<string, unknown>, event?: Event): unknown;
+  run(ctx: CommandContext, event?: Event): unknown;
 }
 
 /** "overlay" sits over the board (results, tutorials); its size never affects layout. */
@@ -313,8 +320,8 @@ export interface ViewHandle {
    * hold is otherwise the menu), and tells players to use the commands list instead.
    */
   gestures?: { secondaryClick?: boolean; hold?: boolean };
-  /** Extra keys merged into the shell context for `when` conditions. */
-  context?(): Record<string, unknown>;
+  /** Extra keys merged into the command context for `when` conditions. */
+  context?(): Partial<CommandContext>;
   /** Screen rects (client coordinates) of the elements a focus refers to. Lets game-agnostic effects target the board. */
   locate?(focus: unknown): DOMRect[];
   /** Screen rects of the elements that differ between two states. */

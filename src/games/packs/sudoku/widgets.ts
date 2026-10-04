@@ -1,5 +1,6 @@
 import { defineSchema } from "../../core/schema";
 import { defineWidgets } from "../../core/define";
+import { digitsUpTo } from "../../lib/digits";
 import type { WidgetContext } from "../../core/types";
 import { h, style } from "../../core/dom";
 import { modelOf } from "./engine/model";
@@ -79,8 +80,8 @@ const pad = widget({
     const wide = slot === "top" || slot === "bottom";
     const modeButtons = MODES.map((m) => h("button", { "aria-pressed": "false", onpointerdown: keep, onclick: () => run(`sudoku.mode-${m.id}`) }, m.label));
     // n buttons in every mode (color mode offers the first n colors), so switching modes never resizes the pad
-    const digitButtons = Array.from({ length: n }, (_, i) =>
-      h("button", { "aria-label": String(i + 1), onpointerdown: keep, onclick: () => run(session.interaction.mode === "color" ? `sudoku.colour-${i + 1}` : `sudoku.d${i + 1}`) }));
+    const digitButtons = digitsUpTo(n).map((d) =>
+      h("button", { "aria-label": String(d), onpointerdown: keep, onclick: () => run(session.interaction.mode === "color" ? `sudoku.colour-${d}` : `sudoku.d${d}`) }));
     const grid = h("div", { class: "sdk-digits", style: `--cols: ${wide ? n : n <= 4 ? 2 : 3}; --n: ${n}` }, digitButtons);
     el.append(h("div", { class: `sdk-pad${wide ? " row" : ""}` },
       h("div", { class: "sdk-modes", role: "group", "aria-label": "input mode" }, modeButtons),
@@ -123,7 +124,7 @@ const highlighter = widget({
     const { session, run } = ctx;
     const n = session.puzzle.n;
     const follow = h("button", { title: "follow the selected cell", onpointerdown: keep, onclick: () => run("sudoku.highlight-off") }, "auto");
-    const buttons = Array.from({ length: n }, (_, i) => h("button", { onpointerdown: keep, onclick: () => run(`sudoku.highlight-${i + 1}`) }, String(i + 1)));
+    const buttons = digitsUpTo(n).map((d) => h("button", { onpointerdown: keep, onclick: () => run(`sudoku.highlight-${d}`) }, String(d)));
     el.append(h("div", { class: "sdk-hl", role: "group", "aria-label": "highlight digit" }, h("span", { class: "label" }, "highlight"), follow, buttons));
     const render = () => {
       const hl = session.interaction.highlight ?? 0;

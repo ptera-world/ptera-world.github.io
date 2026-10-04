@@ -1,5 +1,5 @@
 import type { LoadedPack, ModEntry, Track } from "../../core/mods";
-import { COLOR_TOKENS, checkForUpdate, firstStep, hintFrom, labelSides, listMods, loadPace, loadPluginConfig, packRecord, rateByTechniques, saveMods, selectPackVersion, setLabelSides, setPackEnabled, setTheme, setTokenOverride, setTrack, themeChoice, tokenOverrides } from "./engine";
+import { COLOR_TOKENS, SYSTEM_THEME, checkForUpdate, firstStep, hintFrom, labelSides, listMods, loadPace, loadPluginConfig, packRecord, rateByTechniques, saveMods, selectPackVersion, setLabelSides, setPackEnabled, setTheme, setTokenOverride, setTrack, themeChoice, tokenOverrides } from "./engine";
 import { randomSeed } from "../../core/rng";
 import { defineSchema, resolve } from "../../core/schema";
 import type { Source, TimelineEntry } from "../../core/session";
@@ -266,7 +266,7 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
       const theme = section("theme");
       theme.append(row("theme colors look light dark system", h("div", { class: "w-inline" }, h("span", null, "theme"),
         h("select", { onchange: (e: Event) => setTheme(shell.registry, (e.target as HTMLSelectElement).value) },
-          h("option", { value: "system", selected: themeChoice() === "system" }, "follow system"),
+          h("option", { value: SYSTEM_THEME, selected: themeChoice() === SYSTEM_THEME }, "follow system"),
           shell.registry.listThemes().map((th) => h("option", { value: th.id, selected: themeChoice() === th.id }, th.name))))));
       const overrides = tokenOverrides();
       for (const tok of COLOR_TOKENS) {

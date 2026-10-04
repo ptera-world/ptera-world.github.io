@@ -1,4 +1,4 @@
-import { bindCommands, type BindingSchema } from "../../core/commands";
+import { bindCommands, bindingsOver, handlersOver, type Ids } from "../../core/commands";
 import { h, s, style } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
 import type { View, WidgetDef } from "../../core/types";
@@ -33,7 +33,11 @@ const settings = defineSchema({
 });
 
 const KEYS: string[][] = [["ArrowUp", "w", "8"], ["e", "9"], ["ArrowRight", "d", "6"], ["c", "3"], ["ArrowDown", "s", "2"], ["z", "1"], ["ArrowLeft", "a", "4"], ["q", "7"]];
-const BINDINGS: BindingSchema = Object.fromEntries(DIR_NAMES.map((name, d) => [`inertia.${name}`, { label: `roll ${name}`, category: "inertia", keys: KEYS[d]! }]));
+const BINDINGS = bindingsOver("inertia.", DIR_NAMES, (name) => ({ label: `roll ${name}`, category: "inertia", keys: KEYS[DIR_NAMES.indexOf(name)]! }));
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof BINDINGS> {}
+}
 
 const swatch = (body: string) => `<svg viewBox="-0.5 -0.5 11 11"><rect width="10" height="10" fill="var(--cell)" stroke="var(--border)" stroke-width="0.2"/>${body}</svg>`;
 const GEM_SVG = `<path d="M5 2.2L7.8 5L5 7.8L2.2 5Z" fill="var(--gem, #2bb3c0)" stroke="color-mix(in srgb, var(--gem, #2bb3c0) 60%, var(--text))" stroke-width="0.4"/>`;
@@ -163,7 +167,7 @@ export const inertiaView: View<InertiaPuzzle, InertiaState, InertiaAction, Inert
     return {
       aspect: (p.w * SIZE + 1) / (p.h * SIZE + 1),
       cells: { cols: p.w, rows: p.h },
-      commands: bindCommands(BINDINGS, Object.fromEntries(DIR_NAMES.map((name, d) => [`inertia.${name}`, () => session.dispatch({ type: "move", dir: d })]))),
+      commands: bindCommands(BINDINGS, handlersOver("inertia.", DIR_NAMES, (name) => () => session.dispatch({ type: "move", dir: DIR_NAMES.indexOf(name) }))),
       preview: (state) => {
         previewing = state as InertiaState | null;
         render();

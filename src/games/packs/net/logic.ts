@@ -1,3 +1,5 @@
+import { featureTests } from "../../core/define";
+import type { Ids } from "../../core/commands";
 import type { Hint, PuzzleDef, Rating } from "../../core/types";
 import { formats } from "./formats";
 import { generate, params, tierNeeded } from "./generate";
@@ -134,6 +136,13 @@ function rate(p: NetPuzzle): Rating {
   return { label: TIER_LABEL[a.tier as 1 | 2 | 3], score };
 }
 
+const FEATURES = {
+  /** The board's edges wrap round. */
+  wrap: (p: NetPuzzle) => p.wrap,
+  /** The board has walls between some tiles. */
+  walls: (p: NetPuzzle) => p.barriers.some((b) => b),
+};
+
 export const net: PuzzleDef<NetPuzzle, NetState, NetAction, NetInteraction, typeof params> = {
   id: "net",
   name: "pipes",
@@ -183,16 +192,11 @@ export const net: PuzzleDef<NetPuzzle, NetState, NetAction, NetInteraction, type
     "the small filled square marks the source: pipes joined to it light up, so you can see what's connected so far. it doesn't change the answer.",
     "lock a tile once you're sure of it, so it can't be turned by accident. locked tiles are shaded.",
   ],
-  features: (p) => [...(p.wrap ? ["wrap" as const] : []), ...(p.barriers.some((b) => b) ? ["walls" as const] : [])],
+  features: featureTests(FEATURES),
   rate,
   describe: (p) => `${p.w}×${p.h}${p.wrap ? " wrapping" : ""}${p.barriers.some((b) => b) ? " with walls" : ""}`,
 };
 
 declare module "../../core/types" {
-  interface FeatureNames {
-    /** The board's edges wrap round. */
-    wrap: true;
-    /** The board has walls between some tiles. */
-    walls: true;
-  }
+  interface FeatureNames extends Ids<typeof FEATURES> {}
 }

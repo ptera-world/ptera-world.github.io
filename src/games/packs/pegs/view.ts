@@ -43,6 +43,15 @@ const swatch = (body: string) => `<svg viewBox="-0.5 -0.5 11 11"><rect width="10
 const pegSvg = (fill = "var(--accent)") => `<circle cx="5" cy="5" r="3.4" fill="${fill}" stroke="color-mix(in srgb, var(--accent) 60%, var(--text))" stroke-width="0.5"/>`;
 const holeSvg = `<circle cx="5" cy="5" r="1.6" fill="color-mix(in srgb, var(--text) 18%, var(--surface))"/>`;
 
+/** The keys this view adds to the command context. */
+export interface PegsContext {
+  pegsHolding: boolean;
+}
+
+declare module "../../core/types" {
+  interface CommandContext extends Partial<PegsContext> {}
+}
+
 export const pegsView: View<PegsPuzzle, PegsState, PegsAction, PegsInteraction> = {
   id: "pegs.svg",
   name: "board",
@@ -197,7 +206,7 @@ export const pegsView: View<PegsPuzzle, PegsState, PegsAction, PegsInteraction> 
         "pegs.select": () => choose(session.interaction.cursor),
         "pegs.drop": () => setHeld(-1),
       }),
-      context: () => ({ pegsHolding: session.interaction.held >= 0 }),
+      context: (): PegsContext => ({ pegsHolding: session.interaction.held >= 0 }),
       preview: (state) => {
         previewing = state as PegsState | null;
         render();

@@ -13,7 +13,7 @@ import {
   type KeybindSettings,
 } from "keybinds";
 import { KEYBINDS_CSS } from "./keybinds-theme";
-import type { CommandDef } from "../../core/types";
+import type { CommandContext, CommandDef } from "../../core/types";
 import { bindCommands, type BindingSchema } from "../../core/commands";
 import { confirmDialog } from "./dialog";
 import { style } from "../../core/dom";
@@ -51,7 +51,7 @@ export class CommandHub {
   private storeListener = () => this.refresh();
   private defs = new Map<string, CommandDef>();
   private live: Command[] = [];
-  private contextSources: (() => Record<string, unknown>)[] = [];
+  private contextSources: (() => Partial<CommandContext>)[] = [];
   readonly palette: CommandPalette;
   readonly cheatsheet: KeybindCheatsheet;
   readonly settings: KeybindSettings;
@@ -75,14 +75,14 @@ export class CommandHub {
     if (get) this.sources.push({ owner, get });
   }
 
-  addContext(get: () => Record<string, unknown>): () => void {
+  addContext(get: () => Partial<CommandContext>): () => void {
     this.contextSources.push(get);
     return () => {
       this.contextSources = this.contextSources.filter((g) => g !== get);
     };
   }
 
-  context(): Record<string, unknown> {
+  context(): CommandContext {
     return Object.assign({}, ...this.contextSources.map((g) => g()));
   }
 
@@ -109,7 +109,7 @@ export class CommandHub {
   }
 
   /** Every trigger (key, palette, menu, button) goes through here, so confirmation is uniform. */
-  private async execute(cmd: CommandDef, ctx: Record<string, unknown>, event?: Event): Promise<void> {
+  private async execute(cmd: CommandDef, ctx: CommandContext, event?: Event): Promise<void> {
     const q = shouldConfirm(cmd);
     if (q && !(await confirmDialog(q, cmd.label, isDanger(cmd)))) return;
     cmd.run(ctx, event);
@@ -160,7 +160,7 @@ export class CommandHub {
     });
 
     this.unbind?.();
-    this.unbind = keybinds(this.live.filter((c) => c.keys?.length || c.mouse?.length), () => this.context());
+    this.unbind = keybinds(this.live.filter((c) => c.keys?.length || c.mouse?.length), () => this.libContext());
     const visible = this.live.filter((c) => !c.hidden);
     this.palette.commands = visible;
     this.cheatsheet.commands = visible;
@@ -169,9 +169,14 @@ export class CommandHub {
     this.syncContext();
   }
 
+  /** The keybinds package takes the context as a plain record and hands it back to `when`/`run`. */
+  private libContext(): Record<string, unknown> {
+    return this.context() as Record<string, unknown>;
+  }
+
   /** Push current context into components so `when` greys out unavailable commands. */
   syncContext(): void {
-    const ctx = this.context();
+    const ctx = this.libContext();
     this.palette.context = ctx;
     this.cheatsheet.context = ctx;
     this.menu.context = ctx;

@@ -1,6 +1,7 @@
 import { h, style } from "../../core/dom";
 import type { WidgetDef } from "../../core/types";
 import { filling, geometry, type FillingAction, type FillingInteraction, type FillingPuzzle, type FillingState } from "./logic";
+import { digitsUpTo } from "../../lib/digits";
 import { digitCommand } from "./view";
 
 type FillingWidget = WidgetDef<FillingPuzzle, FillingState, FillingAction, FillingInteraction>;
@@ -27,8 +28,8 @@ export const pad: FillingWidget = {
   mount(el, { session, run, owner }) {
     style("filling-widgets", CSS);
     const top = geometry(session.puzzle).top;
-    const digits = Array.from({ length: top }, (_, i) =>
-      h("button", { type: "button", "aria-label": String(i + 1), onpointerdown: keep, onclick: () => run(digitCommand(i + 1)) }, String(i + 1)));
+    const digits = digitsUpTo(top).map((n) =>
+      h("button", { type: "button", "aria-label": String(n), onpointerdown: keep, onclick: () => run(digitCommand(n)) }, String(n)));
     const notes = h("button", { type: "button", onpointerdown: keep, onclick: () => run("filling.notes"), title: "while on, numbers go in as small notes" }, "notes");
     el.append(h("div", { class: "fil-pad" },
       h("div", { class: "fil-digits", style: `--n: ${top}` }, digits),

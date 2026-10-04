@@ -101,6 +101,15 @@ function legend(): { sample: string; meaning: string }[] {
   ];
 }
 
+/** The keys this view adds to the command context. */
+export interface MapContext {
+  mapPencil: boolean;
+}
+
+declare module "../../core/types" {
+  interface CommandContext extends Partial<MapContext> {}
+}
+
 export function mapView(board: Board): View<MapPuzzle, MapState, MapAction, MapInteraction, typeof settings> {
   return {
     id: "map.svg",
@@ -302,7 +311,7 @@ export function mapView(board: Board): View<MapPuzzle, MapState, MapAction, MapI
         aspect: vbW / vbH,
         cells: { cols: p.w, rows: p.h },
         commands,
-        context: () => ({ mapPencil: session.interaction.pencil }),
+        context: (): MapContext => ({ mapPencil: session.interaction.pencil }),
         target: (): MapTarget => ({ region: hoverRegion >= 0 ? hoverRegion : p.map[session.interaction.cursor]! }),
         preview: (st) => {
           preview = st as MapState | null;

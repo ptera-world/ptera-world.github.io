@@ -28,6 +28,7 @@ export let COLOR_TOKENS!: GamesApi["look"]["COLOR_TOKENS"];
 export let setTheme!: GamesApi["look"]["setTheme"];
 export let setTokenOverride!: GamesApi["look"]["setTokenOverride"];
 export let themeChoice!: GamesApi["look"]["themeChoice"];
+export let SYSTEM_THEME!: GamesApi["look"]["SYSTEM_THEME"];
 export let tokenOverrides!: GamesApi["look"]["tokenOverrides"];
 export let onThemeChange!: GamesApi["look"]["onThemeChange"];
 export let checkForUpdate!: GamesApi["packs"]["checkForUpdate"];
@@ -44,6 +45,6 @@ export function bind(g: GamesApi): void {
   ({ TechniqueHost: TechniqueHostCtor, findPracticePosition, hintFrom, isPartOfStep, isStepDone, firstStep, loadPace, rateByTechniques, findStepAt, applyStep, colorOf, rememberPosition } = g.techniques);
   generate = g.generate;
   ({ labelSides, setLabelSides, cycleLabels, onBoardPrefsChange } = g.board);
-  ({ COLOR_TOKENS, setTheme, setTokenOverride, themeChoice, tokenOverrides, onThemeChange } = g.look);
+  ({ COLOR_TOKENS, SYSTEM_THEME, setTheme, setTokenOverride, themeChoice, tokenOverrides, onThemeChange } = g.look);
   ({ checkForUpdate, listMods, packRecord, saveMods, selectPackVersion, setPackEnabled, setTrack } = g.packs);
 }

@@ -153,6 +153,15 @@ declare module "../../core/commands" {
   interface CommandNames extends Ids<typeof BINDINGS> {}
 }
 
+/** The keys this view adds to the command context. */
+export interface PatternContext {
+  patternCrossMode: boolean;
+}
+
+declare module "../../core/types" {
+  interface CommandContext extends Partial<PatternContext> {}
+}
+
 /** A 10×10 cell sample on the board background; the same colors the board CSS uses. */
 const cellSample = (inner: string) =>
   `<svg viewBox="0 0 10 10"><rect width="10" height="10" fill="var(--cell)" stroke="var(--border)" stroke-width="0.4"/>${inner}</svg>`;
@@ -660,7 +669,7 @@ export function patternView(look: Look, board: Board, menuHoldMs: number): View<
         // right-click crosses; a touch hold crosses unless hold-to-cross is off, then it is the shell menu
         gestures: { secondaryClick: true, hold: (settings.longPressMs) > 0 },
         commands,
-        context: () => ({ patternCrossMode: session.interaction.crossMode }),
+        context: (): PatternContext => ({ patternCrossMode: session.interaction.crossMode }),
         locate: (f) => {
           const focus = f as PatternFocus | undefined;
           if (!focus) return [];

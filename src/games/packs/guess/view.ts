@@ -1,4 +1,4 @@
-import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
+import { bindCommands, bindingsOver, handlersOver, oneBased, type BindingSchema, type Ids } from "../../core/commands";
 import { s, style, inputIs } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
@@ -67,9 +67,15 @@ declare module "../../core/commands" {
 }
 
 /** Digit keys put that color straight into the selected position (0 is color 10). */
-const DIGIT_BINDINGS: BindingSchema = Object.fromEntries(Array.from({ length: 10 }, (_, i) => [
-  `guess.colour-${i + 1}`, { label: `place ${COLOUR_NAMES[i + 1]}`, category: "guess", keys: [String((i + 1) % 10)], hidden: true },
-]));
+const [, ...PEG_COLOURS] = COLOUR_NAMES;
+const COLOURS = oneBased(PEG_COLOURS);
+const DIGIT_BINDINGS = bindingsOver("guess.colour-", COLOURS, (c) => (
+  { label: `place ${COLOUR_NAMES[c]}`, category: "guess", keys: [String(c % 10)], hidden: true }
+));
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof DIGIT_BINDINGS> {}
+}
 
 function legend(): { sample: string; meaning: string }[] {
   const svg = (body: string, w = 10) => `<svg viewBox="-0.5 -0.5 ${w + 1} 11">${body}</svg>`;
@@ -285,12 +291,12 @@ export function guessView(): View<GuessPuzzle, GuessState, GuessAction, GuessInt
         "guess.submit": { menu: "board", when: () => canSubmit(p, session.state.row) && !isOver(p, session.state) },
         "guess.hold": { menu: "board" },
         "guess.clear": { menu: "board" },
-      }), ...bindCommands(DIGIT_BINDINGS, Object.fromEntries(Array.from({ length: 10 }, (_, i) => [`guess.colour-${i + 1}`, () => {
-        if (i + 1 > p.colours) return;
-        session.setInteraction((x) => ({ ...x, colour: i + 1 }));
-        place(slot(), i + 1);
+      }), ...bindCommands(DIGIT_BINDINGS, handlersOver("guess.colour-", COLOURS, (c) => () => {
+        if (c > p.colours) return;
+        session.setInteraction((x) => ({ ...x, colour: c }));
+        place(slot(), c);
         session.setInteraction((x) => ({ ...x, slot: Math.min(p.pegs - 1, x.slot + 1) }));
-      }])))];
+      }))];
       return {
         gestures: { secondaryClick: true, hold: true },
         aspect: width / height,

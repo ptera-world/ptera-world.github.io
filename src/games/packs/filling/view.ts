@@ -1,4 +1,4 @@
-import { bindCommands, type Binding, type CommandHandler } from "../../core/commands";
+import { bindCommands, bindingsOver, handlersOver, type BindingSchema, type Ids } from "../../core/commands";
 import { s, style } from "../../core/dom";
 import type { CommandDef, View } from "../../core/types";
 import { bit, isSingle, valueOf } from "../../lib/grid-kit/csp";
@@ -8,6 +8,7 @@ import {
   type BoardPrefs,
 } from "../../lib/grid-kit/view";
 import { fades } from "../../lib/grid-kit/fade";
+import { digitsUpTo, type Digit } from "../../lib/digits";
 import {
   filling, geometry, shownNumbers,
   type FillingAction, type FillingConflicts, type FillingInteraction, type FillingPuzzle, type FillingState,
@@ -27,37 +28,38 @@ const CSS = `
 .filling-board .rim { fill: none; stroke: var(--text); stroke-width: 0.9; }
 `;
 
-type Dir = "left" | "right" | "up" | "down";
-type MoveCommand = `filling.${Dir}` | `filling.extend-${Dir}`;
-type FillingCommand = `filling.d${number}` | "filling.clear" | "filling.notes" | MoveCommand;
+const BINDINGS = {
+  "filling.clear": { label: "clear cells", category: "filling", keys: ["Backspace", "Delete", "0"], description: "rub out the numbers and notes in the selected cells" },
+  "filling.notes": { label: "notes on / off", category: "filling", keys: ["n"], description: "while on, typing a number toggles it as a small note instead of placing it" },
+} satisfies BindingSchema;
+
+const DIRS = ["left", "right", "up", "down"] as const;
+type Dir = (typeof DIRS)[number];
+const DIR_KEY: Record<Dir, string> = { left: "ArrowLeft", right: "ArrowRight", up: "ArrowUp", down: "ArrowDown" };
+const DIR_STEP: Record<Dir, readonly [number, number]> = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] };
+
+const MOVE_BINDINGS = {
+  ...bindingsOver("filling.", DIRS, (id) => ({ label: `cursor ${id}`, category: "filling", keys: [DIR_KEY[id]], description: `move the selection one cell ${id}` })),
+  ...bindingsOver("filling.extend-", DIRS, (id) => ({ label: `extend selection ${id}`, category: "filling", keys: [`shift+${DIR_KEY[id]}`], description: `add the cell ${id === "up" ? "above" : id === "down" ? "below" : `to the ${id}`} to the selection` })),
+};
+
+/** Number keys 1 … the board's largest number; the handlers must cover the same list. */
+const digitBindings = (digits: readonly Digit[]) =>
+  bindingsOver("filling.d", digits, (n) => ({ label: `${n}`, category: "filling", keys: [String(n)], description: `put ${n} in the selected cells (or toggle it as a note while notes are on)` }));
 
 declare module "../../core/commands" {
-  interface CommandNames extends Record<MoveCommand, true> {
-    "filling.clear": true;
-    "filling.notes": true;
-    [id: `filling.d${number}`]: true;
-  }
+  interface CommandNames extends Ids<typeof BINDINGS>, Ids<typeof MOVE_BINDINGS>, Ids<ReturnType<typeof digitBindings>> {}
 }
 
-export const digitCommand = (n: number): `filling.d${number}` => `filling.d${n}`;
+export const digitCommand = (n: Digit): `filling.d${Digit}` => `filling.d${n}`;
 
-const MOVES = [["left", "cursor left", "ArrowLeft"], ["right", "cursor right", "ArrowRight"], ["up", "cursor up", "ArrowUp"], ["down", "cursor down", "ArrowDown"]] as const;
+/** The keys this view adds to the command context. */
+export interface FillingContext {
+  fillingNotes: boolean;
+}
 
-function bindings(top: number): Record<FillingCommand, Binding> {
-  const digits: Record<`filling.d${number}`, Binding> = {};
-  for (let n = 1; n <= top; n++) digits[digitCommand(n)] = { label: `${n}`, category: "filling", keys: [String(n)], description: `put ${n} in the selected cells (or toggle it as a note while notes are on)` };
-  // MOVES covers every Dir, so every MoveCommand gets an entry
-  const moves = {} as Record<MoveCommand, Binding>;
-  for (const [id, label, key] of MOVES) {
-    moves[`filling.${id}`] = { label, category: "filling", keys: [key], description: `move the selection one cell ${id}` };
-    moves[`filling.extend-${id}`] = { label: `extend selection ${id}`, category: "filling", keys: [`shift+${key}`], description: `add the cell ${id === "up" ? "above" : id === "down" ? "below" : `to the ${id}`} to the selection` };
-  }
-  return {
-    ...digits,
-    ...moves,
-    "filling.clear": { label: "clear cells", category: "filling", keys: ["Backspace", "Delete", "0"], description: "rub out the numbers and notes in the selected cells" },
-    "filling.notes": { label: "notes on / off", category: "filling", keys: ["n"], description: "while on, typing a number toggles it as a small note instead of placing it" },
-  };
+declare module "../../core/types" {
+  interface CommandContext extends Partial<FillingContext> {}
 }
 
 function legend(): { sample: string; meaning: string }[] {
@@ -184,29 +186,27 @@ export function fillingView(board: BoardPrefs): View<FillingPuzzle, FillingState
         const sel = session.interaction.selection;
         return (sel.length ? sel : [session.interaction.cursor]).filter((c) => p.clues[c] === 0);
       };
-      const handlers: Partial<Record<FillingCommand, CommandHandler>> = {};
-      for (let n = 1; n <= g.top; n++) {
-        handlers[digitCommand(n)] = () => {
+      const step = (id: Dir, extend: boolean) => () => {
+        const [dx, dy] = DIR_STEP[id];
+        const c = session.interaction.cursor;
+        const x = Math.min(p.w - 1, Math.max(0, (c % p.w) + dx)), y = Math.min(p.h - 1, Math.max(0, Math.floor(c / p.w) + dy));
+        select(y * p.w + x, extend);
+      };
+      const digits = digitsUpTo(g.top);
+      const commands: CommandDef[] = bindCommands({ ...BINDINGS, ...MOVE_BINDINGS, ...digitBindings(digits) }, {
+        "filling.clear": () => {
+          const cells = targets();
+          if (cells.length && !session.locked) session.dispatch({ type: "clear", cells });
+        },
+        "filling.notes": () => session.setInteraction((i) => ({ ...i, candidates: !i.candidates })),
+        ...handlersOver("filling.", DIRS, (id) => step(id, false)),
+        ...handlersOver("filling.extend-", DIRS, (id) => step(id, true)),
+        ...handlersOver("filling.d", digits, (n) => () => {
           const cells = targets();
           if (!cells.length || session.locked) return;
           session.dispatch(session.interaction.candidates ? { type: "toggle", cells, value: n } : { type: "set", cells, mask: bit(n) });
-        };
-      }
-      handlers["filling.clear"] = () => {
-        const cells = targets();
-        if (cells.length && !session.locked) session.dispatch({ type: "clear", cells });
-      };
-      handlers["filling.notes"] = () => session.setInteraction((i) => ({ ...i, candidates: !i.candidates }));
-      for (const [id, dx, dy] of [["left", -1, 0], ["right", 1, 0], ["up", 0, -1], ["down", 0, 1]] as const) {
-        const step = (extend: boolean) => () => {
-          const c = session.interaction.cursor;
-          const x = Math.min(p.w - 1, Math.max(0, (c % p.w) + dx)), y = Math.min(p.h - 1, Math.max(0, Math.floor(c / p.w) + dy));
-          select(y * p.w + x, extend);
-        };
-        handlers[`filling.${id}`] = step(false);
-        handlers[`filling.extend-${id}`] = step(true);
-      }
-      const commands: CommandDef[] = bindCommands(bindings(g.top), handlers, {
+        }),
+      }, {
         "filling.clear": { menu: "board" },
         "filling.notes": { menu: "board", checked: () => session.interaction.candidates },
       });
@@ -214,7 +214,7 @@ export function fillingView(board: BoardPrefs): View<FillingPuzzle, FillingState
         aspect: f.aspect,
         cells: { cols: p.w, rows: p.h },
         commands,
-        context: () => ({ fillingNotes: session.interaction.candidates }),
+        context: (): FillingContext => ({ fillingNotes: session.interaction.candidates }),
         target: () => (hover >= 0 ? hover : session.interaction.cursor),
         preview: (st) => {
           preview = st as FillingState | null;

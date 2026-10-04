@@ -1,3 +1,5 @@
+import { featureTests } from "../../core/define";
+import type { Ids } from "../../core/commands";
 import type { Hint, PuzzleDef, Rating } from "../../core/types";
 import { formats } from "./formats";
 import { generate, params } from "./generate";
@@ -171,6 +173,16 @@ export function rate(p: BridgesPuzzle): Rating | null {
   return { label: "needs guessing", score: 4000 + Math.min(999, st[3] * 20) };
 }
 
+const FEATURES = {
+  /** The network may contain cycles. */
+  loops: (p: BridgesPuzzle) => p.loops,
+  "no-loops": (p: BridgesPuzzle) => !p.loops,
+  /** More than one bridge may join a pair. */
+  multi: (p: BridgesPuzzle) => p.maxb > 1,
+  /** Exactly one solution is known. */
+  unique: (p: BridgesPuzzle) => analyze(p).unique === true,
+};
+
 export const bridges: PuzzleDef<BridgesPuzzle, BridgesState, BridgesAction, BridgesInteraction, typeof params> = {
   id: "bridges",
   name: "hashi",
@@ -223,24 +235,11 @@ export const bridges: PuzzleDef<BridgesPuzzle, BridgesState, BridgesAction, Brid
     p.loops ? "when you're done, you can walk from any island to any other over the bridges." : "when you're done, you can walk from any island to any other over the bridges, and there's only one way to do it: no loops.",
     "a ✕ between two islands is your own note that no bridge goes there. it doesn't count toward anything.",
   ],
-  /**
-   * "loops" / "no-loops": whether the network may contain cycles. "multi": more than one bridge
-   * may join a pair. "unique": exactly one solution is known.
-   */
-  features: (p) => [
-    p.loops ? "loops" as const : "no-loops" as const,
-    ...(p.maxb > 1 ? ["multi" as const] : []),
-    ...(analyze(p).unique === true ? ["unique" as const] : []),
-  ],
+  features: featureTests(FEATURES),
   rate,
   describe: (p) => `${p.w}×${p.h}, max ${p.maxb}${p.loops ? "" : ", no loops"}`,
 };
 
 declare module "../../core/types" {
-  interface FeatureNames {
-    loops: true;
-    "no-loops": true;
-    multi: true;
-    unique: true;
-  }
+  interface FeatureNames extends Ids<typeof FEATURES> {}
 }

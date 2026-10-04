@@ -266,7 +266,7 @@ export class Strokes {
   }
 }
 
-type CursorId<P extends string> = `${P}.${"left" | "right" | "up" | "down"}`;
+export type CursorId<P extends string> = `${P}.${"left" | "right" | "up" | "down"}`;
 
 /** Cursor movement bindings for a `<prefix>` category. */
 export function cursorBindings<P extends string>(prefix: P, category: string): Record<CursorId<P>, Binding> {

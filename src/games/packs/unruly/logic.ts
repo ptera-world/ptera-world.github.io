@@ -1,5 +1,7 @@
 import type { Rng } from "../../core/rng";
 import { colName, rowName } from "../../core/names";
+import type { Ids } from "../../core/commands";
+import { featureTests } from "../../core/define";
 import { defineSchema, type Values } from "../../core/schema";
 import type { Format, GenerateContext, Hint, PuzzleDef } from "../../core/types";
 import {
@@ -500,6 +502,11 @@ export async function generatePuzzle(w: number, h: number, unique: boolean, leve
 
 const even = (n: number) => Math.max(2, n - (n % 2));
 
+const FEATURES = {
+  /** No two rows, and no two columns, may be the same. */
+  "unique-lines": (p: UnrulyPuzzle) => p.unique,
+};
+
 export const unruly: PuzzleDef<UnrulyPuzzle, UnrulyState, UnrulyAction, UnrulyInteraction, typeof params> = {
   id: "unruly",
   name: "unruly",
@@ -530,7 +537,7 @@ export const unruly: PuzzleDef<UnrulyPuzzle, UnrulyState, UnrulyAction, UnrulyIn
     "every row and every column has as many light pieces as dark ones.",
     ...(p.unique ? ["no two rows may be the same, and no two columns may be the same."] : []),
   ],
-  features: (p) => (p.unique ? ["unique-lines"] : []),
+  features: featureTests(FEATURES),
   describeAction: (p, a) => `${["clear", "light", "dark"][a.value] ?? "mark"} ${cellList(p, a.cells)}`,
   isSolved,
   solve(p) {
@@ -544,8 +551,5 @@ export const unruly: PuzzleDef<UnrulyPuzzle, UnrulyState, UnrulyAction, UnrulyIn
 
 
 declare module "../../core/types" {
-  interface FeatureNames {
-    /** No two rows, and no two columns, may be the same. */
-    "unique-lines": true;
-  }
+  interface FeatureNames extends Ids<typeof FEATURES> {}
 }

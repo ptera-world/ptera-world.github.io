@@ -1,6 +1,8 @@
+import type { Ids } from "../../core/commands";
+import { featureTests } from "../../core/define";
 import type { Rng } from "../../core/rng";
 import { defineSchema, type Values } from "../../core/schema";
-import type { GenerateContext, Hint, PuzzleDef } from "../../core/types";
+import type { Feature, GenerateContext, Hint, PuzzleDef } from "../../core/types";
 import { CROSS, LINE, UNKNOWN, check, type EdgeState } from "./board";
 import { formats, type LoopyPuzzle } from "./formats";
 import { generateClues } from "./generator";
@@ -131,6 +133,16 @@ function centreEdge(g: Grid): number {
   return best;
 }
 
+const FEATURES = {
+  /** Exactly one solution, so moves can be checked against it. */
+  solution: (p: LoopyPuzzle) => analysisOf(p).count === 1,
+};
+
+const fixedFeatures = featureTests<LoopyPuzzle, typeof FEATURES>(FEATURES);
+
+/** Every puzzle has the feature `tiling:<id>` for the tiling it is drawn on. */
+export const tilingFeature = (id: string): Feature => `tiling:${id}` as Feature;
+
 export const loopy: PuzzleDef<LoopyPuzzle, LoopyState, LoopyAction, LoopyInteraction, typeof params> = {
   id: "loopy",
   name: "slitherlink",
@@ -184,7 +196,7 @@ export const loopy: PuzzleDef<LoopyPuzzle, LoopyState, LoopyAction, LoopyInterac
     "crosses are notes you make for edges you know aren't part of the loop. they don't count toward anything.",
     ...(gridOf(p).cells ? ["hints name cells by column letter and row number, like C5. the \"board labels\" command writes them along the edges."] : []),
   ],
-  features: (p) => [`tiling:${p.tiling}` as const, ...(analysisOf(p).count === 1 ? ["solution" as const] : [])],
+  features: (p) => [tilingFeature(p.tiling), ...fixedFeatures(p)],
   rate(p) {
     const a = analysisOf(p);
     if (a.count === 0) return { label: "no solution", score: 100 };
@@ -197,10 +209,5 @@ export const loopy: PuzzleDef<LoopyPuzzle, LoopyState, LoopyAction, LoopyInterac
 };
 
 declare module "../../core/types" {
-  interface FeatureNames {
-    /** The puzzle has exactly one solution, so moves can be checked against it. */
-    solution: true;
-    /** Which tiling the board uses. */
-    [k: `tiling:${string}`]: true;
-  }
+  interface FeatureNames extends Ids<typeof FEATURES> {}
 }

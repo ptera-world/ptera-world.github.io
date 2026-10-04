@@ -28,19 +28,22 @@ export const COLOR_TOKENS: readonly { id: string; label: string }[] = [
   { id: "cell-lit", label: "lit / filled cells" },
 ];
 
+/** The theme choice that follows the OS light/dark preference. */
+export const SYSTEM_THEME = "system";
+
 export function themeChoice(): string {
-  return prefs.get("theme", "system");
+  return prefs.get("theme", SYSTEM_THEME);
 }
 
 export function tokenOverrides(): Record<string, string> {
   return prefs.get("themeTokens", {});
 }
 
-/** Resolve "system" to the first registered theme matching the OS light/dark preference. */
+/** Resolve SYSTEM_THEME to the first registered theme matching the OS light/dark preference. */
 function pick(registry: Registry): Theme | undefined {
   const themes = registry.listThemes();
   const choice = themeChoice();
-  if (choice !== "system") return themes.find((t) => t.id === choice) ?? themes[0];
+  if (choice !== SYSTEM_THEME) return themes.find((t) => t.id === choice) ?? themes[0];
   const light = matchMedia("(prefers-color-scheme: light)").matches;
   return themes.find((t) => t.scheme === (light ? "light" : "dark")) ?? themes[0];
 }

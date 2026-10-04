@@ -1,18 +1,14 @@
 import { Event as HookEvent } from "../../core/hooks";
 import { defineSchema } from "../../core/schema";
-import type { CommandId } from "../../core/commands";
-import type { CommandDef, View } from "../../core/types";
+import { bindCommands, bindingsOver, handlersOver, type BindingSchema, type Ids } from "../../core/commands";
+import type { View } from "../../core/types";
 import { colName, rowName, type Side } from "../../core/names";
 import { s, style, inputIs } from "../../core/dom";
 import { getDeco } from "./deco";
 import { DIR_NAMES, graph, type BridgesPuzzle, type BridgesState } from "./graph";
 import { bridges, type BridgesAction, type BridgesInteraction, type Focus } from "./logic";
 
-declare module "../../core/commands" {
-  interface CommandNames {
-    "bridges.mode": true;
-  }
-}
+
 
 const S = 10;
 const R = 3.4;
@@ -79,6 +75,33 @@ export interface BridgesViewHooks {
 }
 
 const DIR_KEYS = [["ArrowRight", "d"], ["ArrowDown", "s"], ["ArrowLeft", "a"], ["ArrowUp", "w"]] as const;
+
+type Dir = (typeof DIR_NAMES)[number];
+const keysOf = (name: Dir) => DIR_KEYS[DIR_NAMES.indexOf(name)]!;
+const toward = (name: Dir) => (name === "down" ? "below" : name === "up" ? "above" : `to the ${name}`);
+
+const BINDINGS = {
+  "bridges.mode": { label: "tap removes", category: "board", keys: ["x"], description: "for touch, where there's no right-click: while on, a tap or drag takes a bridge away, or puts a ✕ (no bridge here) on an empty gap. while off, taps add bridges. with a mouse, right-click does the same without switching" },
+  "bridges.add-at": { label: "add a bridge", description: "drag from an island toward a neighbor, or click the gap between them", category: "board", mouse: ["click"], hidden: true },
+  "bridges.remove-at": { label: "take away / ✕", description: "drag from an island or click a gap: removes a bridge, or marks an empty gap ✕ (no bridge here)", category: "board", mouse: ["rightclick", "$mod+click"], hidden: true },
+  ...bindingsOver("bridges.add-", DIR_NAMES, (name) => ({ label: `add bridge ${name}`, description: `keyboard: add a bridge from the ringed island to its neighbor ${toward(name)}`, category: "keyboard", keys: [`shift+${keysOf(name)[0]}`, `shift+${keysOf(name)[1]}`] })),
+  ...bindingsOver("bridges.remove-", DIR_NAMES, (name) => ({ label: `take away / ✕ ${name}`, description: `keyboard: take a bridge away ${name === "down" || name === "up" ? toward(name) : `to the ${name} of`} the ringed island, or mark that gap ✕ (no bridge here)`, category: "keyboard", keys: [`$mod+${keysOf(name)[0]}`] })),
+  ...bindingsOver("bridges.move-", DIR_NAMES, (name) => ({ label: `ring ${name}`, description: `keyboard: move the ring (the keyboard cursor) to the next island ${toward(name)}`, category: "keyboard", keys: [...keysOf(name)] })),
+} satisfies BindingSchema;
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<typeof BINDINGS> {}
+}
+
+/** The keys this view adds to the command context. */
+interface BridgesContext {
+  /** Taps take bridges away instead of adding them. */
+  markMode: boolean;
+}
+
+declare module "../../core/types" {
+  interface CommandContext extends Partial<BridgesContext> {}
+}
 
 type Press =
   | { kind: "island"; island: number; secondary: boolean }
@@ -410,23 +433,16 @@ export function makeView(look: Look, board: BoardPrefs, holdMs: number): View<Br
         return p.islands[c] ? g.islandEdges[c]![dir]! : -1;
       };
 
-      const commands: CommandDef[] = [
-        {
-          id: "bridges.mode" satisfies CommandId, label: "tap removes", category: "board", keys: ["x"], menu: "board",
-          description: "for touch, where there's no right-click: while on, a tap or drag takes a bridge away, or puts a ✕ (no bridge here) on an empty gap. while off, taps add bridges. with a mouse, right-click does the same without switching",
-          checked: () => session.interaction.mode === "mark",
-          run: () => session.setInteraction((i) => ({ ...i, mode: i.mode === "mark" ? "bridge" : "mark" })),
-        },
-        { id: "bridges.add-at", label: "add a bridge", description: "drag from an island toward a neighbor, or click the gap between them", category: "board", mouse: ["click"], hidden: true, run: pointer(false) },
-        { id: "bridges.remove-at", label: "take away / ✕", description: "drag from an island or click a gap: removes a bridge, or marks an empty gap ✕ (no bridge here)", category: "board", mouse: ["rightclick", "$mod+click"], hidden: true, run: pointer(true) },
-      ];
-      DIR_NAMES.forEach((name, d) => {
-        const [arrow, letter] = DIR_KEYS[d]!;
-        commands.push(
-          { id: `bridges.add-${name}`, label: `add bridge ${name}`, description: `keyboard: add a bridge from the ringed island to its neighbor ${name === "down" ? "below" : name === "up" ? "above" : `to the ${name}`}`, category: "keyboard", keys: [`shift+${arrow}`, `shift+${letter}`], run: () => act(edgeFrom(d), false, false) },
-          { id: `bridges.remove-${name}`, label: `take away / ✕ ${name}`, description: `keyboard: take a bridge away ${name === "down" ? "below" : name === "up" ? "above" : `to the ${name} of`} the ringed island, or mark that gap ✕ (no bridge here)`, category: "keyboard", keys: [`$mod+${arrow}`], run: () => act(edgeFrom(d), true, false) },
-          { id: `bridges.move-${name}`, label: `ring ${name}`, description: `keyboard: move the ring (the keyboard cursor) to the next island ${name === "down" ? "below" : name === "up" ? "above" : `to the ${name}`}`, category: "keyboard", keys: [arrow, letter], run: move(d) },
-        );
+      const dir = (name: Dir) => DIR_NAMES.indexOf(name);
+      const commands = bindCommands(BINDINGS, {
+        "bridges.mode": () => session.setInteraction((i) => ({ ...i, mode: i.mode === "mark" ? "bridge" : "mark" })),
+        "bridges.add-at": pointer(false),
+        "bridges.remove-at": pointer(true),
+        ...handlersOver("bridges.add-", DIR_NAMES, (name) => () => act(edgeFrom(dir(name)), false, false)),
+        ...handlersOver("bridges.remove-", DIR_NAMES, (name) => () => act(edgeFrom(dir(name)), true, false)),
+        ...handlersOver("bridges.move-", DIR_NAMES, (name) => move(dir(name))),
+      }, {
+        "bridges.mode": { menu: "board", checked: () => session.interaction.mode === "mark" },
       });
 
       const ctm = (x1: number, y1: number, x2: number, y2: number, pad: number): DOMRect => {
@@ -467,7 +483,7 @@ export function makeView(look: Look, board: BoardPrefs, holdMs: number): View<Br
           const a = prev as BridgesState, b = next as BridgesState;
           return g.edges.filter((e) => a.b[e.id] !== b.b[e.id] || a.no[e.id] !== b.no[e.id]).map((e) => edgeRect(e.id));
         },
-        context: () => ({ markMode: session.interaction.mode === "mark" }),
+        context: (): BridgesContext => ({ markMode: session.interaction.mode === "mark" }),
         destroy() {
           clearTimeout(holdTimer);
           offs.forEach((f) => f());

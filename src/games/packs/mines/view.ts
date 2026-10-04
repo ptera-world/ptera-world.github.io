@@ -98,6 +98,16 @@ declare module "../../core/commands" {
   interface CommandNames extends Ids<typeof BINDINGS> {}
 }
 
+/** The keys this view adds to the command context. */
+export interface MinesContext {
+  minesFlagMode: boolean;
+  minesLost: boolean;
+}
+
+declare module "../../core/types" {
+  interface CommandContext extends Partial<MinesContext> {}
+}
+
 /** Flag-or-unflag as an explicit action, so unflagging is recognizably a retraction. */
 export const toggleFlag = (st: MinesState, cell: number): MinesAction => ({ type: "flag", cells: [cell], on: !st.flags[cell] });
 
@@ -398,7 +408,7 @@ export function minesView(look: Look, labelSides: () => ReadonlySet<Side>): View
         },
         gestures: { secondaryClick: true, hold: true },
         commands,
-        context: () => ({ minesFlagMode: session.interaction.flagMode, minesLost: session.state.dead >= 0 }),
+        context: (): MinesContext => ({ minesFlagMode: session.interaction.flagMode, minesLost: session.state.dead >= 0 }),
         locate: (focus) => {
           const f = focus as MinesFocus | undefined;
           return f ? rects([...(f.cells ?? []), ...(f.sources ?? [])]) : [];

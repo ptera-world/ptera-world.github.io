@@ -16,9 +16,10 @@ interface Shared {
   history?: SharedHistory;
 }
 import { namespace, prefs } from "../../core/storage";
-import { HOWTO_TOGGLE, HOWTO_WIDGET, command, techniqueCommand, type ShellCommandDef, type ShellContext } from "./names";
+import { GAME_BINDINGS, HERE_BINDINGS, HOWTO_TOGGLE, HOWTO_WIDGET, SHELL_BINDINGS, command, pluginToggle, presetCommand, techniqueCommand, widgetToggle, type ShellContext } from "./names";
+import { bindCommands } from "../../core/commands";
 import type { TechniqueHost } from "../../core/techniques";
-import type { Step, AnyPuzzleDef, AnyView, AnyWidget, CommandDef, Format, Hint, Technique, ViewHandle, SlotId } from "../../core/types";
+import type { Step, AnyPuzzleDef, CommandContext, AnyView, AnyWidget, CommandDef, Format, Hint, Technique, ViewHandle, SlotId } from "../../core/types";
 import { CommandHub } from "./commands";
 import { add, clear, formatTime, h, setInputKind, style } from "../../core/dom";
 import { arrange, loadLayout, saveLayout, type LayoutConfig } from "./layout";
@@ -196,9 +197,9 @@ export class Shell {
 
   // --- context ---
 
-  private context(): ShellContext {
+  private context(): CommandContext {
     const s = this.session;
-    return {
+    const own: ShellContext = {
       hasSession: !!s,
       solved: s?.solved ?? false,
       locked: s?.locked ?? false,
@@ -207,8 +208,8 @@ export class Shell {
       canRedo: s?.canRedo ?? false,
       hint: !!s?.activeHint,
       practice: s?.origin.kind === "practice",
-      ...this.view?.handle.context?.(),
     };
+    return { ...own, ...this.view?.handle.context?.() };
   }
 
   // --- navigation ---
@@ -804,60 +805,66 @@ export class Shell {
 
   private shellCommands(): CommandDef[] {
     const s = this.session;
-    const base: ShellCommandDef[] = [
-      { id: "shell.palette", label: "commands", category: "general", keys: ["$mod+k"], captureInput: true, run: () => this.hub.openPalette() },
-      { id: "shell.shortcuts", label: "keyboard shortcuts", category: "general", keys: ["$mod+slash"], run: () => { this.hub.cheatsheet.open = !this.hub.cheatsheet.open; } },
-      { id: "shell.rebind", label: "change key bindings", category: "general", run: () => { this.hub.settings.open = true; } },
-      { id: "shell.howto", label: "how to play", category: "general", keys: ["f1"], description: "what this puzzle is, its rules, and how to play it", run: () => this.showHowTo() },
-      { id: "shell.labels", label: "board labels", category: "view", keys: ["l"], description: "letters and numbers along the board edges, so cells named in hints (like C5) are easy to find. cycles off / top+left / all sides", run: () => cycleLabels() },
-      { id: "shell.zoom-in", label: "zoom in", category: "view", keys: zoomTakeover() ? ["equal", "$mod+equal", "$mod+shift+equal"] : ["equal"], description: "make the board bigger (it scrolls when bigger than the screen). also pinch on the board", run: () => this.zoomBy(1.25) },
-      { id: "shell.zoom-out", label: "zoom out", category: "view", keys: zoomTakeover() ? ["minus", "$mod+minus"] : ["minus"], description: "make the board smaller, down to fitting the screen", run: () => this.zoomBy(0.8) },
-      { id: "shell.zoom-fit", label: "fit board", category: "view", keys: zoomTakeover() ? ["$mod+0"] : [], description: "show the whole board at once", run: () => this.zoomFit() },
-      { id: "shell.zen", label: "zen mode", category: "view", keys: ["z"], description: "just the board; press again to bring everything back", checked: () => this.zen, run: () => this.toggleZen() },
-      { id: "shell.index", label: "all puzzles", category: "general", run: () => this.goIndex() },
-    ];
+    const takeover = zoomTakeover();
+    const base = bindCommands(SHELL_BINDINGS, {
+      "shell.palette": () => this.hub.openPalette(),
+      "shell.shortcuts": () => { this.hub.cheatsheet.open = !this.hub.cheatsheet.open; },
+      "shell.rebind": () => { this.hub.settings.open = true; },
+      "shell.howto": () => this.showHowTo(),
+      "shell.labels": () => cycleLabels(),
+      "shell.zoom-in": () => this.zoomBy(1.25),
+      "shell.zoom-out": () => this.zoomBy(0.8),
+      "shell.zoom-fit": () => this.zoomFit(),
+      "shell.zen": () => this.toggleZen(),
+      "shell.index": () => this.goIndex(),
+    }, {
+      "shell.palette": { captureInput: true },
+      "shell.zoom-in": { keys: takeover ? ["equal", "$mod+equal", "$mod+shift+equal"] : ["equal"] },
+      "shell.zoom-out": { keys: takeover ? ["minus", "$mod+minus"] : ["minus"] },
+      "shell.zoom-fit": { keys: takeover ? ["$mod+0"] : [] },
+      "shell.zen": { checked: () => this.zen },
+    });
     if (!s) return base;
     const def = s.def;
     const progress = () => s.canUndo && !s.solved;
+    const confirmNew = () => (progress() ? "start a new game? this one's progress will be lost." : null);
     return [
       ...base,
-      {
-        id: "shell.unlock", label: "unlock board", category: "game",
-        description: "keep playing with a finished board (moves, undo). the solve time is kept as it was",
-        when: (c) => !!c.locked && !c.lost,
-        run: () => { this.unlocked = true; this.syncLock(); this.setStatus("unlocked: the board is yours to play with"); this.hub.refresh(); },
-      },
-      { id: "shell.undo", label: "undo", category: "game", keys: ["$mod+z", "u"], description: "take back the last step", when: (c) => !!c.canUndo && (!c.locked || !!c.lost), run: () => s.undo() },
-      { id: "shell.redo", label: "redo", category: "game", keys: ["$mod+shift+z", "$mod+y", "r"], description: "put back a step you undid", when: (c) => !!c.canRedo && !c.locked, run: () => s.redo() },
-      {
-        id: "shell.restart", label: "restart", category: "game", danger: true, when: (c) => !!c.canUndo || !!c.solved,
-        confirm: () => (s.solved ? "this board is solved. restarting clears it. restart anyway?" : "restart this board from the beginning?"),
-        run: () => s.restart(),
-      },
-      { id: "shell.hint", label: "hint", category: "game", keys: ["shift+slash"], description: "press again for more detail", when: (c) => !c.solved, run: () => this.showHint() },
-      { id: "shell.apply-hint", label: "apply hint", category: "game", keys: ["shift+h"], when: (c) => !c.solved, run: () => this.applyHint() },
-      {
-        id: "shell.reveal", label: "reveal solution", category: "game", danger: true, when: (c) => !c.solved && !!def.solve,
-        confirm: () => "show the whole solution?",
-        run: () => {
+      ...bindCommands(GAME_BINDINGS, {
+        "shell.unlock": () => { this.unlocked = true; this.syncLock(); this.setStatus("unlocked: the board is yours to play with"); this.hub.refresh(); },
+        "shell.undo": () => s.undo(),
+        "shell.redo": () => s.redo(),
+        "shell.restart": () => s.restart(),
+        "shell.hint": () => this.showHint(),
+        "shell.apply-hint": () => this.applyHint(),
+        "shell.reveal": () => {
           const sol = def.solve?.(s.puzzle);
           if (sol) s.replaceState(sol, { kind: "system", reason: "reveal" });
           else this.setStatus("no solution available");
         },
-      },
-      { id: "shell.pause", label: "pause", category: "game", keys: ["p"], when: (c) => !c.solved, checked: () => s.paused, run: () => this.togglePause() },
-      {
-        id: "shell.new", label: "new game", category: "game", keys: ["$mod+Enter"], danger: progress,
-        confirm: () => (progress() ? "start a new game? this one's progress will be lost." : null),
-        run: () => this.newGameSame(),
-      },
+        "shell.pause": () => this.togglePause(),
+        "shell.new": () => this.newGameSame(),
+      }, {
+        "shell.unlock": { when: (c) => !!c.locked && !c.lost },
+        "shell.undo": { when: (c) => !!c.canUndo && (!c.locked || !!c.lost) },
+        "shell.redo": { when: (c) => !!c.canRedo && !c.locked },
+        "shell.restart": {
+          danger: true, when: (c) => !!c.canUndo || !!c.solved,
+          confirm: () => (s.solved ? "this board is solved. restarting clears it. restart anyway?" : "restart this board from the beginning?"),
+        },
+        "shell.hint": { when: (c) => !c.solved },
+        "shell.apply-hint": { when: (c) => !c.solved },
+        "shell.reveal": { danger: true, when: (c) => !c.solved && !!def.solve, confirm: () => "show the whole solution?" },
+        "shell.pause": { when: (c) => !c.solved, checked: () => s.paused },
+        "shell.new": { danger: progress, confirm: confirmNew },
+      }),
       ...(def.presets ?? []).map((p, i): CommandDef => ({
-        id: `shell.preset-${i}`, label: `new ${def.name}: ${p.label}`, category: "new game",
-        confirm: () => (progress() ? "start a new game? this one's progress will be lost." : null),
+        id: presetCommand(i), label: `new ${def.name}: ${p.label}`, category: "new game",
+        confirm: confirmNew,
         run: () => void this.newGame(def, { ...prefs.get(`params:${def.id}`, {}), ...p.params }, randomSeed()),
       })),
       ...(this.host?.plugins() ?? []).map((p): CommandDef => ({
-        id: `toggle.${p.id}`, label: p.name, category: p.category ?? "assists", description: p.description,
+        id: pluginToggle(p), label: p.name, category: p.category ?? "assists", description: p.description,
         checked: () => loadPluginConfig(p).enabled,
         run: () => {
           this.host!.setConfig(p, { ...loadPluginConfig(p), enabled: !loadPluginConfig(p).enabled });
@@ -922,10 +929,8 @@ export class Shell {
     const s = this.session;
     if (!th || !s) return [];
     const aimable = th.list.some((t) => t.findAt);
-    const here: CommandDef[] = aimable ? [{
-      id: "technique.here", label: "use a technique here", category: "techniques", menu: "board",
-      description: "the techniques that apply where you are pointing; point at one to preview, pick it to apply",
-      run: (_ctx, ev) => {
+    const here: CommandDef[] = aimable ? bindCommands(HERE_BINDINGS, {
+      "technique.here": (_ctx, ev) => {
         const list = this.skillsHere();
         if (!list.length) { this.setStatus("no technique applies here right now"); return; }
         const pe = ev as MouseEvent | undefined;
@@ -933,9 +938,9 @@ export class Shell {
         const items = list.map((t) => ({ cmd: { id: techniqueCommand("here", t), label: t.name, description: t.description, run: () => this.applySkill(t) } as CommandDef, enabled: true, keys: [] as string[] }));
         void popup("tiles", x, y, items, (id) => { const t = list.find((x) => techniqueCommand("here", x) === id); if (t) this.applySkill(t); });
       },
-    }] : [];
-    return [...here, ...th.list.flatMap((t): ShellCommandDef[] => [
-      ...(t.findAt ? [{ id: techniqueCommand("here", t), label: `${t.name} here`, category: "techniques", description: `apply ${t.name} to what you are pointing at`, run: () => this.applySkill(t) } satisfies ShellCommandDef] : []),
+    }, { "technique.here": { menu: "board" } }) : [];
+    return [...here, ...th.list.flatMap((t): CommandDef[] => [
+      ...(t.findAt ? [{ id: techniqueCommand("here", t), label: `${t.name} here`, category: "techniques", description: `apply ${t.name} to what you are pointing at`, run: () => this.applySkill(t) } satisfies CommandDef] : []),
       { id: techniqueCommand("find", t), label: `find ${t.name}`, category: "techniques", description: t.description, run: () => this.findTechnique(t) },
       { id: techniqueCommand("apply", t), label: `apply ${t.name}`, category: "techniques", run: () => { if (!th.apply(t)) this.setStatus(`no ${t.name} right now`); } },
       {
@@ -943,13 +948,13 @@ export class Shell {
         checked: () => th.config(t).auto,
         run: () => { th.setConfig(t, { ...th.config(t), auto: !th.config(t).auto }); this.hub.refresh(); },
       },
-      ...(t.practice === false ? [] : [{ id: techniqueCommand("practice", t), label: `practice ${t.name}`, category: "practice", run: () => void this.startPractice(s.def, t, randomSeed()) } satisfies ShellCommandDef]),
+      ...(t.practice === false ? [] : [{ id: techniqueCommand("practice", t), label: `practice ${t.name}`, category: "practice", run: () => void this.startPractice(s.def, t, randomSeed()) } satisfies CommandDef]),
     ])];
   }
 
   private widgetCommands(): CommandDef[] {
     return this.widgetDefs().map((w): CommandDef => ({
-      id: `widget.${w.id}`, label: `show ${w.name}`, category: "layout", description: w.description,
+      id: widgetToggle(w), label: `show ${w.name}`, category: "layout", description: w.description,
       checked: () => (this.layout[w.id]?.slot ?? w.defaultSlot) !== "off",
       run: () => {
         const cur = this.layout[w.id]?.slot ?? w.defaultSlot;

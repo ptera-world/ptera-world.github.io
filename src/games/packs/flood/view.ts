@@ -1,8 +1,8 @@
-import { bindCommands, type BindingSchema } from "../../core/commands";
+import { bindCommands, bindingsOver, handlersOver, oneBased, type Ids } from "../../core/commands";
 import { h, s, style, inputIs } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
 import type { View, WidgetDef } from "../../core/types";
-import { flood, COLOUR_NAMES, MAX_COLOURS, region, type FloodAction, type FloodFocus, type FloodPuzzle, type FloodState } from "./logic";
+import { flood, COLOUR_NAMES, region, type FloodAction, type FloodFocus, type FloodPuzzle, type FloodState } from "./logic";
 
 const SIZE = 10;
 
@@ -29,10 +29,15 @@ const settings = defineSchema({
   numbers: { type: "bool", label: "show a number on each color", default: false, description: "for telling colors apart without relying on hue" },
 });
 
-const BINDINGS: BindingSchema = Object.fromEntries(Array.from({ length: MAX_COLOURS }, (_, c) => [
-  `flood.colour-${c + 1}`,
-  { label: `flood with ${COLOUR_NAMES[c]}`, category: "flood", keys: [String((c + 1) % 10)], description: `fill the flooded area with color ${c + 1} (${COLOUR_NAMES[c]})` },
-]));
+const COLOURS = oneBased(COLOUR_NAMES);
+type Colour = (typeof COLOURS)[number];
+const bindings = (list: readonly Colour[]) => bindingsOver("flood.colour-", list, (n) => (
+  { label: `flood with ${COLOUR_NAMES[n - 1]}`, category: "flood", keys: [String(n % 10)], description: `fill the flooded area with color ${n} (${COLOUR_NAMES[n - 1]})` }
+));
+
+declare module "../../core/commands" {
+  interface CommandNames extends Ids<ReturnType<typeof bindings>> {}
+}
 
 const swatch = (body: string) => `<svg viewBox="-0.5 -0.5 11 11">${body}</svg>`;
 
@@ -110,11 +115,11 @@ export const floodView: View<FloodPuzzle, FloodState, FloodAction, null, typeof 
     const offs = [session.hooks.change.tap(render, { owner: "view" }), session.hooks.refresh.tap(render, { owner: "view" })];
     render();
     const rects = (list: Iterable<number>) => [...new Set(list)].map((c) => cells[c]!.getBoundingClientRect());
-    const handlers = Object.fromEntries(Array.from({ length: p.colours }, (_, c) => [`flood.colour-${c + 1}`, () => session.dispatch({ type: "fill", colour: c })]));
+    const here = COLOURS.slice(0, p.colours);
     return {
       aspect: (p.w * SIZE + 1) / (p.h * SIZE + 1),
       cells: { cols: p.w, rows: p.h },
-      commands: bindCommands(BINDINGS, handlers),
+      commands: bindCommands(bindings(here), handlersOver("flood.colour-", here, (n) => () => session.dispatch({ type: "fill", colour: n - 1 }))),
       preview: (state) => {
         previewing = state as FloodState | null;
         render();

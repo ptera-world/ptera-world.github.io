@@ -1,4 +1,4 @@
-import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
+import { bindCommands, bindingsOver, handlersOver, type BindingSchema, type Ids } from "../../core/commands";
 import { s, style, inputIs } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
@@ -56,13 +56,14 @@ const BINDINGS = {
 } satisfies BindingSchema;
 
 declare module "../../core/commands" {
-  interface CommandNames extends Ids<typeof BINDINGS> {}
+  interface CommandNames extends Ids<typeof BINDINGS>, Ids<typeof DIGIT_BINDINGS> {}
 }
 
 /** Number keys 0-9 toggle highlighting of that number. */
-const DIGIT_BINDINGS: BindingSchema = Object.fromEntries(Array.from({ length: 10 }, (_, d) => [
-  `dominosa.number-${d}`, { label: `highlight ${d}s`, category: "dominosa", keys: [String(d)], hidden: true, description: `highlight every ${d} on the board; again to stop` },
-]));
+const NUMBER_KEYS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
+const DIGIT_BINDINGS = bindingsOver("dominosa.number-", NUMBER_KEYS, (d) => (
+  { label: `highlight ${d}s`, category: "dominosa", keys: [String(d)], hidden: true, description: `highlight every ${d} on the board; again to stop` }
+));
 
 export type Side = "top" | "right" | "bottom" | "left";
 export type Board = { labelSides(): Set<Side>; colName(col: number): string; rowName(row: number): string };
@@ -322,7 +323,7 @@ export function dominosaView(board: Board): View<DominosaPuzzle, DominosaState, 
         "dominosa.domino": { menu: "board" },
         "dominosa.line": { menu: "board" },
         "dominosa.highlight": { menu: "board" },
-      }), ...bindCommands(DIGIT_BINDINGS, Object.fromEntries(Array.from({ length: 10 }, (_, d) => [`dominosa.number-${d}`, () => { if (d <= p.n) toggleHighlight(d); }])))];
+      }), ...bindCommands(DIGIT_BINDINGS, handlersOver("dominosa.number-", NUMBER_KEYS, (d) => () => { if (d <= p.n) toggleHighlight(d); }))];
       return {
         gestures: { secondaryClick: true, hold: true },
         aspect: vbW / vbH,

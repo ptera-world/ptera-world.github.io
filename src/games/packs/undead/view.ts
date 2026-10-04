@@ -107,6 +107,15 @@ function legend(look: Look): { sample: string; meaning: string }[] {
 
 const KIND = ["", "ghost", "vampire", "zombie"] as const;
 
+/** The keys this view adds to the command context. */
+export interface UndeadContext {
+  undeadPencil: boolean;
+}
+
+declare module "../../core/types" {
+  interface CommandContext extends Partial<UndeadContext> {}
+}
+
 export function undeadView(look: Look, board: Board): View<UndeadPuzzle, UndeadState, UndeadAction, UndeadInteraction, typeof settings> {
   return {
     id: "undead.svg",
@@ -337,7 +346,7 @@ export function undeadView(look: Look, board: Board): View<UndeadPuzzle, UndeadS
         aspect: vbW / vbH,
         cells: { cols: p.w + 2, rows: p.h + 3 },
         commands,
-        context: () => ({ undeadPencil: session.interaction.pencil }),
+        context: (): UndeadContext => ({ undeadPencil: session.interaction.pencil }),
         target: (): UndeadTarget => (hoverClue >= 0 ? { clue: hoverClue } : { cell: hoverCell >= 0 ? hoverCell : session.interaction.cursor }),
         preview: (st) => {
           preview = st as UndeadState | null;

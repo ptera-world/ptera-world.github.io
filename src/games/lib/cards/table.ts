@@ -1,5 +1,5 @@
 import { animate, ease, type Animation } from "../../core/anim";
-import { bindCommands, type BindingSchema, type CommandHandler, type Ids } from "../../core/commands";
+import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
 import { s, style, inputIs } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
 import type { Action, CommandDef, ViewContext, ViewHandle } from "../../core/types";
@@ -130,11 +130,15 @@ const BINDINGS = {
   "cards.down": { label: "cursor one card down the column", category: "cards", keys: ["ArrowDown", "s"] },
   "cards.pick": { label: "pick up or put down", category: "cards", keys: ["space"], description: "pick up the cards from the cursor down, then put them on the pile under the cursor" },
   "cards.auto": { label: "move to the best place", category: "cards", keys: ["Enter"], description: "does what clicking the card under the cursor does" },
+} satisfies BindingSchema;
+
+/** Only for games with a stock. */
+const DRAW_BINDINGS = {
   "cards.draw": { label: "draw from the stock", category: "cards", keys: ["n"] },
 } satisfies BindingSchema;
 
 declare module "../../core/commands" {
-  interface CommandNames extends Ids<typeof BINDINGS> {}
+  interface CommandNames extends Ids<typeof BINDINGS>, Ids<typeof DRAW_BINDINGS> {}
 }
 
 export interface TableOptions {
@@ -451,7 +455,7 @@ export function mountTable<Pz, S, A extends Action, I extends { cursor: CardCurs
     const c = session.interaction.cursor;
     if (act(rules.tap(p, session.state, c.pile, Math.min(c.index, topIndex(c.pile))))) session.setInteraction((i) => ({ ...i, cursor: { ...i.cursor, index: topIndex(i.cursor.pile), held: null } }));
   };
-  const handlers: { [K in keyof typeof BINDINGS]?: CommandHandler } = {
+  const handlers = {
     "cards.left": moveCursor(-1),
     "cards.right": moveCursor(1),
     "cards.up": moveDepth(-1),
@@ -459,7 +463,10 @@ export function mountTable<Pz, S, A extends Action, I extends { cursor: CardCurs
     "cards.pick": pick,
     "cards.auto": auto,
   };
-  if (rules.stock !== undefined) handlers["cards.draw"] = () => { act(rules.tap(p, session.state, rules.stock!, topIndex(rules.stock!))); };
+  const stock = rules.stock;
+  const draw = stock === undefined ? [] : bindCommands(DRAW_BINDINGS, {
+    "cards.draw": () => { act(rules.tap(p, session.state, stock, topIndex(stock))); },
+  }, rules.drawLabel ? { "cards.draw": { label: rules.drawLabel } } : {});
 
   // --- lifecycle ---
 
@@ -496,7 +503,7 @@ export function mountTable<Pz, S, A extends Action, I extends { cursor: CardCurs
   return {
     aspect: W / H,
     cells: { cols: Math.round(W / 4), rows: Math.round(H / 4) },
-    commands: [...bindCommands(BINDINGS, handlers, rules.drawLabel ? { "cards.draw": { label: rules.drawLabel } } : {}), ...(opts.commands ?? [])],
+    commands: [...bindCommands(BINDINGS, handlers), ...draw, ...(opts.commands ?? [])],
     target: () => session.interaction.cursor,
     preview: (st) => {
       preview = st as S | null;

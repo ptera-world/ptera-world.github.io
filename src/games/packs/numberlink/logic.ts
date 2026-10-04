@@ -1,4 +1,6 @@
 import type { Rng } from "../../core/rng";
+import type { Ids } from "../../core/commands";
+import { featureTests } from "../../core/define";
 import { defineSchema, type Values } from "../../core/schema";
 import type { Format, GenerateContext, Hint, PuzzleDef } from "../../core/types";
 import { LINE, NO, edgeAt, edgeGrid, pieces } from "../../lib/edges";
@@ -318,6 +320,13 @@ function generate(v: Values<typeof params>, rng: Rng, ctx: GenerateContext): Pro
   return generatePuzzle({ w: v.width, h: v.height, difficulty: LEVEL_NAMES.indexOf(v.difficulty as (typeof LEVEL_NAMES)[number]) }, rng, ctx);
 }
 
+const FEATURES = {
+  /** Every cell must be on a line. */
+  fill: (p: NumberlinkPuzzle) => p.fill,
+  /** Cells may stay empty. */
+  gaps: (p: NumberlinkPuzzle) => !p.fill,
+};
+
 export const numberlink: PuzzleDef<NumberlinkPuzzle, NumberlinkState, NumberlinkAction, NumberlinkInteraction, typeof params> = {
   id: "numberlink",
   name: "numberlink",
@@ -348,7 +357,7 @@ export const numberlink: PuzzleDef<NumberlinkPuzzle, NumberlinkState, Numberlink
   hint,
   rate,
   describeAction,
-  features: (p) => (p.fill ? ["fill"] : ["gaps"]),
+  features: featureTests(FEATURES),
   rules: (p) => [
     "join each pair of matching dots with one line.",
     "lines run between side-by-side cells, straight or turning. they never cross, branch or touch a cell twice.",
@@ -359,10 +368,5 @@ export const numberlink: PuzzleDef<NumberlinkPuzzle, NumberlinkState, Numberlink
 };
 
 declare module "../../core/types" {
-  interface FeatureNames {
-    /** Every cell must be on a line. */
-    fill: true;
-    /** Cells may stay empty. */
-    gaps: true;
-  }
+  interface FeatureNames extends Ids<typeof FEATURES> {}
 }

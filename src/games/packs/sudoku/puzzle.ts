@@ -1,3 +1,5 @@
+import type { Ids } from "../../core/commands";
+import { featureTests } from "../../core/define";
 import type { Rng } from "../../core/rng";
 import type { Schema, Values } from "../../core/schema";
 import type { Feature, GenerateContext, Hint, Preset, PuzzleDef } from "../../core/types";
@@ -174,21 +176,9 @@ const featureCache = new WeakMap<LatinPuzzle, Feature[]>();
 /** A puzzle with a clue of this constraint type has the feature of the same name. */
 export const constraintFeature = (type: string): Feature => type as Feature;
 
-/**
- * Constraint type ids present, plus: "boxes" (box or jigsaw regions), "givens", "rules" (any
- * clue arithmetic), "unnamed-rules" (rules from a type without its own technique), "combos" (clues worth listing combinations for), "links" (cells that see
- * each other other than by row, column or box).
- */
-export function featuresOf(p: LatinPuzzle): Feature[] {
-  let f = featureCache.get(p);
-  if (f) return f;
+/** Cells see each other other than by row, column or box. */
+function hasLinks(p: LatinPuzzle): boolean {
   const m = modelOf(p);
-  const out = new Set(p.constraints.map((c) => constraintFeature(c.type)));
-  if (m.houses.some((h) => h.kind === "box")) out.add("boxes");
-  if (p.givens.some((v) => v)) out.add("givens");
-  if (m.rules.length) out.add("rules");
-  if (m.ruleSource.some((i) => !constraintTypes.get(p.constraints[i]!.type)?.logic)) out.add("unnamed-rules");
-  if (p.constraints.some((c) => constraintTypes.get(c.type)?.combos)) out.add("combos");
   const basic = new Set(["row", "col", "box"]);
   let basicPairs = 0;
   for (let c = 0; c < m.size; c++) {
@@ -196,8 +186,33 @@ export function featuresOf(p: LatinPuzzle): Feature[] {
     for (const h of m.houseOf[c]!) if (basic.has(m.houses[h]!.kind)) for (const x of m.houses[h]!.cells) if (x !== c) seen.add(x);
     basicPairs += seen.size;
   }
-  if (m.peers.reduce((a, ps) => a + ps.length, 0) > basicPairs) out.add("links");
-  f = [...out];
+  return m.peers.reduce((a, ps) => a + ps.length, 0) > basicPairs;
+}
+
+const FEATURES = {
+  /** Box or jigsaw regions. */
+  boxes: (p: LatinPuzzle) => modelOf(p).houses.some((h) => h.kind === "box"),
+  givens: (p: LatinPuzzle) => p.givens.some((v) => v),
+  /** Any clue arithmetic. */
+  rules: (p: LatinPuzzle) => modelOf(p).rules.length > 0,
+  /** Rules from a type without its own technique. */
+  "unnamed-rules": (p: LatinPuzzle) => modelOf(p).ruleSource.some((i) => !constraintTypes.get(p.constraints[i]!.type)?.logic),
+  /** Clues worth listing combinations for. */
+  combos: (p: LatinPuzzle) => p.constraints.some((c) => !!constraintTypes.get(c.type)?.combos),
+  links: hasLinks,
+};
+
+declare module "../../core/types" {
+  interface FeatureNames extends Ids<typeof FEATURES> {}
+}
+
+const fixedFeatures = featureTests<LatinPuzzle, typeof FEATURES>(FEATURES);
+
+/** The constraint types present, plus the FEATURES that hold. */
+export function featuresOf(p: LatinPuzzle): Feature[] {
+  let f = featureCache.get(p);
+  if (f) return f;
+  f = [...new Set([...p.constraints.map((c) => constraintFeature(c.type)), ...fixedFeatures(p)])];
   featureCache.set(p, f);
   return f;
 }
@@ -323,17 +338,4 @@ export function latinDef<P extends Schema>(cfg: LatinDefConfig<P>): PuzzleDef<La
       return [`${p.n}×${p.n}`, ...extra].join(" ") + (p.title ? ` · ${p.title}` : "");
     },
   };
-}
-
-declare module "../../core/types" {
-  interface FeatureNames {
-    boxes: true;
-    givens: true;
-    rules: true;
-    /** Some rule comes from a clue type with no named logic. */
-    "unnamed-rules": true;
-    combos: true;
-    /** Cells see each other beyond rows, columns and boxes. */
-    links: true;
-  }
 }

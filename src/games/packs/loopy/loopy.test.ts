@@ -9,7 +9,7 @@ import { TechniqueHost, applyStep, findPracticePosition, firstStep, rateByTechni
 import pack, { register } from ".";
 import { assists } from "./assists";
 import { CROSS, LINE, UNKNOWN, check } from "./board";
-import { cluesOf, gridOf, loopy, type LoopyAction, type LoopyPuzzle, type LoopyState } from "./def";
+import { cluesOf, gridOf, loopy, tilingFeature, type LoopyAction, type LoopyPuzzle, type LoopyState } from "./def";
 import { dotRef, edgeRef } from "./names";
 import { techniques } from "./techniques";
 import { decodePzpr, encodePzpr, formats, gridFormat, nativeFormat, pzprFileFormat, pzprFormat, sgtFormat } from "./formats";
@@ -234,7 +234,7 @@ test("mistake checks only exist when the puzzle has one solution", async () => {
   const ambiguous = nativeFormat.parse("square:3x3:i");
   expect(loopy.features!(unique)).toContain("solution");
   expect(loopy.features!(ambiguous)).not.toContain("solution");
-  expect(loopy.features!(unique)).toContain("tiling:square");
+  expect(loopy.features!(unique)).toContain(tilingFeature("square"));
   const ids = (p: LoopyPuzzle) => registry.pluginsFor(loopy, p).map((x) => x.id);
   expect(ids(unique)).toContain("loopy.mistakes");
   expect(ids(ambiguous)).not.toContain("loopy.mistakes");

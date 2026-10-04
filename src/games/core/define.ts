@@ -13,3 +13,10 @@ export const defineViews = <Pz, S, A extends Action = any, I = any>() =>
 
 export const defineWidgets = <Pz, S, A extends Action = any, I = any>() =>
   <P extends Schema = {}>(w: WidgetDef<Pz, S, A, I, P>): WidgetDef<Pz, S, A, I, P> => w;
+
+/**
+ * A puzzle's features as named tests; `features(puzzle)` lists the names whose test passes.
+ * The names are the record's keys, so `FeatureNames` can be derived from it.
+ */
+export const featureTests = <Pz, const F extends Record<string, (puzzle: Pz) => boolean>>(tests: F) =>
+  (puzzle: Pz): (keyof F & string)[] => (Object.keys(tests) as (keyof F & string)[]).filter((k) => tests[k]!(puzzle));

@@ -88,6 +88,15 @@ declare module "../../core/commands" {
   interface CommandNames extends Ids<typeof BINDINGS> {}
 }
 
+/** Keys this view adds to the command context. */
+export interface LightupContext {
+  lightupMarkMode: boolean;
+}
+
+declare module "../../core/types" {
+  interface CommandContext extends Partial<LightupContext> {}
+}
+
 /** Inline markup for an asset inside a 10×10 sample. */
 function assetMarkup(markup: string): string {
   const t = markup.trim();
@@ -425,7 +434,7 @@ export function lightupView(look: Look, board: Board): View<LightupPuzzle, Light
         aspect: vbW / vbH,
         cells: { cols: vbW / SIZE, rows: vbH / SIZE },
         commands,
-        context: () => ({ lightupMarkMode: session.interaction.markMode }),
+        context: (): LightupContext => ({ lightupMarkMode: session.interaction.markMode }),
         preview: (st) => {
           previewing = st as LightupState | null;
           render();

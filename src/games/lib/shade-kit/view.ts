@@ -1,11 +1,11 @@
-import { bindCommands, type BindingSchema } from "../../core/commands";
+import { bindCommands, type Binding, type CommandHandler } from "../../core/commands";
 import { s, style } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
-import type { PuzzleRef, View } from "../../core/types";
+import type { CommandDef, PuzzleRef, View } from "../../core/types";
 import type { Focus } from "../grid-kit/names";
 import {
   KIT_CSS, SIZE, Strokes, cursorBindings, cursorHandlers, cursorRect, drawFocus, focusCells, frame,
-  type BoardPrefs,
+  type BoardPrefs, type CursorId,
 } from "../grid-kit/view";
 import { BLACK, DOT, NONE, type Mark, type ShadeAction, type ShadeInteraction, type ShadeState } from "./state";
 
@@ -24,9 +24,13 @@ export interface Flags {
 
 export const NO_FLAGS: Flags = { marks: new Set(), texts: new Set(), cells: new Set() };
 
-export interface ShadeViewSpec<Pz extends { w: number; h: number }> {
-  /** Its id is also the command and CSS class prefix. */
+/** The commands a shade view defines; a pack declares them with `Ids<Record<ShadeIds<"norinori">, true>>`. */
+export type ShadeIds<P extends string> = `${P}.${"shade" | "dot" | "clear"}` | CursorId<P>;
+
+export interface ShadeViewSpec<Pz extends { w: number; h: number }, P extends string> {
   puzzle: PuzzleRef;
+  /** Command and CSS class prefix. */
+  prefix: P;
   /** Text naming a BLACK mark in commands and controls ("shade", "star", "queen"). */
   shadeWord: string;
   glyph: Glyph;
@@ -78,9 +82,9 @@ const settings = defineSchema({
 });
 
 /** A board of cells that are marked BLACK or DOT, with optional regions, region colors and cell texts. */
-export function shadeView<Pz extends { w: number; h: number }>(spec: ShadeViewSpec<Pz>, board: BoardPrefs): View<Pz, ShadeState, ShadeAction, ShadeInteraction, typeof settings> {
-  const id = spec.puzzle.id, word = spec.shadeWord;
-  const BINDINGS: BindingSchema = {
+export function shadeView<Pz extends { w: number; h: number }, P extends string>(spec: ShadeViewSpec<Pz, P>, board: BoardPrefs): View<Pz, ShadeState, ShadeAction, ShadeInteraction, typeof settings> {
+  const id = spec.prefix, word = spec.shadeWord;
+  const BINDINGS = <Record<ShadeIds<P>, Binding>>{
     [`${id}.shade`]: { label: `${word} on / off`, category: id, keys: ["space", "b"], description: `${word} the selected cell, or take it away` },
     [`${id}.dot`]: { label: "dot on / off", category: id, keys: ["Enter", "period"], description: `put a dot on the selected cell: your note that it gets no ${word}. press again to remove it` },
     [`${id}.clear`]: { label: "clear cell", category: id, keys: ["Backspace", "Delete"], description: `remove the ${word} or dot from the selected cell` },
@@ -183,12 +187,12 @@ export function shadeView<Pz extends { w: number; h: number }>(spec: ShadeViewSp
         const c = session.interaction.cursor;
         if (!spec.fixed(p, c)) session.dispatch({ type: "set", cells: [c], value: value(session.state.marks[c]!) });
       };
-      const commands = bindCommands(BINDINGS, {
+      const commands = bindCommands<ShadeIds<P>>(BINDINGS as never, <Record<ShadeIds<P>, CommandHandler>>{
         [`${id}.shade`]: atCursor((m) => (m === BLACK ? NONE : BLACK)),
         [`${id}.dot`]: atCursor((m) => (m === DOT ? NONE : DOT)),
         [`${id}.clear`]: atCursor(() => NONE),
         ...cursorHandlers(id, p, session),
-      }, {
+      }, <Partial<Record<ShadeIds<P>, Partial<CommandDef>>>>{
         [`${id}.shade`]: { menu: "board" },
         [`${id}.dot`]: { menu: "board" },
         [`${id}.clear`]: { menu: "board" },

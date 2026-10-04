@@ -1,3 +1,5 @@
+import type { Ids } from "../../core/commands";
+import { featureTests } from "../../core/define";
 import type { Rng } from "../../core/rng";
 import { defineSchema, type Values } from "../../core/schema";
 import type { Format, GenerateContext, Hint, PuzzleDef } from "../../core/types";
@@ -199,6 +201,11 @@ function generate(v: Values<typeof params>, rng: Rng, ctx: GenerateContext): Pro
   return generatePuzzle({ w: v.width, h: v.height, difficulty: LEVEL_NAMES.indexOf(v.difficulty as (typeof LEVEL_NAMES)[number]), walls: v.walls }, rng, ctx);
 }
 
+const FEATURES = {
+  /** Some side-by-side cells have a wall between them. */
+  walls: (p: ZipPuzzle) => p.walls.length > 0,
+};
+
 export const zip: PuzzleDef<ZipPuzzle, ZipState, ZipAction, null, typeof params> = {
   id: "zip",
   name: "zip",
@@ -228,7 +235,7 @@ export const zip: PuzzleDef<ZipPuzzle, ZipState, ZipAction, null, typeof params>
   hint,
   rate,
   describeAction,
-  features: (p) => (p.walls.length ? ["walls"] : []),
+  features: featureTests(FEATURES),
   rules: (p) => [
     "draw one path that starts on 1 and visits every cell exactly once, moving between side-by-side cells.",
     `it passes the numbers in order (1, 2, 3, …) and ends on ${board(p).last}.`,
@@ -238,8 +245,5 @@ export const zip: PuzzleDef<ZipPuzzle, ZipState, ZipAction, null, typeof params>
 };
 
 declare module "../../core/types" {
-  interface FeatureNames {
-    /** Some side-by-side cells have a wall between them. */
-    walls: true;
-  }
+  interface FeatureNames extends Ids<typeof FEATURES> {}
 }
