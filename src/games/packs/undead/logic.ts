@@ -1,9 +1,12 @@
 import type { Rng } from "../../core/rng";
-import { cellName as boardCell, colName, rowName } from "../../core/names";
+import { colName, rowName } from "../../core/names";
+import { cellList, cellName } from "../../lib/grid-kit/names";
 import { defineSchema, type Values } from "../../core/schema";
 import type { Format, GenerateContext, Hint, PuzzleDef } from "../../core/types";
 import { ALL, EMPTY, GHOST, MIRROR_L, MIRROR_R, VAMPIRE, ZOMBIE, bit, geometry, seen, type UndeadPuzzle } from "./grid";
 import { LEVEL_NAMES, analyze, generatePuzzle, type Level } from "./solver";
+
+export { cellList, cellName };
 
 export type { UndeadPuzzle } from "./grid";
 
@@ -141,15 +144,6 @@ export const sgtFormat: Format<UndeadPuzzle> = {
 };
 
 // --- names, conflicts, hints ---
-
-export const cellName = (p: { w: number }, c: number) => boardCell(c % p.w, Math.floor(c / p.w));
-
-export function cellList(p: { w: number }, cells: readonly number[]): string {
-  const names = cells.slice(0, 3).map((c) => cellName(p, c));
-  const rest = cells.length - names.length;
-  if (rest > 0) return `${names.join(", ")} and ${rest} more`;
-  return names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}` : names[0] ?? "";
-}
 
 /** "the 2 above column C", "the 0 right of row 4". */
 export function clueName(p: UndeadPuzzle, i: number): string {

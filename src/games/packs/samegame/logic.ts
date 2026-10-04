@@ -1,4 +1,4 @@
-import { cellName } from "../../core/names";
+import { cellName as cellAt } from "../../lib/grid-kit/names";
 import type { Rng } from "../../core/rng";
 import { defineSchema, type Values } from "../../core/schema";
 import type { Format, GenerateContext, PuzzleDef, Rating } from "../../core/types";
@@ -49,7 +49,7 @@ export interface SamegameInteraction {
   cursor: number;
 }
 
-export const cellAt = (p: { w: number }, c: number) => cellName(c % p.w, Math.floor(c / p.w));
+export { cellAt };
 
 /** The joined same-color group containing `cell` (empty for an empty cell). */
 export function group(w: number, h: number, grid: readonly number[], cell: number): number[] {

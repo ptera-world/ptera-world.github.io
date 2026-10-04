@@ -1,11 +1,10 @@
-import { cellName } from "../../core/names";
+import { cellName as at } from "../../lib/grid-kit/names";
 import type { Step, Technique } from "../../core/types";
 import { GLYPHS, describeShift, hintFor, target, type NetslideAction, type NetslideFocus, type NetslidePuzzle, type NetslideState } from "./logic";
 import type { PermStep, StepKind } from "../../lib/perm";
 
 type NetslideTechnique = Technique<NetslidePuzzle, NetslideState, NetslideAction>;
 
-const at = (p: NetslidePuzzle, c: number) => cellName(c % p.w, Math.floor(c / p.w));
 const moves = (n: number) => (n === 1 ? "1 more slide" : `${n} more slides`);
 const does = (n: number, verb: string) => `${moves(n)} ${n === 1 ? `${verb}s` : verb}`;
 const sequence = (actions: NetslideAction[]) => actions.map(describeShift).join(", then ");

@@ -1,5 +1,5 @@
 import type { Step, Technique } from "../../core/types";
-import { cellName } from "../../core/names";
+import { cellName as cellAt, plural } from "../../lib/grid-kit/names";
 import { info, type PatternAction, type PatternFocus, type PatternPuzzle, type PatternState, type PatternTarget, type GuideSpan } from "./logic";
 import { ruleOnLine, type LineFind, type LineRuleId } from "./rules";
 import { EMPTY, FILLED, Lines, UNKNOWN, findProbe, lineClue, lineName } from "./solver";
@@ -56,7 +56,6 @@ function actionsOf(fill: number[], empty: number[]): PatternAction[] {
   return out;
 }
 
-const plural = (n: number, one: string, many: string) => (n === 1 ? one : many);
 
 function outcome(fill: number, empty: number): string {
   const parts: string[] = [];
@@ -191,7 +190,6 @@ export const everyWay = lineTechnique("every", {
   practice: { params: { width: 15, height: 15, difficulty: "hard", smoothing: 0 } },
 });
 
-const cellAt = (p: PatternPuzzle, c: number) => cellName(c % p.w, Math.floor(c / p.w));
 const word = (v: number) => (v === FILLED ? "filled" : "empty");
 
 export const whatIf: PatternTechnique = {

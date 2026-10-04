@@ -2,8 +2,10 @@ import type { Rng } from "../../core/rng";
 import { defineSchema, type Values } from "../../core/schema";
 import type { Format, GenerateContext, Hint, PuzzleDef } from "../../core/types";
 import { BLACK, EMPTY, geometry, litCounts, type LightupPuzzle } from "./grid";
-import { cellName as boardCell } from "../../core/names";
+import { cellList, cellName } from "../../lib/grid-kit/names";
 import { LEVEL_NAMES, analyze, generatePuzzle, type Level, type Symmetry } from "./solver";
+
+export { cellList, cellName };
 
 export type { LightupPuzzle } from "./grid";
 
@@ -155,17 +157,6 @@ function checkSize(w: number, h: number): void {
 }
 
 // --- hints ---
-
-/** A cell's name as the board's edge labels show it, e.g. "C5". */
-export const cellName = (p: { w: number }, c: number) => boardCell(c % p.w, Math.floor(c / p.w));
-
-/** "C5", "C5 and D2", "C5, D2, E1 and 3 more". */
-export function cellList(p: { w: number }, cells: readonly number[]): string {
-  const names = cells.slice(0, 3).map((c) => cellName(p, c));
-  const rest = cells.length - names.length;
-  if (rest > 0) return `${names.join(", ")} and ${rest} more`;
-  return names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}` : names[0] ?? "";
-}
 
 /** Focus payload understood by the lightup views. Every cell a hint's text names is in one of these lists. */
 export interface LightupFocus {

@@ -1,4 +1,5 @@
 import type { Step, Technique } from "../../core/types";
+import { plural } from "../../lib/grid-kit/names";
 import { cellName, mineCount, numbers, visibleKnowledge, type MinesAction, type MinesFocus, type MinesPuzzle, type MinesState } from "./logic";
 import { MINE, UNKNOWN, deduceAt, deduceCount, deduceGlobal, deducePairs, neighbourTable, type Deduction } from "./solver";
 
@@ -29,7 +30,6 @@ function actionsOf(d: Deduction): MinesAction[] {
   return out;
 }
 
-const plural = (n: number, one: string, many: string) => (n === 1 ? one : many);
 
 /** "these 3 cells are safe and this one is a mine", for any mix. */
 function outcome(d: Deduction): string {

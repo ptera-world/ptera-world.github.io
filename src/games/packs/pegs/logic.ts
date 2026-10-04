@@ -1,4 +1,4 @@
-import { cellName } from "../../core/names";
+import { cellName as cellAt } from "../../lib/grid-kit/names";
 import type { Rng } from "../../core/rng";
 import { defineSchema, type Values } from "../../core/schema";
 import type { Format, PuzzleDef, Rating } from "../../core/types";
@@ -52,7 +52,7 @@ export interface PegsInteraction {
   cursor: number;
 }
 
-export const cellAt = (p: { w: number }, c: number) => cellName(c % p.w, Math.floor(c / p.w));
+export { cellAt };
 export const pegCount = (grid: readonly number[]) => grid.reduce((a, v) => a + (v === PEG ? 1 : 0), 0);
 
 export function jumpFor(p: Pick<PegsPuzzle, "w" | "h">, grid: readonly number[], from: number, to: number): Jump | null {

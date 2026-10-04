@@ -1,9 +1,11 @@
 import type { Rng } from "../../core/rng";
-import { cellName as boardCell } from "../../core/names";
+import { cellList, cellName } from "../../lib/grid-kit/names";
 import { defineSchema, type Values } from "../../core/schema";
 import type { Format, PuzzleDef } from "../../core/types";
 import { fireAt, hitCode } from "./beam";
 import { obfuscateBitmap } from "../../lib/sha1";
+
+export { cellList, cellName };
 
 export const params = defineSchema({
   width: { type: "int", label: "width", default: 8, min: 2, max: 16 },
@@ -158,15 +160,6 @@ export const sgtFormat: Format<BlackboxPuzzle> = {
 };
 
 // --- definition ---
-
-export const cellName = (p: { w: number }, c: number) => boardCell(c % p.w, Math.floor(c / p.w));
-
-export function cellList(p: { w: number }, cells: readonly number[]): string {
-  const names = cells.slice(0, 3).map((c) => cellName(p, c));
-  const rest = cells.length - names.length;
-  if (rest > 0) return `${names.join(", ")} and ${rest} more`;
-  return names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}` : names[0] ?? "";
-}
 
 /** Focus payload understood by the blackbox view. */
 export interface BlackboxFocus {

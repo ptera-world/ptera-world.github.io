@@ -1,9 +1,11 @@
 import type { Rng } from "../../core/rng";
 import { defineSchema, type Values } from "../../core/schema";
 import type { Format, GenerateContext, Hint, PuzzleDef, Rating } from "../../core/types";
-import { cellName as boardCellName } from "../../core/names";
+import { cellName } from "../../lib/grid-kit/names";
 import { obfuscateBitmap } from "../../lib/sha1";
 import { UNKNOWN, countNumbers, generateLayout, neighbourTable, solveLayout, startKnowledge, type Level } from "./solver";
+
+export { cellName };
 
 export const params = defineSchema({
   width: { type: "int", label: "width", default: 9, min: 4, max: 60 },
@@ -71,9 +73,6 @@ export function numbers(p: MinesPuzzle): number[] {
 export function mineCount(p: MinesPuzzle): number {
   return p.mines.reduce((a, b) => a + b, 0);
 }
-
-/** Shared board name of a cell ("C5"), matching the edge labels. */
-export const cellName = (p: { w: number }, c: number) => boardCellName(c % p.w, Math.floor(c / p.w));
 
 /** Open `cells` (flood-filling zeros, skipping flags). Mutates `open`; returns the mine hit or -1. */
 function openCells(p: MinesPuzzle, open: number[], flags: number[], cells: readonly number[]): number {

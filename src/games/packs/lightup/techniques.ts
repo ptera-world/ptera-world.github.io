@@ -1,4 +1,5 @@
 import type { Step, Technique } from "../../core/types";
+import { plural } from "../../lib/grid-kit/names";
 import { EMPTY, geometry, litCounts } from "./grid";
 import {
   BULB, DOT, NONE, cellList, cellName,
@@ -56,7 +57,6 @@ function first(p: LightupPuzzle, s: LightupState, kinds: readonly StepKind[]): {
   return raw ? { raw, cells } : null;
 }
 
-const plural = (n: number, one: string, many: string) => (n === 1 ? one : many);
 
 function outcome(p: LightupPuzzle, cells: readonly number[], value: number): string {
   const one = cells.length === 1;

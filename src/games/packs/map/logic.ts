@@ -1,5 +1,5 @@
 import type { Rng } from "../../core/rng";
-import { cellName as boardCell } from "../../core/names";
+import { cellList, cellName } from "../../lib/grid-kit/names";
 import { defineSchema, type Values } from "../../core/schema";
 import type { Format, GenerateContext, Hint, PuzzleDef } from "../../core/types";
 import { ALL, geometry, type MapPuzzle } from "./grid";
@@ -197,14 +197,12 @@ export const sgtFormat: Format<MapPuzzle> = {
 /** A region is named by the cell its label sits in. */
 export const regionName = (p: MapPuzzle, r: number) => {
   const c = geometry(p).anchor[r]!;
-  return `the region at ${boardCell(c % p.w, Math.floor(c / p.w))}`;
+  return `the region at ${cellName(p, c)}`;
 };
 
 export function regionList(p: MapPuzzle, regions: readonly number[]): string {
   const g = geometry(p);
-  const names = regions.slice(0, 3).map((r) => boardCell(g.anchor[r]! % p.w, Math.floor(g.anchor[r]! / p.w)));
-  const rest = regions.length - names.length;
-  const list = rest > 0 ? `${names.join(", ")} and ${rest} more` : names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}` : names[0] ?? "";
+  const list = cellList(p, regions.map((r) => g.anchor[r]!));
   return `the ${regions.length === 1 ? "region" : "regions"} at ${list}`;
 }
 

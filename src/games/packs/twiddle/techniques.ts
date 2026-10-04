@@ -1,11 +1,10 @@
-import { cellName } from "../../core/names";
+import { cellName as at } from "../../lib/grid-kit/names";
 import type { Step, Technique } from "../../core/types";
 import { describeTurn, goalTile, hintFor, type TwiddleAction, type TwiddleFocus, type TwiddlePuzzle, type TwiddleState } from "./logic";
 import type { PermStep, StepKind } from "../../lib/perm";
 
 type TwiddleTechnique = Technique<TwiddlePuzzle, TwiddleState, TwiddleAction>;
 
-const at = (p: TwiddlePuzzle, c: number) => cellName(c % p.w, Math.floor(c / p.w));
 const moves = (n: number) => (n === 1 ? "1 more turn" : `${n} more turns`);
 const does = (n: number, verb: string) => `${moves(n)} ${n === 1 ? `${verb}s` : verb}`;
 export const sequence = (p: TwiddlePuzzle, actions: TwiddleAction[]) => actions.map((a) => describeTurn(p, a)).join(", then ");

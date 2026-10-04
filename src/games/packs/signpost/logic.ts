@@ -1,9 +1,11 @@
 import type { Rng } from "../../core/rng";
-import { cellName as boardCell } from "../../core/names";
+import { cellList, cellName } from "../../lib/grid-kit/names";
 import { defineSchema, type Values } from "../../core/schema";
 import type { Format, GenerateContext, Hint, PuzzleDef } from "../../core/types";
 import { chains, geometry, type Chains, type SignpostPuzzle } from "./grid";
 import { LEVEL_NAMES, analyze, freshKnowledge, generatePuzzle, look, valid, type Level } from "./solver";
+
+export { cellList, cellName };
 
 export type { SignpostPuzzle } from "./grid";
 
@@ -195,15 +197,6 @@ export const gridFormat: Format<SignpostPuzzle> = {
 };
 
 // --- names, conflicts, hints ---
-
-export const cellName = (p: { w: number }, c: number) => boardCell(c % p.w, Math.floor(c / p.w));
-
-export function cellList(p: { w: number }, cells: readonly number[]): string {
-  const names = cells.slice(0, 3).map((c) => cellName(p, c));
-  const rest = cells.length - names.length;
-  if (rest > 0) return `${names.join(", ")} and ${rest} more`;
-  return names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}` : names[0] ?? "";
-}
 
 /** Focus payload understood by the signpost view. */
 export interface SignpostFocus {

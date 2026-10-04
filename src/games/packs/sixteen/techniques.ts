@@ -1,11 +1,10 @@
-import { cellName } from "../../core/names";
+import { cellName as at } from "../../lib/grid-kit/names";
 import type { Step, Technique } from "../../core/types";
 import { describeShift, hintFor, type SixteenAction, type SixteenFocus, type SixteenPuzzle, type SixteenState } from "./logic";
 import type { PermStep, StepKind } from "../../lib/perm";
 
 type SixteenTechnique = Technique<SixteenPuzzle, SixteenState, SixteenAction>;
 
-const at = (p: SixteenPuzzle, c: number) => cellName(c % p.w, Math.floor(c / p.w));
 const moves = (n: number) => (n === 1 ? "1 more move" : `${n} more moves`);
 const does = (n: number, verb: string) => `${moves(n)} ${n === 1 ? `${verb}s` : verb}`;
 export const sequence = (actions: SixteenAction[]) => actions.map(describeShift).join(", then ");

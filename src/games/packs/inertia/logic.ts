@@ -1,4 +1,4 @@
-import { cellName } from "../../core/names";
+import { cellName as cellAt } from "../../lib/grid-kit/names";
 import type { Rng } from "../../core/rng";
 import { defineSchema, type Values } from "../../core/schema";
 import type { Format, GenerateContext, PuzzleDef, Rating } from "../../core/types";
@@ -45,7 +45,7 @@ export const DX = [0, 1, 1, 1, 0, -1, -1, -1] as const;
 export const DY = [-1, -1, 0, 1, 1, 1, 0, -1] as const;
 export const DIR_NAMES = ["up", "up-right", "right", "down-right", "down", "down-left", "left", "up-left"] as const;
 
-export const cellAt = (p: { w: number }, c: number) => cellName(c % p.w, Math.floor(c / p.w));
+export { cellAt };
 
 const kind = (p: Pick<InertiaPuzzle, "w" | "h" | "grid">, x: number, y: number) => (x < 0 || y < 0 || x >= p.w || y >= p.h ? WALL : p.grid[y * p.w + x]!);
 
