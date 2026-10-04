@@ -446,6 +446,7 @@ export function latinView(board: BoardPrefs = noLabels, puzzleId = "sudoku"): Vi
 
       return {
         aspect: vb[2]! / vb[3]!,
+        cells: { cols: vb[2]! / S, rows: vb[3]! / S },
           locate: (focus) => rects(focusCells(focus)),
         locateChange: (a, b) => rects(changedCells(a as GridState, b as GridState)),
         destroy() {

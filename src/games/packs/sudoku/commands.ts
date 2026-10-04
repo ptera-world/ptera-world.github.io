@@ -33,7 +33,7 @@ export function boardCommands(session: LatinSession, cellAt: (e: Event | undefin
   const whole = "the selected cells, or the whole board when only one cell is selected";
   return [
     ...MODES.map((m): CommandDef => ({
-      id: `sudoku.mode-${m.id}`, label: `${m.label} mode`, category: INPUT, keys: [m.key], menu: "board",
+      id: `sudoku.mode-${m.id}`, label: `${m.label} mode`, category: INPUT, keys: [m.key],
       description: MODE_HELP[m.id], checked: modeIs(m.id), run: () => setMode(session, m.id),
     })),
     {
@@ -91,7 +91,7 @@ export function boardCommands(session: LatinSession, cellAt: (e: Event | undefin
     { id: "sudoku.extend-left", label: "extend selection left", category: SELECT, keys: ["shift+arrowleft"], description: "add the cell to the left to the selection", run: () => move(session, 0, -1, true) },
     { id: "sudoku.extend-right", label: "extend selection right", category: SELECT, keys: ["shift+arrowright"], description: "add the cell to the right to the selection", run: () => move(session, 0, 1, true) },
     {
-      id: "sudoku.select-all", label: "select all", category: SELECT, keys: ["$mod+a"], menu: "board",
+      id: "sudoku.select-all", label: "select all", category: SELECT, keys: ["$mod+a"],
       description: "select every cell (e.g. to clear all marks at once)", run: () => setSelection(session, [...Array(size).keys()]),
     },
     {
@@ -99,7 +99,7 @@ export function boardCommands(session: LatinSession, cellAt: (e: Event | undefin
       description: "select every cell holding the same digit as the selected cell",
       run: () => selectSame(session, session.interaction.cursor),
     },
-    { id: "sudoku.deselect", label: "clear selection", category: SELECT, keys: ["escape"], menu: "board", description: "select nothing", run: () => setSelection(session, []) },
+    { id: "sudoku.deselect", label: "clear selection", category: SELECT, keys: ["escape"], description: "select nothing", run: () => setSelection(session, []) },
     {
       id: "sudoku.highlight-here", label: "highlight this digit everywhere", category: LOOK, mouse: ["middleclick"], menu: "board",
       description: "keep this cell's digit lit up across the board while you select other cells; again to stop",
