@@ -4,7 +4,7 @@ import { Registry } from "../../core/registry";
 import { Session } from "../../core/session";
 import { TechniqueHost, applyStep, findPracticePosition, firstStep, rateByTechniques } from "../../core/techniques";
 import { cellName } from "../../lib/grid-kit/names";
-import { gridFormat, zip, type ZipAction, type ZipFocus } from "./logic";
+import { gridFormat, zip, type ZipFocus } from "./logic";
 import { zipPlugins } from "./plugins";
 import { analyze, board, countSolutions, logicSolve, walkOf, type ZipPuzzle } from "./solver";
 import { zipTechniques } from "./techniques";
