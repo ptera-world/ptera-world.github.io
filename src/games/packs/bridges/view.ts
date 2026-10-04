@@ -428,6 +428,7 @@ export function makeView(look: Look, board: BoardPrefs, holdMs: number): View<Br
       render();
       return {
         aspect: vbW / vbH,
+        cells: { cols: vbW / S, rows: vbH / S },
         locate(focus) {
           const f = focus as Partial<Focus> | null;
           if (!f || typeof f !== "object") return [];
