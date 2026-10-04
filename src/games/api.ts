@@ -14,6 +14,7 @@ import * as techniques from "./core/techniques";
 import * as dom from "./ui/dom";
 import { asset } from "./ui/themes";
 import * as board from "./ui/board";
+import { HOLD_MS } from "./core/gestures";
 import { fx } from "./ui/fx";
 import type { Shell } from "./ui/shell";
 
@@ -34,6 +35,8 @@ export const api = {
   look: { asset },
   /** Shared board conventions: cell names for hints, which edges show labels. */
   board,
+  /** Touch hold duration (ms) at which the shell opens the board menu. */
+  HOLD_MS,
   /** Set once the shell boots; null while mods are loading. */
   shell: null as Shell | null,
 };

@@ -183,8 +183,12 @@ export interface PuzzleDef<Pz = unknown, S = unknown, A extends Action = Action,
   init(puzzle: Pz): S;
   reduce(puzzle: Pz, state: S, action: A): S;
   isSolved(puzzle: Pz, state: S): boolean;
-  /** The game is over without being solved (e.g. a mine was opened). Undo still works. */
-  isLost?(puzzle: Pz, state: S): boolean;
+  /**
+   * The game is over without being solved (e.g. a mine was opened). Undo still works. Return
+   * `{ focus }` instead of true to say where (highlight data, as in Hint.focus), so effects can
+   * point at it.
+   */
+  isLost?(puzzle: Pz, state: S): boolean | { focus?: unknown };
   initInteraction?(puzzle: Pz): I;
   /** Full solution state, or null if none/unknown. */
   solve?(puzzle: Pz): S | null;

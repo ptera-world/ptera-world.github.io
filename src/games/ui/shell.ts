@@ -29,8 +29,8 @@ import { SAVE_PREFIX, INDEX_KEY, findSession, listSessions, loadSession, newSess
 
 const prefs = namespace("prefs");
 
-/** How long a touch must be held to count as a hold (board menu). Views with their own holds should stay below it or declare gestures.hold. */
-export const HOLD_MS = 550;
+export { HOLD_MS } from "../core/gestures";
+import { HOLD_MS } from "../core/gestures";
 
 /** Serialized text, or null if the format can't write or throws on this puzzle. */
 export function trySerialize(fmt: Format<unknown>, puzzle: unknown): string | null {
@@ -390,7 +390,7 @@ export class Shell {
       session.hooks.change.tap((ctx) => {
         const lost = session.lost;
         if (lost && !this.wasLost && ctx.cause === "action") {
-          session.hooks.fx.call({ kind: "mistake" });
+          session.hooks.fx.call({ kind: "mistake", focus: session.lostFocus });
           session.hooks.fx.call({ kind: "lost" });
         }
         this.wasLost = lost;

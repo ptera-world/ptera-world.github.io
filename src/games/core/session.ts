@@ -202,8 +202,19 @@ export class Session<Pz = unknown, S = unknown, A extends Action = Action, I = u
 
   /** Over without being solved (see PuzzleDef.isLost); false once undone back past the loss. */
   get lost(): boolean {
+    return !!this.lostResult();
+  }
+
+  /** Where the game was lost, if the puzzle says. */
+  get lostFocus(): unknown {
+    const r = this.lostResult();
+    return typeof r === "object" && r ? r.focus : undefined;
+  }
+
+  private lostResult(): boolean | { focus?: unknown } {
+    if (this.solved) return false;
     try {
-      return !this.solved && !!this.def.isLost?.(this.puzzle, this._state);
+      return this.def.isLost?.(this.puzzle, this._state) ?? false;
     } catch {
       return false;
     }
