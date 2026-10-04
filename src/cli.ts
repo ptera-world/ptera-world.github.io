@@ -20,7 +20,7 @@ import { join } from "path";
 import { generateGraph } from "./gen-graph";
 import { generateHeadings } from "./gen-headings";
 import { generatePages } from "./gen-pages";
-import { siteConfig, type CollectionId } from "./site-config";
+import { siteConfig, type AppConfig, type AppId, type CollectionId } from "./site-config";
 
 const args = Bun.argv.slice(2);
 const command = args[0];
@@ -113,7 +113,22 @@ async function buildAll(collectionFilter?: CollectionId): Promise<void> {
     await cp(srcHtml, `${destDir}/index.html`);
   }
 
+  if (!collectionFilter) await buildApps();
+
   console.log("\nBuild complete.");
+}
+
+async function buildApps(): Promise<void> {
+  for (const [id, app] of Object.entries(siteConfig.apps) as [AppId, AppConfig][]) {
+    const outDir = `dist/${id}`;
+    console.log(`\nBundling app ${app.name} → ${outDir}/main.js...`);
+    await cp(`public/${id}`, outDir, { recursive: true });
+    const result = await Bun.build({ entrypoints: [app.entry], outdir: outDir, minify: true, naming: "main.js" });
+    if (!result.success) {
+      console.error("Bundle failed:", result.logs);
+      process.exit(1);
+    }
+  }
 }
 
 switch (command) {

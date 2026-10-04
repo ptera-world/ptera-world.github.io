@@ -62,7 +62,22 @@ export const siteConfig = {
       contentDirs: ["meta", "intelligence"],
     },
   } satisfies Record<string, CollectionConfig>,
+  /** Standalone apps served at /<id>/: own JS entry, own static dir under public/<id>/, no graph. */
+  apps: {
+    games: {
+      name: "games",
+      entry: "src/games/main.ts",
+    },
+  } satisfies Record<string, AppConfig>,
 } as const;
+
+export interface AppConfig {
+  name: string;
+  /** Bundled to /<id>/main.js. */
+  entry: string;
+}
+
+export type AppId = keyof typeof siteConfig.apps;
 
 export type CollectionId = keyof typeof siteConfig.collections;
 

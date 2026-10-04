@@ -98,6 +98,18 @@ const server = Bun.serve({
     const url = new URL(req.url);
     let path = url.pathname;
 
+    for (const [id, app] of Object.entries(siteConfig.apps)) {
+      if (path === `/${id}`) return Response.redirect(`/${id}/${url.search}`, 302);
+      if (path === `/${id}/`) path = `/${id}/index.html`;
+      if (!isProduction && path === `/${id}/main.js`) {
+        const result = await Bun.build({ entrypoints: [app.entry], target: "browser", sourcemap: "inline" });
+        if (!result.success) return new Response(result.logs.map(String).join("\n"), { status: 500 });
+        return new Response(await result.outputs[0]!.arrayBuffer(), {
+          headers: { "Content-Type": "application/javascript" },
+        });
+      }
+    }
+
     // Detect collection from path prefix
     let collectionId: CollectionId = "default";
     for (const id of Object.keys(siteConfig.collections) as CollectionId[]) {
