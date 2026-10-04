@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { readdirSync } from "fs";
+import { existsSync, readdirSync } from "fs";
 import { api } from "./api";
 import { generate } from "./core/generate";
 import { Registry } from "./core/registry";
@@ -8,7 +8,8 @@ import { Session } from "./core/session";
 import { TechniqueHost } from "./core/techniques";
 
 const registry = new Registry();
-for (const dir of readdirSync(new URL("./packs", import.meta.url))) {
+// same rule as the build: a directory is a pack once it has an index.ts
+for (const dir of readdirSync(new URL("./packs", import.meta.url)).filter((d) => existsSync(new URL(`./packs/${d}/index.ts`, import.meta.url)))) {
   const mod = (await import(`./packs/${dir}/index.ts`)) as { default: (games: typeof api) => void };
   mod.default({ ...api, registry });
 }
