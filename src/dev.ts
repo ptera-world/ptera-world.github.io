@@ -109,7 +109,9 @@ const server = Bun.serve({
         // rebuilt when the entry script is requested, so a reload picks up source changes
         if (rel === "main.js" || !appCache.has(id)) {
           try {
-            appCache.set(id, new Map((await buildApp(app, { minify: false })).map((o) => [o.path, o])));
+            const { outputs, failed } = await buildApp(app, { minify: false });
+            for (const f of failed) console.error(`[dev] pack ${f.id} failed to build:\n${f.error}`);
+            appCache.set(id, new Map(outputs.map((o) => [o.path, o])));
           } catch (e) {
             return new Response(String(e instanceof AggregateError ? e.errors.join("\n") : e), { status: 500 });
           }

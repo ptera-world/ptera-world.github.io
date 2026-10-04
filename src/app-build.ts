@@ -30,6 +30,7 @@ const PACK_SDK = new Set([
   "core/dom.ts",
   "core/storage.ts",
   "core/anim.ts",
+  "core/define.ts",
 ]);
 
 /**
@@ -74,9 +75,9 @@ async function bundle(entry: string, root: string, outName: string, opts: { mini
  * Bundle an app: the engine entry on its own, every pack directory as its own self-contained
  * module (one file, no shared chunks, loadable from anywhere), and a pack list (packs.json)
  * naming every pack in directory order. A pack that fails to build is listed with its error
- * and never takes the others down.
+ * and never takes the others down; `failed` names every such pack, for callers to report.
  */
-export async function buildApp(app: AppConfig, opts: { minify: boolean }): Promise<AppOutput[]> {
+export async function buildApp(app: AppConfig, opts: { minify: boolean }): Promise<{ outputs: AppOutput[]; failed: { id: string; error: string }[] }> {
   const root = resolve(dirname(app.entry));
   const packsDir = app.packs ? resolve(app.packs) : "";
   const packIds = packsDir && existsSync(packsDir)
@@ -85,15 +86,18 @@ export async function buildApp(app: AppConfig, opts: { minify: boolean }): Promi
   const out: AppOutput[] = [await bundle(app.entry, root, "main.js", opts)];
   const packsBase = relative(root, packsDir);
   const list: { id: string; name: string; url: string; error?: string }[] = [];
+  const failed: { id: string; error: string }[] = [];
   for (const id of packIds) {
     const path = `${packsBase}/${id}/index.js`;
     try {
       out.push({ ...(await bundle(join(packsDir, id, "index.ts"), root, path, opts, [packBoundary(root, join(packsDir, id))])), pack: true });
       list.push({ id, name: id, url: `./${path}` });
     } catch (e) {
-      list.push({ id, name: id, url: `./${path}`, error: String(e instanceof Error ? e.message : e).slice(0, 800) });
+      const error = String(e instanceof Error ? e.message : e);
+      failed.push({ id, error });
+      list.push({ id, name: id, url: `./${path}`, error: error.slice(0, 800) });
     }
   }
   out.push({ path: "packs.json", type: "application/json", body: JSON.stringify({ name: "built-in", packs: list }, null, 2) });
-  return out;
+  return { outputs: out, failed };
 }

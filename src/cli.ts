@@ -122,7 +122,13 @@ async function buildApps(): Promise<Set<string>> {
     console.log(`\nBundling app ${app.name} → ${outDir}/...`);
     await cp(`public/${id}`, outDir, { recursive: true });
     try {
-      for (const o of await buildApp(app, { minify: true })) {
+      const { outputs, failed } = await buildApp(app, { minify: true });
+      if (failed.length) {
+        for (const f of failed) console.error(`pack ${f.id} failed to build:\n${f.error}\n`);
+        console.error(`Bundle failed: ${failed.length} pack${failed.length > 1 ? "s" : ""} of ${app.name} didn't build.`);
+        process.exit(1);
+      }
+      for (const o of outputs) {
         await Bun.write(join(outDir, o.path), o.body);
         if (o.pack) packs.add(`/${id}/${o.path}`);
       }
