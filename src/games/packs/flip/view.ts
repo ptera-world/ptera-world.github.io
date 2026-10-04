@@ -27,6 +27,7 @@ export const flipView: View<FlipPuzzle, FlipState, FlipAction, FlipInteraction> 
   name: "grid",
   puzzle: "flip",
   settings,
+  controls: [{ how: "click or tap a light", what: "press it (toggles it and its neighbours)" }],
   bindings: {
     "flip.left": { label: "cursor left", category: "flip", keys: ["ArrowLeft", "a"] },
     "flip.right": { label: "cursor right", category: "flip", keys: ["ArrowRight", "d"] },

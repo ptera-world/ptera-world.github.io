@@ -59,7 +59,12 @@ export interface Arrangement {
   side: "right" | "below";
   boardW: number;
   boardH: number;
+  /** Everything below the board scrolls instead of sharing the screen with it. */
+  scroll: boolean;
 }
+
+/** A no-scroll board smaller than this share of the best possible board is unusable, so the page scrolls instead. */
+const MIN_FIT_SHARE = 0.6;
 
 /**
  * Pick where the side slot and panel go so the board is as large as possible. Ties (within 3%)
@@ -74,14 +79,21 @@ export function arrange(m: Measures): Arrangement {
       if (m.hasSide && side === "right") w -= m.sideW + m.gap;
       if (m.hasSide && side === "below") hgt -= m.sideBelowH + m.gap;
       if (w <= 0 || hgt <= 0) {
-        options.push({ panel, side, boardW: 0, boardH: 0 });
+        options.push({ panel, side, boardW: 0, boardH: 0, scroll: false });
         continue;
       }
       const bw = Math.min(w, hgt * m.aspect);
-      options.push({ panel, side, boardW: Math.floor(bw), boardH: Math.floor(bw / m.aspect) });
+      options.push({ panel, side, boardW: Math.floor(bw), boardH: Math.floor(bw / m.aspect), scroll: false });
     }
   }
   const area = (a: Arrangement) => a.boardW * a.boardH;
   const best = Math.max(...options.map(area));
-  return options.find((a) => area(a) >= best * 0.97)!;
+  const fit = options.find((a) => area(a) >= best * 0.97)!;
+
+  // the largest the board can be while staying fully visible, with everything else scrolling below it
+  const sw = m.width - 2 * m.gap;
+  const sh = m.height - 2 * m.gap - m.topH;
+  const sbw = Math.max(0, Math.min(sw, sh * m.aspect));
+  if (fit.boardW >= sbw * MIN_FIT_SHARE) return fit;
+  return { panel: "below", side: "below", boardW: Math.floor(sbw), boardH: Math.floor(sbw / m.aspect), scroll: true };
 }

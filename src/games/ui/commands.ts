@@ -1,5 +1,7 @@
 import {
   BindingsStore,
+  formatKeyParts,
+  formatMouseParts,
   fuzzyMatcher,
   keybinds,
   registerComponents,
@@ -18,6 +20,9 @@ import { style } from "./dom";
 import { namespace } from "../core/storage";
 
 const prefs = namespace("prefs");
+
+const KEY_GLYPHS: Record<string, string> = { SLASH: "/", COMMA: ",", PERIOD: ".", MINUS: "-", EQUAL: "=", SEMICOLON: ";", QUOTE: "'", BACKQUOTE: "`", BRACKETLEFT: "[", BRACKETRIGHT: "]", BACKSLASH: "\\" };
+const prettyKey = (p: string): string => KEY_GLYPHS[p.toUpperCase()] ?? p;
 
 export type ConfirmPolicy = "danger" | "always" | "never";
 
@@ -185,9 +190,14 @@ export class CommandHub {
     this.menu.open = true;
   }
 
-  /** Keys currently bound to a command, for button tooltips. */
+  /** Keys currently bound to a command, as shown to people (e.g. "Ctrl+Z"). */
   keysFor(id: string): string[] {
-    return this.live.find((c) => c.id === id)?.keys ?? [];
+    return (this.live.find((c) => c.id === id)?.keys ?? []).map((k) => formatKeyParts(k).map(prettyKey).join("+"));
+  }
+
+  /** Mouse bindings as shown to people (e.g. "Right click"). */
+  mouseFor(id: string): string[] {
+    return (this.live.find((c) => c.id === id)?.mouse ?? []).map((m) => formatMouseParts(m).join("+"));
   }
 
   destroy(): void {

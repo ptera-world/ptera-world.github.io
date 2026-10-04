@@ -12,6 +12,8 @@ import { confirmDialog } from "./dialog";
 import { add, clear, formatTime, h, style } from "./dom";
 import { schemaForm } from "./form";
 import { SLOTS, loadLayout } from "./layout";
+import { labelSides, setLabelSides } from "./board";
+import { setTipDelay, tipDelay } from "./tooltips";
 import type { Shell, ShareLevel } from "./shell";
 import { trySerialize } from "./shell";
 
@@ -21,7 +23,7 @@ const CSS = `
 .widget:empty { display: none; }
 .slot:not(:has(> .widget:not(:empty))) { display: none; }
 /* reserves two lines, so a message appearing or wrapping never moves what sits above or beside it */
-.w-status { min-height: 2.9em; line-height: 1.45; text-align: center; color: var(--text-dim); max-width: 60ch; }
+.w-status { min-height: 2.9em; line-height: 1.45; text-align: center; color: var(--text-dim); width: min(60ch, 100%); }
 [data-solved] .w-status { color: var(--accent); }
 .w-toolbar { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
 button.danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 45%, var(--border)); }
@@ -59,6 +61,14 @@ button.danger:hover:not(:disabled) { border-color: var(--danger); background: va
 .w-game.current { background: var(--accent-soft); border-radius: 6px; padding-left: 6px; }
 .w-game .link { background: none; border: none; padding: 0; text-align: left; flex: 1; }
 .w-game .link:hover strong { color: var(--accent); }
+.w-howto { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; box-shadow: 0 18px 50px rgba(0,0,0,.45); max-width: min(460px, 100%); max-height: calc(100% - 20px); overflow-y: auto; display: flex; flex-direction: column; gap: 8px; align-self: center; margin-bottom: auto; margin-top: auto; }
+.w-howto .head strong { font-size: 18px; }
+.w-howto .goal { font-size: 15px; }
+.w-howto h4 { font-size: 12px; letter-spacing: .06em; color: var(--text-dim); font-weight: normal; margin-top: 4px; }
+.w-howto ul { padding-left: 18px; display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+.w-howto .how { list-style: none; padding-left: 0; }
+.w-howto-corner { position: absolute; top: 6px; right: 6px; width: 28px; height: 28px; padding: 0; border-radius: 99px; opacity: .55; }
+.w-howto-corner:hover { opacity: 1; }
 .w-note { font-size: 13px; padding: 6px 8px; border-radius: 6px; background: var(--surface-2); }
 `;
 
@@ -288,7 +298,23 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
       }
       lay.append(row("reset layout default", h("button", { onclick: () => shell.resetLayout() }, "reset layout")));
 
+      const brd = section("board");
+      const sides = labelSides();
+      brd.append(row("board labels coordinates edges letters numbers rows columns sides", h("div", { class: "w-inline" },
+        h("span", { style: "flex: 1" }, "edge labels (A, B, … and 1, 2, …)"),
+        (["top", "left", "right", "bottom"] as const).map((sd) => h("label", { class: "w-inline" }, h("input", {
+          type: "checkbox", checked: sides.has(sd),
+          onchange: (e: Event) => { const cur = labelSides(); if ((e.target as HTMLInputElement).checked) cur.add(sd); else cur.delete(sd); setLabelSides(cur); },
+        }), sd)))));
+
       const beh = section("behaviour");
+      const delay = tipDelay();
+      beh.append(row("tooltips tips hover delay explain buttons", h("div", { class: "w-inline" },
+        h("span", { style: "flex: 1" }, "tooltips"),
+        h("select", { onchange: (e: Event) => setTipDelay(Number((e.target as HTMLSelectElement).value)) },
+          ([[0, "instant"], [250, "quick"], [450, "normal"], [900, "slow"], [-1, "off"]] as const).map(([v, lab]) => h("option", { value: v, selected: v === delay }, lab))))));
+      beh.append(row("lock solved board finished frozen unlock", toggle(prefs.get("lockSolved", true), "lock boards once solved", (on) => { prefs.set("lockSolved", on); shell.hub.refresh(); }),
+        h("small", null, "a finished board ignores moves until you unlock it")));
       beh.append(row("confirm restart reveal new game dangerous ask", h("div", { class: "w-inline" }, h("span", null, "ask before"),
         h("select", { onchange: (e: Event) => prefs.set("confirm", (e.target as HTMLSelectElement).value) },
           ([["danger", "restart, reveal, losing progress"], ["always", "anything that asks"], ["never", "never ask"]] as const)
@@ -619,6 +645,7 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
           h("div", { class: "w-inline" },
             h("button", { class: "primary", onclick: () => ctx.run("shell.new") }, "new game"),
             h("button", { onclick: () => shell.openTab("share") }, "share"),
+            !shell.unlocked && prefs.get("lockSolved", true) ? h("button", { onclick: () => { ctx.run("shell.unlock"); dismissed = true; render(); } }, "unlock") : null,
             h("button", { onclick: () => { dismissed = true; render(); } }, "close"))));
       };
       sessionTaps(ctx, () => { if (!s.solved) dismissed = false; render(); });
@@ -648,7 +675,43 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
     },
   };
 
-  return [status, toolbar, game, settings, techniques, historyW, practice, share, packs, results, opened];
+  const howto: WidgetDef = {
+    id: "howto", name: "how to play", description: "what this puzzle is and how to play it; shows the first time you open each puzzle", puzzles: "*", defaultSlot: "overlay", order: 10,
+    mount(el, ctx) {
+      const s = ctx.session;
+      const seenKey = `howtoSeen:${s.def.id}`;
+      let open = !prefs.get(seenKey, false) && s.origin.kind !== "practice";
+      const close = () => { open = false; prefs.set(seenKey, true); render(); };
+      el.addEventListener("howto-open", () => { open = true; render(); });
+      const render = () => {
+        clear(el);
+        const corner = h("button", { class: "w-howto-corner", "data-command": "shell.howto", "aria-label": "how to play", onclick: () => { open = !open; render(); } }, "?");
+        el.append(corner);
+        if (!open) return;
+        const rules = s.def.rules?.(s.puzzle) ?? [];
+        const gestures = (shell.view?.def.controls ?? []).map((g) => h("li", null, h("strong", null, g.how), h("span", { class: "w-dim" }, ` · ${g.what}`)));
+        const own = ctx.commands().filter((c) => !/^(shell|toggle|technique|widget|fx)\./.test(c.id) && !c.hidden);
+        // pointer-bound commands first: they are how most people play
+        own.sort((a, b) => Number(!(b.mouse?.length)) - Number(!(a.mouse?.length)));
+        const how = [...gestures, ...own.slice(0, Math.max(0, 9 - gestures.length)).map((c) => {
+          const ways = [...shell.hub.mouseFor(c.id), ...shell.hub.keysFor(c.id)].join(", ");
+          return h("li", null, h("strong", null, c.label), ways ? h("span", { class: "w-dim" }, ` · ${ways}`) : null, c.description ? h("div", { class: "w-dim" }, c.description) : null);
+        })];
+        const hasTutorial = (shell.techniques?.list.length ?? 0) > 0;
+        add(el, h("div", { class: "w-howto", role: "dialog", "aria-label": `how to play ${s.def.name}` },
+          h("div", { class: "head" }, h("strong", null, s.def.name), s.def.aliases?.length ? h("span", { class: "w-dim" }, ` · also ${s.def.aliases.slice(0, 3).join(", ")}`) : null),
+          s.def.description ? h("p", { class: "goal" }, s.def.description) : null,
+          rules.length ? [h("h4", null, "rules"), h("ul", null, rules.map((r) => h("li", null, r)))] : null,
+          how.length ? [h("h4", null, "playing"), h("ul", { class: "how" }, how), h("p", { class: "w-dim" }, "right-click the board (or hold on touch) for more. every action is in the commands list, top right.")] : null,
+          h("div", { class: "w-inline" },
+            hasTutorial ? h("button", { class: "primary", onclick: () => { close(); void shell.startPractice(s.def, shell.techniques!.list[0]!, randomSeed()); } }, "learn by doing") : null,
+            h("button", { class: hasTutorial ? undefined : "primary", onclick: close }, "play"))));
+      };
+      render();
+    },
+  };
+
+  return [status, toolbar, game, settings, techniques, historyW, practice, share, packs, results, opened, howto];
 }
 
 /** Assisted rating used by packs/mods: hardest technique still left for the player given their auto techniques. */

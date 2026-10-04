@@ -24,6 +24,8 @@ export type ChangeCause = "action" | "undo" | "redo" | "restore";
 export interface ActionCtx<Pz, S, A extends Action, I> {
   session: Session<Pz, S, A, I>;
   state: S;
+  /** Who is making this move. */
+  source: Source;
 }
 
 export interface ApplyCtx<Pz, S, A extends Action, I> {
@@ -208,7 +210,7 @@ export class Session<Pz = unknown, S = unknown, A extends Action = Action, I = u
   /** Returns true if the state changed. */
   dispatch(action: A, opts: DispatchOptions = {}): boolean {
     const source = opts.source ?? { kind: "player" };
-    const vetted = this.hooks.action.call(action, { session: this, state: this._state });
+    const vetted = this.hooks.action.call(action, { session: this, state: this._state, source });
     if (vetted === null) return false;
     const prev = this._state;
     const reduce = (s: S, a: A) => this.def.reduce(this.puzzle, s, a);

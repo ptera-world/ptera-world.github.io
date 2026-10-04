@@ -276,6 +276,11 @@ export interface View<Pz = any, S = any, A extends Action = any, I = any> {
   /** Puzzle id this renders. */
   puzzle: string;
   settings?: Schema;
+  /**
+   * Pointer gestures handled directly on the board (not bindable commands), for the how-to-play
+   * card and tooltips, e.g. { how: "click a cell", what: "press it" }. Mouse and touch both.
+   */
+  controls?: readonly { how: string; what: string }[];
   mount(root: HTMLElement, ctx: ViewContext<Pz, S, A, I>): ViewHandle;
 }
 

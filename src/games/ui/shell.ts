@@ -23,6 +23,8 @@ import { clear, formatTime, h, style } from "./dom";
 import { arrange, loadLayout, saveLayout, type LayoutConfig } from "./layout";
 import { builtinWidgets } from "./widgets";
 import { onThemeChange } from "./themes";
+import { cycleLabels, onBoardPrefsChange } from "./board";
+import { installTooltips } from "./tooltips";
 import { SAVE_PREFIX, INDEX_KEY, findSession, listSessions, loadSession, newSessionId, removeSession, saveSession } from "./sessions";
 
 const prefs = namespace("prefs");
@@ -72,6 +74,8 @@ export class Shell {
   session: Session<any, any, any, any> | null = null;
   /** Saved-game id of the current session. */
   sessionId = "";
+  /** Player unlocked the current solved board for free play (not saved; a reopened solved board is locked again). */
+  unlocked = false;
   /** Adopting another tab's save: don't write it back. */
   private reloading = false;
   host: PluginHost | null = null;
@@ -144,8 +148,31 @@ export class Shell {
     }, { capture: true });
     document.addEventListener("pointerdown", () => { this.root.dataset.input = "pointer"; }, { capture: true });
     onThemeChange(() => { if (this.session) this.mountView(); });
+    onBoardPrefsChange(() => { if (this.session) this.mountView(); });
+    installTooltips(this.hub);
+    this.installLongPress();
     this.hub.setSource("shell", () => this.shellCommands());
     await this.fromUrl();
+  }
+
+  /** Touch: holding on the board opens the same menu a right-click does. */
+  private installLongPress(): void {
+    let timer = 0;
+    let start: { x: number; y: number } | null = null;
+    const cancel = () => { clearTimeout(timer); start = null; };
+    this.els.boardbox.addEventListener("pointerdown", (e) => {
+      if (e.pointerType !== "touch") return;
+      start = { x: e.clientX, y: e.clientY };
+      timer = window.setTimeout(() => {
+        if (!start || !this.hub.all().some((c) => [c.menu].flat().includes("board"))) return;
+        this.hub.openMenu("board", start.x, start.y);
+        start = null;
+      }, 550);
+    });
+    this.els.boardbox.addEventListener("pointermove", (e) => {
+      if (start && Math.hypot(e.clientX - start.x, e.clientY - start.y) > 10) cancel();
+    });
+    for (const ev of ["pointerup", "pointercancel"]) this.els.boardbox.addEventListener(ev, cancel);
   }
 
   // --- context ---
@@ -155,6 +182,7 @@ export class Shell {
     return {
       hasSession: !!s,
       solved: s?.solved ?? false,
+      locked: !!s?.solved && !this.unlocked && prefs.get("lockSolved", true),
       canUndo: s?.canUndo ?? false,
       canRedo: s?.canRedo ?? false,
       hint: !!s?.activeHint,
@@ -357,7 +385,15 @@ export class Shell {
         this.saveNow();
       }, { owner: "shell" }),
       session.hooks.refresh.tap(() => this.hub.syncContext(), { owner: "shell" }),
+      // a solved board is a finished thing: player moves are refused until it is unlocked
+      session.hooks.action.tap((a, { source }) => {
+        if (!a || !session.solved || this.unlocked || !prefs.get("lockSolved", true) || source.kind !== "player") return a;
+        this.setStatus("this board is solved. unlock it to keep playing with it");
+        session.hooks.fx.call({ kind: "locked" });
+        return null;
+      }, { owner: "shell", priority: -100 }),
     );
+    this.unlocked = false;
     if (!session.paused && !document.hidden) session.resume();
     this.root.toggleAttribute("data-paused", session.paused);
     this.renderHeader();
@@ -543,6 +579,22 @@ export class Shell {
     this.relayout();
   }
 
+  /** Zen: every slot but the board hidden, without touching the saved layout. */
+  zen = false;
+
+  toggleZen(): void {
+    this.zen = !this.zen;
+    this.root.toggleAttribute("data-zen", this.zen);
+    this.relayout();
+    this.hub.refresh();
+  }
+
+  showHowTo(): void {
+    const w = this.widgets.find((m) => m.def.id === "howto");
+    if (w) w.el.dispatchEvent(new CustomEvent("howto-open"));
+    else this.setPlacement("howto", "overlay");
+  }
+
   openTab(id: string): void {
     this.activeTab = id;
     prefs.set("tab", id);
@@ -559,8 +611,8 @@ export class Shell {
     const e = this.els;
     if (!this.session) return;
     const stage = e.stage;
-    const hasSide = e.side.childElementCount > 0;
-    const hasPanel = this.root.hasAttribute("data-has-panel");
+    const hasSide = !this.zen && e.side.childElementCount > 0;
+    const hasPanel = !this.zen && this.root.hasAttribute("data-has-panel");
     stage.dataset.side = "below";
     stage.dataset.panel = "right";
     const sideBelowH = hasSide ? e.side.offsetHeight : 0;
@@ -569,8 +621,8 @@ export class Shell {
       width: this.root.clientWidth,
       height: window.innerHeight - e.header.offsetHeight,
       // a visible slot also costs the gap between it and the board row
-      topH: e.top.offsetHeight ? e.top.offsetHeight + 12 : 0,
-      bottomH: e.bottom.offsetHeight ? e.bottom.offsetHeight + 12 : 0,
+      topH: !this.zen && e.top.offsetHeight ? e.top.offsetHeight + 12 : 0,
+      bottomH: !this.zen && e.bottom.offsetHeight ? e.bottom.offsetHeight + 12 : 0,
       sideW: hasSide ? e.side.offsetWidth : 0,
       sideBelowH,
       panelW: 320,
@@ -582,6 +634,7 @@ export class Shell {
     const a = arrange(measures);
     stage.dataset.side = a.side;
     stage.dataset.panel = a.panel;
+    stage.toggleAttribute("data-scroll", a.scroll);
     e.boardbox.style.width = `${Math.max(120, a.boardW)}px`;
     e.boardbox.style.height = `${Math.max(120, a.boardH)}px`;
   }
@@ -594,6 +647,9 @@ export class Shell {
       { id: "shell.palette", label: "commands", category: "general", keys: ["$mod+k"], captureInput: true, run: () => this.hub.openPalette() },
       { id: "shell.shortcuts", label: "keyboard shortcuts", category: "general", keys: ["$mod+slash"], run: () => { this.hub.cheatsheet.open = !this.hub.cheatsheet.open; } },
       { id: "shell.rebind", label: "change key bindings", category: "general", run: () => { this.hub.settings.open = true; } },
+      { id: "shell.howto", label: "how to play", category: "general", keys: ["f1"], description: "what this puzzle is, its rules, and how to play it", run: () => this.showHowTo() },
+      { id: "shell.labels", label: "board labels", category: "view", keys: ["l"], description: "letters and numbers along the board edges, so cells named in hints (like C5) are easy to find. cycles off / top+left / all sides", run: () => cycleLabels() },
+      { id: "shell.zen", label: "zen mode", category: "view", keys: ["z"], description: "just the board; press again to bring everything back", checked: () => this.zen, run: () => this.toggleZen() },
       { id: "shell.index", label: "all puzzles", category: "general", run: () => this.goIndex() },
     ];
     if (!s) return base;
@@ -601,8 +657,14 @@ export class Shell {
     const progress = () => s.canUndo && !s.solved;
     return [
       ...base,
-      { id: "shell.undo", label: "undo", category: "game", keys: ["$mod+z", "u"], when: (c) => !!c.canUndo, run: () => s.undo() },
-      { id: "shell.redo", label: "redo", category: "game", keys: ["$mod+shift+z", "$mod+y", "r"], when: (c) => !!c.canRedo, run: () => s.redo() },
+      {
+        id: "shell.unlock", label: "unlock solved board", category: "game",
+        description: "keep playing with a finished board (moves, undo). the solve time is kept as it was",
+        when: (c) => !!c.locked,
+        run: () => { this.unlocked = true; this.setStatus("unlocked: the board is yours to play with"); this.hub.refresh(); },
+      },
+      { id: "shell.undo", label: "undo", category: "game", keys: ["$mod+z", "u"], description: "take back the last step", when: (c) => !!c.canUndo && !c.locked, run: () => s.undo() },
+      { id: "shell.redo", label: "redo", category: "game", keys: ["$mod+shift+z", "$mod+y", "r"], description: "put back a step you undid", when: (c) => !!c.canRedo && !c.locked, run: () => s.redo() },
       {
         id: "shell.restart", label: "restart", category: "game", danger: true, when: (c) => !!c.canUndo || !!c.solved,
         confirm: () => (s.solved ? "this board is solved. restarting clears it. restart anyway?" : "restart this board from the beginning?"),
@@ -1015,6 +1077,7 @@ const SHELL_CSS = `
 .panel-body > .widget { display: flex; flex-direction: column; gap: 10px; }
 
 [data-paused] .boardbox .view { filter: blur(14px); pointer-events: none; }
+[data-zen] .slot-top, [data-zen] .slot-side, [data-zen] .slot-bottom, [data-zen] .panel, [data-zen] .bar .meta { display: none; }
 [data-mode="index"] .stage { display: none; }
 #games:not([data-mode="index"]) .index-wrap { display: none; }
 .index-wrap { padding: 16px; display: flex; justify-content: center; }
