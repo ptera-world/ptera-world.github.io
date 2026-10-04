@@ -1,5 +1,5 @@
 import type { WidgetDef } from "../../core/types";
-import { h, style } from "../../ui/dom";
+import { h, style } from "../../core/dom";
 import type { LightupAction, LightupInteraction, LightupPuzzle, LightupState } from "./logic";
 
 type LightupWidget = WidgetDef<LightupPuzzle, LightupState, LightupAction, LightupInteraction>;

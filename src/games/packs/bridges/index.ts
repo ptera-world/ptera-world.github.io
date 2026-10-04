@@ -2,7 +2,7 @@ import type { GamesApi } from "../../api";
 import { HOLD_MS } from "../../core/gestures";
 import type { Registry } from "../../core/registry";
 import type { WidgetDef } from "../../core/types";
-import { h, style } from "../../ui/dom";
+import { h, style } from "../../core/dom";
 import { components, graph, islandSums, type BridgesPuzzle, type BridgesState } from "./graph";
 import { bridges, type BridgesAction, type BridgesInteraction } from "./logic";
 import { plugins } from "./plugins";

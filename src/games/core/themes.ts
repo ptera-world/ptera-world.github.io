@@ -1,6 +1,6 @@
-import type { Registry } from "../core/registry";
-import { namespace } from "../core/storage";
-import type { Theme } from "../core/types";
+import type { Registry } from "./registry";
+import { namespace } from "./storage";
+import type { Theme } from "./types";
 import { style } from "./dom";
 
 const prefs = namespace("prefs");

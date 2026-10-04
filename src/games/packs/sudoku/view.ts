@@ -1,7 +1,7 @@
 import { Event as HookEvent } from "../../core/hooks";
 import { defineSchema } from "../../core/schema";
 import type { View } from "../../core/types";
-import { clear, s, style } from "../../ui/dom";
+import { clear, s, style } from "../../core/dom";
 import { digits } from "./engine/bits";
 import { insetOutline } from "./engine/constraints/draw";
 import { modelOf } from "./engine/model";

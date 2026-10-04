@@ -1,5 +1,5 @@
-import type { Snapshot } from "../core/session";
-import { namespace } from "../core/storage";
+import type { Snapshot } from "../../core/session";
+import { namespace } from "../../core/storage";
 
 /**
  * Saved games as first-class records: any number per puzzle, each with its own id, listed in an

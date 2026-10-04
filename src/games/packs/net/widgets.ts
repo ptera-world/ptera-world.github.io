@@ -1,5 +1,5 @@
 import type { WidgetDef } from "../../core/types";
-import { h } from "../../ui/dom";
+import { h } from "../../core/dom";
 import type { NetInteraction } from "./logic";
 
 const button = (id: string, label: string, run: (id: string) => boolean) =>

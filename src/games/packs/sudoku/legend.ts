@@ -1,4 +1,4 @@
-import { s } from "../../ui/dom";
+import { s } from "../../core/dom";
 import { constraintTypes } from "./engine/registry";
 import type { ConstraintSpec, RenderCtx } from "./engine/types";
 import { featuresOf, type LatinPuzzle } from "./puzzle";

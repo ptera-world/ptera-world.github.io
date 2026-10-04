@@ -177,9 +177,9 @@ export function selectPackVersion(url: string, hash?: string): void {
 }
 
 /** The code a pack runs: latest upstream when following, else the selected stored version. */
-async function resolveCode(url: string, defaultTrack: Track): Promise<string> {
+async function resolveCode(url: string, defaultTrack: Track, force?: Track): Promise<string> {
   const rec = packRecord(url);
-  const track = rec.track ?? defaultTrack;
+  const track = force ?? rec.track ?? defaultTrack;
   if (track === "latest" || !rec.versions.length) {
     try {
       const v = await fetchVersion(url);
@@ -214,8 +214,9 @@ async function runCode(code: string, api: unknown): Promise<void> {
  * failing pack is reported and skipped. Sources only come from the built-in list and the
  * player's stored list, never from the page URL.
  */
-export async function loadPacks(api: unknown, baseList: string): Promise<{ packs: LoadedPack[]; sources: ModLoadResult[] }> {
-  const disabled = new Set(disabledPacks());
+export async function loadPacks(api: unknown, baseList: string, opts: { safe?: boolean } = {}): Promise<{ packs: LoadedPack[]; sources: ModLoadResult[] }> {
+  // safe mode: the built-in list only, every pack on, latest versions; player settings untouched
+  const disabled = new Set(opts.safe ? [] : disabledPacks());
   const packs: LoadedPack[] = [];
   const sources: ModLoadResult[] = [];
   const seen = new Set<string>();
@@ -229,7 +230,7 @@ export async function loadPacks(api: unknown, baseList: string): Promise<{ packs
     packs.push(entry);
     if (!entry.enabled) return;
     try {
-      await runCode(await resolveCode(key, defaultTrack), api);
+      await runCode(await resolveCode(key, defaultTrack, opts.safe ? "latest" : undefined), api);
     } catch (e) {
       console.error(`[games] pack ${name} failed`, e);
       entry.error = e instanceof Error ? e.message : String(e);
@@ -257,7 +258,7 @@ export async function loadPacks(api: unknown, baseList: string): Promise<{ packs
     console.error("[games] built-in pack list failed", e);
   }
 
-  for (const mod of listMods()) {
+  for (const mod of opts.safe ? [] : listMods()) {
     if (!mod.enabled) continue;
     try {
       if ("url" in mod.source) {

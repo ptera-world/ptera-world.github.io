@@ -1,7 +1,7 @@
 import { defineSchema } from "../../core/schema";
 import type { View } from "../../core/types";
 import { bindCommands, type BindingSchema } from "../../core/commands";
-import { s, style } from "../../ui/dom";
+import { s, style } from "../../core/dom";
 import { affected, type FlipAction, type FlipInteraction, type FlipPuzzle, type FlipState } from "./logic";
 
 /** Derived-annotation key: cells to press (from the solution assist). */

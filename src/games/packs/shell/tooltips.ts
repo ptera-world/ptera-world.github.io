@@ -1,6 +1,6 @@
-import { namespace } from "../core/storage";
+import { namespace } from "../../core/storage";
 import type { CommandHub } from "./commands";
-import { h, style } from "./dom";
+import { h, style } from "../../core/dom";
 
 const prefs = namespace("prefs");
 

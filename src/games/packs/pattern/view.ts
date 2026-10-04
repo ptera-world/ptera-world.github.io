@@ -1,7 +1,7 @@
 import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
 import { bindCommands, type BindingSchema } from "../../core/commands";
-import { s, style } from "../../ui/dom";
+import { s, style } from "../../core/dom";
 import type { ClueRef, PatternAction, PatternFocus, PatternInteraction, PatternPuzzle, PatternState } from "./logic";
 import { EMPTY, FILLED, UNKNOWN, type Cell } from "./solver";
 
@@ -193,7 +193,7 @@ function legendFor(look: Look): { sample: string; meaning: string }[] {
   ];
 }
 
-export type Board = Pick<typeof import("../../ui/board"), "labelSides" | "colName" | "rowName">;
+export type Board = Pick<typeof import("../../core/board"), "labelSides" | "colName" | "rowName">;
 
 /** `menuHoldMs` is the shell's board-menu hold time (games.HOLD_MS). */
 export function patternView(look: Look, board: Board, menuHoldMs: number): View<PatternPuzzle, PatternState, PatternAction, PatternInteraction> {

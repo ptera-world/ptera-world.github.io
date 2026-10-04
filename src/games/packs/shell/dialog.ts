@@ -1,4 +1,4 @@
-import { h, style } from "./dom";
+import { h, style } from "../../core/dom";
 
 const CSS = `
 .gm-dialog { border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); padding: 18px; max-width: min(92vw, 380px); margin: auto; }

@@ -308,6 +308,16 @@ export interface KeyValue {
 
 export type AnyPuzzleDef = PuzzleDef<any, any, any, any, any>;
 
+/**
+ * The page itself (chrome, panels, how games are presented). Exactly one runs: the one the player
+ * chose, else the last registered. Comes from a pack like everything else.
+ */
+export interface Frontend {
+  id: string;
+  name: string;
+  mount(root: HTMLElement): void | Promise<void>;
+}
+
 /** A look: values for the CSS custom properties every view and widget styles with. */
 export interface Theme {
   id: string;

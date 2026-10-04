@@ -1,5 +1,5 @@
 import type { WidgetDef } from "../../core/types";
-import { h, style } from "../../ui/dom";
+import { h, style } from "../../core/dom";
 import type { PatternAction, PatternInteraction, PatternPuzzle, PatternState } from "./logic";
 
 type PatternWidget = WidgetDef<PatternPuzzle, PatternState, PatternAction, PatternInteraction>;

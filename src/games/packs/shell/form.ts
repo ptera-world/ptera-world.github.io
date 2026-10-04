@@ -1,5 +1,5 @@
-import { coerce, type Field, type Schema } from "../core/schema";
-import { h } from "./dom";
+import { coerce, type Field, type Schema } from "../../core/schema";
+import { h } from "../../core/dom";
 
 /**
  * Form for a schema. Calls onChange with the full updated values on every edit and re-evaluates

@@ -1,12 +1,12 @@
-import { generate } from "../core/generate";
-import { Event as HookEvent, untapAll } from "../core/hooks";
-import type { LoadedPack, ModLoadResult } from "../core/mods";
-import { PluginHost, loadPluginConfig } from "../core/plugins";
-import type { Registry } from "../core/registry";
-import { randomSeed } from "../core/rng";
-import { canonical, fromQuery, resolve, toQuery } from "../core/schema";
-import { Session, type Origin, type SharedHistory, type Snapshot } from "../core/session";
-import { packJson, unpackJson, type Patch } from "../core/patch";
+import { Event as HookEvent, untapAll } from "../../core/hooks";
+import type { LoadedPack, ModLoadResult } from "../../core/mods";
+import type { PluginHost } from "../../core/plugins";
+import type { Registry } from "../../core/registry";
+import { randomSeed } from "../../core/rng";
+import { canonical, fromQuery, resolve, toQuery } from "../../core/schema";
+import type { Origin, Session, SharedHistory, Snapshot } from "../../core/session";
+import { PluginHostCtor, SessionCtor, TechniqueHostCtor, cycleLabels, findPracticePosition, generate, hintFrom, isPartOfStep, isStepDone, loadPluginConfig, onBoardPrefsChange, onThemeChange } from "./engine";
+import { packJson, unpackJson, type Patch } from "../../core/patch";
 
 /** What a share link carries beyond the puzzle itself. */
 export type ShareLevel = "puzzle" | "state" | "history";
@@ -15,22 +15,20 @@ interface Shared {
   state?: Patch | null;
   history?: SharedHistory;
 }
-import { namespace } from "../core/storage";
-import { TechniqueHost, findPracticePosition, hintFrom, isPartOfStep, isStepDone } from "../core/techniques";
-import type { AnyPuzzleDef, CommandDef, Format, Hint, Technique, View, ViewHandle, WidgetDef, SlotId } from "../core/types";
+import { namespace } from "../../core/storage";
+import type { TechniqueHost } from "../../core/techniques";
+import type { AnyPuzzleDef, CommandDef, Format, Hint, Technique, View, ViewHandle, WidgetDef, SlotId } from "../../core/types";
 import { CommandHub } from "./commands";
-import { clear, formatTime, h, style } from "./dom";
+import { add, clear, formatTime, h, style } from "../../core/dom";
 import { arrange, loadLayout, saveLayout, type LayoutConfig } from "./layout";
 import { builtinWidgets } from "./widgets";
-import { onThemeChange } from "./themes";
-import { cycleLabels, onBoardPrefsChange } from "./board";
 import { installTooltips } from "./tooltips";
 import { SAVE_PREFIX, INDEX_KEY, findSession, listSessions, loadSession, newSessionId, removeSession, saveSession } from "./sessions";
 
 const prefs = namespace("prefs");
 
-export { HOLD_MS } from "../core/gestures";
-import { HOLD_MS } from "../core/gestures";
+export { HOLD_MS } from "../../core/gestures";
+import { HOLD_MS } from "../../core/gestures";
 
 /** Serialized text, or null if the format can't write or throws on this puzzle. */
 export function trySerialize(fmt: Format<unknown>, puzzle: unknown): string | null {
@@ -99,7 +97,7 @@ export class Shell {
   private practiceStart: unknown = null;
   private els: ReturnType<Shell["buildDom"]>;
 
-  constructor(readonly root: HTMLElement, readonly registry: Registry, readonly modResults: ModLoadResult[], readonly packs: LoadedPack[] = []) {
+  constructor(readonly root: HTMLElement, readonly registry: Registry, readonly modResults: ModLoadResult[], readonly packs: LoadedPack[] = [], readonly safe = false) {
     this.els = this.buildDom();
     this.hub = new CommandHub(root);
     this.hub.addContext(() => this.context());
@@ -126,7 +124,7 @@ export class Shell {
         if (snap.past.length === s.depth && JSON.stringify(snap.state) === JSON.stringify(s.state)) return;
         this.reloading = true;
         try {
-          this.setSession(Session.restore(s.def, snap), false, this.sessionId);
+          this.setSession(SessionCtor.restore(s.def, snap), false, this.sessionId);
         } finally {
           this.reloading = false;
         }
@@ -267,7 +265,7 @@ export class Shell {
     const def = snap ? this.registry.getPuzzle(snap.puzzleId) : undefined;
     if (!snap || !def) return false;
     try {
-      this.setSession(Session.restore(def, snap), push, id);
+      this.setSession(SessionCtor.restore(def, snap), push, id);
       return true;
     } catch (e) {
       console.error("[games] save restore failed", e);
@@ -319,7 +317,7 @@ export class Shell {
         this.showError(`couldn't find a ${t.name} to practise in time. try again for a different board.`);
         return;
       }
-      this.setSession(new Session(def, pos.puzzle, { ...origin, step: pos.step }, { state: pos.state }), push);
+      this.setSession(new SessionCtor(def, pos.puzzle, { ...origin, step: pos.step }, { state: pos.state }), push);
       this.setStatus(`find the ${t.name}`);
     } catch (e) {
       if (ac.signal.aborted) return;
@@ -331,7 +329,7 @@ export class Shell {
   }
 
   loadPuzzle(def: AnyPuzzleDef, puzzle: unknown, origin: Origin, push = true, shared: Shared | null = null): void {
-    this.setSession(shared ? Session.fromShared(def, puzzle, origin, shared) : new Session(def, puzzle, origin), push);
+    this.setSession(shared ? SessionCtor.fromShared(def, puzzle, origin, shared) : new SessionCtor(def, puzzle, origin), push);
   }
 
   /** Link to the current puzzle, optionally carrying the current position or the whole move history. */
@@ -377,9 +375,9 @@ export class Shell {
     this.teardownSession();
     this.session = session;
     this.sessionId = id;
-    this.techniques = new TechniqueHost(this.registry, session);
+    this.techniques = new TechniqueHostCtor(this.registry, session);
     this.practiceStart = session.origin.kind === "practice" ? session.state : null;
-    this.host = new PluginHost(this.registry, session);
+    this.host = new PluginHostCtor(this.registry, session);
     this.hub.setScope(session.def.id);
     const url = this.urlFor(session);
     if (push) history.pushState(null, "", url);
@@ -923,10 +921,12 @@ export class Shell {
       panelBody: h("div", { class: "panel-body" }),
       index: h("div", { class: "index-wrap" }),
     };
-    els.header.append(
+    add(els.header,
       h("a", { href: "/", class: "home", title: "ptera.world" }, "ptera"),
       h("a", { href: location.pathname, class: "crumb", onclick: (ev: MouseEvent) => { ev.preventDefault(); this.goIndex(); } }, "games"),
-      els.title, els.meta, h("span", { class: "spacer" }), els.pauseMark, els.timer,
+      els.title, els.meta, h("span", { class: "spacer" }),
+      this.safe ? h("a", { class: "safe-mark", href: location.pathname, title: "safe mode: only the built-in packs are loaded, all switched on. your pack settings are untouched" }, "safe mode · leave") : null,
+      els.pauseMark, els.timer,
       h("button", { class: "howto-btn", "data-command": "shell.howto", "aria-label": "how to play", onclick: () => this.hub.run("shell.howto") }, "?"),
       h("button", { class: "palette-btn", "data-command": "shell.palette", onclick: () => this.hub.openPalette() }, "commands"));
     els.middle.append(h("div", { class: "boardwrap" }, els.boardbox, els.overlay), els.side);
@@ -1084,6 +1084,7 @@ const SHELL_CSS = `
 [data-solved] .bar .pause-mark { color: var(--accent); }
 [data-solved] .bar .timer { color: var(--accent); }
 .bar .palette-btn { padding: 4px 10px; font-size: 13px; }
+.bar .safe-mark { font-size: 12px; color: var(--warn); }
 .bar .howto-btn { padding: 0; width: 28px; height: 28px; border-radius: 99px; font-size: 14px; }
 @media (max-width: 520px) {
   .bar { gap: 8px; padding: 8px 10px; }

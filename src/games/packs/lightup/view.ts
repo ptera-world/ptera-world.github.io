@@ -1,7 +1,7 @@
 import { bindCommands, type BindingSchema } from "../../core/commands";
 import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
-import { s, style } from "../../ui/dom";
+import { s, style } from "../../core/dom";
 import { EMPTY, geometry, litCounts } from "./grid";
 import {
   BULB, DOT, NONE, clueMet, toggleMark, type Conflicts, type Mark,

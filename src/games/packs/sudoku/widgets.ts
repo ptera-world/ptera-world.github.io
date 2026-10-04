@@ -1,6 +1,6 @@
 import { defineSchema } from "../../core/schema";
 import type { WidgetContext, WidgetDef } from "../../core/types";
-import { h, style } from "../../ui/dom";
+import { h, style } from "../../core/dom";
 import { modelOf } from "./engine/model";
 import { constraintTypes } from "./engine/registry";
 import { cellName } from "./engine/types";

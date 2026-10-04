@@ -1,7 +1,7 @@
-import type { Side } from "../core/names";
-import { namespace } from "../core/storage";
+import type { Side } from "./names";
+import { namespace } from "./storage";
 
-export { cellName, colName, rowName, type Side } from "../core/names";
+export { cellName, colName, rowName, type Side } from "./names";
 
 const prefs = namespace("prefs");
 const SIDES: readonly Side[] = ["top", "right", "bottom", "left"];

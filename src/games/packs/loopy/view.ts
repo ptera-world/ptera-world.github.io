@@ -2,7 +2,7 @@ import { HOLD_MS } from "../../core/gestures";
 import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
 import { colName, rowName, type Side } from "../../core/names";
-import { s, style } from "../../ui/dom";
+import { s, style } from "../../core/dom";
 import { CROSS, LINE, UNKNOWN, type EdgeState } from "./board";
 import { gridOf, type LoopyAction, type LoopyFocus, type LoopyInteraction, type LoopyPuzzle, type LoopyState } from "./def";
 import { edgeBetween, type Grid } from "./grid";

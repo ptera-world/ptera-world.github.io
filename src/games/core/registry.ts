@@ -1,5 +1,5 @@
 import { Event, Waterfall } from "./hooks";
-import type { AnyPuzzleDef, Plugin, Technique, Theme, View, WidgetDef } from "./types";
+import type { AnyPuzzleDef, Frontend, Plugin, Technique, Theme, View, WidgetDef } from "./types";
 
 /**
  * Global catalogue of puzzles, plugins and views. Registering an existing id replaces it,
@@ -13,6 +13,7 @@ export class Registry {
   private techniques = new Map<string, Technique>();
   private widgets = new Map<string, WidgetDef>();
   private themes = new Map<string, Theme>();
+  private frontends = new Map<string, Frontend>();
 
   readonly hooks = {
     resolvePuzzle: new Waterfall<AnyPuzzleDef, void>("resolvePuzzle"),
@@ -21,7 +22,7 @@ export class Registry {
     resolveTechnique: new Waterfall<Technique, void>("resolveTechnique"),
     resolveWidget: new Waterfall<WidgetDef, void>("resolveWidget"),
     /** Fired after any registration change. */
-    changed: new Event<{ kind: "puzzle" | "plugin" | "view" | "technique" | "widget" | "theme"; id: string }>("changed"),
+    changed: new Event<{ kind: "puzzle" | "plugin" | "view" | "technique" | "widget" | "theme" | "frontend"; id: string }>("changed"),
   };
 
   puzzle(def: AnyPuzzleDef): void {
@@ -42,6 +43,17 @@ export class Registry {
   technique(t: Technique): void {
     this.techniques.set(t.id, t);
     this.hooks.changed.call({ kind: "technique", id: t.id });
+  }
+
+  frontend(f: Frontend): void {
+    this.frontends.delete(f.id);
+    this.frontends.set(f.id, f);
+    this.hooks.changed.call({ kind: "frontend", id: f.id });
+  }
+
+  /** Registration order; the last one is the default. */
+  listFrontends(): Frontend[] {
+    return [...this.frontends.values()];
   }
 
   theme(th: Theme): void {

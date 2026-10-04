@@ -25,7 +25,8 @@ const PACK_SDK = new Set([
   "core/commands.ts",
   "core/gestures.ts",
   "core/patch.ts",
-  "ui/dom.ts",
+  "core/dom.ts",
+  "core/storage.ts",
 ]);
 
 /** Fails the build when a pack reaches into the engine outside PACK_SDK, or into another pack. */

@@ -1,5 +1,5 @@
-import { namespace } from "../core/storage";
-import type { SlotId, WidgetDef } from "../core/types";
+import { namespace } from "../../core/storage";
+import type { SlotId, WidgetDef } from "../../core/types";
 
 const store = namespace("layout");
 

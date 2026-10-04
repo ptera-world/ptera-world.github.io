@@ -1,22 +1,24 @@
 /**
- * Everything a mod may use. Mods are ES modules whose default export is
+ * Everything a pack may use. Packs are ES modules whose default export is
  * `(games: GamesApi) => void | Promise<void>`; this object is also at `globalThis.pteraGames`.
  */
+import * as board from "./core/board";
+import * as commands from "./core/commands";
+import * as dom from "./core/dom";
+import { fx } from "./core/fx";
+import { generate } from "./core/generate";
+import { HOLD_MS } from "./core/gestures";
 import * as hooks from "./core/hooks";
+import * as mods from "./core/mods";
+import * as patch from "./core/patch";
+import * as plugins from "./core/plugins";
 import { registry } from "./core/registry";
 import * as rng from "./core/rng";
 import * as schema from "./core/schema";
 import { Session } from "./core/session";
 import { namespace } from "./core/storage";
-import * as commands from "./core/commands";
-import * as patch from "./core/patch";
 import * as techniques from "./core/techniques";
-import * as dom from "./ui/dom";
-import { asset } from "./ui/themes";
-import * as board from "./ui/board";
-import { HOLD_MS } from "./core/gestures";
-import { fx } from "./ui/fx";
-import type { Shell } from "./ui/shell";
+import * as themes from "./core/themes";
 
 export const api = {
   registry,
@@ -28,17 +30,23 @@ export const api = {
   dom,
   commands,
   techniques,
+  plugins,
+  generate,
   patch,
-  /** Effect helpers (flash, pop, burst, shake) for mods building their own effects. */
+  /** Effect helpers (flash, pop, burst, shake). */
   fx,
-  /** Themed graphics: `look.asset("pattern.empty-mark", defaultSvg)`. Views re-mount when the theme changes. */
-  look: { asset },
-  /** Shared board conventions: cell names for hints, which edges show labels. */
+  /** How themes apply: `asset("pattern.empty-mark", defaultSvg)` for themed graphics, plus the theme and colour settings. */
+  look: themes,
+  /** Cell names for hints, and which edges the player wants labelled. */
   board,
-  /** Touch hold duration (ms) at which the shell opens the board menu. */
+  /** Touch hold duration (ms) at which a hold counts as a hold. */
   HOLD_MS,
-  /** Set once the shell boots; null while mods are loading. */
-  shell: null as Shell | null,
+  /** Pack management, and what this page load loaded (filled in by the loader before any frontend mounts). */
+  packs: { ...mods, loaded: [] as mods.LoadedPack[], sources: [] as mods.ModLoadResult[] },
+  /** Loaded with ?safe: only the built-in packs, all on, latest versions; the player's pack settings are left alone. */
+  safe: false,
+  /** Whatever the running frontend wants to expose (e.g. the shell object). */
+  shell: null as unknown,
 };
 
 export type GamesApi = typeof api;

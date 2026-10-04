@@ -13,11 +13,11 @@ import {
   type KeybindSettings,
 } from "keybinds";
 import { KEYBINDS_CSS } from "./keybinds-theme";
-import type { CommandDef } from "../core/types";
-import { bindCommands, type BindingSchema } from "../core/commands";
+import type { CommandDef } from "../../core/types";
+import { bindCommands, type BindingSchema } from "../../core/commands";
 import { confirmDialog } from "./dialog";
-import { style } from "./dom";
-import { namespace } from "../core/storage";
+import { style } from "../../core/dom";
+import { namespace } from "../../core/storage";
 
 const prefs = namespace("prefs");
 
