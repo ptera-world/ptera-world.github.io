@@ -1,5 +1,5 @@
 import type { Plugin, Step, Technique } from "../../core/types";
-import { cardName } from "../../lib/cards/deck";
+import { cardName, safeHomeReason } from "../../lib/cards/deck";
 import { planner } from "../../lib/cards/plan";
 import type { CardFocus } from "../../lib/cards/table";
 import { describeMove, freecell, whereTo, fromPos, pileName, toPos, type FreecellAction, type FreecellInteraction, type FreecellPuzzle, type FreecellState } from "./logic";
@@ -43,7 +43,7 @@ function reason(p: FreecellPuzzle, s: FreecellState, path: readonly Move[]): str
   const card = lead(s, m);
   if (m.to >= C && m.to < C + 4) {
     return isSafeHome(pos.found, card)
-      ? "it can't be needed in a column any more, since both foundations of the other color are already up to its rank"
+      ? safeHomeReason(card)
       : "the winning line sends it home now";
   }
   const after = clonePos(pos);

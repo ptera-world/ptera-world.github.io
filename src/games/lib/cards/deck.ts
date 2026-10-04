@@ -69,3 +69,11 @@ export function msDeal(n: number): Face[] {
 
 /** `upper` can sit on `lower` in a column built down in alternating colors. */
 export const buildsDownAlternating = (upper: Face, lower: Face): boolean => rankOf(lower) === rankOf(upper) + 1 && isRed(lower) !== isRed(upper);
+
+/** Why sending `card` home can't hurt, given it passed the safe-home test (other color's foundations at least one rank below). */
+export function safeHomeReason(card: Face): string {
+  const r = rankOf(card);
+  if (r === 1) return "an ace can always go home";
+  if (r === 2) return "nothing ever needs to sit on a two, since aces go straight home";
+  return `nothing can need to sit on it any more: both ${isRed(card) ? "black" : "red"} foundations already reach ${rankWord(r - 1)}`;
+}
