@@ -67,6 +67,10 @@ button.danger:hover:not(:disabled) { border-color: var(--danger); background: va
 .w-howto h4 { font-size: 12px; letter-spacing: .06em; color: var(--text-dim); font-weight: normal; margin-top: 4px; }
 .w-howto ul { padding-left: 18px; display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
 .w-howto .how { list-style: none; padding-left: 0; }
+.w-howto .legend { list-style: none; padding-left: 0; }
+.w-howto .legend li { display: flex; align-items: center; gap: 10px; }
+.w-howto .legend .sw { width: 26px; height: 26px; flex: none; display: inline-flex; align-items: center; justify-content: center; }
+.w-howto .legend .sw svg { width: 100%; height: 100%; }
 .w-howto-corner { position: absolute; top: 6px; right: 6px; width: 28px; height: 28px; padding: 0; border-radius: 99px; opacity: .55; }
 .w-howto-corner:hover { opacity: 1; }
 .w-note { font-size: 13px; padding: 6px 8px; border-radius: 6px; background: var(--surface-2); }
@@ -692,16 +696,22 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
         const gestures = (shell.view?.def.controls ?? []).map((g) => h("li", null, h("strong", null, g.how), h("span", { class: "w-dim" }, ` · ${g.what}`)));
         const own = ctx.commands().filter((c) => !/^(shell|toggle|technique|widget|fx)\./.test(c.id) && !c.hidden);
         // pointer-bound commands first: they are how most people play
-        own.sort((a, b) => Number(!(b.mouse?.length)) - Number(!(a.mouse?.length)));
+        own.sort((a, b) => Number(!(a.mouse?.length)) - Number(!(b.mouse?.length)));
         const how = [...gestures, ...own.slice(0, Math.max(0, 9 - gestures.length)).map((c) => {
           const ways = [...shell.hub.mouseFor(c.id), ...shell.hub.keysFor(c.id)].join(", ");
           return h("li", null, h("strong", null, c.label), ways ? h("span", { class: "w-dim" }, ` · ${ways}`) : null, c.description ? h("div", { class: "w-dim" }, c.description) : null);
         })];
         const hasTutorial = (shell.techniques?.list.length ?? 0) > 0;
+        const legend = (shell.view?.def.legend ?? []).map((l) => {
+          const sw = h("span", { class: "sw", "aria-hidden": "true" });
+          sw.innerHTML = l.sample;
+          return h("li", null, sw, h("span", null, l.meaning));
+        });
         add(el, h("div", { class: "w-howto", role: "dialog", "aria-label": `how to play ${s.def.name}` },
           h("div", { class: "head" }, h("strong", null, s.def.name), s.def.aliases?.length ? h("span", { class: "w-dim" }, ` · also ${s.def.aliases.slice(0, 3).join(", ")}`) : null),
           s.def.description ? h("p", { class: "goal" }, s.def.description) : null,
           rules.length ? [h("h4", null, "rules"), h("ul", null, rules.map((r) => h("li", null, r)))] : null,
+          legend.length ? [h("h4", null, "what you see"), h("ul", { class: "legend" }, legend)] : null,
           how.length ? [h("h4", null, "playing"), h("ul", { class: "how" }, how), h("p", { class: "w-dim" }, "right-click the board (or hold on touch) for more. every action is in the commands list, top right.")] : null,
           h("div", { class: "w-inline" },
             hasTutorial ? h("button", { class: "primary", onclick: () => { close(); void shell.startPractice(s.def, shell.techniques!.list[0]!, randomSeed()); } }, "learn by doing") : null,
