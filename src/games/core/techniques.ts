@@ -130,8 +130,14 @@ export class TechniqueHost {
     }, { owner: AUTO_OWNER, priority: 100 });
   }
 
+  /**
+   * Techniques applied automatically. On a practice board the practised technique and anything at
+   * least as hard never auto-apply, or the board would solve the exercise itself.
+   */
   private autoList(): Technique[] {
-    return this.list.filter((t) => loadTechniqueConfig(t).auto);
+    const o = this.session.origin;
+    const target = o.kind === "practice" ? this.list.find((t) => t.id === o.technique) : undefined;
+    return this.list.filter((t) => loadTechniqueConfig(t).auto && (!target || t.level < target.level));
   }
 
   /** Paced mode: apply the next automatic step after the pace delay, repeating until none apply. */

@@ -183,6 +183,8 @@ export interface PuzzleDef<Pz = unknown, S = unknown, A extends Action = Action,
   init(puzzle: Pz): S;
   reduce(puzzle: Pz, state: S, action: A): S;
   isSolved(puzzle: Pz, state: S): boolean;
+  /** The game is over without being solved (e.g. a mine was opened). Undo still works. */
+  isLost?(puzzle: Pz, state: S): boolean;
   initInteraction?(puzzle: Pz): I;
   /** Full solution state, or null if none/unknown. */
   solve?(puzzle: Pz): S | null;
@@ -261,6 +263,11 @@ export interface ViewHandle {
   hooks?: object;
   /** Board width / height, used to size the board as large as the layout allows. Default 1. */
   aspect?: number;
+  /**
+   * Gestures the board uses itself. The shell then never opens its board menu on them (touch
+   * hold is otherwise the menu), and tells players to use the commands list instead.
+   */
+  gestures?: { secondaryClick?: boolean; hold?: boolean };
   /** Extra keys merged into the shell context for `when` conditions. */
   context?(): Record<string, unknown>;
   /** Screen rects (client coordinates) of the elements a focus refers to. Lets game-agnostic effects target the board. */

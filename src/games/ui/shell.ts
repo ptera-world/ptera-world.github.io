@@ -29,6 +29,9 @@ import { SAVE_PREFIX, INDEX_KEY, findSession, listSessions, loadSession, newSess
 
 const prefs = namespace("prefs");
 
+/** How long a touch must be held to count as a hold (board menu). Views with their own holds should stay below it or declare gestures.hold. */
+export const HOLD_MS = 550;
+
 /** Serialized text, or null if the format can't write or throws on this puzzle. */
 export function trySerialize(fmt: Format<unknown>, puzzle: unknown): string | null {
   if (!fmt.serialize) return null;
@@ -76,6 +79,7 @@ export class Shell {
   sessionId = "";
   /** Player unlocked the current solved board for free play (not saved; a reopened solved board is locked again). */
   unlocked = false;
+  private wasLost = false;
   /** Adopting another tab's save: don't write it back. */
   private reloading = false;
   host: PluginHost | null = null;
@@ -136,7 +140,7 @@ export class Shell {
       raf = requestAnimationFrame(() => this.relayout());
     });
     this.els.boardbox.addEventListener("contextmenu", (e) => {
-      if (e.defaultPrevented || !this.hub.all().some((c) => [c.menu].flat().includes("board"))) return;
+      if (e.defaultPrevented || this.view?.handle.gestures?.secondaryClick || !this.hub.all().some((c) => [c.menu].flat().includes("board"))) return;
       e.preventDefault();
       this.hub.openMenu("board", e.clientX, e.clientY);
     });
@@ -161,13 +165,21 @@ export class Shell {
     let start: { x: number; y: number } | null = null;
     const cancel = () => { clearTimeout(timer); start = null; };
     this.els.boardbox.addEventListener("pointerdown", (e) => {
-      if (e.pointerType !== "touch") return;
+      if (e.pointerType !== "touch" || this.view?.handle.gestures?.hold) return;
       start = { x: e.clientX, y: e.clientY };
       timer = window.setTimeout(() => {
         if (!start || !this.hub.all().some((c) => [c.menu].flat().includes("board"))) return;
         this.hub.openMenu("board", start.x, start.y);
         start = null;
-      }, 550);
+        // the finger lifting after a hold must not count as a tap (on the board or the menu backdrop)
+        const swallow = (ev: Event) => { ev.preventDefault(); ev.stopPropagation(); };
+        window.addEventListener("click", swallow, { capture: true, once: true });
+        window.addEventListener("pointerup", swallow, { capture: true, once: true });
+        setTimeout(() => {
+          window.removeEventListener("click", swallow, { capture: true });
+          window.removeEventListener("pointerup", swallow, { capture: true });
+        }, 800);
+      }, HOLD_MS);
     });
     this.els.boardbox.addEventListener("pointermove", (e) => {
       if (start && Math.hypot(e.clientX - start.x, e.clientY - start.y) > 10) cancel();
@@ -182,7 +194,8 @@ export class Shell {
     return {
       hasSession: !!s,
       solved: s?.solved ?? false,
-      locked: !!s?.solved && !this.unlocked && prefs.get("lockSolved", true),
+      locked: s?.locked ?? false,
+      lost: s?.lost ?? false,
       canUndo: s?.canUndo ?? false,
       canRedo: s?.canRedo ?? false,
       hint: !!s?.activeHint,
@@ -375,6 +388,15 @@ export class Shell {
     delete this.root.dataset.mode;
     this.sessionCleanup.push(
       session.hooks.change.tap((ctx) => {
+        const lost = session.lost;
+        if (lost && !this.wasLost && ctx.cause === "action") {
+          session.hooks.fx.call({ kind: "mistake" });
+          session.hooks.fx.call({ kind: "lost" });
+        }
+        this.wasLost = lost;
+        this.root.toggleAttribute("data-lost", lost);
+        if (lost) session.pause();
+        else if (!session.paused && !document.hidden && !session.solved) session.resume();
         this.scheduleSave();
         this.syncSolvedStatus();
         this.hub.syncContext();
@@ -386,14 +408,18 @@ export class Shell {
       }, { owner: "shell" }),
       session.hooks.refresh.tap(() => this.hub.syncContext(), { owner: "shell" }),
       // a solved board is a finished thing: player moves are refused until it is unlocked
+      session.hooks.solved.tap(() => this.syncLock(), { owner: "shell" }),
       session.hooks.action.tap((a, { source }) => {
-        if (!a || !session.solved || this.unlocked || !prefs.get("lockSolved", true) || source.kind !== "player") return a;
-        this.setStatus("this board is solved. unlock it to keep playing with it");
+        if (!a || !session.locked || source.kind !== "player") return a;
+        this.setStatus(session.lost ? "game over. undo to step back, or start a new game" : "this board is solved. unlock it to keep playing with it");
         session.hooks.fx.call({ kind: "locked" });
         return null;
       }, { owner: "shell", priority: -100 }),
     );
     this.unlocked = false;
+    this.wasLost = session.lost;
+    this.root.toggleAttribute("data-lost", this.wasLost);
+    this.syncLock();
     if (!session.paused && !document.hidden) session.resume();
     this.root.toggleAttribute("data-paused", session.paused);
     this.renderHeader();
@@ -579,6 +605,12 @@ export class Shell {
     this.relayout();
   }
 
+  /** Keep the session's lock in step with solved state, the unlock choice and the setting. */
+  syncLock(): void {
+    const s = this.session;
+    s?.setLocked((s.solved && !this.unlocked && prefs.get("lockSolved", true)) || s.lost);
+  }
+
   /** Zen: every slot but the board hidden, without touching the saved layout. */
   zen = false;
 
@@ -589,9 +621,10 @@ export class Shell {
     this.hub.refresh();
   }
 
+  /** Toggle the how-to card (placing its widget over the board if the player had hidden it). */
   showHowTo(): void {
     const w = this.widgets.find((m) => m.def.id === "howto");
-    if (w) w.el.dispatchEvent(new CustomEvent("howto-open"));
+    if (w) w.el.dispatchEvent(new CustomEvent("howto-toggle"));
     else this.setPlacement("howto", "overlay");
   }
 
@@ -660,10 +693,10 @@ export class Shell {
       {
         id: "shell.unlock", label: "unlock solved board", category: "game",
         description: "keep playing with a finished board (moves, undo). the solve time is kept as it was",
-        when: (c) => !!c.locked,
-        run: () => { this.unlocked = true; this.setStatus("unlocked: the board is yours to play with"); this.hub.refresh(); },
+        when: (c) => !!c.locked && !c.lost,
+        run: () => { this.unlocked = true; this.syncLock(); this.setStatus("unlocked: the board is yours to play with"); this.hub.refresh(); },
       },
-      { id: "shell.undo", label: "undo", category: "game", keys: ["$mod+z", "u"], description: "take back the last step", when: (c) => !!c.canUndo && !c.locked, run: () => s.undo() },
+      { id: "shell.undo", label: "undo", category: "game", keys: ["$mod+z", "u"], description: "take back the last step", when: (c) => !!c.canUndo && (!c.locked || !!c.lost), run: () => s.undo() },
       { id: "shell.redo", label: "redo", category: "game", keys: ["$mod+shift+z", "$mod+y", "r"], description: "put back a step you undid", when: (c) => !!c.canRedo && !c.locked, run: () => s.redo() },
       {
         id: "shell.restart", label: "restart", category: "game", danger: true, when: (c) => !!c.canUndo || !!c.solved,
@@ -894,7 +927,8 @@ export class Shell {
       h("a", { href: "/", class: "home", title: "ptera.world" }, "ptera"),
       h("a", { href: location.pathname, class: "crumb", onclick: (ev: MouseEvent) => { ev.preventDefault(); this.goIndex(); } }, "games"),
       els.title, els.meta, h("span", { class: "spacer" }), els.pauseMark, els.timer,
-      h("button", { class: "palette-btn", title: "all commands", onclick: () => this.hub.openPalette() }, "commands"));
+      h("button", { class: "howto-btn", "data-command": "shell.howto", "aria-label": "how to play", onclick: () => this.hub.run("shell.howto") }, "?"),
+      h("button", { class: "palette-btn", "data-command": "shell.palette", onclick: () => this.hub.openPalette() }, "commands"));
     els.middle.append(h("div", { class: "boardwrap" }, els.boardbox, els.overlay), els.side);
     els.main.append(els.top, els.middle, els.bottom);
     els.panel.append(els.tabs, els.panelBody);
@@ -1011,6 +1045,12 @@ export class Shell {
       this.keepStatus = false;
       return;
     }
+    this.syncLock();
+    if (s.lost) {
+      delete this.root.dataset.solved;
+      this.setStatus("game over. undo to step back, or start a new game");
+      return;
+    }
     if (s.solved) {
       this.root.dataset.solved = "";
       this.root.removeAttribute("data-paused");
@@ -1044,6 +1084,14 @@ const SHELL_CSS = `
 [data-solved] .bar .pause-mark { color: var(--accent); }
 [data-solved] .bar .timer { color: var(--accent); }
 .bar .palette-btn { padding: 4px 10px; font-size: 13px; }
+.bar .howto-btn { padding: 0; width: 28px; height: 28px; border-radius: 99px; font-size: 14px; }
+@media (max-width: 520px) {
+  .bar { gap: 8px; padding: 8px 10px; }
+  .bar .meta, .bar .crumb { display: none; }
+  .bar .title { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .bar .pause-mark { min-width: 0; }
+  .bar .pause-mark:not(.on) { display: none; }
+}
 
 .stage { flex: 1; display: flex; min-height: 0; }
 .stage[data-panel="below"] { flex-direction: column; overflow-y: auto; }
@@ -1056,6 +1104,7 @@ const SHELL_CSS = `
 .boardbox { position: relative; flex: none; display: flex; align-items: center; justify-content: center; }
 .slot-overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 10px; }
 .slot-overlay > .widget { pointer-events: auto; }
+[data-lost] .boardbox { box-shadow: 0 0 0 3px var(--danger); border-radius: 10px; }
 [data-solved] .boardbox { animation: solved-glow 1.6s ease-out; border-radius: 10px; }
 @keyframes solved-glow { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 70%, transparent); } 40% { box-shadow: 0 0 0 14px color-mix(in srgb, var(--accent) 25%, transparent); } 100% { box-shadow: 0 0 0 28px transparent; } }
 @media (prefers-reduced-motion: reduce) { [data-solved] .boardbox { animation: none; } }

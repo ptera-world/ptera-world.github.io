@@ -170,6 +170,7 @@ export class Session<Pz = unknown, S = unknown, A extends Action = Action, I = u
   private batchStart: S | null = null;
   private _activeHint: Hint<A> | null = null;
   private _paused = false;
+  private _locked = false;
   private pendingNotes: Note<S>[] = [];
   private batchActions: A[] = [];
   private batchSources: Source[] = [];
@@ -197,6 +198,15 @@ export class Session<Pz = unknown, S = unknown, A extends Action = Action, I = u
 
   get interaction(): I {
     return this._interaction;
+  }
+
+  /** Over without being solved (see PuzzleDef.isLost); false once undone back past the loss. */
+  get lost(): boolean {
+    try {
+      return !this.solved && !!this.def.isLost?.(this.puzzle, this._state);
+    } catch {
+      return false;
+    }
   }
 
   get solved(): boolean {
@@ -537,6 +547,20 @@ export class Session<Pz = unknown, S = unknown, A extends Action = Action, I = u
 
   elapsedMs(): number {
     return this.elapsedBase + (this.runningSince === null ? 0 : performance.now() - this.runningSince);
+  }
+
+  /**
+   * Player moves are refused (a finished board, unless unlocked). Set by the host; views can use it
+   * to skip previews and drags. Changing it fires `refresh`.
+   */
+  get locked(): boolean {
+    return this._locked;
+  }
+
+  setLocked(locked: boolean): void {
+    if (this._locked === locked) return;
+    this._locked = locked;
+    this.hooks.refresh.call();
   }
 
   /** Paused by the player; belongs to this game and is saved with it. */

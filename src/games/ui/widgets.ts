@@ -53,6 +53,8 @@ button.danger:hover:not(:disabled) { border-color: var(--danger); background: va
 .w-search { position: sticky; top: -12px; background: var(--bg); padding: 4px 0 8px; z-index: 1; }
 .w-results { background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(6px); border: 1px solid var(--accent); border-radius: 12px; padding: 10px 14px; box-shadow: 0 10px 30px rgba(0,0,0,.35); display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; justify-content: center; max-width: 100%; animation: results-in 420ms cubic-bezier(.2,.9,.3,1.3); }
 .w-results .big { font-size: 18px; color: var(--accent); }
+.w-results.lost { border-color: var(--danger); }
+.w-results.lost .big { color: var(--danger); }
 .w-results .time { font: 600 18px var(--mono); }
 .w-results ul { list-style: none; font-size: 12px; color: var(--text-dim); display: flex; flex-wrap: wrap; gap: 2px 10px; flex-basis: 100%; justify-content: center; }
 [data-slot="side"] .w-results, [data-slot="panel"] .w-results { flex-direction: column; }
@@ -71,8 +73,6 @@ button.danger:hover:not(:disabled) { border-color: var(--danger); background: va
 .w-howto .legend li { display: flex; align-items: center; gap: 10px; }
 .w-howto .legend .sw { width: 26px; height: 26px; flex: none; display: inline-flex; align-items: center; justify-content: center; }
 .w-howto .legend .sw svg { width: 100%; height: 100%; }
-.w-howto-corner { position: absolute; top: 6px; right: 6px; width: 28px; height: 28px; padding: 0; border-radius: 99px; opacity: .55; }
-.w-howto-corner:hover { opacity: 1; }
 .w-note { font-size: 13px; padding: 6px 8px; border-radius: 6px; background: var(--surface-2); }
 `;
 
@@ -620,7 +620,16 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
       let dismissed = false;
       const render = () => {
         clear(el);
-        if (!s.solved || dismissed) return;
+        if ((!s.solved && !s.lost) || dismissed) return;
+        if (s.lost) {
+          add(el, h("div", { class: "w-results lost", role: "status" },
+            h("strong", { class: "big" }, "game over"),
+            h("div", { class: "w-inline" },
+              h("button", { class: "primary", onclick: () => s.undo() }, "undo"),
+              h("button", { onclick: () => ctx.run("shell.new") }, "new game"),
+              h("button", { onclick: () => { dismissed = true; render(); } }, "look at the board"))));
+          return;
+        }
         const { past } = s.timeline();
         let yours = 0, hints = 0, revealed = false;
         const used = new Map<string, { auto: number; manual: number; hint: number }>();
@@ -652,7 +661,7 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
             !shell.unlocked && prefs.get("lockSolved", true) ? h("button", { onclick: () => { ctx.run("shell.unlock"); dismissed = true; render(); } }, "unlock") : null,
             h("button", { onclick: () => { dismissed = true; render(); } }, "close"))));
       };
-      sessionTaps(ctx, () => { if (!s.solved) dismissed = false; render(); });
+      sessionTaps(ctx, () => { if (!s.solved && !s.lost) dismissed = false; render(); });
       s.hooks.solved.tap(() => { dismissed = false; render(); }, { owner: ctx.owner });
       render();
     },
@@ -686,22 +695,27 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
       const seenKey = `howtoSeen:${s.def.id}`;
       let open = !prefs.get(seenKey, false) && s.origin.kind !== "practice";
       const close = () => { open = false; prefs.set(seenKey, true); render(); };
-      el.addEventListener("howto-open", () => { open = true; render(); });
+      el.addEventListener("howto-toggle", () => { if (open) close(); else { open = true; render(); } });
       const render = () => {
         clear(el);
-        const corner = h("button", { class: "w-howto-corner", "data-command": "shell.howto", "aria-label": "how to play", onclick: () => { open = !open; render(); } }, "?");
-        el.append(corner);
         if (!open) return;
         const rules = s.def.rules?.(s.puzzle) ?? [];
         const gestures = (shell.view?.def.controls ?? []).map((g) => h("li", null, h("strong", null, g.how), h("span", { class: "w-dim" }, ` · ${g.what}`)));
-        const own = ctx.commands().filter((c) => !/^(shell|toggle|technique|widget|fx)\./.test(c.id) && !c.hidden);
-        // pointer-bound commands first: they are how most people play
+        // what you can do with a pointer; keyboard-only commands live in the shortcuts list
+        const own = ctx.commands().filter((c) => !/^(shell|toggle|technique|widget|fx)\./.test(c.id) && !c.hidden && (c.mouse?.length || [c.menu].flat().includes("board")));
         own.sort((a, b) => Number(!(a.mouse?.length)) - Number(!(b.mouse?.length)));
+        const keyCount = ctx.commands().filter((c) => !/^(toggle|technique|widget|fx)\./.test(c.id) && !c.hidden && shell.hub.keysFor(c.id).length).length;
         const how = [...gestures, ...own.slice(0, Math.max(0, 9 - gestures.length)).map((c) => {
           const ways = [...shell.hub.mouseFor(c.id), ...shell.hub.keysFor(c.id)].join(", ");
           return h("li", null, h("strong", null, c.label), ways ? h("span", { class: "w-dim" }, ` · ${ways}`) : null, c.description ? h("div", { class: "w-dim" }, c.description) : null);
         })];
         const hasTutorial = (shell.techniques?.list.length ?? 0) > 0;
+        const g = shell.view?.handle.gestures ?? {};
+        const hasMenu = ctx.commands().some((c) => [c.menu].flat().includes("board"));
+        const menuWays = [g.secondaryClick ? "" : "right-click the board", g.hold ? "" : "hold on it (touch)"].filter(Boolean);
+        const shortcut = shell.hub.keysFor("shell.shortcuts")[0];
+        const menuLine = (hasMenu && menuWays.length ? `${menuWays.join(" or ")} for more. ` : "") + "every action is in the commands list, top right."
+          + (keyCount ? ` ${keyCount} keyboard shortcuts${shortcut ? ` (${shortcut} lists them)` : ""}.` : "");
         const legend = (shell.view?.def.legend ?? []).map((l) => {
           const sw = h("span", { class: "sw", "aria-hidden": "true" });
           sw.innerHTML = l.sample;
@@ -712,7 +726,7 @@ export function builtinWidgets(shell: Shell): WidgetDef[] {
           s.def.description ? h("p", { class: "goal" }, s.def.description) : null,
           rules.length ? [h("h4", null, "rules"), h("ul", null, rules.map((r) => h("li", null, r)))] : null,
           legend.length ? [h("h4", null, "what you see"), h("ul", { class: "legend" }, legend)] : null,
-          how.length ? [h("h4", null, "playing"), h("ul", { class: "how" }, how), h("p", { class: "w-dim" }, "right-click the board (or hold on touch) for more. every action is in the commands list, top right.")] : null,
+          how.length ? [h("h4", null, "playing"), h("ul", { class: "how" }, how), h("p", { class: "w-dim" }, menuLine)] : null,
           h("div", { class: "w-inline" },
             hasTutorial ? h("button", { class: "primary", onclick: () => { close(); void shell.startPractice(s.def, shell.techniques!.list[0]!, randomSeed()); } }, "learn by doing") : null,
             h("button", { class: hasTutorial ? undefined : "primary", onclick: close }, "play"))));
