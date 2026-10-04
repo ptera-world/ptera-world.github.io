@@ -81,6 +81,42 @@ const BINDINGS: BindingSchema = {
   "lightup.down": { label: "cursor down", category: "light up", keys: ["ArrowDown", "s"], description: "move the keyboard selection one cell down" },
 };
 
+/** Inline markup for an asset inside a 10×10 sample. */
+function assetMarkup(markup: string): string {
+  const t = markup.trim();
+  return t.startsWith("<") ? t.replace(/^<svg\b/, `<svg width="${SIZE}" height="${SIZE}"`) : `<image href="${t}" width="${SIZE}" height="${SIZE}"/>`;
+}
+
+/** Every colour and mark the board draws, with the same tokens and the current theme's assets. */
+function legend(look: Look): { sample: string; meaning: string }[] {
+  const bulb = assetMarkup(look.asset("lightup.bulb", ASSETS.bulb));
+  const dot = assetMarkup(look.asset("lightup.dot", ASSETS.dot));
+  const svg = (body: string) => `<svg viewBox="-0.5 -0.5 11 11">${body}</svg>`;
+  const cell = `<rect width="10" height="10" fill="var(--cell)" stroke="var(--border)" stroke-width="0.25"/>`;
+  const glow = (opacity: number, fill = "var(--cell-lit)") => `<rect x="0.15" y="0.15" width="9.7" height="9.7" fill="${fill}" opacity="${opacity}"/>`;
+  const wall = (fill = "var(--text)", extra = "") => `<rect width="10" height="10" fill="${fill}" ${extra}/>`;
+  const num = (n: number, fill = "var(--bg)", opacity = "1") =>
+    `<text x="5" y="5.3" fill="${fill}" style="opacity: ${opacity}" font-size="6.4" font-weight="600" font-family="var(--font)" text-anchor="middle" dominant-baseline="central">${n}</text>`;
+  const box = (stroke: string, extra = "") => `<rect x="0.5" y="0.5" width="9" height="9" rx="1" fill="none" stroke="${stroke}" stroke-width="0.9" ${extra}/>`;
+  return [
+    { sample: svg(cell), meaning: "an empty cell that isn't lit yet" },
+    { sample: svg(cell + glow(0.26) + bulb), meaning: "a light" },
+    { sample: svg(cell + glow(0.26)), meaning: "a lit cell: a light shines on it" },
+    { sample: svg(cell + glow(0.12)), meaning: "where a light would shine, while you point at an unlit cell" },
+    { sample: svg(cell + dot), meaning: "a no-light mark: your note that this cell can't hold a light" },
+    { sample: svg(wall()), meaning: "a wall: blocks light, can touch any number of lights" },
+    { sample: svg(wall() + num(2)), meaning: "a numbered wall: exactly this many lights must touch it" },
+    { sample: svg(wall() + num(2, "var(--bg)", "var(--done-opacity)")), meaning: "a faded number: it has all its lights and nothing open around it" },
+    { sample: svg(cell + glow(0.26) + bulb + `<circle cx="5" cy="5" r="3.6" fill="none" stroke="var(--danger)" stroke-width="0.9"/>`), meaning: "a light that shines on another light" },
+    { sample: svg(wall("var(--danger-soft)", `stroke="var(--danger)" stroke-width="0.5"`) + num(1, "var(--danger)")), meaning: "a number that can't get the right count of lights any more" },
+    { sample: svg(cell + glow(0.22, "var(--danger)")), meaning: "a cell nothing can light any more" },
+    { sample: svg(cell + box("var(--hint)")), meaning: "hint: the cell it changes" },
+    { sample: svg(cell + box("var(--hint)", `stroke-dasharray="1.2 0.8" stroke-width="0.6"`)), meaning: "hint: the reason (a number, or a cell that needs light)" },
+    { sample: svg(cell + box("var(--hint)", `stroke-width="0.4" stroke-opacity="0.7"`)), meaning: "hint: other cells it mentions" },
+    { sample: svg(cell + box("var(--focus)", `stroke-width="0.6"`)), meaning: "the keyboard selection (shown while using the keyboard)" },
+  ];
+}
+
 export type Side = "top" | "right" | "bottom" | "left";
 export type Board = { labelSides(): Set<Side>; colName(col: number): string; rowName(row: number): string };
 
@@ -98,6 +134,9 @@ export function lightupView(look: Look, board: Board): View<LightupPuzzle, Light
       { how: "right-click, or hold on a touch screen", what: "put a no-light mark (a dot) there, or take it away. keep holding and drag to mark several cells" },
       { how: "point at an unlit cell", what: "shows where a light there would shine" },
     ],
+    get legend() {
+      return legend(look);
+    },
     mount(root, { session, settings }) {
       style("lightup", CSS);
       const p = session.puzzle;
