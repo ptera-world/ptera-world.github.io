@@ -188,7 +188,7 @@ const blockRange: PatternPlugin = {
   setup({ session, owner }) {
     session.hooks.derive.tap((d, { puzzle, state, interaction }) => {
       const ref = interaction?.clue;
-      if (!ref) return d;
+      if (!ref || session.locked) return d;
       const clue = lineClue(puzzle, ref.line);
       if (ref.block < 0 || ref.block >= clue.length) return d;
       const idx = lineCells(puzzle, ref.line);

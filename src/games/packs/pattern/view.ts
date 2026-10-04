@@ -90,7 +90,7 @@ const settings = defineSchema({
   },
   guides: { type: "int", label: "thick line every (0 = off)", default: 5, min: 0, max: 10 },
   band: { type: "bool", label: "highlight the row and column under the pointer", default: true },
-  longPressMs: { type: "int", label: "touch: hold a cell this long to cross it (ms, 0 = holding opens the menu)", default: 0, min: 0, max: 2000 },
+  longPressMs: { type: "int", label: "touch: hold a cell this long to cross it (ms, 0 = holding opens the menu)", default: 400, min: 0, max: 2000 },
 });
 
 const SIZE = 10;
@@ -99,8 +99,8 @@ const CLUE_H = 6.5;
 const MARGIN = 3.5;
 /** Depth of an edge label strip (row numbers / column letters). */
 const LABEL = 5.5;
-/** A touch held still this long is a menu press (the shell opens the board menu), not a tap. */
-const HOLD_MS = 450;
+/** Must equal the shell's board-menu hold (ui/shell HOLD_MS), which a pack can't import without the DOM. */
+const MENU_HOLD_MS = 550;
 const SVG_NS = "http://www.w3.org/2000/svg";
 
 /** An asset (SVG markup or image URL) as an element filling one cell box. */
@@ -209,7 +209,7 @@ export function patternView(look: Look, board: Board): View<PatternPuzzle, Patte
       { how: "drag along a row or column", what: "do the same to the whole stretch; the number in the top-left corner counts the cells" },
       { how: "middle-click a cell", what: "clear it" },
       { how: "point at or tap a clue number", what: "shade where that block can still go" },
-      { how: "hold a cell (touch)", what: "open the menu for that cell: fill, cross, clear, cross mode" },
+      { how: "hold a cell (touch)", what: "cross it out instead of filling it (in settings this can open the menu instead)" },
     ],
     /** Read when shown, so the samples use the current theme's graphics. */
     get legend() {
@@ -475,7 +475,7 @@ export function patternView(look: Look, board: Board): View<PatternPuzzle, Patte
       };
 
       const onDown = (e: PointerEvent) => {
-        if (drag || e.button > 2) return;
+        if (drag || e.button > 2 || session.locked) return;
         const ref = clueAt(e);
         if (ref) {
           // touch has no hover: a tap toggles the guide for that number
@@ -496,8 +496,6 @@ export function patternView(look: Look, board: Board): View<PatternPuzzle, Patte
         drag = { pointerId: e.pointerId, start: cell, cur: cell, from, target, secondary, prior: session.state.cells, timer: 0 };
         const lp = settings.longPressMs as number;
         if (e.pointerType !== "mouse" && lp > 0 && e.button === 0) {
-          // holding crosses instead, so the shell's hold-for-menu must not start from a cell
-          e.stopPropagation();
           drag.timer = window.setTimeout(() => {
             if (!drag || drag.cur !== drag.start) return;
             drag.secondary = !drag.secondary;
@@ -507,7 +505,7 @@ export function patternView(look: Look, board: Board): View<PatternPuzzle, Patte
           }, lp);
         } else if (e.pointerType === "touch") {
           // a still hold is a menu press: drop the pending mark so letting go doesn't also paint
-          drag.timer = window.setTimeout(() => { if (drag && drag.cur === drag.start) endDrag(false); }, HOLD_MS);
+          drag.timer = window.setTimeout(() => { if (drag && drag.cur === drag.start) endDrag(false); }, MENU_HOLD_MS);
         }
         session.setInteraction((i) => ({ ...i, cursor: cell, clue: null }));
         render();
@@ -523,7 +521,7 @@ export function patternView(look: Look, board: Board): View<PatternPuzzle, Patte
           return;
         }
         if (e.pointerType !== "mouse") return;
-        pointClue(clueAt(e));
+        pointClue(session.locked ? null : clueAt(e));
         const cell = pointToCell(e, false);
         if (cell !== hover) { hover = cell; render(); }
       };
@@ -557,7 +555,11 @@ export function patternView(look: Look, board: Board): View<PatternPuzzle, Patte
       const offs = [
         session.hooks.change.tap(render, { owner: "view" }),
         session.hooks.interaction.tap(render, { owner: "view" }),
-        session.hooks.refresh.tap(render, { owner: "view" }),
+        session.hooks.refresh.tap(() => {
+          if (session.locked && drag) endDrag(false);
+          if (session.locked && session.interaction.clue) pointClue(null);
+          render();
+        }, { owner: "view" }),
         session.hooks.solved.tap(render, { owner: "view" }),
       ];
       render();
@@ -589,6 +591,8 @@ export function patternView(look: Look, board: Board): View<PatternPuzzle, Patte
       });
       return {
         aspect: W / H,
+        // right-click crosses; a touch hold crosses unless hold-to-cross is off, then it is the shell menu
+        gestures: { secondaryClick: true, hold: (settings.longPressMs as number) > 0 },
         commands,
         context: () => ({ patternCrossMode: session.interaction.crossMode }),
         locate: (f) => {
