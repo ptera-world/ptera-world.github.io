@@ -9,7 +9,7 @@ import { lightupWidgets } from "./widgets";
 export default function pack(games: GamesApi): void {
   const { registry } = games;
   registry.puzzle(lightup);
-  registry.view(lightupView(games.look));
+  registry.view(lightupView(games.look, games.board));
   for (const t of lightupTechniques) registry.technique(t);
   for (const p of lightupPlugins) registry.plugin(p);
   for (const w of lightupWidgets) registry.widget(w);

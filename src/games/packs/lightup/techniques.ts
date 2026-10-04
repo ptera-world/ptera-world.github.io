@@ -1,11 +1,11 @@
 import type { Step, Technique } from "../../core/types";
 import { EMPTY, geometry, litCounts } from "./grid";
 import {
-  BULB, DOT, NONE, cellName,
+  BULB, DOT, NONE, cellList, cellName,
   type LightupAction, type LightupFocus, type LightupPuzzle, type LightupState,
 } from "./logic";
 import {
-  DARK, LIGHT, analyze, assign, freshKnowledge, scanSteps,
+  DARK, LIGHT, UNK, analyze, assign, freshKnowledge, scanSteps,
   type Knowledge, type Step as SolverStep, type StepKind,
 } from "./solver";
 
@@ -58,17 +58,17 @@ function first(p: LightupPuzzle, s: LightupState, kinds: readonly StepKind[]): {
 
 const plural = (n: number, one: string, many: string) => (n === 1 ? one : many);
 
-function outcome(cells: readonly number[], value: number): string {
-  const n = cells.length;
-  if (value === LIGHT) return n === 1 ? "that cell is a light" : `those ${n} cells are lights`;
-  return n === 1 ? "that cell can't hold a light" : `those ${n} cells can't hold lights`;
+function outcome(p: LightupPuzzle, cells: readonly number[], value: number): string {
+  const one = cells.length === 1;
+  if (value === LIGHT) return `${cellList(p, cells)} ${one ? "is a light" : "are lights"}`;
+  return `${cellList(p, cells)} can't hold ${one ? "a light" : "lights"}`;
 }
 
-function step(raw: SolverStep, cells: number[], message: string, nudge: string, nudgeFocus: LightupFocus): Step<LightupAction> {
+function step(raw: SolverStep, cells: number[], message: string, nudge: string, nudgeFocus: LightupFocus, related: number[] = []): Step<LightupAction> {
   return {
     message,
     nudge,
-    focus: { cells, because: raw.because } satisfies LightupFocus,
+    focus: { cells, because: raw.because, related } satisfies LightupFocus,
     nudgeFocus,
     actions: [{ type: "set", cells, value: raw.value === LIGHT ? BULB : DOT }],
   };
@@ -91,7 +91,7 @@ export const finished: LightupTechnique = {
     const v = p.cells[q]!;
     const at = cellName(p, q);
     const why = v === 0 ? `the 0 at ${at} can't touch any lights` : `the ${v} at ${at} already touches ${v} ${plural(v, "light", "lights")}`;
-    return step(hit.raw, hit.cells, `${why}, so ${outcome(hit.cells, DARK)}`, `look at the ${v} at ${at}`, { cells: [], because: [q] });
+    return step(hit.raw, hit.cells, `${why}, so ${outcome(p, hit.cells, DARK)}`, `look at the ${v} at ${at}`, { cells: [], because: [q] });
   },
   practice: { params: EASY },
 };
@@ -110,7 +110,7 @@ export const needsAll: LightupTechnique = {
     const need = hit.raw.cells.length;
     const at = cellName(p, q);
     return step(hit.raw, hit.cells,
-      `the ${v} at ${at} still needs ${need} ${plural(need, "light", "lights")} and only ${need} of its neighbours can take one, so ${outcome(hit.cells, LIGHT)}`,
+      `the ${v} at ${at} still needs ${need} ${plural(need, "light", "lights")} and only ${need} of its neighbours can take one, so ${outcome(p, hit.cells, LIGHT)}`,
       `look at the ${v} at ${at}`, { cells: [], because: [q] });
   },
   practice: { params: EASY },
@@ -146,9 +146,11 @@ export const leavesDark: LightupTechnique = {
     if (!hit) return null;
     const x = hit.raw.because[0]!;
     const y = hit.cells[0]!;
+    const k = knowledge(p, s)!;
+    const spots = [x, ...geometry(p).sees[x]!].filter((c) => k[c] === UNK);
     return step(hit.raw, hit.cells,
-      `a light at ${cellName(p, y)} would shine on every spot that could light ${cellName(p, x)}, so ${outcome(hit.cells, DARK)}`,
-      `which cells could light ${cellName(p, x)}?`, { cells: [], because: [x] });
+      `${cellName(p, x)} can only be lit from ${cellList(p, spots)}. a light at ${cellName(p, y)} would shine on all of them, leaving ${cellName(p, x)} dark, so ${outcome(p, hit.cells, DARK)}`,
+      `which cells could still light ${cellName(p, x)}?`, { cells: [], because: [x] }, spots);
   },
   practice: { params: MEDIUM },
 };
@@ -166,9 +168,15 @@ export const crowds: LightupTechnique = {
     const y = hit.cells[0]!;
     const v = p.cells[q]!;
     const at = cellName(p, q);
+    const k = knowledge(p, s)!;
+    const g = geometry(p);
+    const open = g.adj[q]!.filter((a) => k[a] === UNK);
+    const need = v - g.adj[q]!.filter((a) => k[a] === LIGHT).length;
+    const blocked = open.filter((a) => g.seeMask[y * g.n + a]);
+    const left = open.length - blocked.length;
     return step(hit.raw, hit.cells,
-      `a light at ${cellName(p, y)} would leave the ${v} at ${at} too few places for its lights, so ${outcome(hit.cells, DARK)}`,
-      `look at the ${v} at ${at} and the cells around its corners`, { cells: [], because: [q] });
+      `the ${v} at ${at} still needs ${need} ${plural(need, "light", "lights")}. a light at ${cellName(p, y)} would shine on ${cellList(p, blocked)}, leaving it ${left === 0 ? "no place" : `only ${left} ${plural(left, "place", "places")}`} for them, so ${outcome(p, hit.cells, DARK)}`,
+      `look at the ${v} at ${at} and the cells around its corners`, { cells: [], because: [q] }, blocked);
   },
   practice: { params: MEDIUM },
 };
@@ -185,8 +193,8 @@ export const trial: LightupTechnique = {
     const c = hit.cells[0]!;
     const at = cellName(p, c);
     const message = hit.raw.kind === "probe-light"
-      ? `if ${at} were a light, the easy rules would run into a clash, so ${outcome(hit.cells, DARK)}`
-      : `if ${at} stayed dark, the easy rules would run into a clash, so ${outcome(hit.cells, LIGHT)}`;
+      ? `if ${at} were a light, following finished number, no room to spare and only one way to light it from there would break a rule, so ${outcome(p, hit.cells, DARK)}`
+      : `if ${at} stayed dark, following finished number, no room to spare and only one way to light it from there would break a rule, so ${outcome(p, hit.cells, LIGHT)}`;
     return step(hit.raw, hit.cells, message, `try ${at} both ways`, { cells: [c], because: [] });
   },
   practice: { params: HARD },

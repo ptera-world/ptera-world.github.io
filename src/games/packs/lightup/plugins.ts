@@ -12,7 +12,7 @@ type LightupPlugin = Plugin<LightupPuzzle, LightupState, LightupAction, LightupI
 export const conflicts: LightupPlugin = {
   id: "lightup.conflicts",
   name: "show conflicts",
-  description: "flags rule breaks you can see without knowing the answer",
+  description: "marks rule breaks you can see without knowing the answer in red: a ring around lights that shine on each other, numbers that can't get the right count any more, and cells nothing can light",
   category: "assists",
   appliesTo: ["lightup"],
   enabledByDefault: true,

@@ -2,6 +2,7 @@ import type { Rng } from "../../core/rng";
 import { defineSchema, type Values } from "../../core/schema";
 import type { Format, GenerateContext, Hint, PuzzleDef } from "../../core/types";
 import { BLACK, EMPTY, geometry, litCounts, type LightupPuzzle } from "./grid";
+import { cellName as boardCell } from "../../ui/board";
 import { LEVEL_NAMES, analyze, generatePuzzle, type Level, type Symmetry } from "./solver";
 
 export type { LightupPuzzle } from "./grid";
@@ -155,14 +156,25 @@ function checkSize(w: number, h: number): void {
 
 // --- hints ---
 
-export const cellName = (p: { w: number }, c: number) => `(${(c % p.w) + 1}, ${Math.floor(c / p.w) + 1})`;
+/** A cell's name as the board's edge labels show it, e.g. "C5". */
+export const cellName = (p: { w: number }, c: number) => boardCell(c % p.w, Math.floor(c / p.w));
 
-/** Focus payload understood by the lightup views. */
+/** "C5", "C5 and D2", "C5, D2, E1 and 3 more". */
+export function cellList(p: { w: number }, cells: readonly number[]): string {
+  const names = cells.slice(0, 3).map((c) => cellName(p, c));
+  const rest = cells.length - names.length;
+  if (rest > 0) return `${names.join(", ")} and ${rest} more`;
+  return names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}` : names[0] ?? "";
+}
+
+/** Focus payload understood by the lightup views. Every cell a hint's text names is in one of these lists. */
 export interface LightupFocus {
   /** Cells the hint acts on. */
   cells: number[];
   /** Cells explaining why (clues or cells that need lighting). */
   because: number[];
+  /** Other cells the text talks about, e.g. the spots that could still light a cell. */
+  related?: number[];
 }
 
 /** Rule breaks visible on the board without knowing the answer. */
@@ -201,7 +213,7 @@ export function wrongMarksHint(p: LightupPuzzle, s: LightupState): Hint<LightupA
   const wrong = geometry(p).empties.filter((c) => (s.marks[c] === BULB && sol[c] !== 1) || (s.marks[c] === DOT && sol[c] === 1));
   if (!wrong.length) return null;
   return {
-    message: wrong.length === 1 ? `the mark at ${cellName(p, wrong[0]!)} is wrong` : `${wrong.length} marks are wrong`,
+    message: `${wrong.length === 1 ? "the light or mark on" : "the lights or marks on"} ${cellList(p, wrong)} ${wrong.length === 1 ? "is" : "are"} wrong`,
     focus: { cells: wrong, because: [] } satisfies LightupFocus,
     actions: [{ type: "set", cells: wrong, value: NONE }],
   };
@@ -210,9 +222,12 @@ export function wrongMarksHint(p: LightupPuzzle, s: LightupState): Hint<LightupA
 /** Fallback when no technique offers a hint: a visible rule break, or why there's no next step. */
 export function hint(p: LightupPuzzle, s: LightupState): Hint<LightupAction> | null {
   const c = findConflicts(p, s.marks);
-  if (c.lights.length) return { message: "two lights shine on each other", focus: { cells: c.lights, because: [] } satisfies LightupFocus };
-  if (c.clues.length) return { message: "a number can't get the right count of lights any more", focus: { cells: [], because: c.clues } satisfies LightupFocus };
-  if (c.dark.length) return { message: "a cell can't be lit any more", focus: { cells: c.dark, because: [] } satisfies LightupFocus };
+  if (c.lights.length) return { message: `the lights on ${cellList(p, c.lights)} shine on each other`, focus: { cells: c.lights, because: [] } satisfies LightupFocus };
+  if (c.clues.length) {
+    const q = c.clues[0]!;
+    return { message: `the ${p.cells[q]} on ${cellName(p, q)} can't get exactly ${p.cells[q]} touching lights any more`, focus: { cells: [], because: [q] } satisfies LightupFocus };
+  }
+  if (c.dark.length) return { message: `nothing can light ${cellList(p, c.dark)} any more`, focus: { cells: c.dark, because: [] } satisfies LightupFocus };
   const a = analyze(p);
   if (a.count === 0) return { message: "this puzzle has no solution" };
   if (a.count === 2) return { message: "this puzzle has more than one solution, so it can need a guess" };
@@ -238,9 +253,9 @@ function generate(v: Values<typeof params>, rng: Rng, ctx: GenerateContext): Pro
 export const lightup: PuzzleDef<LightupPuzzle, LightupState, LightupAction, LightupInteraction, typeof params> = {
   id: "lightup",
   name: "light up",
-  aliases: ["akari", "light up", "lightup", "bijutsukan", "lights"],
+  aliases: ["akari", "bijutsukan", "lightup", "lights"],
   tags: ["logic", "grid", "numbers", "nikoli"],
-  description: "place lights so every open square is lit. lights can't see each other; numbers count adjacent lights.",
+  description: "put lights on the board until every empty cell is lit. a light shines along its row and column up to the nearest wall, no light may shine on another, and a number on a wall says how many lights touch it.",
   generatorVersion: 1,
   params,
   presets: [
@@ -257,11 +272,12 @@ export const lightup: PuzzleDef<LightupPuzzle, LightupState, LightupAction, Ligh
   reduce,
   isRetraction: (a) => a.value === NONE,
   rules: () => [
-    "put lights in open squares so that every open square is lit.",
-    "a light shines along its row and column until it hits a wall, and lights its own square.",
+    "the board has empty cells and walls (the dark cells). lights go in empty cells.",
+    "a light lights its own cell and shines along its row and column until it hits a wall or the edge.",
+    "every empty cell must end up lit.",
     "no light may shine on another light.",
-    "a number on a wall is exactly how many lights touch it (above, below, left and right). walls without a number can touch any number of lights.",
-    "no-light marks are notes for you.",
+    "a number on a wall is exactly how many lights touch that wall (above, below, left and right; not diagonally). walls without a number can touch any number.",
+    "a no-light mark (a small dot) is your own note that a cell can't hold a light. it doesn't count for anything.",
   ],
   isSolved,
   solve(p) {

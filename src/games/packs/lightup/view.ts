@@ -35,6 +35,8 @@ const CSS = `
 .lightup-board .clash { fill: none; stroke: var(--danger); stroke-width: 0.9; pointer-events: none; }
 .lightup-board .focus { fill: none; stroke: var(--hint); stroke-width: 0.9; pointer-events: none; }
 .lightup-board .focus.why { stroke-dasharray: 1.2 0.8; stroke-width: 0.6; }
+.lightup-board .focus.related { stroke-width: 0.4; stroke-opacity: 0.7; }
+.lightup-board .labels text { fill: var(--text-dim); font: 500 3.6px var(--font); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
 .lightup-board .cursor { fill: none; stroke: var(--focus); stroke-width: 0.6; pointer-events: none; }
 [data-input="pointer"] .lightup-board .cursor { display: none; }
 @media (prefers-reduced-motion: reduce) { .lightup-board .glow { transition: none; } }
@@ -67,36 +69,60 @@ function assetNode(markup: string): () => Element {
   return () => (el ? el.cloneNode(true) as Element : s("g"));
 }
 
+/** Ordered by how much a first-time player needs them; the how-to-play card lists them in this order. */
 const BINDINGS: BindingSchema = {
-  "lightup.left": { label: "cursor left", category: "light up", keys: ["ArrowLeft", "a"] },
-  "lightup.right": { label: "cursor right", category: "light up", keys: ["ArrowRight", "d"] },
-  "lightup.up": { label: "cursor up", category: "light up", keys: ["ArrowUp", "w"] },
-  "lightup.down": { label: "cursor down", category: "light up", keys: ["ArrowDown", "s"] },
-  "lightup.light": { label: "light on / off", category: "light up", keys: ["space", "Enter"] },
-  "lightup.mark": { label: "no-light mark on / off", category: "light up", keys: ["x", "period"] },
-  "lightup.clear": { label: "clear cell", category: "light up", keys: ["Backspace", "Delete"] },
-  "lightup.mode": { label: "mark mode (taps place no-light marks)", category: "light up", keys: ["m"] },
+  "lightup.light": { label: "light on / off", category: "light up", keys: ["space", "Enter"], description: "put a light on the selected cell, or take it away" },
+  "lightup.mark": { label: "no-light mark on / off", category: "light up", keys: ["x", "period"], description: "put a small dot on the selected cell: your note that it can't hold a light. press again to remove it" },
+  "lightup.clear": { label: "clear cell", category: "light up", keys: ["Backspace", "Delete"], description: "remove the light or no-light mark from the selected cell" },
+  "lightup.mode": { label: "taps place marks", category: "light up", keys: ["m"], description: "while on, clicking or tapping a cell puts a no-light mark there instead of a light (useful on touch screens). turn it off to place lights again" },
+  "lightup.left": { label: "cursor left", category: "light up", keys: ["ArrowLeft", "a"], description: "move the keyboard selection one cell left" },
+  "lightup.right": { label: "cursor right", category: "light up", keys: ["ArrowRight", "d"], description: "move the keyboard selection one cell right" },
+  "lightup.up": { label: "cursor up", category: "light up", keys: ["ArrowUp", "w"], description: "move the keyboard selection one cell up" },
+  "lightup.down": { label: "cursor down", category: "light up", keys: ["ArrowDown", "s"], description: "move the keyboard selection one cell down" },
 };
 
-export function lightupView(look: Look): View<LightupPuzzle, LightupState, LightupAction, LightupInteraction> {
+export type Side = "top" | "right" | "bottom" | "left";
+export type Board = { labelSides(): Set<Side>; colName(col: number): string; rowName(row: number): string };
+
+/** Space for edge labels, in cell units of SIZE. */
+const LABEL = 6;
+
+export function lightupView(look: Look, board: Board): View<LightupPuzzle, LightupState, LightupAction, LightupInteraction> {
   return {
     id: "lightup.svg",
     name: "grid",
     puzzle: "lightup",
     settings,
+    controls: [
+      { how: "click or tap an empty cell", what: "put a light there, or take it away" },
+      { how: "right-click, or hold on a touch screen", what: "put a no-light mark (a dot) there, or take it away. keep holding and drag to mark several cells" },
+      { how: "point at an unlit cell", what: "shows where a light there would shine" },
+    ],
     mount(root, { session, settings }) {
       style("lightup", CSS);
       const p = session.puzzle;
       const g = geometry(p);
       const bulbNode = assetNode(look.asset("lightup.bulb", ASSETS.bulb));
       const dotNode = assetNode(look.asset("lightup.dot", ASSETS.dot));
+      const sides = board.labelSides();
+      const m = (side: Side) => (sides.has(side) ? LABEL : PAD);
+      const vbW = p.w * SIZE + m("left") + m("right"), vbH = p.h * SIZE + m("top") + m("bottom");
       const svg = s("svg", {
-        viewBox: `${-PAD} ${-PAD} ${p.w * SIZE + 2 * PAD} ${p.h * SIZE + 2 * PAD}`,
+        viewBox: `${-m("left")} ${-m("top")} ${vbW} ${vbH}`,
         class: "lightup-board", role: "grid", "aria-label": `light up, ${p.w} by ${p.h}`,
       });
+      const labels = s("g", { class: "labels" });
+      for (let x = 0; x < p.w; x++) {
+        if (sides.has("top")) labels.append(s("text", { x: x * SIZE + SIZE / 2, y: -LABEL / 2 }, board.colName(x)));
+        if (sides.has("bottom")) labels.append(s("text", { x: x * SIZE + SIZE / 2, y: p.h * SIZE + LABEL / 2 }, board.colName(x)));
+      }
+      for (let y = 0; y < p.h; y++) {
+        if (sides.has("left")) labels.append(s("text", { x: -LABEL / 2, y: y * SIZE + SIZE / 2 }, board.rowName(y)));
+        if (sides.has("right")) labels.append(s("text", { x: p.w * SIZE + LABEL / 2, y: y * SIZE + SIZE / 2 }, board.rowName(y)));
+      }
       const base = s("g"), glowL = s("g"), marksL = s("g"), over = s("g");
       const cursor = s("rect", { width: SIZE - 0.6, height: SIZE - 0.6, rx: 1, class: "cursor" });
-      svg.append(base, glowL, marksL, over, cursor);
+      svg.append(labels, base, glowL, marksL, over, cursor);
       root.append(svg);
 
       const cx = (i: number) => (i % p.w) * SIZE;
@@ -162,7 +188,7 @@ export function lightupView(look: Look): View<LightupPuzzle, LightupState, Light
         for (const c of badLights) over.append(s("circle", { cx: cx(c) + SIZE / 2, cy: cy(c) + SIZE / 2, r: 3.6, class: "clash" }));
         const focus = session.activeHint?.focus as LightupFocus | undefined;
         if (focus) {
-          for (const [list, cls] of [[focus.cells, "focus"], [focus.because, "focus why"]] as const) {
+          for (const [list, cls] of [[focus.related ?? [], "focus related"], [focus.because, "focus why"], [focus.cells, "focus"]] as const) {
             for (const c of list) over.append(s("rect", { x: cx(c) + 0.5, y: cy(c) + 0.5, width: SIZE - 1, height: SIZE - 1, rx: 1, class: cls }));
           }
         }
@@ -222,6 +248,8 @@ export function lightupView(look: Look): View<LightupPuzzle, LightupState, Light
         const c = cellAt(e);
         if (c < 0 || pointerId !== -1) return;
         e.preventDefault();
+        // holding a cell places marks here, so the board's hold-for-menu must not also fire
+        if (e.pointerType === "touch") e.stopPropagation();
         pointerId = e.pointerId;
         svg.setPointerCapture?.(e.pointerId);
         setCursor(c);
@@ -312,24 +340,27 @@ export function lightupView(look: Look): View<LightupPuzzle, LightupState, Light
 
       const rects = (list: Iterable<number>) => [...new Set(list)].flatMap((c) => (tiles[c] ? [tiles[c].getBoundingClientRect()] : []));
       const commands: CommandDef[] = bindCommands(BINDINGS, {
-        "lightup.left": move(-1, 0),
-        "lightup.right": move(1, 0),
-        "lightup.up": move(0, -1),
-        "lightup.down": move(0, 1),
         "lightup.light": atCursor((c) => session.dispatch(toggleMark(session.state, c, BULB))),
         "lightup.mark": atCursor((c) => session.dispatch(toggleMark(session.state, c, DOT))),
         "lightup.clear": atCursor((c) => session.dispatch({ type: "set", cells: [c], value: NONE })),
         "lightup.mode": () => session.setInteraction((i) => ({ ...i, markMode: !i.markMode })),
+        "lightup.left": move(-1, 0),
+        "lightup.right": move(1, 0),
+        "lightup.up": move(0, -1),
+        "lightup.down": move(0, 1),
       }, {
-        "lightup.mode": { checked: () => session.interaction.markMode },
+        "lightup.light": { menu: "board" },
+        "lightup.mark": { menu: "board" },
+        "lightup.clear": { menu: "board" },
+        "lightup.mode": { menu: "board", checked: () => session.interaction.markMode },
       });
       return {
-        aspect: (p.w * SIZE + 2 * PAD) / (p.h * SIZE + 2 * PAD),
+        aspect: vbW / vbH,
         commands,
         context: () => ({ lightupMarkMode: session.interaction.markMode }),
         locate: (focus) => {
           const f = focus as LightupFocus | undefined;
-          return f ? rects([...(f.cells ?? []), ...(f.because ?? [])]) : [];
+          return f ? rects([...(f.cells ?? []), ...(f.because ?? []), ...(f.related ?? [])]) : [];
         },
         locateChange: (a, b) => {
           const x = (a as LightupState).marks, y = (b as LightupState).marks;

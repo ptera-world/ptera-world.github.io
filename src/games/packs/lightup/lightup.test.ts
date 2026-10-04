@@ -5,7 +5,7 @@ import { Session } from "../../core/session";
 import { Registry } from "../../core/registry";
 import { TechniqueHost, applyStep, findPracticePosition, firstStep, rateByTechniques } from "../../core/techniques";
 import { BLACK, EMPTY, geometry, litCounts, type LightupPuzzle } from "./grid";
-import { BULB, DOT, NONE, gridFormat, lightup, sgtFormat, type LightupAction } from "./logic";
+import { BULB, DOT, NONE, cellList, cellName, gridFormat, lightup, sgtFormat, type LightupAction, type LightupFocus } from "./logic";
 import { checkMarks } from "./plugins";
 import { LIGHT, analyze, countSolutions, freshKnowledge, logicSolve, type Level } from "./solver";
 import { lightupTechniques } from "./techniques";
@@ -129,6 +129,37 @@ test("every technique step agrees with the solution, and steps never touch marke
       st = applyStep(lightup, p, st, hit.step);
     }
   }
+});
+
+test("every cell a hint names is highlighted", async () => {
+  const names = (msg: string) => msg.match(/\b[A-Z]+\d+\b/g) ?? [];
+  let seen = 0;
+  for (const difficulty of ["easy", "medium", "hard"]) {
+    const p = await gen({ width: 9, height: 9, difficulty }, `names-${difficulty}`);
+    let st = lightup.init(p);
+    for (let i = 0; i < 400; i++) {
+      for (const t of lightupTechniques) {
+        const step = t.find(p, st);
+        if (!step) continue;
+        const f = step.focus as LightupFocus, nf = step.nudgeFocus as LightupFocus;
+        const all = (x: LightupFocus) => new Set([...x.cells, ...x.because, ...(x.related ?? [])].map((c) => cellName(p, c)));
+        for (const n of names(step.message)) expect(all(f).has(n)).toBe(true);
+        for (const n of names(step.nudge ?? "")) expect(all(nf).has(n)).toBe(true);
+        seen++;
+      }
+      const hit = firstStep(lightup, lightupTechniques, p, st);
+      if (!hit) break;
+      st = applyStep(lightup, p, st, hit.step);
+    }
+  }
+  expect(seen).toBeGreaterThan(50);
+});
+
+test("cells are named like the board labels", () => {
+  expect(cellName({ w: 10 }, 0)).toBe("A1");
+  expect(cellName({ w: 10 }, 42)).toBe("C5");
+  expect(cellList({ w: 10 }, [0, 1, 2, 3, 4])).toBe("A1, B1, C1 and 2 more");
+  expect(cellList({ w: 10 }, [0, 1])).toBe("A1 and B1");
 });
 
 test("auto techniques cascade inside the move that triggered them, as one undo step", async () => {
