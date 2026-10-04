@@ -44,11 +44,6 @@ export function assign(g: Geometry, k: Knowledge, c: number, v: number): boolean
   return true;
 }
 
-export function applyStep(g: Geometry, k: Knowledge, s: Step): boolean {
-  for (const c of s.cells) if (!assign(g, k, c, s.value)) return false;
-  return true;
-}
-
 export function isLit(g: Geometry, k: Knowledge, i: number): boolean {
   if (k[i] === LIGHT) return true;
   for (const j of g.sees[i]!) if (k[j] === LIGHT) return true;
@@ -284,18 +279,30 @@ export function propagate(g: Geometry, k: Knowledge, maxLevel: Level): Propagate
   }
 }
 
-/** The easiest single deduction available from k, "contradiction" if k is inconsistent, or null. */
-export function nextStep(g: Geometry, k: Knowledge, maxLevel: Level = 2): Step | "contradiction" | null {
+const RULE_OF: Record<StepKind, Rule> = {
+  "clue-full": clueRule,
+  "clue-needs-all": clueRule,
+  "only-source": onlySourceRule,
+  "starves-cell": starvesCellRule,
+  "starves-clue": starvesClueRule,
+  "probe-light": probeRule,
+  "probe-dark": probeRule,
+};
+
+/**
+ * First step of one of `kinds` in rule scan order that `accept` takes, or null (also when k is
+ * contradictory). Reads k without changing it.
+ */
+export function scanSteps(g: Geometry, k: Knowledge, kinds: readonly StepKind[], accept: (s: Step) => boolean): Step | null {
   let found: Step | null = null;
   const emit: Emit = (s) => {
+    if (!kinds.includes(s.kind) || !accept(s)) return 0;
     found = s;
     return 1;
   };
-  for (const [level, rule] of RULES) {
-    if (level > maxLevel) break;
-    const r = rule(g, k, emit);
+  for (const rule of new Set(kinds.map((kd) => RULE_OF[kd]))) {
+    rule(g, k, emit);
     if (found) return found;
-    if (r === CONTRA) return "contradiction";
   }
   return null;
 }

@@ -81,11 +81,6 @@ export function withWalls(g: Geometry, cells: readonly number[]): Geometry {
   return { ...g, cells, clues };
 }
 
-/** The open cells a light at `cell` illuminates, itself included. */
-export function beam(g: Geometry, cell: number): number[] {
-  return [cell, ...g.sees[cell]!];
-}
-
 /** Lit-by count per cell for a set of light flags (1 = light). */
 export function litCounts(g: Geometry, lights: ArrayLike<number>): Int16Array {
   const out = new Int16Array(g.n);

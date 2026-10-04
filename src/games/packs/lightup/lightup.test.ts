@@ -2,9 +2,13 @@ import { expect, test } from "bun:test";
 import { generate } from "../../core/generate";
 import { createRng } from "../../core/rng";
 import { Session } from "../../core/session";
-import { BLACK, EMPTY, geometry, type LightupPuzzle } from "./grid";
-import { gridFormat, lightup, sgtFormat, type LightupState } from "./logic";
+import { Registry } from "../../core/registry";
+import { TechniqueHost, applyStep, findPracticePosition, firstStep, rateByTechniques } from "../../core/techniques";
+import { BLACK, EMPTY, geometry, litCounts, type LightupPuzzle } from "./grid";
+import { BULB, DOT, NONE, gridFormat, lightup, sgtFormat, type LightupAction } from "./logic";
+import { checkMarks } from "./plugins";
 import { LIGHT, analyze, countSolutions, freshKnowledge, logicSolve, type Level } from "./solver";
+import { lightupTechniques } from "./techniques";
 
 const sig = () => new AbortController().signal;
 const gen = (params: Record<string, unknown>, seed: string) => generate(lightup, params, seed, sig()) as Promise<LightupPuzzle>;
@@ -60,26 +64,100 @@ test("logic never contradicts brute force on random boards", () => {
   expect(solved).toBeGreaterThan(20);
 });
 
-test("following hints from scratch solves the puzzle", async () => {
+/** A session with the pack's techniques and hint check attached the way the shell does it. */
+function played(p: LightupPuzzle, auto: string[] = []) {
+  const registry = new Registry();
+  for (const t of lightupTechniques) registry.technique(auto.includes(t.id) ? { ...t, defaults: { auto: true } } : t);
+  const s = new Session(lightup, p, { kind: "imported" });
+  const host = new TechniqueHost(registry, s);
+  checkMarks.setup!({ session: s, settings: {}, owner: "check" });
+  return { s, host };
+}
+
+const solution = (p: LightupPuzzle) => analyze(p).solution!;
+
+test("following hints solves boards of every difficulty; wrong marks come first", async () => {
   for (const difficulty of ["easy", "medium", "hard"]) {
     const p = await gen({ width: 10, height: 10, difficulty }, `h-${difficulty}`);
-    const s = new Session(lightup, p, { kind: "imported" });
+    const { s } = played(p);
+    const bad = p.cells.findIndex((v, c) => v === EMPTY && solution(p)[c] === 0);
+    s.dispatch({ type: "set", cells: [bad], value: BULB });
+    expect(s.hint()?.actions?.[0]).toEqual({ type: "set", cells: [bad], value: NONE });
     for (let i = 0; i < 400 && !s.solved; i++) {
-      const h = s.hint();
-      expect(h?.actions?.[0]).toBeDefined();
-      s.dispatch(h!.actions![0]!);
+      const hnt = s.hint();
+      expect(hnt?.actions?.length).toBeGreaterThan(0);
+      s.batch(() => { for (const a of hnt!.actions!) s.dispatch(a); });
     }
     expect(s.solved).toBe(true);
   }
 });
 
-test("hint flags wrong marks first", async () => {
-  const p = await gen({ width: 8, height: 8 }, "wrong");
-  const sol = analyze(p).solution!;
-  const bad = p.cells.findIndex((v, c) => v === EMPTY && sol[c] === 0);
-  const s: LightupState = { marks: p.cells.map((_, c) => (c === bad ? 1 : 0)) };
-  const h = lightup.hint!(p, s)!;
-  expect(h.actions?.[0]).toEqual({ type: "set", cells: [bad], value: 0 });
+test("each difficulty needs its techniques: rating by techniques matches the generator", async () => {
+  const want = { easy: "lightup.only-source", medium: "lightup.crowds", hard: "lightup.trial" } as const;
+  for (const difficulty of ["easy", "medium", "hard"] as const) {
+    for (let i = 0; i < 4; i++) {
+      const p = await gen({ width: 9, height: 9, difficulty }, `r${i}`);
+      const r = rateByTechniques(lightup, lightupTechniques, p);
+      expect(r).not.toBeNull();
+      const lvl = r!.hardest.level;
+      expect(lvl).toBeLessThanOrEqual(lightupTechniques.find((t) => t.id === want[difficulty])!.level);
+      if (difficulty !== "easy") expect(lvl).toBeGreaterThan(lightupTechniques.find((t) => t.id === want[difficulty === "medium" ? "easy" : "medium"])!.level);
+    }
+  }
+});
+
+test("every technique step agrees with the solution, and steps never touch marked or lit cells", async () => {
+  for (const difficulty of ["easy", "medium", "hard"]) {
+    const p = await gen({ width: 9, height: 9, difficulty }, `sound-${difficulty}`);
+    const sol = solution(p);
+    let st = lightup.init(p);
+    const rng = createRng(`noise-${difficulty}`);
+    // a wrong light and a wrong mark the techniques must not build on
+    const wrongLight = geometry(p).empties.find((c) => sol[c] === 0 && rng.bool(0.3))!;
+    st = lightup.reduce(p, st, { type: "set", cells: [wrongLight], value: BULB });
+    const lit = () => litCounts(geometry(p), st.marks);
+    for (let i = 0; i < 400; i++) {
+      const hit = firstStep(lightup, lightupTechniques, p, st);
+      if (!hit) break;
+      for (const a of hit.step.actions as LightupAction[]) {
+        for (const c of a.cells) {
+          expect(st.marks[c]).toBe(NONE);
+          expect(lit()[c]).toBe(0);
+          expect(a.value === BULB ? 1 : 0).toBe(sol[c]!);
+        }
+      }
+      st = applyStep(lightup, p, st, hit.step);
+    }
+  }
+});
+
+test("auto techniques cascade inside the move that triggered them, as one undo step", async () => {
+  const p = await gen({ width: 8, height: 8, difficulty: "easy" }, "auto");
+  const { s } = played(p, ["lightup.finished", "lightup.needs-all", "lightup.only-source"]);
+  expect(s.solved).toBe(false);
+  s.settle(true);
+  expect(s.solved).toBe(true);
+  s.undo();
+  expect(s.state.marks.every((m) => m === NONE)).toBe(true);
+});
+
+test("clearing a mark is a retraction: auto doesn't put it straight back", () => {
+  const p = gridFormat.parse("...\n.0.\n...");
+  const { s } = played(p, ["lightup.finished"]);
+  s.settle(true);
+  expect(s.state.marks[1]).toBe(DOT);
+  s.dispatch({ type: "set", cells: [1], value: NONE });
+  expect(s.state.marks[1]).toBe(NONE);
+  expect(lightup.isRetraction!({ type: "set", cells: [1], value: NONE })).toBe(true);
+  expect(lightup.isRetraction!({ type: "set", cells: [1], value: DOT })).toBe(false);
+});
+
+test("practice finds a position for every technique", async () => {
+  for (const t of lightupTechniques) {
+    const pos = await findPracticePosition(lightup, lightupTechniques, t, "practice", sig());
+    expect(pos).not.toBeNull();
+    expect(firstStep(lightup, lightupTechniques, pos!.puzzle, pos!.state)!.technique.id).toBe(t.id);
+  }
 });
 
 test("formats round-trip and sgt runs split at 26", async () => {

@@ -1,16 +1,16 @@
 import type { GamesApi } from "../../api";
-import type { Registry } from "../../core/registry";
 import { lightup } from "./logic";
 import { lightupPlugins } from "./plugins";
+import { lightupTechniques } from "./techniques";
 import { lightupView } from "./view";
-
-export function register(registry: Registry): void {
-  registry.puzzle(lightup);
-  registry.view(lightupView);
-  for (const p of lightupPlugins) registry.plugin(p);
-}
+import { lightupWidgets } from "./widgets";
 
 /** Pack entry: loaded by URL through the same path as any third-party pack. */
 export default function pack(games: GamesApi): void {
-  register(games.registry);
+  const { registry } = games;
+  registry.puzzle(lightup);
+  registry.view(lightupView(games.look));
+  for (const t of lightupTechniques) registry.technique(t);
+  for (const p of lightupPlugins) registry.plugin(p);
+  for (const w of lightupWidgets) registry.widget(w);
 }
