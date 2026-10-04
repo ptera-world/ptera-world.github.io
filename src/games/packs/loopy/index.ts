@@ -10,9 +10,9 @@ export { passes } from "./solver";
 export { techniques } from "./techniques";
 export { KEYS } from "./keys";
 
-export function register(registry: Registry, look?: Look, labels?: Labels): void {
+export function register(registry: Registry, look?: Look, labels?: Labels, holdMs?: number): void {
   registry.puzzle(loopy);
-  registry.view(makeLoopyView(look, labels));
+  registry.view(makeLoopyView(look, labels, holdMs));
   for (const t of techniques) registry.technique(t);
   for (const p of assists) registry.plugin(p);
 }
@@ -46,5 +46,5 @@ export default function pack(games: GamesApi): void {
   } catch (e) {
     console.error("[games] loopy settings migration failed", e);
   }
-  register(games.registry, games.look, games.board);
+  register(games.registry, games.look, games.board, games.HOLD_MS);
 }

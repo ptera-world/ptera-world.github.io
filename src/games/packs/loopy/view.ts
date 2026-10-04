@@ -1,3 +1,4 @@
+import { HOLD_MS } from "../../core/gestures";
 import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
 import { colName, rowName, type Side } from "../../ui/board";
@@ -102,11 +103,6 @@ const LEGEND: readonly { sample: string; meaning: string }[] = [
   { sample: sw(edge("var(--accent)", 2.4) + dots), meaning: "lines turn this colour once the puzzle is solved" },
 ];
 
-/**
- * The shell's touch hold: held this long without moving 10px, it opens the board menu and
- * swallows the lifting finger, so the press must end here without becoming a tap.
- */
-const MENU_HOLD_MS = 550;
 
 /** Default cross mark; its colour follows the mark's state (currentColor / inherited stroke). */
 const CROSS_MARK = `<path d="M-1 -1L1 1M-1 1L1 -1" fill="none" stroke-width="0.5" stroke-linecap="round"/>`;
@@ -199,7 +195,11 @@ function inradius(g: Grid, f: number): number {
 }
 
 /** The board. Every input goes through commands (keys and mouse buttons are rebindable); touch is handled here. */
-export function makeLoopyView(look: Look = plainLook, labels: Labels = noLabels): View<LoopyPuzzle, LoopyState, LoopyAction, LoopyInteraction> {
+/**
+ * `holdMs` is the shell's touch hold: held that long without moving 10px, it opens the board
+ * menu and swallows the lifting finger, so the press must end here without becoming a tap.
+ */
+export function makeLoopyView(look: Look = plainLook, labels: Labels = noLabels, holdMs: number = HOLD_MS): View<LoopyPuzzle, LoopyState, LoopyAction, LoopyInteraction> {
   return {
     id: "loopy.svg",
     name: "board",
@@ -425,7 +425,7 @@ export function makeLoopyView(look: Look = plainLook, labels: Labels = noLabels)
           if (gesture !== gs || gs.dragging) return;
           gesture = null;
           render();
-        }, MENU_HOLD_MS);
+        }, holdMs);
       };
 
       /**
