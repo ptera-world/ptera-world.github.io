@@ -28,8 +28,8 @@ export interface BoardPrefs {
 
 /** Room for edge labels, in board units. */
 const LABEL = 6;
-/** A touch held still this long is abandoned as a move; it stays below the shell's hold, which opens the board menu. */
-const LONG_PRESS_MS = 500;
+/** How long before the shell's touch hold (board menu) a still touch is abandoned as a move. */
+const HOLD_LEAD_MS = 50;
 
 const CSS = `
 .bridges-board { display: block; width: 100%; height: 100%; touch-action: none; user-select: none; -webkit-user-select: none; }
@@ -113,7 +113,7 @@ function legend(look: Look): { sample: string; meaning: string }[] {
   ];
 }
 
-export function makeView(look: Look, board: BoardPrefs): View<BridgesPuzzle, BridgesState, BridgesAction, BridgesInteraction> {
+export function makeView(look: Look, board: BoardPrefs, holdMs: number): View<BridgesPuzzle, BridgesState, BridgesAction, BridgesInteraction> {
   const view: View<BridgesPuzzle, BridgesState, BridgesAction, BridgesInteraction> = {
     id: "bridges.svg",
     name: "board",
@@ -340,7 +340,7 @@ export function makeView(look: Look, board: BoardPrefs): View<BridgesPuzzle, Bri
         if (!press && begin(ev.clientX, ev.clientY, false) && press) {
           (press as { touch?: unknown }).touch = { x: ev.clientX, y: ev.clientY, t: performance.now(), far: false };
           clearTimeout(holdTimer);
-          holdTimer = window.setTimeout(abandon, LONG_PRESS_MS);
+          holdTimer = window.setTimeout(abandon, Math.max(0, holdMs - HOLD_LEAD_MS));
         }
       };
       /** Right-click is the take-away gesture everywhere on the board, never the browser or board menu. */

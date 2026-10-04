@@ -1,4 +1,5 @@
 import type { GamesApi } from "../../api";
+import { HOLD_MS } from "../../core/gestures";
 import type { Registry } from "../../core/registry";
 import type { WidgetDef } from "../../core/types";
 import { h, style } from "../../ui/dom";
@@ -72,10 +73,10 @@ const progressWidget: BridgesWidget = {
 const plainLook: Look = { asset: (_id, fallback) => fallback };
 const noLabels: BoardPrefs = { labelSides: () => new Set() };
 
-export function register(registry: Registry, look: Look = plainLook, board: BoardPrefs = noLabels): void {
+export function register(registry: Registry, look: Look = plainLook, board: BoardPrefs = noLabels, holdMs = HOLD_MS): void {
   for (const t of techniques) registry.technique(t);
   registry.puzzle(bridges);
-  registry.view(makeView(look, board));
+  registry.view(makeView(look, board, holdMs));
   for (const p of plugins) registry.plugin(p);
   registry.widget(modeWidget);
   registry.widget(progressWidget);
@@ -83,5 +84,5 @@ export function register(registry: Registry, look: Look = plainLook, board: Boar
 
 /** Pack entry: loaded by URL through the same path as any third-party pack. */
 export default function pack(games: GamesApi): void {
-  register(games.registry, games.look, games.board);
+  register(games.registry, games.look, games.board, games.HOLD_MS);
 }
