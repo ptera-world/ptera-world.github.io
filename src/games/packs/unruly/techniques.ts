@@ -64,7 +64,7 @@ export const lastCell: UnrulyTechnique = technique<UnrulyPuzzle, UnrulyState, Un
   description: "a row or column with one empty cell left already has its half of one color, so the last cell takes the other.",
   explain(p, _s, d, vars) {
     const li = lineOf(d);
-    return step(p, d, vars, `${lineName(p, li)} already has its half of ${colourWord(colourIn(d))}`, `${lineName(p, li)} has one empty cell left`, { cells: [], because: [] }, { related: geometryLine(p, li) });
+    return step(p, d, vars, `${lineName(p, li)} already has its half of ${colourWord(colourIn(d))}`, `${lineName(p, li)} has one empty cell left`, { cells: [], because: [], related: geometryLine(p, li) }, { related: geometryLine(p, li) });
   },
   practice: { params: { width: 6, height: 6, difficulty: "trivial" } },
 });
@@ -78,7 +78,7 @@ export const countFull: UnrulyTechnique = technique<UnrulyPuzzle, UnrulyState, U
   description: "a row or column that already has half its cells in one color can't take any more of it: every empty cell in it takes the other color.",
   explain(p, _s, d, vars) {
     const li = lineOf(d);
-    return step(p, d, vars, `${lineName(p, li)} already has its half of ${colourWord(colourIn(d))}`, `count the colors in ${lineName(p, li)}`, { cells: [], because: [] }, { related: geometryLine(p, li) });
+    return step(p, d, vars, `${lineName(p, li)} already has its half of ${colourWord(colourIn(d))}`, `count the colors in ${lineName(p, li)}`, { cells: [], because: [], related: geometryLine(p, li) }, { related: geometryLine(p, li) });
   },
   practice: { params: { width: 8, height: 8, difficulty: "easy" } },
 });
@@ -109,7 +109,7 @@ export const lastOne: UnrulyTechnique = technique<UnrulyPuzzle, UnrulyState, Unr
     const li = lineOf(d);
     const c = colourWord(colourIn(d));
     return step(p, d, vars, `${lineName(p, li)} needs one more ${c}, and it has to go in ${cellList(p, d.related ?? [])} to stop three of the other color in a row`,
-      `${lineName(p, li)} needs just one more ${c}`, { cells: [], because: [] }, { related: d.related ?? [] });
+      `${lineName(p, li)} needs just one more ${c}`, { cells: [], because: [], related: d.related ?? [] }, { related: d.related ?? [] });
   },
   practice: { params: { width: 8, height: 8, difficulty: "normal" } },
 });

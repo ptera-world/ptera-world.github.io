@@ -163,7 +163,7 @@ export function blackboxView(board: Board): View<BlackboxPuzzle, BlackboxState, 
           const ball = st.guesses[c] || !!preview?.guesses[c];
           const cls = !preview || preview.guesses[c] === st.guesses[c] ? "ball" : st.guesses[c] ? "ball faded" : "ball preview";
           if (ball) marks.append(s("circle", { cx: x * SIZE + SIZE / 2, cy: y * SIZE + SIZE / 2, r: 3, class: cls }));
-          if (st.solved && p.balls.includes(c)) marks.append(s("circle", { cx: x * SIZE + SIZE / 2, cy: y * SIZE + SIZE / 2, r: 3.6, class: "ball real" }));
+          if ((st.solved || preview?.solved) && p.balls.includes(c)) marks.append(s("circle", { cx: x * SIZE + SIZE / 2, cy: y * SIZE + SIZE / 2, r: 3.6, class: st.solved ? "ball real" : "ball real preview" }));
         }
         const ready = canCheck(p, st);
         check.style.display = ready ? "" : "none";
