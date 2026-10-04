@@ -66,7 +66,7 @@ const settings = defineSchema({
 /** Acting on "the tile": the cursor, which a pointer press also moves, so these work from the board menu too. */
 const bindings: BindingSchema = {
   "net.tap-at": { label: "click a tile", category: "net", mouse: ["click"], description: "do what the tap buttons say: turn the tile clockwise (the default), anticlockwise, or lock it" },
-  "net.rotate-ccw-at": { label: "turn anticlockwise (pointer)", category: "net", mouse: [], description: "turn the clicked tile anticlockwise. has no button by default: right-click opens the board menu, but you can bind it here" },
+  "net.rotate-ccw-at": { label: "turn anticlockwise (pointer)", category: "net", mouse: ["rightclick"], description: "turn the clicked tile anticlockwise" },
   "net.lock-at": { label: "lock / unlock (pointer)", category: "net", mouse: ["middleclick", "shift+click"], description: "lock or unlock the clicked tile; keep the button down and drag to lock or unlock several" },
   "net.source-at": { label: "move the source (pointer)", category: "net", mouse: ["$mod+click"], description: "make the clicked tile the source: pipes joined to it light up" },
   "net.left": { label: "cursor left", category: "net", keys: ["arrowleft"], description: "move the keyboard cursor one tile left" },
@@ -84,8 +84,8 @@ const bindings: BindingSchema = {
   "net.tap-lock": { label: "tap locks", category: "net", description: "a tap or click on a tile locks or unlocks it; drag across tiles to lock or unlock them all" },
 };
 
-/** On the board menu (right-click when unbound, long-press on touch). */
-const BOARD_MENU = ["net.rotate-cw", "net.rotate-ccw", "net.rotate-half", "net.lock", "net.source", "net.jumble", "net.recentre"];
+/** On the board menu (long-press on touch): only what acts on the pressed tile. */
+const BOARD_MENU = ["net.rotate-cw", "net.rotate-ccw", "net.rotate-half", "net.lock", "net.source"];
 
 /** Only meaningful on wrapping boards. */
 const wrapBindings: BindingSchema = {
@@ -119,6 +119,7 @@ const legend = [
 
 const controls = [
   { how: "tap a tile", what: "turn it clockwise. the tap buttons under the board switch this to anticlockwise or to locking" },
+  { how: "right-click a tile", what: "turn it anticlockwise" },
   { how: "with tap set to lock, drag across tiles", what: "lock (or unlock) every tile you pass over" },
   { how: "touch and hold a tile", what: "a menu of everything you can do to that tile" },
 ];
@@ -341,7 +342,6 @@ export function netView({ look = (_id, fallback) => fallback, labelSides = () =>
         else rotate(cell, mode === "ccw" ? -1 : 1);
       };
 
-      let rightClickAt = -Infinity;
       const pointerCell = (fn: (cell: number) => void): CommandHandler => (_ctx, e) => {
         const cell = cellAt(e?.target ?? null);
         if (cell < 0) return false;
@@ -383,10 +383,8 @@ export function netView({ look = (_id, fallback) => fallback, labelSides = () =>
         }
         finishPaint();
       };
-      // a right-click that turned a tile isn't also a request for the board menu
-      const onContextMenu = (e: Event) => {
-        if (performance.now() - rightClickAt < TAP_MS) e.preventDefault();
-      };
+      // right-click is the board's own gesture (turn anticlockwise), never the browser or board menu
+      const onContextMenu = (e: Event) => e.preventDefault();
       svg.addEventListener("pointerdown", onPointerDown);
       svg.addEventListener("contextmenu", onContextMenu);
       window.addEventListener("pointermove", onPointerMove);
@@ -447,10 +445,7 @@ export function netView({ look = (_id, fallback) => fallback, labelSides = () =>
           "net.tap-ccw": setTap("ccw"),
           "net.tap-lock": setTap("lock"),
           "net.tap-at": pointerCell(tap),
-          "net.rotate-ccw-at": pointerCell((c) => {
-            rightClickAt = performance.now();
-            rotate(c, -1);
-          }),
+          "net.rotate-ccw-at": pointerCell((c) => rotate(c, -1)),
           "net.lock-at": pointerCell(startPaint),
           "net.source-at": pointerCell(setSource),
         }, {
@@ -477,6 +472,8 @@ export function netView({ look = (_id, fallback) => fallback, labelSides = () =>
 
       return {
         aspect: vbW / vbH,
+        cells: { cols: p.w, rows: p.h },
+        gestures: { secondaryClick: true },
         locate(focus) {
           const f = focus as Partial<NetHintFocus> | null;
           if (!f || !Array.isArray(f.cells)) return [];
