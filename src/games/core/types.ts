@@ -272,7 +272,10 @@ export interface ViewHandle {
   hooks?: object;
   /** Board width / height, used to size the board as large as the layout allows. Default 1. */
   aspect?: number;
-  /** Cells across and down, so the frontend can keep cells at least a minimum size (scrolling or zooming the board instead). */
+  /**
+   * The whole drawn board measured in cells (outside clues and labels included), so the frontend
+   * can keep a cell at least a minimum size by zooming/scrolling instead of shrinking it.
+   */
   cells?: { cols: number; rows: number };
   /**
    * What the player is pointing at (cursor cell, hovered line, selection), in the shape the

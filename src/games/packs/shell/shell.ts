@@ -864,12 +864,33 @@ export class Shell {
     s.batch(() => { for (const a of hit.step.actions) s.dispatch(a, { source }); });
   }
 
+  /** Aimable techniques that have a step at what the player points at right now. */
+  skillsHere(): Technique[] {
+    const s = this.session;
+    const target = this.view?.handle.target?.();
+    if (!s || target === undefined || target === null) return [];
+    return (this.techniques?.list ?? []).filter((t) => t.findAt && findStepAt(s.def, t, s.puzzle, s.state, target));
+  }
+
   private techniqueCommands(): CommandDef[] {
     const th = this.techniques;
     const s = this.session;
     if (!th || !s) return [];
-    return th.list.flatMap((t): CommandDef[] => [
-      ...(t.findAt ? [{ id: `technique.here.${t.id}`, label: `${t.name} here`, category: "techniques", menu: "board", description: `apply ${t.name} to what you are pointing at`, run: () => this.applySkill(t) } satisfies CommandDef] : []),
+    const aimable = th.list.some((t) => t.findAt);
+    const here: CommandDef[] = aimable ? [{
+      id: "technique.here", label: "use a technique here", category: "techniques", menu: "board",
+      description: "the techniques that apply where you are pointing; point at one to preview, pick it to apply",
+      run: (_ctx, ev) => {
+        const list = this.skillsHere();
+        if (!list.length) { this.setStatus("no technique applies here right now"); return; }
+        const pe = ev as MouseEvent | undefined;
+        const x = pe?.clientX ?? innerWidth / 2, y = pe?.clientY ?? innerHeight / 2;
+        const items = list.map((t) => ({ cmd: { id: `technique.here.${t.id}`, label: t.name, description: t.description, run: () => this.applySkill(t) } as CommandDef, enabled: true, keys: [] as string[] }));
+        void popup("tiles", x, y, items, (id) => { const t = list.find((x) => `technique.here.${x.id}` === id); if (t) this.applySkill(t); });
+      },
+    }] : [];
+    return [...here, ...th.list.flatMap((t): CommandDef[] => [
+      ...(t.findAt ? [{ id: `technique.here.${t.id}`, label: `${t.name} here`, category: "techniques", description: `apply ${t.name} to what you are pointing at`, run: () => this.applySkill(t) } satisfies CommandDef] : []),
       { id: `technique.find.${t.id}`, label: `find ${t.name}`, category: "techniques", description: t.description, run: () => this.findTechnique(t) },
       { id: `technique.apply.${t.id}`, label: `apply ${t.name}`, category: "techniques", run: () => { if (!th.apply(t)) this.setStatus(`no ${t.name} right now`); } },
       {
@@ -878,7 +899,7 @@ export class Shell {
         run: () => { th.setConfig(t, { ...th.config(t), auto: !th.config(t).auto }); this.hub.refresh(); },
       },
       { id: `technique.practice.${t.id}`, label: `practise ${t.name}`, category: "practice", run: () => void this.startPractice(s.def, t, randomSeed()) },
-    ]);
+    ])];
   }
 
   private widgetCommands(): CommandDef[] {
