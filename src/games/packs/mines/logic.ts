@@ -1,7 +1,7 @@
 import type { Rng } from "../../core/rng";
 import { defineSchema, type Values } from "../../core/schema";
 import type { Format, GenerateContext, Hint, PuzzleDef, Rating } from "../../core/types";
-import { cellName } from "../../lib/grid-kit/names";
+import { cellList, cellName } from "../../lib/grid-kit/names";
 import { obfuscateBitmap } from "../../lib/sha1";
 import { UNKNOWN, countNumbers, generateLayout, neighbourTable, solveLayout, startKnowledge, type Level } from "./solver";
 
@@ -332,13 +332,21 @@ export const mines: PuzzleDef<MinesPuzzle, MinesState, MinesAction, MinesInterac
   initInteraction: (p) => ({ cursor: p.start ?? Math.floor(p.h / 2) * p.w + Math.floor(p.w / 2), flagMode: false }),
   reduce,
   isRetraction: (a) => a.type === "flag" && a.on === false,
+  describeAction: (p, a, _before, after) => {
+    const boom = after.dead >= 0 ? ` (${cellName(p, after.dead)} was a mine)` : "";
+    switch (a.type) {
+      case "open": return `open ${cellList(p, a.cells)}${a.cells.includes(after.dead) ? boom : ""}`;
+      case "chord": return `open around ${cellName(p, a.cell)}${boom}`;
+      case "flag": return `${a.on ?? after.flags[a.cells[0]!] ? "flag" : "unflag"} ${cellList(p, a.cells)}`;
+    }
+  },
   rules: (p) => [
     "open every cell that isn't a mine.",
     "an open number shows how many of its eight neighbors are mines.",
     `there are ${mineCount(p)} mines in total.`,
     "opening a mine loses the game (undo steps back).",
     "flags are notes for you: they mark cells you think are mines and stop them being opened by accident.",
-    "a number with all its flags around it can be clicked to open the rest of its neighbors.",
+    "a number with all its flags around it can be clicked (or right-clicked) to open the rest of its neighbors.",
   ],
   isLost: (_p, s) => (s.dead >= 0 ? { focus: { cells: [s.dead], sources: [] } satisfies MinesFocus } : false),
   isSolved: (p, s) => s.dead < 0 && p.mines.every((m, c) => m || s.open[c]),

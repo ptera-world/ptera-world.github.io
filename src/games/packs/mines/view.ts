@@ -50,6 +50,7 @@ const CSS = `
 const settings = defineSchema({
   longPressMs: { type: "int", label: "touch long-press for flag (ms)", default: 380, min: 150, max: 1500 },
   chordOnClick: { type: "bool", label: "click a number that has all its flags to open its other neighbors (chording)", default: true },
+  chordOnRightClick: { type: "bool", label: "right-click a number that has all its flags to open its other neighbors (chording)", default: true },
   dimDone: { type: "bool", label: "fade numbers whose neighbors are all decided", default: true },
 });
 
@@ -88,7 +89,7 @@ const BINDINGS: BindingSchema = {
   "mines.flag": { label: "flag / unflag cell", category: "minesweeper", keys: ["f", "x"], description: "put a flag on the cell under the keyboard cursor (or take it off). flags mark mines and can't be opened by accident" },
   "mines.chord": { label: "open around number", category: "minesweeper", keys: ["Enter", "c"], description: "on an open number that already has that many flags around it, open all its other neighbors at once" },
   "mines.mode": { label: "flag mode", category: "minesweeper", keys: ["m"], description: "while on, clicking or tapping a hidden cell flags it instead of opening it. for touch screens, where there is no right click" },
-  "mines.flag-at": { label: "flag / unflag (pointer)", category: "minesweeper", mouse: ["rightclick"], description: "flag the cell under the pointer, or take its flag off" },
+  "mines.flag-at": { label: "flag / unflag (pointer)", category: "minesweeper", mouse: ["rightclick"], description: "flag the cell under the pointer, or take its flag off. on an open number, opens its other neighbors instead when its flags are all there (if right-click chording is on)" },
 };
 
 /** Flag-or-unflag as an explicit action, so unflagging is recognizably a retraction. */
@@ -117,7 +118,7 @@ export function minesView(look: Look, labelSides: () => ReadonlySet<Side>): View
     controls: [
       { how: "click or tap a hidden cell", what: "open it" },
       { how: "right-click, or long-press on touch", what: "flag it as a mine (again to take the flag off)" },
-      { how: "click an open number that has all its flags", what: "open its other neighbors: pointing at it shows which (middle-click or enter does the same; \"open around finished numbers\" in assists does it by itself)" },
+      { how: "click or right-click an open number that has all its flags", what: "open its other neighbors: pointing at it shows which (middle-click or enter does the same; \"open around finished numbers\" in assists does it by itself)" },
       { how: "press, then drag off the cell before letting go", what: "change your mind: nothing happens" },
     ],
     mount(root, { session, settings }) {
@@ -188,7 +189,7 @@ export function minesView(look: Look, labelSides: () => ReadonlySet<Side>): View
         const safeHint = new Set(ded?.safe ?? []);
         const mineHint = new Set(ded?.mines ?? []);
         const press = new Set(pressed);
-        const around = new Set(settings.chordOnClick && hover >= 0 && !pressed.length ? chordCells(p, st, hover) : []);
+        const around = new Set((settings.chordOnClick || settings.chordOnRightClick) && hover >= 0 && !pressed.length ? chordCells(p, st, hover) : []);
         for (let c = 0; c < n; c++) {
           const open = st.open[c] === 1;
           const isMine = p.mines[c] === 1;
@@ -197,7 +198,7 @@ export function minesView(look: Look, labelSides: () => ReadonlySet<Side>): View
           if (c === st.dead) cls += "boom";
           else if (open) {
             cls += settings.dimDone && nums[c] && isDone(st, c) ? "open done" : "open";
-            if (settings.chordOnClick && nums[c] && !dead && chordCells(p, st, c).length) cls += " chordable";
+            if ((settings.chordOnClick || settings.chordOnRightClick) && nums[c] && !dead && chordCells(p, st, c).length) cls += " chordable";
           }
           else {
             cls += "closed";
@@ -369,6 +370,10 @@ export function minesView(look: Look, labelSides: () => ReadonlySet<Side>): View
           const cell = e instanceof MouseEvent ? cellAt(e) : -1;
           if (cell < 0) return false;
           setCursor(cell);
+          if (session.state.open[cell]) {
+            if (settings.chordOnRightClick) session.dispatch({ type: "chord", cell });
+            return true;
+          }
           session.dispatch(toggleFlag(session.state, cell));
           return true;
         },
