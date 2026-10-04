@@ -31,6 +31,8 @@ export interface Step {
   message: string;
   /** Where to look, without giving the answer away. */
   nudge: string;
+  /** Cells the nudge names, when it names any (else the nudge points at `areas`). */
+  nudgeCells?: number[];
 }
 
 export interface Technique {
@@ -176,6 +178,7 @@ export const nakedSingle: Technique = {
         place: [[c, d]], eliminate: [], cells: [c], areas: [],
         message: `naked single: every other digit is ruled out for ${name(g, c)}, so it's ${d}`,
         nudge: `one cell has only one digit left: check ${name(g, c)}`,
+        nudgeCells: [c],
       });
     }
     return null;
@@ -359,7 +362,7 @@ export function fish(k: number, difficulty: number): Technique {
             const bl = list(combo.map((h) => m.houses[h]!.label)), cl = list(covers.map((h) => m.houses[h]!.label));
             return step(t, {
               place: [], eliminate: elims, cells, areas: combo.map((h) => m.houses[h]!.cells.slice()),
-              message: `${t.name} on ${d}: in ${bl}, ${d} is confined to ${cl}, so remove it from the rest of ${cl}`,
+              message: `${t.name}: in ${bl}, ${d} can only go in ${cl}, so remove ${d} from the rest of ${cl}`,
               nudge: `look at ${d} across ${bl}`,
             });
           }
@@ -475,18 +478,24 @@ export function findChain(g: Grid, o: ChainOptions = {}): Step | null {
     let allCells = true;
     for (let i = 0; i + 1 < path.length; i += 2) if (cellOf(path[i]!) !== cellOf(path[i + 1]!)) allCells = false;
     const kind = sameDigit ? "x-chain" : allCells ? (path.length === 6 ? "xy-wing" : "xy-chain") : "alternating chain";
-    const text = path.map((x, i) => `${i ? (i % 2 ? " = " : " – ") : ""}${digOf(x)}@${name(g, cellOf(x))}`).join("");
+    // read as a story: if the start isn't true, each strong link forces the next true, each weak link the next false
+    const at = (x: number) => `${name(g, cellOf(x))} is ${digOf(x)}`;
+    const isnt = (x: number) => `${name(g, cellOf(x))} isn't ${digOf(x)}`;
+    const story = path.slice(1).map((x, i) => (i % 2 === 0 ? at(x) : isnt(x))).join(", so ");
+    const text = `if ${isnt(path[0]!)}, then ${story}`;
     const cells = [...new Set(path.map(cellOf))];
     const linkCount = path.length - 1;
+    const last = path[path.length - 1]!;
     const result = pl.length
-      ? `assuming ${digOf(path[0]!)}@${name(g, cellOf(path[0]!))} is false proves it true, so it's ${digOf(path[0]!)}`
-      : `one of the ends is true, so remove ${describeElims(g, elims)}`;
+      ? `which contradicts the start, so ${at(path[0]!)}`
+      : `so either ${at(path[0]!)} or ${at(last)}; both rule out ${describeElims(g, elims)}`;
     return step(chains, {
       name: kind,
       difficulty: 4 + 0.3 * (linkCount - 3),
       place: pl, eliminate: elims, cells, areas: [],
       message: `${kind}: ${text}; ${result}`,
-      nudge: `follow a chain of either-or links starting at ${name(g, cellOf(path[0]!))}`,
+      nudge: `suppose ${isnt(path[0]!)} and follow what that forces`,
+      nudgeCells: [cellOf(path[0]!)],
     });
   }
 }
@@ -517,6 +526,7 @@ export const trial: Technique = {
           place: [], eliminate: [[c, bit(d)]], cells: [c], areas: [],
           message: `trial and error: putting ${d} in ${name(g, c)} leads to a contradiction, so it can't be ${d}`,
           nudge: `try a digit in ${name(g, c)} and see what breaks`,
+          nudgeCells: [c],
         });
       }
     }

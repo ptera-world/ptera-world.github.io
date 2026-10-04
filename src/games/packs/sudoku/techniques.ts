@@ -18,7 +18,7 @@ export function toStep(es: EngineStep): CoreStep<GridAction> {
   const prefix = `${es.name}: `;
   const message = es.message.startsWith(prefix) ? es.message.slice(prefix.length) : es.message;
   const focus: HintFocus = { cells: es.cells, areas: es.areas, place: es.place, eliminate: es.eliminate, level: 2 };
-  const nudgeFocus: HintFocus = { cells: es.areas.length ? [] : es.cells, areas: es.areas, place: [], eliminate: [], level: 0 };
+  const nudgeFocus: HintFocus = { cells: es.nudgeCells ?? (es.areas.length ? [] : es.cells), areas: es.areas, place: [], eliminate: [], level: 0 };
   return { message, nudge: es.nudge, focus, nudgeFocus, actions };
 }
 

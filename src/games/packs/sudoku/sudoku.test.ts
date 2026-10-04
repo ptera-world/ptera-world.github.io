@@ -270,3 +270,26 @@ test("names, aliases and rules", async () => {
   const p = await generate(sudoku, { variants: ["thermo"], difficulty: "any" }, "rules", sig()) as LatinPuzzle;
   expect(sudoku.rules!(p).some((r) => r.includes("thermometer"))).toBe(true);
 });
+
+test("every cell a hint names is highlighted, at both hint levels", async () => {
+  const cases = [
+    [sudoku, { difficulty: "expert" }], [sudoku, { variants: ["killer", "thermo"], difficulty: "hard" }], [sudoku, { variants: ["arrow", "renban", "whispers", "xv"], difficulty: "any" }], [sudoku, { variants: ["littlekiller", "kropki", "jigsaw"], difficulty: "any" }], [keen, { size: 6 }], [towers, { size: 6 }], [unequal, { size: 5 }],
+  ] as const;
+  const named = (text: string) => [...text.matchAll(/\b([A-I])([1-9])\b/g)].map((m) => (Number(m[2]) - 1) * 9 + m[1]!.charCodeAt(0) - 65);
+  for (const [def, params] of cases) {
+    const p = await generate(def, params, "names", sig()) as LatinPuzzle;
+    const cell = (c9: number) => Math.floor(c9 / 9) * p.n + (c9 % 9);
+    const list = latinTechniques().filter((t) => t.puzzles.includes(def.id) && (t.requires ?? []).every((r) => featuresOf(p).includes(r))).sort((a, b) => a.level - b.level);
+    let s = initState(p);
+    for (let guard = 0; guard < 300 && !def.isSolved(p, s); guard++) {
+      const hit = firstStep(def, list, p, s);
+      if (!hit) break;
+      for (const [text, focus] of [[hit.step.message, hit.step.focus], [hit.step.nudge ?? "", hit.step.nudgeFocus]] as const) {
+        const f = focus as { cells: number[]; areas: number[][]; place: [number, number][]; eliminate: [number, number][] };
+        const lit = new Set([...f.cells, ...f.areas.flat(), ...f.place.map(([c]) => c), ...f.eliminate.map(([c]) => c)]);
+        for (const c of named(text)) expect({ text, cell: cell(c), lit: lit.has(cell(c)) }).toEqual({ text, cell: cell(c), lit: true });
+      }
+      s = applyStep(def, p, s, hit.step);
+    }
+  }
+}, 60_000);

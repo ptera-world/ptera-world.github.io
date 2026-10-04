@@ -72,7 +72,7 @@ const sudokuParams = defineSchema({
 export const sudoku = latinDef({
   id: "sudoku",
   name: "sudoku",
-  description: "fill the grid so every row, column and box holds each digit once. with variants.",
+  description: "put a digit in every empty cell so that no row, column or box has the same digit twice. some puzzles add extra rules, listed below.",
   aliases: ["number place", "solo", "killer sudoku", "jigsaw sudoku", "thermo sudoku", "variant sudoku"],
   tags: ["logic", "grid", "numbers", "latin square", "variants"],
   generatorVersion: 1,
@@ -116,7 +116,7 @@ const sizeField = (def: number) => ({ type: "int", label: "size", default: def, 
 export const keen = latinDef({
   id: "keen",
   name: "calcudoku",
-  description: "a latin square split into cages; each cage's digits make its number with its operation.",
+  description: "put a digit in every cell so that no row or column has the same digit twice. the digits in each outlined cage must make the cage's number using its sign: 6+ means they add up to 6, 2÷ means one divided by the other is 2.",
   aliases: ["kenken", "keen", "mathdoku", "kendoku"],
   tags: ["logic", "grid", "numbers", "latin square", "arithmetic"],
   generatorVersion: 1,
@@ -150,7 +150,7 @@ export const keen = latinDef({
 export const towers = latinDef({
   id: "towers",
   name: "skyscrapers",
-  description: "a latin square of building heights; edge clues count the buildings visible from there.",
+  description: "each cell is a building from 1 to the grid size storeys tall, and no row or column repeats a height. a number outside the grid says how many buildings you'd see looking in from there: taller buildings hide shorter ones behind them.",
   aliases: ["towers", "skyscraper"],
   tags: ["logic", "grid", "numbers", "latin square", "visibility"],
   generatorVersion: 1,
@@ -173,7 +173,7 @@ export const towers = latinDef({
 export const unequal = latinDef({
   id: "unequal",
   name: "futoshiki",
-  description: "a latin square with inequality signs between some neighbouring cells.",
+  description: "put a digit in every cell so that no row or column has the same digit twice, and every < or > sign between two cells is true.",
   aliases: ["unequal", "inequality", "hutoshiki"],
   tags: ["logic", "grid", "latin square", "inequality"],
   generatorVersion: 1,

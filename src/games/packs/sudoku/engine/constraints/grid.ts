@@ -1,6 +1,6 @@
 import { boxIds, connected, KING, KNIGHT, orthoPairs, pairs } from "../geometry";
 import { pairRule } from "../rules";
-import type { ConstraintSpec, ConstraintType, House } from "../types";
+import { cellName, cellSpan, colName, type ConstraintSpec, type ConstraintType, type House } from "../types";
 
 const range = (n: number) => [...Array(n).keys()];
 
@@ -12,15 +12,32 @@ export const latin: ConstraintType = {
   compile(_c, n) {
     const houses: House[] = [];
     for (const r of range(n)) houses.push({ cells: range(n).map((c) => r * n + c), kind: "row", label: `row ${r + 1}` });
-    for (const c of range(n)) houses.push({ cells: range(n).map((r) => r * n + c), kind: "col", label: `column ${c + 1}` });
+    for (const c of range(n)) houses.push({ cells: range(n).map((r) => r * n + c), kind: "col", label: `column ${colName(c)}` });
     return { houses };
   },
 };
 
-function regionHouses(n: number, ids: readonly number[], word: string): House[] {
+function regionHouses(n: number, ids: readonly number[], name: (id: number, cells: number[]) => string): House[] {
   const out: House[] = [];
-  for (const id of range(n)) out.push({ cells: ids.flatMap((v, c) => (v === id ? [c] : [])), kind: "box", label: `${word} ${id + 1}` });
+  for (const id of range(n)) {
+    const cells = ids.flatMap((v, c) => (v === id ? [c] : []));
+    out.push({ cells, kind: "box", label: name(id, cells) });
+  }
   return out;
+}
+
+const VERT = [[], ["middle"], ["top", "bottom"], ["top", "middle", "bottom"]];
+const HORZ = [[], ["middle"], ["left", "right"], ["left", "middle", "right"]];
+
+/** "the top-left box", "the centre box", … where the boxes form at most 3×3; else by a corner cell. */
+function boxName(n: number, w: number, h: number): (id: number, cells: number[]) => string {
+  const across = n / w, down = n / h;
+  return (id, cells) => {
+    const v = VERT[down]?.[Math.floor(id / across)], hz = HORZ[across]?.[id % across];
+    if (v === undefined || hz === undefined) return `the box at ${cellName(n, cells[0]!)}`;
+    const where = v === "middle" && hz === "middle" ? "centre" : v === "middle" ? hz : hz === "middle" ? v : `${v}-${hz}`;
+    return `the ${where} box`;
+  };
 }
 
 export interface BoxesSpec extends ConstraintSpec { w: number; h: number }
@@ -31,7 +48,7 @@ export const boxes: ConstraintType<BoxesSpec> = {
   rule: "every box contains each digit once",
   kind: "global",
   validate: (c, n) => (Number.isInteger(c.w) && Number.isInteger(c.h) && c.w * c.h === n && n % c.w === 0 ? null : "box size must tile the grid"),
-  compile: (c, n) => ({ houses: regionHouses(n, boxIds(n, c.w, c.h), "box") }),
+  compile: (c, n) => ({ houses: regionHouses(n, boxIds(n, c.w, c.h), boxName(n, c.w, c.h)) }),
 };
 
 export interface RegionsSpec extends ConstraintSpec { ids: number[] }
@@ -50,7 +67,7 @@ export const regions: ConstraintType<RegionsSpec> = {
     }
     return null;
   },
-  compile: (c, n) => ({ houses: regionHouses(n, c.ids, "region") }),
+  compile: (c, n) => ({ houses: regionHouses(n, c.ids, (_id, cells) => `the region with ${cellName(n, cells[0]!)}`) }),
 };
 
 export interface DiagonalSpec extends ConstraintSpec { anti?: boolean }
@@ -98,7 +115,7 @@ export const nonconsecutive: ConstraintType = {
   logic: { name: "non-consecutive logic", level: 2, description: "a placed digit rules out its neighbours on both sides in the four touching cells: a 5 means no 4 or 6 next to it. a cell that can only be 4 or 6 also forbids 5 around it." },
   kind: "global",
   compile: (_c, n) => ({
-    rules: orthoPairs(n).map(([a, b]) => pairRule(n, a, b, "non-consecutive", (x, y) => Math.abs(x - y) !== 1, 2)),
+    rules: orthoPairs(n).map(([a, b]) => pairRule(n, a, b, `the non-consecutive rule between ${cellSpan(n, [a, b])}`, (x, y) => Math.abs(x - y) !== 1, 2)),
   }),
 };
 

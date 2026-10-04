@@ -5,7 +5,7 @@ import { constraintTypes } from "./engine/registry";
 import { techniques as gradingTechniques } from "./engine/human";
 import { latinPlugins } from "./plugins";
 import { clueTechnique, latinTechnique, latinTechniques } from "./techniques";
-import { viewFor } from "./view";
+import { viewFor, type BoardPrefs } from "./view";
 import { latinWidgets } from "./widgets";
 
 /**
@@ -17,10 +17,10 @@ import { latinWidgets } from "./widgets";
  */
 export const engine = { constraintTypes, latinTechnique, clueTechnique, gradingTechniques };
 
-export function register(registry: Registry): void {
+export function register(registry: Registry, board?: BoardPrefs): void {
   for (const def of latinDefs) {
     registry.puzzle(Object.assign(def, { engine }));
-    registry.view(viewFor(def.id));
+    registry.view(viewFor(def.id, board));
   }
   for (const p of latinPlugins) registry.plugin(p);
   for (const t of latinTechniques()) registry.technique(t);
@@ -55,5 +55,5 @@ function migrate(games: GamesApi): void {
 /** Pack entry: loaded by URL through the same path as any third-party pack. */
 export default function pack(games: GamesApi): void {
   migrate(games);
-  register(games.registry);
+  register(games.registry, games.board);
 }

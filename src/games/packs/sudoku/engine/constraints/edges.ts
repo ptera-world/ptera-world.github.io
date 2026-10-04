@@ -1,6 +1,6 @@
 import { isOrthoAdjacent, orthoPairs } from "../geometry";
 import { pairRule } from "../rules";
-import type { ConstraintSpec, ConstraintType, RenderCtx } from "../types";
+import { cellSpan, type ConstraintSpec, type ConstraintType, type RenderCtx } from "../types";
 import { midpoint } from "./draw";
 
 export interface EdgeSpec extends ConstraintSpec { a: number; b: number }
@@ -22,7 +22,7 @@ export const kropki: ConstraintType<KropkiSpec> = {
   kind: "clue",
   removable: true,
   validate: (c, n) => validEdge(c, n) ?? (c.color === "white" || c.color === "black" ? null : "colour must be white or black"),
-  compile: (c, n) => ({ rules: [pairRule(n, c.a, c.b, `the ${c.color} dot`, kropkiOk(c.color), 2)] }),
+  compile: (c, n) => ({ rules: [pairRule(n, c.a, c.b, `the ${c.color} dot between ${cellSpan(n, [c.a, c.b])}`, kropkiOk(c.color), 2)] }),
   clues(sol, n, rng) {
     const out: KropkiSpec[] = [];
     for (const [a, b] of orthoPairs(n)) {
@@ -49,7 +49,7 @@ export const xv: ConstraintType<XvSpec> = {
   kind: "clue",
   removable: true,
   validate: (c, n) => validEdge(c, n) ?? (c.sum === 5 || c.sum === 10 ? null : "sum must be 5 or 10"),
-  compile: (c, n) => ({ rules: [pairRule(n, c.a, c.b, c.sum === 10 ? "the X" : "the V", (x, y) => x + y === c.sum, 2)] }),
+  compile: (c, n) => ({ rules: [pairRule(n, c.a, c.b, `the ${c.sum === 10 ? "X" : "V"} between ${cellSpan(n, [c.a, c.b])}`, (x, y) => x + y === c.sum, 2)] }),
   clues: (sol, n) => orthoPairs(n).flatMap(([a, b]) => {
     const s = sol[a]! + sol[b]!;
     return s === 5 || s === 10 ? [{ type: "xv", a, b, sum: s }] : [];
@@ -77,7 +77,7 @@ export const unequal: ConstraintType<EdgeSpec> = {
   kind: "clue",
   removable: true,
   validate: validEdge,
-  compile: (c, n) => ({ rules: [pairRule(n, c.a, c.b, "the inequality", (x, y) => x < y, 1.8)] }),
+  compile: (c, n) => ({ rules: [pairRule(n, c.a, c.b, `the sign between ${cellSpan(n, [c.a, c.b])}`, (x, y) => x < y, 1.8)] }),
   clues: (sol, n) => orthoPairs(n).map(([a, b]) => (sol[a]! < sol[b]! ? { type: "unequal", a, b } : { type: "unequal", a: b, b: a })),
   cells: (c) => [c.a, c.b],
   render(c, ctx) {

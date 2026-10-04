@@ -1,4 +1,5 @@
 import type { Rng } from "../../../core/rng";
+import { cellName as boardCell, colName } from "../../../ui/board";
 
 /**
  * Engine contracts. A puzzle is an n×n grid of digits 1..n plus a list of constraint instances.
@@ -111,7 +112,13 @@ export interface ConstraintType<C extends ConstraintSpec = ConstraintSpec> {
   render?(c: C, ctx: RenderCtx): void;
 }
 
-export const cellName = (n: number, cell: number): string => `r${Math.floor(cell / n) + 1}c${(cell % n) + 1}`;
+/** Board-wide cell name: column letter then row number, e.g. "C5". */
+export const cellName = (n: number, cell: number): string => boardCell(cell % n, Math.floor(cell / n));
+export { colName };
+
+/** "B3 and B4", or "B3 to B7" for longer runs. */
+export const cellSpan = (n: number, cells: readonly number[]): string =>
+  cells.length === 2 ? `${cellName(n, cells[0]!)} and ${cellName(n, cells[1]!)}` : `${cellName(n, cells[0]!)} to ${cellName(n, cells[cells.length - 1]!)}`;
 export const rowOf = (n: number, cell: number): number => Math.floor(cell / n);
 export const colOf = (n: number, cell: number): number => cell % n;
 

@@ -137,7 +137,7 @@ const highlighter: LatinWidget = {
 const cellLabel: LatinWidget = {
   id: "sudoku.cell-name",
   name: "cell name",
-  description: "the selected cell's row and column, as hints name cells (r3c4 = row 3, column 4)",
+  description: "the selected cell's name as hints use it: column letter, then row number (C5 = column C, row 5). turn on edge labels (l) to see the letters and numbers around the board",
   puzzles: LATIN_IDS,
   defaultSlot: "off",
   order: 30,

@@ -1,7 +1,7 @@
 import type { Rng } from "../../../../core/rng";
 import { isKingAdjacent, randomPath } from "../geometry";
 import { linearRule, pairRule, predicateRule } from "../rules";
-import type { ConstraintSpec, ConstraintType, Rule } from "../types";
+import { cellName, cellSpan, type ConstraintSpec, type ConstraintType, type Rule } from "../types";
 import { polyline } from "./draw";
 
 export interface LineSpec extends ConstraintSpec { cells: number[] }
@@ -15,7 +15,7 @@ function validPath(cells: unknown, n: number, min: number): string | null {
 }
 
 const chain = (n: number, cells: readonly number[], label: string, ok: (x: number, y: number) => boolean, difficulty: number): Rule[] =>
-  cells.slice(1).map((b, i) => pairRule(n, cells[i]!, b, label, ok, difficulty));
+  cells.slice(1).map((b, i) => pairRule(n, cells[i]!, b, `${label} between ${cellSpan(n, [cells[i]!, b])}`, ok, difficulty));
 
 /** Up to `count` non-overlapping random paths of at least minLen cells, each accepted by `step`. */
 function pathClues(n: number, rng: Rng, count: number, minLen: number, maxLen: number, step: (path: readonly number[], next: number) => boolean, starts: (c: number) => boolean, finish: (path: number[]) => number[] | null = (p) => p): number[][] {
@@ -65,7 +65,7 @@ export const whispers: ConstraintType<LineSpec> = {
   validate: (c, n) => validPath(c.cells, n, 2),
   compile(c, n) {
     const gap = Math.ceil(n / 2);
-    return { rules: chain(n, c.cells, "the whisper line", (x, y) => Math.abs(x - y) >= gap, 2) };
+    return { rules: chain(n, c.cells, "the green line", (x, y) => Math.abs(x - y) >= gap, 2) };
   },
   clues(sol, n, rng, o) {
     const gap = Math.ceil(n / 2);
@@ -94,10 +94,11 @@ export const renban: ConstraintType<LineSpec> = {
       }
       return hi - lo;
     };
+    const label = `the purple line from ${cellName(n, c.cells[0]!)}`;
     return {
-      houses: [{ cells: c.cells, kind: "line", label: "the renban line" }],
+      houses: [{ cells: c.cells, kind: "line", label }],
       rules: [predicateRule(n, c.cells, {
-        label: "the renban line",
+        label,
         distinct: true,
         difficulty: 2.5,
         accept: (v) => Math.max(...v) - Math.min(...v) === k - 1,
@@ -134,7 +135,7 @@ export const arrow: ConstraintType<ArrowSpec> = {
   compile(c, n) {
     const cells = [c.circle, ...c.cells];
     return {
-      rules: [linearRule(n, cells, cells.map((_, i) => (i ? 1 : -1)), 0, "the arrow", 2.5)],
+      rules: [linearRule(n, cells, cells.map((_, i) => (i ? 1 : -1)), 0, `the arrow from ${cellName(n, c.circle)}`, 2.5)],
     };
   },
   clues(sol, n, rng, o) {

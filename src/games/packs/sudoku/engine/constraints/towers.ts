@@ -1,5 +1,5 @@
 import { predicateRule } from "../rules";
-import type { ConstraintSpec, ConstraintType } from "../types";
+import { colName, type ConstraintSpec, type ConstraintType } from "../types";
 import { sideMargins } from "./cages";
 
 export type Side = "top" | "bottom" | "left" | "right";
@@ -48,7 +48,7 @@ export const towers: ConstraintType<TowersSpec> = {
     const cells = sightLine(n, c.side, c.index);
     return {
       rules: [predicateRule(n, cells, {
-        label: `the ${c.count} clue`,
+        label: `the ${c.count} clue ${c.side === "top" ? "above column" : c.side === "bottom" ? "below column" : c.side === "left" ? "left of row" : "right of row"} ${c.side === "top" || c.side === "bottom" ? colName(c.index) : c.index + 1}`,
         distinct: true,
         difficulty: 2,
         accept: (v) => visible(v) === c.count,

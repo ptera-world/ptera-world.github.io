@@ -1,7 +1,7 @@
 import type { Rng } from "../../../../core/rng";
 import { offsets, ORTHO, partition, ray } from "../geometry";
 import { linearRule, predicateRule, sumFeasible, sumRule } from "../rules";
-import type { ConstraintSpec, ConstraintType, Margins, RenderCtx } from "../types";
+import { cellName, cellSpan, type ConstraintSpec, type ConstraintType, type Margins, type RenderCtx } from "../types";
 import { anchorCell, cornerLabel, insetOutline } from "./draw";
 
 function validCells(cells: unknown, n: number, max: number): string | null {
@@ -52,10 +52,11 @@ export const killer: ConstraintType<KillerSpec> = {
   combos: true,
   validate: (c, n) => validCells(c.cells, n, n) ?? (c.sum === undefined || Number.isInteger(c.sum) ? null : "sum must be a whole number"),
   compile(c, n) {
-    const label = c.sum === undefined ? "cage" : `cage ${c.sum}`;
+    const at = cellName(n, anchorCell(c.cells));
+    const label = c.sum === undefined ? `the cage at ${at}` : `the ${c.sum} cage at ${at}`;
     return {
       houses: c.cells.length > 1 ? [{ cells: c.cells, kind: "cage", label }] : [],
-      rules: c.sum === undefined ? [] : [sumRule(n, c.cells, c.sum, `the ${c.sum} cage`, true, 2)],
+      rules: c.sum === undefined ? [] : [sumRule(n, c.cells, c.sum, label, true, 2)],
     };
   },
   clues(solution, n, rng, o) {
@@ -110,7 +111,7 @@ export const keen: ConstraintType<KeenSpec> = {
     return Number.isInteger(c.target) && c.target >= 0 ? null : "target must be a whole number";
   },
   compile(c, n) {
-    const label = `the ${c.target}${OP_GLYPH[c.op]} cage`;
+    const label = `the ${c.target}${OP_GLYPH[c.op]} cage at ${cellName(n, anchorCell(c.cells))}`;
     const accept = keenAccept(c.op, c.target);
     const feasible = c.op === "+" ? (v: readonly number[], m: readonly number[]) => sumFeasible(c.target, v, m)
       : c.op === "*" ? (v: readonly number[]) => c.target % v.reduce((a, b) => (b ? a * b : a), 1) === 0
@@ -172,7 +173,7 @@ export const littleKiller: ConstraintType<LittleKillerSpec> = {
   },
   compile(s, n) {
     const cells = lkCells(s, n);
-    return { rules: [linearRule(n, cells, cells.map(() => 1), s.sum, `the little killer ${s.sum}`, 2.5)] };
+    return { rules: [linearRule(n, cells, cells.map(() => 1), s.sum, `the little killer ${s.sum} along ${cellSpan(n, cells)}`, 2.5)] };
   },
   clues(solution, n, rng, o) {
     const out: LittleKillerSpec[] = [];
