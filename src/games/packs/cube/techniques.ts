@@ -1,17 +1,8 @@
 import type { Step, Technique } from "../../core/types";
-import { arena, type CubeAction, type CubeFocus, type CubePuzzle, type CubeState } from "./logic";
+import { direction, type CubeAction, type CubeFocus, type CubePuzzle, type CubeState } from "./logic";
 import { plan, type Plan } from "./solver";
 
 type CubeTechnique = Technique<CubePuzzle, CubeState, CubeAction>;
-
-const NAMES = ["right", "down-right", "down", "down-left", "left", "up-left", "up", "up-right"] as const;
-
-/** Compass name for rolling from one square to a neighbor. */
-export function direction(p: CubePuzzle, from: number, to: number): string {
-  const a = arena(p).squares;
-  const angle = Math.atan2(a[to]!.y - a[from]!.y, a[to]!.x - a[from]!.x);
-  return NAMES[((Math.round(angle / (Math.PI / 4)) % 8) + 8) % 8]!;
-}
 
 const rolls = (n: number) => (n === 1 ? "1 roll" : `${n} rolls`);
 

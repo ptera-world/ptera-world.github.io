@@ -75,6 +75,15 @@ export function roll(p: CubePuzzle, s: Pick<CubeState, "square" | "key" | "faces
   return { square: to, key, faces, blue };
 }
 
+const COMPASS = ["right", "down-right", "down", "down-left", "left", "up-left", "up", "up-right"] as const;
+
+/** Compass name for rolling from one square to a neighbor. */
+export function direction(p: CubePuzzle, from: number, to: number): string {
+  const a = arena(p).squares;
+  const angle = Math.atan2(a[to]!.y - a[from]!.y, a[to]!.x - a[from]!.x);
+  return COMPASS[((Math.round(angle / (Math.PI / 4)) % 8) + 8) % 8]!;
+}
+
 export const isComplete = (faces: readonly number[]) => faces.every(Boolean);
 
 /** Squares each face can ever land on fall into classes; blue squares are spread evenly over them. */
@@ -193,6 +202,12 @@ export const cube: PuzzleDef<CubePuzzle, CubeState, CubeAction, null, typeof par
     return next ? { ...next, moves: s.moves + 1 } : s;
   },
   isSolved: (_p, s) => isComplete(s.faces),
+  describeAction: (p, a, before, after) => {
+    if (!arena(p).links[before.square]!.some((l) => l.to === a.to)) return "roll";
+    const gained = after.faces.filter(Boolean).length - before.faces.filter(Boolean).length;
+    const what = after.moves - before.moves !== 1 || !gained ? "" : gained > 0 ? ", picks up blue" : ", sets blue down";
+    return `roll ${direction(p, before.square, a.to)}${what}`;
+  },
   rate,
   rules: (p) => [
     `the ${SOLID_NAMES[p.solid]} rolls over one edge at a time onto a neighboring square.`,

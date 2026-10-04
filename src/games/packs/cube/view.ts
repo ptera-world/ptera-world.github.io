@@ -3,12 +3,15 @@ import { h, s, style } from "../../core/dom";
 import type { View, WidgetDef } from "../../core/types";
 import { SOLIDS } from "./geometry";
 import { arena, type CubeAction, type CubeFocus, type CubePuzzle, type CubeState } from "./logic";
-import { pose } from "./pose";
+import { animate, ease, type Animation } from "../../core/anim";
+import { add, cross, dot, hull, norm, pose, rotate, signedAngle, sub, type V3 } from "./pose";
 
 const UNIT = 10;
 /** Oblique view: a point z above the arena is drawn this much up and to the right. */
 const LIFT_X = 0.18, LIFT_Y = 0.55;
 const BLUE = "var(--cube-blue, #3b6fd6)";
+/** How long one roll takes on screen. */
+const ROLL_MS = 200;
 
 const CSS = `
 .cube-board { display: block; width: 100%; height: 100%; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
@@ -19,6 +22,7 @@ const CSS = `
 .cube-board .face.plain { fill: color-mix(in srgb, var(--surface) 85%, transparent); }
 .cube-board .face.blue { fill: ${BLUE}; fill-opacity: 0.85; }
 .cube-board .shadow { fill: rgb(0 0 0 / 0.12); pointer-events: none; }
+.cube-board .ghost { opacity: 0.45; pointer-events: none; }
 .cube-board .mark { fill: none; stroke: var(--hint); stroke-width: 0.8; stroke-linejoin: round; pointer-events: none; }
 .cube-board .mark.route { stroke-dasharray: 1.4 1; stroke-width: 0.6; }
 .cube-moves { font-family: var(--mono); color: var(--text-dim); min-height: 1.4em; }
@@ -61,13 +65,29 @@ export const cubeView: View<CubePuzzle, CubeState, CubeAction, null> = {
     });
     const poly = (pts: [number, number][]) => pts.map(([x, y]) => `${(x * UNIT).toFixed(2)},${(y * UNIT).toFixed(2)}`).join(" ");
     const cells = a.squares.map((q, i) => s("polygon", { points: poly(q.points), class: "sq", "data-sq": i }));
-    const marks = s("g"), body = s("g");
-    svg.append(...cells, marks, body);
+    const marks = s("g"), body = s("g"), ghost = s("g", { class: "ghost" });
+    svg.append(...cells, marks, body, ghost);
     root.append(svg);
 
-    const project = ([x, y, z]: [number, number, number]): [number, number] => [x + z * LIFT_X, y - z * LIFT_Y];
-    const render = () => {
-      const st = session.state;
+    const project = ([x, y, z]: V3): [number, number] => [x + z * LIFT_X, y - z * LIFT_Y];
+    const view: V3 = [-LIFT_X, LIFT_Y, 1];
+    /** The solid drawn from vertex positions: its shadow straight down, then the faces turned toward the viewer. */
+    const drawSolid = (g: SVGGElement, world: readonly V3[], blueFaces: readonly number[]) => {
+      g.replaceChildren(s("polygon", { points: poly(hull(world.map(([x, y]) => [x, y]))), class: "shadow" }));
+      const centre = world.reduce<V3>((acc, v) => [acc[0] + v[0] / world.length, acc[1] + v[1] / world.length, acc[2] + v[2] / world.length], [0, 0, 0]);
+      solid.faces.forEach((vs, i) => {
+        const pts = vs.map((v) => world[v]!);
+        const [p0, p1, p2] = pts as [V3, V3, V3];
+        let n = cross(sub(p1, p0), sub(p2, p0));
+        const mid = pts.reduce<V3>((acc, v) => [acc[0] + v[0] / pts.length, acc[1] + v[1] / pts.length, acc[2] + v[2] / pts.length], [0, 0, 0]);
+        if (dot(n, sub(mid, centre)) < 0) n = [-n[0], -n[1], -n[2]];
+        if (dot(n, view) > 1e-6) g.append(s("polygon", { points: poly(pts.map(project)), class: `face ${blueFaces[i] ? "blue" : "plain"}` }));
+      });
+    };
+
+    let rolling: Animation | null = null;
+    let previewing: CubeState | null = null;
+    const drawBoard = (st: CubeState) => {
       const near = new Set(a.links[st.square]!.map((l) => l.to));
       cells.forEach((c, i) => {
         c.classList.toggle("blue", !!st.blue[i]);
@@ -77,23 +97,53 @@ export const cubeView: View<CubePuzzle, CubeState, CubeAction, null> = {
       const f = session.activeHint?.focus as CubeFocus | undefined;
       for (const i of f?.route ?? []) if (i !== f?.target) marks.append(s("polygon", { points: poly(a.squares[i]!.points), class: "mark route" }));
       if (f?.target !== undefined) marks.append(s("polygon", { points: poly(a.squares[f.target]!.points), class: "mark" }));
-      body.replaceChildren();
-      const world = pose(p, st);
-      const centre = world.reduce((acc, v) => [acc[0] + v[0] / world.length, acc[1] + v[1] / world.length, acc[2] + v[2] / world.length], [0, 0, 0]);
-      body.append(s("polygon", { points: poly(a.squares[st.square]!.points), class: "shadow" }));
-      const view: [number, number, number] = [-LIFT_X, LIFT_Y, 1];
-      const faces = solid.faces.map((vs, i) => {
-        const pts = vs.map((v) => world[v]!);
-        const [p0, p1, p2] = pts as [[number, number, number], [number, number, number], [number, number, number]];
-        const u = [p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2]], w = [p2[0] - p0[0], p2[1] - p0[1], p2[2] - p0[2]];
-        let n = [u[1]! * w[2]! - u[2]! * w[1]!, u[2]! * w[0]! - u[0]! * w[2]!, u[0]! * w[1]! - u[1]! * w[0]!];
-        const mid = pts.reduce((acc, v) => [acc[0]! + v[0] / pts.length, acc[1]! + v[1] / pts.length, acc[2]! + v[2] / pts.length], [0, 0, 0]);
-        if (n[0]! * (mid[0]! - centre[0]) + n[1]! * (mid[1]! - centre[1]) + n[2]! * (mid[2]! - centre[2]) < 0) n = n.map((x) => -x);
-        return { i, pts, facing: n[0]! * view[0] + n[1]! * view[1] + n[2]! * view[2] };
-      }).filter((x) => x.facing > 1e-6);
-      for (const face of faces) {
-        body.append(s("polygon", { points: poly(face.pts.map(project)), class: `face ${st.faces[face.i] ? "blue" : "plain"}` }));
+    };
+    const drawGhost = () => {
+      ghost.replaceChildren();
+      const g = previewing;
+      if (!g) return;
+      const st = session.state;
+      for (let i = 0; i < a.squares.length; i++) {
+        if (g.blue[i] !== st.blue[i]) ghost.append(s("polygon", { points: poly(a.squares[i]!.points), class: `sq ${g.blue[i] ? "blue" : ""}` }));
       }
+      if (g.square !== st.square || g.key.some((v, i) => v !== st.key[i]) || g.faces.some((v, i) => v !== st.faces[i])) {
+        const solidG = s("g");
+        drawSolid(solidG, pose(p, g), g.faces);
+        ghost.append(solidG);
+      }
+    };
+    const render = () => {
+      if (rolling) return;
+      const st = session.state;
+      drawBoard(st);
+      drawSolid(body, pose(p, st), st.faces);
+      drawGhost();
+    };
+
+    /**
+     * A roll between neighboring squares turns the solid about the edge both poses share. Anything
+     * else (a jump through history, a new puzzle) just redraws.
+     */
+    const animateRoll = (prev: CubeState, next: CubeState) => {
+      rolling?.cancel();
+      rolling = null;
+      if (!a.links[prev.square]!.some((l) => l.to === next.square)) return render();
+      const w0 = pose(p, prev), w1 = pose(p, next);
+      const pivot = w0.flatMap((v, i) => (Math.hypot(...sub(v, w1[i]!)) < 1e-6 ? [i] : []));
+      if (pivot.length !== 2) return render();
+      const o = w0[pivot[0]!]!, axis = norm(sub(w0[pivot[1]!]!, o));
+      const moving = w0.findIndex((v, i) => !pivot.includes(i) && Math.hypot(...sub(v, w1[i]!)) > 1e-6);
+      const angle = signedAngle(sub(w0[moving]!, o), sub(w1[moving]!, o), axis);
+      drawBoard(prev);
+      const anim = animate(ROLL_MS, (t) => {
+        drawSolid(body, w0.map((v) => add(o, rotate(sub(v, o), axis, angle * t))), prev.faces);
+      }, ease.inOut);
+      rolling = anim;
+      void anim.then(() => {
+        if (rolling !== anim) return;
+        rolling = null;
+        render();
+      });
     };
 
     const onDown = (e: PointerEvent) => {
@@ -117,7 +167,7 @@ export const cubeView: View<CubePuzzle, CubeState, CubeAction, null> = {
       if (best >= 0) session.dispatch({ type: "roll", to: best });
     };
 
-    const offs = [session.hooks.change.tap(render, { owner: "view" }), session.hooks.refresh.tap(render, { owner: "view" })];
+    const offs = [session.hooks.change.tap(({ prev, state }) => animateRoll(prev, state), { owner: "view" }), session.hooks.refresh.tap(render, { owner: "view" })];
     render();
     const rects = (list: Iterable<number>) => [...new Set(list)].map((i) => cells[i]!.getBoundingClientRect());
     return {
@@ -129,6 +179,10 @@ export const cubeView: View<CubePuzzle, CubeState, CubeAction, null> = {
         "cube.up": toward(0, -1),
         "cube.down": toward(0, 1),
       }),
+      preview: (st) => {
+        previewing = st as CubeState | null;
+        drawGhost();
+      },
       locate: (focus) => {
         const f = focus as CubeFocus | undefined;
         return rects([...(f?.route ?? []), ...(f?.target !== undefined ? [f.target] : [])]);
@@ -138,6 +192,7 @@ export const cubeView: View<CubePuzzle, CubeState, CubeAction, null> = {
         return rects([a1.square, b1.square, ...a1.blue.flatMap((v, i) => (v !== b1.blue[i] ? [i] : []))]);
       },
       destroy() {
+        rolling?.cancel();
         offs.forEach((f) => f());
         svg.remove();
       },
