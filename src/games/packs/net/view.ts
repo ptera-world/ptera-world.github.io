@@ -472,7 +472,7 @@ export function netView({ look = (_id, fallback) => fallback, labelSides = () =>
 
       return {
         aspect: vbW / vbH,
-        cells: { cols: p.w, rows: p.h },
+        cells: { cols: vbW / SIZE, rows: vbH / SIZE },
         gestures: { secondaryClick: true },
         locate(focus) {
           const f = focus as Partial<NetHintFocus> | null;
