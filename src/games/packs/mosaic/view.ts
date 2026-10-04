@@ -7,6 +7,7 @@ import {
   KIT_CSS, SIZE, Strokes, cursorBindings, cursorHandlers, cursorRect, drawFocus, focusCells, focusLegend, frame, sample, sampleCell,
   type BoardPrefs,
 } from "../../lib/grid-kit/view";
+import { fades } from "../../lib/grid-kit/fade";
 import {
   BLACK, DOT, NONE, finishedClues,
   type Mark, type MosaicAction, type MosaicConflicts, type MosaicInteraction, type MosaicPuzzle, type MosaicState,
@@ -67,6 +68,7 @@ export function mosaicView(board: BoardPrefs): View<MosaicPuzzle, MosaicState, M
       const p = session.puzzle;
       const n = p.w * p.h;
       const f = frame(root, p, "mosaic-board", "mosaic", board);
+      const fade = fades(f);
       const holders: SVGGElement[] = [];
       const nums: (SVGTextElement | undefined)[] = [];
       const numLayer = s("g");
@@ -116,7 +118,8 @@ export function mosaicView(board: BoardPrefs): View<MosaicPuzzle, MosaicState, M
           el.classList.toggle("done", done.has(c));
         }
         while (f.ghost.firstChild) f.ghost.firstChild.remove();
-        if (preview) for (let c = 0; c < n; c++) if (preview.marks[c] !== shown[c]) drawMark(f.ghost, c, preview.marks[c]!);
+        fade.clear();
+        if (preview) for (let c = 0; c < n; c++) if (preview.marks[c] !== shown[c]) { if (shown[c]) fade.cell(c); drawMark(f.ghost, c, preview.marks[c]!); }
         while (f.over.firstChild) f.over.firstChild.remove();
         drawFocus(f.over, f, session.activeHint?.focus as Focus | undefined);
         placeCursor(session.interaction.cursor);

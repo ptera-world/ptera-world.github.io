@@ -8,6 +8,7 @@ import {
   KIT_CSS, SIZE, Strokes, cursorBindings, cursorHandlers, cursorRect, drawFocus, focusCells, focusLegend, frame, sample, sampleCell,
   type BoardPrefs,
 } from "../../lib/grid-kit/view";
+import { fades } from "../../lib/grid-kit/fade";
 import {
   BLANK, FULL, MAGNET, MINUS, NEUTRAL, PLUS, cellSigns, geometry, shownSigns, targets, valueFor,
   type MagnetsAction, type MagnetsConflicts, type MagnetsInteraction, type MagnetsPuzzle, type MagnetsState,
@@ -88,6 +89,7 @@ export function magnetsView(board: BoardPrefs): View<MagnetsPuzzle, MagnetsState
       const p = session.puzzle;
       const g = geometry(p);
       const f = frame(root, p, "magnets-board", "magnets", board, { top: 1, right: 1, bottom: 1, left: 1 });
+      const fade = fades(f);
       for (let c = 0; c < g.n; c++) {
         const cell = s("rect", { x: f.cx(c), y: f.cy(c), width: SIZE, height: SIZE, class: g.domOf[c]! < 0 ? "lone" : "cell" });
         f.base.append(cell);
@@ -205,10 +207,13 @@ export function magnetsView(board: BoardPrefs): View<MagnetsPuzzle, MagnetsState
           });
         });
         while (f.ghost.firstChild) f.ghost.firstChild.remove();
+        fade.clear();
         if (preview) {
           for (let c = 0; c < g.n; c++) {
             const d = domAt(c);
-            if (d >= 0 && preview.doms[d] !== doms[d]) drawCell(f.ghost, c, preview.doms[d]!, false);
+            if (d < 0 || preview.doms[d] === doms[d]) continue;
+            if (doms[d] !== FULL) fade.cell(c);
+            drawCell(f.ghost, c, preview.doms[d]!, false);
           }
         }
         while (f.over.firstChild) f.over.firstChild.remove();

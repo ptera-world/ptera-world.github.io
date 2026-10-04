@@ -17,7 +17,8 @@ const CSS = `
 .blackbox-board .label { fill: var(--text); font: 600 4.2px var(--font); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
 .blackbox-board .ball { fill: var(--text); pointer-events: none; }
 .blackbox-board .ball.real { fill: none; stroke: var(--accent); stroke-width: 0.8; }
-.blackbox-board .ball.preview { opacity: 0.4; }
+.blackbox-board .ball.preview, .blackbox-board .label.preview { opacity: 0.45; }
+.blackbox-board .faded { opacity: 0.25; }
 .blackbox-board .check { fill: var(--accent-soft, var(--cell)); stroke: var(--accent); stroke-width: 0.5; cursor: pointer; }
 .blackbox-board .check-label { fill: var(--text); font: 600 3.2px var(--font); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
 .blackbox-board .count { fill: var(--text-dim); font: 500 3.2px var(--font); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
@@ -129,6 +130,8 @@ export function blackboxView(board: Board): View<BlackboxPuzzle, BlackboxState, 
       const render = () => {
         const st = session.state;
         const labels = beamLabels(p, st);
+        const pvLabels = preview ? beamLabels(p, preview) : null;
+        const shotText = (v: number, e: number, lab: Map<number, number>) => (v === hitCode(p.w, p.h) ? "H" : v === reflectCode(p.w, p.h) ? "R" : String(lab.get(e) ?? ""));
         const pair = new Set<number>();
         if (hoverEntry >= 0 && st.shots[hoverEntry] !== -1) {
           pair.add(hoverEntry);
@@ -148,17 +151,18 @@ export function blackboxView(board: Board): View<BlackboxPuzzle, BlackboxState, 
           r.classList.toggle("pair", pair.has(e));
           r.classList.toggle("wrong", wrong.has(e));
           r.classList.toggle("revealed", st.revealed.includes(e));
-          if (v === -1) marks.append(arrow(e));
-          else {
-            const t = v === hitCode(p.w, p.h) ? "H" : v === reflectCode(p.w, p.h) ? "R" : String(labels.get(e) ?? "");
-            marks.append(s("text", { x: x * SIZE + SIZE / 2, y: y * SIZE + SIZE / 2 + 0.2, class: "label" }, t));
-          }
+          const pv = preview ? preview.shots[e]! : v;
+          const label = (t: string, cls: string) => marks.append(s("text", { x: x * SIZE + SIZE / 2, y: y * SIZE + SIZE / 2 + 0.2, class: cls }, t));
+          if (v === -1 && pv !== -1) label(shotText(pv, e, pvLabels!), "label preview");
+          else if (v === -1) marks.append(arrow(e));
+          else label(shotText(v, e, labels), pv === -1 ? "label faded" : "label");
         }
-        const show = preview ?? st;
         for (let c = 0; c < p.w * p.h; c++) {
           const x = (c % p.w) + 1, y = Math.floor(c / p.w) + 1;
-          rects[y * W + x]!.classList.toggle("locked", show.locks[c]!);
-          if (show.guesses[c]) marks.append(s("circle", { cx: x * SIZE + SIZE / 2, cy: y * SIZE + SIZE / 2, r: 3, class: `ball${preview && !st.guesses[c] ? " preview" : ""}` }));
+          rects[y * W + x]!.classList.toggle("locked", (preview ?? st).locks[c]!);
+          const ball = st.guesses[c] || !!preview?.guesses[c];
+          const cls = !preview || preview.guesses[c] === st.guesses[c] ? "ball" : st.guesses[c] ? "ball faded" : "ball preview";
+          if (ball) marks.append(s("circle", { cx: x * SIZE + SIZE / 2, cy: y * SIZE + SIZE / 2, r: 3, class: cls }));
           if (st.solved && p.balls.includes(c)) marks.append(s("circle", { cx: x * SIZE + SIZE / 2, cy: y * SIZE + SIZE / 2, r: 3.6, class: "ball real" }));
         }
         const ready = canCheck(p, st);

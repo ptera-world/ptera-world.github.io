@@ -174,8 +174,9 @@ export function mapView(board: Board): View<MapPuzzle, MapState, MapAction, MapI
         for (let r = 0; r < p.n; r++) {
           const a = g.anchor[r]!;
           const pv = preview && (preview.colours[r] !== st.colours[r] || preview.marks[r] !== st.marks[r]) ? preview : null;
-          if (pv && pv.colours[r]! >= 0) {
-            for (const c of g.cells[r]!) marksL.append(s("rect", { x: cx(c) + 2.5, y: cy(c) + 2.5, width: 5, height: 5, rx: 1, fill: FILLS[pv.colours[r]!], opacity: 0.85 }));
+          if (pv && pv.colours[r] !== st.colours[r]) {
+            const fill = pv.colours[r]! >= 0 ? FILLS[pv.colours[r]!] : "var(--cell)";
+            for (const c of g.cells[r]!) marksL.append(s("rect", { x: cx(c) + 2.5, y: cy(c) + 2.5, width: 5, height: 5, rx: 1, fill, opacity: 0.85 }));
           }
           const mk = (pv ?? st).colours[r]! < 0 ? (pv ?? st).marks[r]! : 0;
           for (let c = 0; c < 4; c++) {

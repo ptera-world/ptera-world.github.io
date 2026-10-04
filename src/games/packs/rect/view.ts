@@ -5,6 +5,7 @@ import {
   KIT_CSS, SIZE, cursorRect, drawFocus, focusCells, focusLegend, frame, sample, sampleCell,
   type BoardPrefs,
 } from "../../lib/grid-kit/view";
+import { fades } from "../../lib/grid-kit/fade";
 import {
   boxEdges, edgeBetween, geometry, pieceRight, pieces,
   type RectAction, type RectConflicts, type RectInteraction, type RectPuzzle, type RectState,
@@ -69,6 +70,7 @@ export function rectView(board: BoardPrefs): View<RectPuzzle, RectState, RectAct
       const p = session.puzzle;
       const g = geometry(p);
       const f = frame(root, p, "rect-board", "rectangles", board);
+      const fade = fades(f);
       const tint: SVGRectElement[] = [];
       for (let c = 0; c < g.n; c++) {
         const cell = s("rect", { x: f.cx(c), y: f.cy(c), width: SIZE, height: SIZE, class: "cell" });
@@ -135,7 +137,11 @@ export function rectView(board: BoardPrefs): View<RectPuzzle, RectState, RectAct
         while (f.marks.firstChild) f.marks.firstChild.remove();
         walls.forEach((v, e) => v && drawWall(f.marks, e));
         while (f.ghost.firstChild) f.ghost.firstChild.remove();
-        if (preview) preview.walls.forEach((v, e) => v && !walls[e] && drawWall(f.ghost, e));
+        fade.clear();
+        if (preview) preview.walls.forEach((v, e) => {
+          if (v && !walls[e]) drawWall(f.ghost, e);
+          else if (!v && walls[e]) { const [x1, y1, x2, y2] = seg(e); fade.line(x1, y1, x2, y2, 1.4); }
+        });
         if (drag?.mode === "box" && drag.end !== drag.start) {
           const box = boxOf(drag.start, drag.end);
           for (const [k, v] of Object.entries({ x: box.x * SIZE, y: box.y * SIZE, width: box.w * SIZE, height: box.h * SIZE })) dragEl.setAttribute(k, String(v));

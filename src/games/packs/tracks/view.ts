@@ -19,6 +19,7 @@ const CSS = `
 .tracks-board .cell.given { fill: var(--surface-2, var(--cell)); }
 .tracks-board .cell.bad { fill: var(--danger-soft); }
 .tracks-board .rail { stroke: var(--accent); stroke-width: 2; stroke-linecap: round; pointer-events: none; fill: none; }
+.tracks-board .faded { opacity: 0.25; }
 .tracks-board .rail.given { stroke: var(--text); }
 .tracks-board .rail.loop-bad { stroke: var(--danger); }
 .tracks-board .rail.preview { stroke: var(--hint); opacity: 0.6; }
@@ -186,16 +187,18 @@ export function tracksView(board: Board): View<TracksPuzzle, TracksState, Tracks
           }
         };
         for (let e = 0; e < g.ne; e++) {
-          drawEdge(e, st.edges[e]!);
-          if (preview && preview.edges[e] !== st.edges[e]) drawEdge(e, preview.edges[e]!, " preview");
+          const changed = !!preview && preview.edges[e] !== st.edges[e];
+          drawEdge(e, st.edges[e]!, changed ? " faded" : "");
+          if (changed) drawEdge(e, preview!.edges[e]!, " preview");
         }
         const drawMark = (c: number, v: number, extra = "") => {
           if (v === TRACK) marks.append(s("rect", { x: cx(c) - 2, y: cy(c) - 2, width: 4, height: 4, rx: 1, class: `has${extra}` }));
           else if (v === EMPTY) marks.append(s("path", { d: `M${cx(c) - 1.5} ${cy(c) - 1.5}l3 3M${cx(c) + 1.5} ${cy(c) - 1.5}l-3 3`, class: `none${extra}` }));
         };
         for (let c = 0; c < g.n; c++) {
-          drawMark(c, st.cells[c]!);
-          if (preview && preview.cells[c] !== st.cells[c]) drawMark(c, preview.cells[c]!, " preview");
+          const changed = !!preview && preview.cells[c] !== st.cells[c];
+          drawMark(c, st.cells[c]!, changed ? " faded" : "");
+          if (changed) drawMark(c, preview!.cells[c]!, " preview");
         }
         while (over.firstChild) over.firstChild.remove();
         const focus = session.activeHint?.focus as TracksFocus | undefined;

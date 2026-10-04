@@ -7,6 +7,7 @@ import {
   KIT_CSS, SIZE, Strokes, cursorBindings, cursorHandlers, cursorRect, drawFocus, focusCells, focusLegend, frame, sample, sampleCell,
   type BoardPrefs,
 } from "../../lib/grid-kit/view";
+import { fades } from "../../lib/grid-kit/fade";
 import {
   BLACK, CIRCLE, NONE,
   type SinglesAction, type SinglesConflicts, type SinglesInteraction, type SinglesPuzzle, type SinglesState,
@@ -69,6 +70,7 @@ export function singlesView(board: BoardPrefs): View<SinglesPuzzle, SinglesState
       const p = session.puzzle;
       const n = p.w * p.h;
       const f = frame(root, p, "singles-board", "singles", board);
+      const fade = fades(f);
       const nums: SVGTextElement[] = [];
       const cells: SVGRectElement[] = [];
       for (let c = 0; c < n; c++) {
@@ -113,8 +115,9 @@ export function singlesView(board: BoardPrefs): View<SinglesPuzzle, SinglesState
           nums[c]!.classList.toggle("bad", shown[c] === CIRCLE && !!bad?.repeats.includes(c));
         }
         while (f.ghost.firstChild) f.ghost.firstChild.remove();
+        fade.clear();
         if (preview) {
-          for (let c = 0; c < n; c++) if (preview.marks[c] !== shown[c]) drawMark(f.ghost, c, preview.marks[c]!, null);
+          for (let c = 0; c < n; c++) if (preview.marks[c] !== shown[c]) { if (shown[c]) fade.cell(c); drawMark(f.ghost, c, preview.marks[c]!, null); }
         }
         while (f.over.firstChild) f.over.firstChild.remove();
         drawFocus(f.over, f, session.activeHint?.focus as Focus | undefined);

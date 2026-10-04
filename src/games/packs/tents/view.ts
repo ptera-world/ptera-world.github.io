@@ -7,6 +7,7 @@ import {
   KIT_CSS, SIZE, Strokes, cursorBindings, cursorHandlers, cursorRect, drawFocus, focusCells, focusLegend, frame, sample, sampleCell,
   type BoardPrefs,
 } from "../../lib/grid-kit/view";
+import { fades } from "../../lib/grid-kit/fade";
 import {
   GRASS, NONE, TENT, TREE, geometry, lineTarget,
   type Mark, type TentsAction, type TentsConflicts, type TentsInteraction, type TentsPuzzle, type TentsState,
@@ -71,6 +72,7 @@ export function tentsView(board: BoardPrefs): View<TentsPuzzle, TentsState, Tent
       const p = session.puzzle;
       const g = geometry(p);
       const f = frame(root, p, "tents-board", "tents", board, { top: 0, right: 1, bottom: 1, left: 0 });
+      const fade = fades(f);
       const holders: SVGGElement[] = [];
       const trees = new Map<number, SVGCircleElement>();
       for (let c = 0; c < g.n; c++) {
@@ -129,7 +131,8 @@ export function tentsView(board: BoardPrefs): View<TentsPuzzle, TentsState, Tent
           clues[li]!.classList.toggle("done", !badLines.has(li) && have === lineTarget(p, li));
         });
         while (f.ghost.firstChild) f.ghost.firstChild.remove();
-        if (preview) for (let c = 0; c < g.n; c++) if (preview.marks[c] !== shown[c]) drawMark(f.ghost, c, preview.marks[c]!, false);
+        fade.clear();
+        if (preview) for (let c = 0; c < g.n; c++) if (preview.marks[c] !== shown[c]) { if (shown[c]) fade.cell(c); drawMark(f.ghost, c, preview.marks[c]!, false); }
         while (f.over.firstChild) f.over.firstChild.remove();
         drawFocus(f.over, f, session.activeHint?.focus as Focus | undefined);
         placeCursor(session.interaction.cursor);

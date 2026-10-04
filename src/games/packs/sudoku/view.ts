@@ -38,6 +38,7 @@ const CSS = `
 .sdk-board .value { font: 600 ${S * 0.62}px var(--font); fill: var(--text); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
 .sdk-board .value.entered { fill: var(--focus); font-weight: 500; }
 .sdk-board .value.conflict, .sdk-board .value.mistake { fill: var(--danger); }
+.sdk-board .value.faded { opacity: 0.25; }
 .sdk-board .center-mark { font: 500 ${S * 0.26}px var(--font); fill: var(--focus); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
 .sdk-board .cand { font: 400 ${S * 0.24}px var(--font); fill: var(--text-dim); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
 .sdk-board .corner-mark { font: 500 ${S * 0.22}px var(--font); fill: var(--focus); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
@@ -275,6 +276,7 @@ export function latinView(board: BoardPrefs = noLabels, puzzleId = "sudoku"): Vi
           t.classList.toggle("entered", v > 0 && !p.givens[c]);
           t.classList.toggle("conflict", conflicts.has(c));
           t.classList.toggle("mistake", mistakes.has(c));
+          t.classList.toggle("faded", v > 0 && !!previewing && previewing.values[c] !== v);
 
           if (colorKeys[c] !== st.colors[c]) {
             colorKeys[c] = st.colors[c]!;

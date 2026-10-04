@@ -7,6 +7,7 @@ import {
   KIT_CSS, SIZE, cursorRect, drawFocus, focusCells, focusLegend, frame, sample, sampleCell,
   type BoardPrefs,
 } from "../../lib/grid-kit/view";
+import { fades } from "../../lib/grid-kit/fade";
 import {
   geometry, shownNumbers,
   type FillingAction, type FillingConflicts, type FillingInteraction, type FillingPuzzle, type FillingState,
@@ -70,6 +71,7 @@ export function fillingView(board: BoardPrefs): View<FillingPuzzle, FillingState
       const p = session.puzzle;
       const g = geometry(p);
       const f = frame(root, p, "filling-board", "filling", board);
+      const fade = fades(f);
       const tint: SVGRectElement[] = [];
       for (let c = 0; c < g.n; c++) {
         const cell = s("rect", { x: f.cx(c), y: f.cy(c), width: SIZE, height: SIZE, class: "cell" });
@@ -120,7 +122,8 @@ export function fillingView(board: BoardPrefs): View<FillingPuzzle, FillingState
         while (f.marks.firstChild) f.marks.firstChild.remove();
         for (let c = 0; c < g.n; c++) drawCell(f.marks, c, doms[c]!, bad.has(c));
         while (f.ghost.firstChild) f.ghost.firstChild.remove();
-        if (preview) for (let c = 0; c < g.n; c++) if (preview.doms[c] !== doms[c]) drawCell(f.ghost, c, preview.doms[c]!, false);
+        fade.clear();
+        if (preview) for (let c = 0; c < g.n; c++) if (preview.doms[c] !== doms[c]) { if (doms[c] !== g.full) fade.cell(c); drawCell(f.ghost, c, preview.doms[c]!, false); }
         while (f.over.firstChild) f.over.firstChild.remove();
         drawFocus(f.over, f, session.activeHint?.focus as Focus | undefined);
         placeCursor(session.interaction.cursor);

@@ -20,6 +20,7 @@ const CSS = `
 .pearl-board .pearl.bad { stroke: var(--danger); stroke-width: 1; }
 .pearl-board .pearl.black.bad { fill: var(--danger); }
 .pearl-board .line { stroke: var(--accent); stroke-width: 1.6; stroke-linecap: round; pointer-events: none; }
+.pearl-board .faded { opacity: 0.25; }
 .pearl-board .line.loop-bad { stroke: var(--danger); }
 .pearl-board .line.preview { stroke: var(--hint); opacity: 0.6; }
 .pearl-board .cross { stroke: var(--text-dim); stroke-width: 0.5; stroke-linecap: round; pointer-events: none; }
@@ -147,8 +148,9 @@ export function pearlView(board: Board): View<PearlPuzzle, PearlState, PearlActi
           }
         };
         for (let e = 0; e < g.ne; e++) {
-          drawEdge(e, st.edges[e]!);
-          if (preview && preview.edges[e] !== st.edges[e]) drawEdge(e, preview.edges[e]!, " preview");
+          const changed = !!preview && preview.edges[e] !== st.edges[e];
+          drawEdge(e, st.edges[e]!, changed ? " faded" : "");
+          if (changed) drawEdge(e, preview!.edges[e]!, " preview");
         }
         while (over.firstChild) over.firstChild.remove();
         const focus = session.activeHint?.focus as PearlFocus | undefined;

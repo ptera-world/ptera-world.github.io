@@ -7,6 +7,7 @@ import {
   KIT_CSS, SIZE, Strokes, cursorBindings, cursorHandlers, cursorRect, drawFocus, focusCells, focusLegend, frame, sample, sampleCell,
   type BoardPrefs,
 } from "../../lib/grid-kit/view";
+import { fades } from "../../lib/grid-kit/fade";
 import {
   BLACK, DOT, NONE,
   type Mark, type RangeAction, type RangeConflicts, type RangeInteraction, type RangePuzzle, type RangeState,
@@ -66,6 +67,7 @@ export function rangeView(board: BoardPrefs): View<RangePuzzle, RangeState, Rang
       const p = session.puzzle;
       const n = p.w * p.h;
       const f = frame(root, p, "range-board", "range", board);
+      const fade = fades(f);
       const holders: SVGGElement[] = [];
       const nums: (SVGTextElement | undefined)[] = [];
       for (let c = 0; c < n; c++) {
@@ -107,7 +109,8 @@ export function rangeView(board: BoardPrefs): View<RangePuzzle, RangeState, Rang
           nums[c]?.classList.toggle("bad", clues.has(c));
         }
         while (f.ghost.firstChild) f.ghost.firstChild.remove();
-        if (preview) for (let c = 0; c < n; c++) if (preview.marks[c] !== shown[c]) drawMark(f.ghost, c, preview.marks[c]!, false);
+        fade.clear();
+        if (preview) for (let c = 0; c < n; c++) if (preview.marks[c] !== shown[c]) { if (shown[c]) fade.cell(c); drawMark(f.ghost, c, preview.marks[c]!, false); }
         while (f.over.firstChild) f.over.firstChild.remove();
         drawFocus(f.over, f, session.activeHint?.focus as Focus | undefined);
         placeCursor(session.interaction.cursor);

@@ -28,6 +28,7 @@ const CSS = `
 .signpost-board .num.letter { font-style: italic; fill: var(--text-dim); }
 .signpost-board .num.bad { fill: var(--danger); }
 .signpost-board .link { stroke: var(--accent); stroke-width: 0.7; stroke-linecap: round; opacity: 0.7; pointer-events: none; fill: none; }
+.signpost-board .link.faded { opacity: 0.2; }
 .signpost-board .link.preview { stroke: var(--hint); stroke-dasharray: 1.2 0.8; opacity: 0.9; }
 .signpost-board .link.drag { stroke: var(--focus); stroke-dasharray: 1 0.8; opacity: 1; }
 .signpost-board .link.focus { stroke: var(--hint); stroke-width: 1.2; opacity: 1; }
@@ -201,7 +202,7 @@ export function signpostView(board: Board): View<SignpostPuzzle, SignpostState, 
           const [x1, y1] = centre(a), [x2, y2] = centre(b);
           linksL.append(s("line", { x1, y1, x2, y2, class: cls }));
         };
-        if (settings.links) st.next.forEach((t, c) => { if (t >= 0) line(c, t, "link"); });
+        if (settings.links) st.next.forEach((t, c) => { if (t >= 0) line(c, t, preview && preview.next[c] !== t ? "link faded" : "link"); });
         if (preview) preview.next.forEach((t, c) => { if (t >= 0 && st.next[c] !== t) line(c, t, "link preview"); });
         if (drag?.moved) {
           const [x1, y1] = centre(drag.from);

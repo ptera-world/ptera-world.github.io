@@ -6,6 +6,7 @@ import {
   KIT_CSS, SIZE, cursorBindings, cursorHandlers, cursorRect, drawFocus, focusCells, focusLegend, frame, sample, sampleCell,
   type BoardPrefs,
 } from "../../lib/grid-kit/view";
+import { fades } from "../../lib/grid-kit/fade";
 import {
   GAP, LINE, NONE, geometry, regions,
   type Mark, type PalisadeAction, type PalisadeConflicts, type PalisadeInteraction, type PalisadePuzzle, type PalisadeState,
@@ -79,6 +80,7 @@ export function palisadeView(board: BoardPrefs): View<PalisadePuzzle, PalisadeSt
       const p = session.puzzle;
       const g = geometry(p);
       const f = frame(root, p, "palisade-board", "palisade", board);
+      const fade = fades(f);
       const tint: SVGRectElement[] = [];
       const nums: (SVGTextElement | undefined)[] = [];
       for (let c = 0; c < g.n; c++) {
@@ -200,7 +202,11 @@ export function palisadeView(board: BoardPrefs): View<PalisadePuzzle, PalisadeSt
         while (f.marks.firstChild) f.marks.firstChild.remove();
         for (let e = 0; e < g.edges.length; e++) drawEdge(f.marks, e, marks[e]!);
         while (f.ghost.firstChild) f.ghost.firstChild.remove();
-        if (preview) for (let e = 0; e < g.edges.length; e++) if (preview.marks[e] !== marks[e]) drawEdge(f.ghost, e, preview.marks[e]!);
+        fade.clear();
+        if (preview) for (let e = 0; e < g.edges.length; e++) if (preview.marks[e] !== marks[e]) {
+          if (marks[e]) { const [x1, y1, x2, y2] = seg(e); fade.line(x1, y1, x2, y2, 1.8); }
+          drawEdge(f.ghost, e, preview.marks[e]!);
+        }
         while (f.over.firstChild) f.over.firstChild.remove();
         const focus = session.activeHint?.focus as PalisadeFocus | undefined;
         drawFocus(f.over, f, focus);

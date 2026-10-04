@@ -7,6 +7,7 @@ import {
   KIT_CSS, SIZE, Strokes, cursorBindings, cursorHandlers, cursorRect, drawFocus, focusCells, focusLegend, frame, sample, sampleCell,
   type BoardPrefs,
 } from "../../lib/grid-kit/view";
+import { fades } from "../../lib/grid-kit/fade";
 import {
   NONE, SLASH_BACK, SLASH_FWD, geometry, pointCell,
   type Mark, type SlantAction, type SlantConflicts, type SlantInteraction, type SlantPuzzle, type SlantState,
@@ -72,6 +73,7 @@ export function slantView(board: BoardPrefs): View<SlantPuzzle, SlantState, Slan
       const p = session.puzzle;
       const g = geometry(p);
       const f = frame(root, p, "slant-board", "slant", board, { top: 0.4, right: 0.4, bottom: 0.4, left: 0.4 });
+      const fade = fades(f);
       const holders: SVGGElement[] = [];
       for (let c = 0; c < g.n; c++) {
         const cell = s("rect", { x: f.cx(c), y: f.cy(c), width: SIZE, height: SIZE, class: "cell" });
@@ -129,7 +131,8 @@ export function slantView(board: BoardPrefs): View<SlantPuzzle, SlantState, Slan
           circle.classList.toggle("done", !badClues.has(pt) && full && have === p.clues[pt]);
         }
         while (f.ghost.firstChild) f.ghost.firstChild.remove();
-        if (preview) for (let c = 0; c < g.n; c++) if (preview.marks[c] !== shown[c]) drawLine(f.ghost, c, preview.marks[c]!, false);
+        fade.clear();
+        if (preview) for (let c = 0; c < g.n; c++) if (preview.marks[c] !== shown[c]) { if (shown[c]) fade.cell(c); drawLine(f.ghost, c, preview.marks[c]!, false); }
         while (f.over.firstChild) f.over.firstChild.remove();
         drawFocus(f.over, f, session.activeHint?.focus as Focus | undefined);
         placeCursor(session.interaction.cursor);

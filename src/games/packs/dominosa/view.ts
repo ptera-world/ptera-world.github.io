@@ -25,6 +25,7 @@ const CSS = `
 .dominosa-board .domino.ghost { fill: none; stroke: var(--text-dim); stroke-width: 0.5; stroke-dasharray: 1 0.8; }
 .dominosa-board .domino.preview { fill: var(--hint); opacity: 0.45; }
 .dominosa-board .line { stroke: var(--text); stroke-width: 0.9; stroke-linecap: round; pointer-events: none; }
+.dominosa-board .faded { opacity: 0.25; }
 .dominosa-board .line.preview { stroke: var(--hint); opacity: 0.6; }
 .dominosa-board .focus { fill: none; stroke: var(--hint); stroke-width: 0.9; pointer-events: none; }
 .dominosa-board .focus.why { stroke-dasharray: 1.2 0.8; stroke-width: 0.6; }
@@ -150,9 +151,9 @@ export function dominosaView(board: Board): View<DominosaPuzzle, DominosaState, 
         for (let q = 0; q < g.np; q++) {
           const pv = preview && preview.marks[q] !== marks[q] ? preview.marks[q] : undefined;
           if (marks[q] === DOMINO) {
-            pieces.append(s("rect", { ...box(q, INSET), rx: 2, class: dup.has(q) ? "domino bad" : "domino" }));
+            pieces.append(s("rect", { ...box(q, INSET), rx: 2, class: `${dup.has(q) ? "domino bad" : "domino"}${pv !== undefined ? " faded" : ""}` }));
             on[g.pa[q]!] = on[g.pb[q]!] = 1;
-          } else if (marks[q] === LINE) pieces.append(s("line", { ...lineAt(q), class: "line" }));
+          } else if (marks[q] === LINE) pieces.append(s("line", { ...lineAt(q), class: pv !== undefined ? "line faded" : "line" }));
           if (pv === DOMINO) pieces.append(s("rect", { ...box(q, INSET), rx: 2, class: "domino preview" }));
           else if (pv === LINE) pieces.append(s("line", { ...lineAt(q), class: "line preview" }));
         }

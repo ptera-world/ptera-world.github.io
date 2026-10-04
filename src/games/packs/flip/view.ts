@@ -14,6 +14,7 @@ const CSS = `
 .flip-board .cell.preview { stroke: var(--accent); stroke-width: 0.8; }
 .flip-board .cell.solution { stroke: var(--hint); stroke-width: 1; stroke-dasharray: 1.5 1; }
 .flip-board .cell.hint { stroke: var(--hint); stroke-width: 1.4; }
+.flip-board .ghost { pointer-events: none; opacity: 0.8; stroke: var(--text-dim); stroke-width: 0.4; stroke-dasharray: 1 0.7; }
 .flip-board .cursor { stroke: var(--focus); stroke-width: 0.6; pointer-events: none; }
 [data-input="pointer"] .flip-board .cursor { display: none; }
 `;
@@ -52,8 +53,10 @@ export const flipView: View<FlipPuzzle, FlipState, FlipAction, FlipInteraction> 
       svg.append(r);
       return r;
     });
+    const ghost = s("g", { class: "ghost" });
     const cursor = s("rect", { width: size, height: size, rx: 2, class: "cursor", fill: "none" });
-    svg.append(cursor);
+    svg.append(ghost, cursor);
+    let previewing: FlipState | null = null;
     root.append(svg);
 
     const render = () => {
@@ -67,6 +70,11 @@ export const flipView: View<FlipPuzzle, FlipState, FlipAction, FlipInteraction> 
         r.classList.toggle("solution", sol.has(i));
         r.classList.toggle("hint", hint.has(i));
         r.classList.toggle("preview", prev.has(i));
+      });
+      ghost.replaceChildren();
+      previewing?.lights.forEach((v, i) => {
+        if (v === st.lights[i]) return;
+        ghost.append(s("rect", { x: (i % p.w) * size + 2.5, y: Math.floor(i / p.w) * size + 2.5, width: size - 5, height: size - 5, rx: 1, fill: v ? "var(--cell-lit)" : "var(--cell)" }));
       });
       const c = session.interaction.cursor;
       cursor.setAttribute("x", String((c % p.w) * size));
@@ -106,6 +114,10 @@ export const flipView: View<FlipPuzzle, FlipState, FlipAction, FlipInteraction> 
     return {
       aspect: p.w / p.h,
       cells: { cols: (p.w * size + 2) / size, rows: (p.h * size + 2) / size },
+      preview: (state) => {
+        previewing = state as FlipState | null;
+        render();
+      },
       locate: (focus) => (Array.isArray(focus) ? rects(focus as number[]) : []),
       locateChange: (a, b) => {
         const x = (a as FlipState).lights, y = (b as FlipState).lights;

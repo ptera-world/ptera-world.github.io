@@ -32,6 +32,7 @@ const CSS = `
 .mines-board .closed.around { fill: color-mix(in srgb, var(--accent) 22%, var(--surface)); }
 .mines-board .pv { opacity: 0.6; pointer-events: none; }
 .mines-board .pv-open { fill: var(--surface); }
+.mines-board .pv-closed { fill: color-mix(in srgb, var(--text) 16%, var(--surface)); }
 .mines-board .closed.safe-hint { fill: color-mix(in srgb, var(--accent) 40%, var(--surface)); }
 .mines-board .closed.mine-hint { fill: color-mix(in srgb, var(--danger) 40%, var(--surface)); }
 .mines-board text { font-family: var(--mono); font-weight: 700; font-size: 6.4px; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
@@ -235,6 +236,7 @@ export function minesView(look: Look, labelSides: () => ReadonlySet<Side>): View
               at(s("rect", { width: SIZE, height: SIZE, rx: 1.2, class: "pv-open" }));
               if (nums[c] && !p.mines[c]) at(s("text", { x: 5, y: 5.4, class: `n${nums[c]}` }, String(nums[c])));
             } else if (ghost.flags[c] && !st.flags[c]) at(flagNode());
+            else if ((!ghost.open[c] && st.open[c]) || (!ghost.flags[c] && st.flags[c])) at(s("rect", { width: SIZE, height: SIZE, rx: 1.2, class: "pv-closed" }));
           }
         }
         for (const c of focus?.sources ?? []) overlay.append(box(c, "source"));

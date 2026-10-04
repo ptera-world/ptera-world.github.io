@@ -14,6 +14,8 @@ const CSS = `
 .galaxies-board .tile { fill: var(--cell); stroke: var(--border); stroke-width: 0.2; }
 .galaxies-board .tile.bad { fill: var(--danger-soft); }
 .galaxies-board .wall { stroke: var(--text); stroke-width: 0.8; stroke-linecap: round; fill: none; pointer-events: none; }
+.galaxies-board .ghost { pointer-events: none; opacity: 0.6; }
+.galaxies-board .ghost .wall { stroke-dasharray: 1 0.8; }
 .galaxies-board .dot { stroke: var(--text); stroke-width: 0.5; pointer-events: none; }
 .galaxies-board .dot.white { fill: var(--cell); }
 .galaxies-board .dot.black { fill: var(--text); }
@@ -99,9 +101,9 @@ export function galaxiesView(board: Board): View<GalaxiesPuzzle, GalaxiesState, 
         if (sides.has("left")) labels.append(s("text", { x: -LABEL / 2, y: y * SIZE + SIZE / 2 }, board.rowName(y)));
         if (sides.has("right")) labels.append(s("text", { x: p.w * SIZE + LABEL / 2, y: y * SIZE + SIZE / 2 }, board.rowName(y)));
       }
-      const base = s("g"), walls = s("g"), dotsL = s("g"), over = s("g");
+      const base = s("g"), walls = s("g"), ghostL = s("g", { class: "ghost" }), dotsL = s("g"), over = s("g");
       const cursor = s("rect", { width: SIZE - 0.6, height: SIZE - 0.6, rx: 1, class: "cursor" });
-      svg.append(labels, base, walls, dotsL, over, cursor);
+      svg.append(labels, base, walls, ghostL, dotsL, over, cursor);
       root.append(svg);
 
       const tx = (t: number) => (t % p.w) * SIZE;
@@ -120,8 +122,25 @@ export function galaxiesView(board: Board): View<GalaxiesPuzzle, GalaxiesState, 
       let preview: GalaxiesState | null = null;
       let hover = -1;
 
+      /** Outline plus a wall between every two neighboring tiles painted into different galaxies. */
+      const wallPath = (owner: readonly number[]): string => {
+        let wd = `M0 0H${p.w * SIZE}V${p.h * SIZE}H0Z`;
+        for (let t = 0; t < g.n; t++) {
+          const a = owner[t]!;
+          if (t % p.w < p.w - 1) {
+            const b = owner[t + 1]!;
+            if (a >= 0 && b >= 0 && a !== b) wd += `M${tx(t) + SIZE} ${ty(t)}v${SIZE}`;
+          }
+          if (t + p.w < g.n) {
+            const b = owner[t + p.w]!;
+            if (a >= 0 && b >= 0 && a !== b) wd += `M${tx(t)} ${ty(t) + SIZE}h${SIZE}`;
+          }
+        }
+        return wd;
+      };
+
       const render = () => {
-        const st = preview ?? session.state;
+        const st = session.state;
         const conf = session.derived()[CONFLICTS_KEY] as Conflicts | undefined;
         const bad = new Set([...(conf?.asymmetric ?? []), ...(conf?.detached ?? [])]);
         for (let t = 0; t < g.n; t++) {
@@ -129,20 +148,17 @@ export function galaxiesView(board: Board): View<GalaxiesPuzzle, GalaxiesState, 
           tiles[t]!.style.fill = bad.has(t) ? "" : settings.tint && d >= 0 ? tintFor(d, p.dots[d]!.black) : "";
           tiles[t]!.classList.toggle("bad", bad.has(t));
         }
-        let wd = `M0 0H${p.w * SIZE}V${p.h * SIZE}H0Z`;
-        for (let t = 0; t < g.n; t++) {
-          const a = st.owner[t]!;
-          if (t % p.w < p.w - 1) {
-            const b = st.owner[t + 1]!;
-            if (a >= 0 && b >= 0 && a !== b) wd += `M${tx(t) + SIZE} ${ty(t)}v${SIZE}`;
-          }
-          if (t + p.w < g.n) {
-            const b = st.owner[t + p.w]!;
-            if (a >= 0 && b >= 0 && a !== b) wd += `M${tx(t)} ${ty(t) + SIZE}h${SIZE}`;
-          }
-        }
         while (walls.firstChild) walls.firstChild.remove();
-        walls.append(s("path", { d: wd, class: "wall" }));
+        walls.append(s("path", { d: wallPath(st.owner), class: "wall" }));
+        ghostL.replaceChildren();
+        if (preview) {
+          for (let t = 0; t < g.n; t++) {
+            const d = preview.owner[t]!;
+            if (d === st.owner[t]) continue;
+            ghostL.append(s("rect", { x: tx(t) + 1.5, y: ty(t) + 1.5, width: SIZE - 3, height: SIZE - 3, rx: 1, fill: d >= 0 ? tintFor(d, p.dots[d]!.black) : "var(--cell)" }));
+          }
+          ghostL.append(s("path", { d: wallPath(preview.owner), class: "wall" }));
+        }
         const brush = session.interaction.brush;
         dots.forEach((c, d) => c.classList.toggle("brush", d === brush));
         while (over.firstChild) over.firstChild.remove();

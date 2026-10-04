@@ -161,9 +161,9 @@ export function lightupView(look: Look, board: Board): View<LightupPuzzle, Light
         if (sides.has("left")) labels.append(s("text", { x: -LABEL / 2, y: y * SIZE + SIZE / 2 }, board.rowName(y)));
         if (sides.has("right")) labels.append(s("text", { x: p.w * SIZE + LABEL / 2, y: y * SIZE + SIZE / 2 }, board.rowName(y)));
       }
-      const base = s("g"), glowL = s("g"), marksL = s("g"), ghostL = s("g", { class: "ghost" }), over = s("g");
+      const base = s("g"), glowL = s("g"), marksL = s("g"), fadeL = s("g", { opacity: 0.7, "pointer-events": "none" }), ghostL = s("g", { class: "ghost" }), over = s("g");
       const cursor = s("rect", { width: SIZE - 0.6, height: SIZE - 0.6, rx: 1, class: "cursor" });
-      svg.append(labels, base, glowL, marksL, ghostL, over, cursor);
+      svg.append(labels, base, glowL, marksL, fadeL, ghostL, over, cursor);
       root.append(svg);
 
       const cx = (i: number) => (i % p.w) * SIZE;
@@ -220,11 +220,14 @@ export function lightupView(look: Look, board: Board): View<LightupPuzzle, Light
           else if (mark === DOT) holder.append(dotNode());
         }
         ghostL.replaceChildren();
+        fadeL.replaceChildren();
         if (previewing) {
           const pm = previewing.marks, plit = litCounts(g, pm);
           for (const c of g.empties) {
             if (plit[c]! > 0 && !lit[c]) ghostL.append(s("rect", { x: cx(c) + 0.15, y: cy(c) + 0.15, width: SIZE - 0.3, height: SIZE - 0.3, class: "glow" }));
-            if (pm[c] === m[c] || pm[c] === NONE) continue;
+            if (pm[c] === m[c]) continue;
+            if (m[c] !== NONE) fadeL.append(s("rect", { x: cx(c) + 0.6, y: cy(c) + 0.6, width: SIZE - 1.2, height: SIZE - 1.2, fill: "var(--cell)" }));
+            if (pm[c] === NONE) continue;
             const at = s("g", { transform: `translate(${cx(c)} ${cy(c)})` });
             at.append(pm[c] === BULB ? bulbNode() : dotNode());
             ghostL.append(at);

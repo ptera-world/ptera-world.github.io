@@ -38,6 +38,7 @@ const CSS = `
 .guess-board .focus.why { stroke-dasharray: 1.2 0.8; stroke-width: 0.5; }
 .guess-board .cursor { fill: none; stroke: var(--focus); stroke-width: 0.6; pointer-events: none; }
 .guess-board .preview { opacity: 0.5; }
+.guess-board .faded { opacity: 0.25; }
 [data-input="pointer"] .guess-board .cursor { display: none; }
 `;
 
@@ -127,6 +128,7 @@ export function guessView(): View<GuessPuzzle, GuessState, GuessAction, GuessInt
         const st = session.state;
         const over_ = isOver(p, st);
         const cur = st.done.length;
+        const pvDone = preview?.done.length ?? cur;
         while (rowsL.firstChild) rowsL.firstChild.remove();
         while (pegsL.firstChild) pegsL.firstChild.remove();
         const pegAt = (x: number, y: number, c: number, extra = "") => {
@@ -136,15 +138,18 @@ export function guessView(): View<GuessPuzzle, GuessState, GuessAction, GuessInt
         for (let r = 0; r < p.guesses; r++) {
           const y = rowY(r);
           rowsL.append(s("rect", { x: boardX - 1, y, width: width - boardX + 0.5, height: P, rx: 2, class: `row${r === cur && !over_ ? " current" : ""}` }));
-          const shown = r < cur ? st.done[r]!.code : r === cur && !over_ ? (preview?.row ?? st.row) : null;
+          const marked = r < cur ? st.done[r] : r < pvDone ? preview!.done[r] : undefined;
+          const look = r < cur ? (r >= pvDone ? " faded" : "") : r < pvDone ? " preview" : "";
+          const building = r === cur && !over_ && pvDone === cur;
+          const shown = marked ? marked.code : building ? (preview?.row ?? st.row) : null;
           for (let i = 0; i < p.pegs; i++) {
-            pegAt(pegX(i), y + P / 2, shown?.[i] ?? 0, preview && r === cur && preview.row[i] !== st.row[i] ? " preview" : "");
+            pegAt(pegX(i), y + P / 2, shown?.[i] ?? 0, building && preview && preview.row[i] !== st.row[i] ? " preview" : look);
             if (r === cur && !over_ && st.holds[i]) pegsL.append(s("circle", { cx: pegX(i), cy: y + P / 2, r: R + 1, class: "hold" }));
           }
-          if (r < cur) {
-            const g = st.done[r]!;
+          if (marked) {
+            const g = marked;
             for (let k = 0; k < p.pegs; k++) {
-              const cls = k < g.black ? "score black" : k < g.black + g.white ? "score white" : "score";
+              const cls = (k < g.black ? "score black" : k < g.black + g.white ? "score white" : "score") + look;
               pegsL.append(s("circle", { cx: scoreX + 2 + (k % scoreCols) * 4, cy: y + 3 + Math.floor(k / scoreCols) * 4, r: 1.3, class: cls }));
             }
           } else if (r === cur && !over_) {

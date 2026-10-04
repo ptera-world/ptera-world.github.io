@@ -7,6 +7,7 @@ import {
   KIT_CSS, SIZE, Strokes, cursorBindings, cursorHandlers, cursorRect, drawFocus, focusCells, focusLegend, frame, sample, sampleCell,
   type BoardPrefs,
 } from "../../lib/grid-kit/view";
+import { fades } from "../../lib/grid-kit/fade";
 import {
   DARK, LIGHT, NONE, ONE, colours,
   type Mark, type UnrulyAction, type UnrulyConflicts, type UnrulyInteraction, type UnrulyPuzzle, type UnrulyState,
@@ -71,6 +72,7 @@ export function unrulyView(board: BoardPrefs): View<UnrulyPuzzle, UnrulyState, U
       const p = session.puzzle;
       const n = p.w * p.h;
       const f = frame(root, p, "unruly-board", "unruly", board);
+      const fade = fades(f);
       const warn: SVGRectElement[] = [];
       const holders: SVGGElement[] = [];
       for (let c = 0; c < n; c++) {
@@ -113,9 +115,14 @@ export function unrulyView(board: BoardPrefs): View<UnrulyPuzzle, UnrulyState, U
           warn[c]!.setAttribute("visibility", lines.has(c) ? "visible" : "hidden");
         }
         while (f.ghost.firstChild) f.ghost.firstChild.remove();
+        fade.clear();
         if (preview) {
           const pc = colours(p, preview.marks);
-          for (let c = 0; c < n; c++) if (pc[c] !== col[c] && pc[c]! >= 0) piece(f.ghost, c, pc[c]!, false);
+          for (let c = 0; c < n; c++) {
+            if (pc[c] === col[c]) continue;
+            if (col[c]! >= 0) fade.cell(c);
+            if (pc[c]! >= 0) piece(f.ghost, c, pc[c]!, false);
+          }
         }
         while (f.over.firstChild) f.over.firstChild.remove();
         drawFocus(f.over, f, session.activeHint?.focus as Focus | undefined);
