@@ -72,9 +72,9 @@ const autoDot: LightupPlugin = {
     litToo: { type: "bool", label: "also mark neighbours that are already lit", default: false },
   }),
   setup({ session, settings, owner }) {
-    session.hooks.apply.tap((next, { puzzle, prev, reduce }) => {
+    session.hooks.apply.tap((next, { puzzle, prev, action, reduce }) => {
       const g = geometry(puzzle);
-      const placed = g.empties.filter((c) => next.marks[c] === BULB && prev.marks[c] !== BULB);
+      const placed = g.empties.filter((c) => next.marks[c] === BULB && (!action || prev.marks[c] !== BULB));
       if (!placed.length) return next;
       const lit = litCounts(g, next.marks);
       const cells = new Set<number>();

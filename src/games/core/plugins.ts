@@ -40,8 +40,13 @@ export class PluginHost {
   private active = new Map<string, Active>();
   private view: { handle: ViewHandle; root: HTMLElement } | null = null;
 
+  private ready = false;
+
+  /** Attaches enabled plugins, then settles the opening state with all of them (no undo step). */
   constructor(private registry: Registry, private session: Session<any, any, any, any>) {
     for (const p of registry.pluginsFor(session.def.id)) this.sync(p);
+    this.ready = true;
+    session.settle(false);
   }
 
   plugins(): Plugin[] {
@@ -67,6 +72,8 @@ export class PluginHost {
     this.active.set(p.id, a);
     if (this.view) this.attachUi(a);
     this.session.invalidateDerived();
+    // an enabled plugin's apply taps take effect immediately, as one undoable step
+    if (this.ready) this.session.settle(true, owner);
   }
 
   setConfig(p: Plugin, cfg: PluginConfig): void {

@@ -36,8 +36,8 @@ export const autoFlag: MinesPlugin = {
     const p = session.puzzle;
     const nb = neighbourTable(p.w, p.h);
     const nums = numbers(p);
-    session.hooks.apply.tap((next, { prev, reduce }) => {
-      if (Object.is(next, prev) || next.dead >= 0) return next;
+    session.hooks.apply.tap((next, { prev, action, reduce }) => {
+      if ((action && Object.is(next, prev)) || next.dead >= 0) return next;
       const cells: number[] = [];
       for (let c = 0; c < nums.length; c++) {
         if (!next.open[c] || !nums[c]) continue;
@@ -61,8 +61,8 @@ export const autoOpen: MinesPlugin = {
     const p = session.puzzle;
     const nb = neighbourTable(p.w, p.h);
     const nums = numbers(p);
-    session.hooks.apply.tap((next, { prev, reduce }) => {
-      if (Object.is(next, prev)) return next;
+    session.hooks.apply.tap((next, { prev, action, reduce }) => {
+      if (action && Object.is(next, prev)) return next;
       let s = next;
       for (let changed = true; changed && s.dead < 0;) {
         changed = false;

@@ -217,11 +217,12 @@ const auto: BridgesPlugin = {
     },
     marks: { type: "bool", label: "also mark impossible connections", default: false },
   }),
-  /** Fires only on moves that add a bridge or mark, so removals stick. */
+  /** Fires on settle passes and on moves that add a bridge or mark, so removals stick. */
   setup({ session, settings, owner }) {
     const tier = TIER_OF[settings.strength as string] ?? 1;
     const marks = settings.marks === true;
-    session.hooks.apply.tap((next, { puzzle, prev }) => {
+    session.hooks.apply.tap((next, { puzzle, prev, action }) => {
+      if (!action) return autoFill(puzzle, next, tier, marks);
       if (Object.is(next, prev)) return next;
       const added = next.b.some((v, e) => v > prev.b[e]!) || next.no.some((v, e) => v > prev.no[e]!);
       return added ? autoFill(puzzle, next, tier, marks) : next;

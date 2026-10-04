@@ -53,11 +53,11 @@ const autoCross: PatternPlugin = {
   appliesTo: ["pattern"],
   enabledByDefault: true,
   setup({ session, owner }) {
-    session.hooks.apply.tap((next, { prev, puzzle, reduce }) => {
-      if (next === prev) return next;
+    session.hooks.apply.tap((next, { prev, action, puzzle, reduce }) => {
+      if (action && next === prev) return next;
       const lines = new Set<number>();
       next.cells.forEach((v, i) => {
-        if (v === FILLED && prev.cells[i] !== FILLED) {
+        if (v === FILLED && (!action || prev.cells[i] !== FILLED)) {
           lines.add(Math.floor(i / puzzle.w));
           lines.add(puzzle.h + (i % puzzle.w));
         }

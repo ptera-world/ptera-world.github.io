@@ -8,7 +8,9 @@ import { sidesOf } from "./solver";
 
 type LoopyPlugin = Plugin<LoopyPuzzle, LoopyState, LoopyAction, LoopyInteraction>;
 
-function changed(prev: LoopyState, next: LoopyState): number[] {
+/** Edges that differ from prev; every edge on a settle pass (no action), so the whole board is checked. */
+function changed(prev: LoopyState, next: LoopyState, settling: boolean): number[] {
+  if (settling) return next.edges.map((_, e) => e);
   const out: number[] = [];
   for (let e = 0; e < next.edges.length; e++) if (prev.edges[e] !== next.edges[e]) out.push(e);
   return out;
@@ -24,10 +26,10 @@ const autoCrossClues: LoopyPlugin = {
   appliesTo: ["loopy"],
   enabledByDefault: false,
   setup({ session, owner }) {
-    session.hooks.apply.tap((next, { prev, puzzle, reduce }) => {
+    session.hooks.apply.tap((next, { prev, action, puzzle, reduce }) => {
       const g = gridOf(puzzle);
       let state = next;
-      for (const f of facesOf(g, changed(prev, next))) {
+      for (const f of facesOf(g, changed(prev, next, !action))) {
         const c = puzzle.clues[f]!;
         if (c < 0) continue;
         const es = g.fe[f]!;
@@ -52,11 +54,11 @@ const autoCrossDots: LoopyPlugin = {
   }),
   setup({ session, settings, owner }) {
     const deadEnds = settings.deadEnds as boolean;
-    session.hooks.apply.tap((next, { prev, puzzle, reduce }) => {
+    session.hooks.apply.tap((next, { prev, action, puzzle, reduce }) => {
       const g = gridOf(puzzle);
       let state = next;
       const queue: number[] = [];
-      for (const e of changed(prev, next)) queue.push(g.ev[2 * e]!, g.ev[2 * e + 1]!);
+      for (const e of changed(prev, next, !action)) queue.push(g.ev[2 * e]!, g.ev[2 * e + 1]!);
       const seen = new Set<number>();
       while (queue.length) {
         const v = queue.pop()!;

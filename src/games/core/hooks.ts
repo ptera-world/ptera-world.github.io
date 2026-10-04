@@ -60,9 +60,11 @@ abstract class HookBase<F> {
 
 /** Each tap may return a replacement value; returning undefined keeps the current one. */
 export class Waterfall<T, C = void> extends HookBase<(value: T, ctx: C) => T | void> {
-  call(value: T, ctx: C): T {
+  /** With `owner`, only that owner's taps run. */
+  call(value: T, ctx: C, owner?: string): T {
     let v = value;
     for (const t of this.taps.slice()) {
+      if (owner !== undefined && t.owner !== owner) continue;
       const r = this.guard(t, () => t.fn(v, ctx));
       if (r !== undefined) v = r as T;
     }

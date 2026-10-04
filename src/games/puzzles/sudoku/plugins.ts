@@ -81,13 +81,13 @@ const autoRemove: LatinPlugin = {
   }),
   setup({ session, settings, owner }) {
     const corner = settings.corner as boolean;
-    session.hooks.apply.tap((next, { puzzle, prev }) => {
-      if (next.values === prev.values) return next;
+    session.hooks.apply.tap((next, { puzzle, prev, action }) => {
+      if (action && next.values === prev.values) return next;
       const m = modelOf(puzzle);
       let center = next.center, cornerM = next.corner;
       for (let c = 0; c < m.size; c++) {
         const v = next.values[c]!;
-        if (!v || v === prev.values[c]) continue;
+        if (!v || (action && v === prev.values[c])) continue;
         const b = bit(v);
         for (const p of m.peers[c]!) {
           if (center[p]! & b) {
@@ -123,7 +123,7 @@ function autoFill(kind: "naked" | "hidden"): LatinPlugin {
       const useStruck = settings.struck as boolean;
       const candidates = settings.depth === "rules" ? ruleCandidates : peerCandidates;
       session.hooks.apply.tap((next, { puzzle, action, reduce }) => {
-        if (action.type === "clear" || (action.type === "set" && action.digit === 0)) return next;
+        if (action && (action.type === "clear" || (action.type === "set" && action.digit === 0))) return next;
         const m = modelOf(puzzle);
         let s = next;
         for (let guard = 0; guard < m.size; guard++) {

@@ -15,8 +15,14 @@ export interface ActionCtx<Pz, S, A extends Action, I> {
 export interface ApplyCtx<Pz, S, A extends Action, I> {
   session: Session<Pz, S, A, I>;
   puzzle: Pz;
+  /** State before this step. During a settle pass it equals the incoming state. */
   prev: S;
-  action: A;
+  /**
+   * The player action being applied, or null for a settle pass. A settle pass runs when an
+   * assist is switched on, the session opens, or the board restarts: there is no move to react
+   * to, so taps must check the whole state rather than only what differs from prev.
+   */
+  action: A | null;
   /** The puzzle's pure reducer, for applying follow-up actions inside the same history step. */
   reduce(state: S, action: A): S;
 }
@@ -67,7 +73,11 @@ export class Session<Pz = unknown, S = unknown, A extends Action = Action, I = u
   readonly hooks = {
     /** Transform or veto (return null) an incoming action before it reaches the reducer. */
     action: new Waterfall<A | null, ActionCtx<Pz, S, A, I>>("action"),
-    /** Post-reduce: return a further-modified state. Runs once per dispatch; result is one history step. */
+    /**
+     * Post-reduce: return a further-modified state. Runs once per dispatch (result is one history
+     * step) and once per settle pass (action null). Taps should be idempotent: running a tap on
+     * its own output must not change it.
+     */
     apply: new Waterfall<S, ApplyCtx<Pz, S, A, I>>("apply"),
     /** Build view annotations from current state. Must be pure in (puzzle, state, interaction, settings). */
     derive: new Waterfall<Derived, DeriveCtx<Pz, S, I>>("derive"),
@@ -247,12 +257,38 @@ export class Session<Pz = unknown, S = unknown, A extends Action = Action, I = u
     this._solvedAtMs = null;
     this.elapsedBase = 0;
     this.runningSince = wasTiming ? performance.now() : null;
-    const fresh = this.def.init(this.puzzle);
+    const fresh = this.settled(this.def.init(this.puzzle));
     const prev = this._state;
     if (Object.is(fresh, prev)) return;
     this.pushHistory(prev, []);
     this._state = fresh;
     this.emit(prev, [], "action", false);
+  }
+
+  private settled(state: S, owner?: string): S {
+    const reduce = (s: S, a: A) => this.def.reduce(this.puzzle, s, a);
+    return this.hooks.apply.call(state, { session: this, puzzle: this.puzzle, prev: state, action: null, reduce }, owner);
+  }
+
+  /**
+   * Run every apply tap against the current state with no action, so assists that were just
+   * switched on (or present when the board opened) take effect without waiting for a move.
+   * `record` makes the change its own undo step; otherwise it is folded into the current state
+   * with no history entry. With `owner`, only that owner's taps run, so switching one assist on
+   * never re-applies another (e.g. refilling a cell the player erased).
+   */
+  settle(record: boolean, owner?: string): boolean {
+    if (this.batchDepth > 0) return false;
+    const prev = this._state;
+    const next = this.settled(prev, owner);
+    if (Object.is(next, prev)) return false;
+    if (record) {
+      this.commit(prev, next, []);
+    } else {
+      this._state = next;
+      this.emit(prev, [], "restore", true);
+    }
+    return true;
   }
 
   /** Replace progress wholesale (e.g. reveal solution) as one undoable step. */
