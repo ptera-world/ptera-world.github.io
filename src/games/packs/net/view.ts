@@ -1,5 +1,6 @@
 import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
+import { HOLD_MS } from "../../core/gestures";
 import { bindCommands, type BindingSchema, type CommandHandler } from "../../core/commands";
 import { colName, rowName } from "../../ui/board";
 import { s, style } from "../../ui/dom";
@@ -13,8 +14,6 @@ const ANIM_MS = 130;
 /** A touch shorter than this, without moving, is a tap. */
 const TAP_MS = 450;
 const MOVE_PX = 12;
-/** The shell opens the board menu after a still hold this long and keeps the release for itself. */
-const MENU_HOLD_MS = 550;
 /** Viewbox units reserved on a side that shows edge labels. */
 const LABEL = 6;
 /** Rotation (degrees, SVG's clockwise) taking an arm drawn pointing right to direction d. */
@@ -152,9 +151,11 @@ export interface NetViewDeps {
   look?: AssetLookup;
   /** Board edges that show column letters / row numbers. */
   labelSides?: () => ReadonlySet<string>;
+  /** Still-hold time after which the shell opens the board menu and keeps the release for itself. */
+  holdMs?: number;
 }
 
-export function netView({ look = (_id, fallback) => fallback, labelSides = () => new Set() }: NetViewDeps = {}): View<NetPuzzle, NetState, NetAction, NetInteraction> {
+export function netView({ look = (_id, fallback) => fallback, labelSides = () => new Set(), holdMs = HOLD_MS }: NetViewDeps = {}): View<NetPuzzle, NetState, NetAction, NetInteraction> {
   return {
     id: "net.svg",
     name: "grid",
@@ -361,7 +362,7 @@ export function netView({ look = (_id, fallback) => fallback, labelSides = () =>
         if (e.pointerType !== "touch" || cell < 0 || press) return;
         e.preventDefault();
         // a still hold becomes the board menu, whose release never reaches us: forget the press then
-        const timer = window.setTimeout(() => { if (press && !press.moved) press = null; }, MENU_HOLD_MS);
+        const timer = window.setTimeout(() => { if (press && !press.moved) press = null; }, holdMs);
         press = { id: e.pointerId, cell, t0: performance.now(), x: e.clientX, y: e.clientY, moved: false, timer };
       };
       const onPointerMove = (e: PointerEvent) => {

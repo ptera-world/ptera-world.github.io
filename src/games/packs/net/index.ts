@@ -17,5 +17,5 @@ export function register(registry: Registry, deps: NetViewDeps = {}): void {
 
 /** Pack entry: loaded by URL through the same path as any third-party pack. */
 export default function pack(games: GamesApi): void {
-  register(games.registry, { look: games.look.asset, labelSides: games.board.labelSides });
+  register(games.registry, { look: games.look.asset, labelSides: games.board.labelSides, holdMs: games.HOLD_MS });
 }
