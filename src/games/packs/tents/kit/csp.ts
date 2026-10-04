@@ -45,8 +45,8 @@ export type Emit = (d: Deduction) => boolean;
 /**
  * Local check over a fixed set of variables, re-run whenever one of them narrows. Reads `k`
  * only; reports through `emit`. Returns false iff `k` already breaks it. An emit may narrow `k`
- * at once, so every deduction must be worked out from `k` as it is when it is emitted, not from
- * values read before an earlier emit.
+ * at once, so each deduction must come from one consistent view: `k` as it is when emitted, or
+ * a copy taken before the first emit. Mixing values read before and after an emit is unsound.
  */
 export interface Constraint {
   vars: readonly number[];
@@ -297,50 +297,6 @@ export function countSolutions(m: Model, start: Doms, limit = 2): { count: numbe
   return out;
 }
 
-/**
- * A random full solution reachable from `start` (deterministic in rng), or null if none: depth
- * first, branching on a random undecided variable with the fewest values, values in random order.
- * Gives up (null) after `budget` dead ends.
- */
-export function randomSolution(m: Model, start: Doms, rng: { int(n: number): number; shuffle<T>(a: T[]): T[] }, budget = 2000): Doms | null {
-  const level = m.countLevel ?? 0;
-  let dead = 0;
-  const search = (k: Doms, dirty: number[] | null): Doms | null => {
-    if (!saturate(m, k, level, dirty)) {
-      dead++;
-      return null;
-    }
-    let best = 99;
-    const picks: number[] = [];
-    for (let v = 0; v < m.n; v++) {
-      const c = popcount(k[v]!);
-      if (c < 2) continue;
-      if (c < best) {
-        best = c;
-        picks.length = 0;
-      }
-      if (c === best) picks.push(v);
-    }
-    if (!picks.length) {
-      if (m.complete && !m.complete(k)) {
-        dead++;
-        return null;
-      }
-      return k;
-    }
-    const pick = picks[rng.int(picks.length)]!;
-    for (const x of rng.shuffle(valuesOf(k[pick]!))) {
-      if (dead > budget) return null;
-      const t = k.slice();
-      t[pick] = bit(x);
-      const r = search(t, [pick]);
-      if (r) return r;
-    }
-    return null;
-  };
-  return search(start.slice(), null);
-}
-
 export interface Analysis {
   /** 0 none, 1 unique, 2 several (counting stops at 2). */
   count: 0 | 1 | 2;
@@ -378,4 +334,24 @@ export function solveLevel(m: Model, start: Doms, maxLevel: number): number | nu
   const r = propagate(m, k, maxLevel, finished);
   if (!r.ok || !finished(k)) return null;
   return m.done || !m.complete || m.complete(k) ? r.used : null;
+}
+
+/** Deductions up to `level` decide every variable (so the solution is unique), in no particular order. */
+export function decides(m: Model, start: Doms, level: number): boolean {
+  const k = start.slice();
+  return saturate(m, k, level) && isDecided(k) && (!m.complete || m.complete(k));
+}
+
+/**
+ * Least level ≤ maxLevel at which logic finishes the puzzle (see Model.done), found by saturating
+ * at each level in turn. Same answer as solveLevel, without step-by-step bookkeeping.
+ */
+export function levelNeeded(m: Model, start: Doms, maxLevel: number): number | null {
+  const finished = m.done ?? isDecided;
+  for (let level = 0; level <= maxLevel; level++) {
+    const k = start.slice();
+    if (!saturate(m, k, level)) return null;
+    if (finished(k) && (m.done || !m.complete || m.complete(k))) return level;
+  }
+  return null;
 }

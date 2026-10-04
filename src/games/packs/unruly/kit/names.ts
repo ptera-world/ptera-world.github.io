@@ -23,6 +23,8 @@ export interface Focus {
   because: number[];
   /** Other cells the text talks about. */
   related?: number[];
+  /** Grid points (corners, on the (w + 1)-wide lattice) the hint is about. */
+  points?: number[];
 }
 
 /** What the board establishes, as domains over the puzzle's model. */

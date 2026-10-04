@@ -44,8 +44,9 @@ export type Emit = (d: Deduction) => boolean;
 
 /**
  * Local check over a fixed set of variables, re-run whenever one of them narrows. Reads `k`
- * only; reports through `emit`. Returns false iff `k` already breaks it. Must tolerate `k`
- * narrowing between its own emits (deductions found earlier stay true).
+ * only; reports through `emit`. Returns false iff `k` already breaks it. An emit may narrow `k`
+ * at once, so each deduction must come from one consistent view: `k` as it is when emitted, or
+ * a copy taken before the first emit. Mixing values read before and after an emit is unsound.
  */
 export interface Constraint {
   vars: readonly number[];
@@ -102,8 +103,8 @@ export function narrow(k: Doms, d: Deduction, changed?: number[]): boolean {
   return true;
 }
 
-/** Level-0 local constraints to a fixpoint, starting from those watching `dirty` (null: all). */
-function closure(m: Model, k: Doms, dirty: readonly number[] | null): boolean {
+/** Local constraints' deductions up to `level` to a fixpoint, starting from those watching `dirty` (null: all). */
+function closure(m: Model, k: Doms, dirty: readonly number[] | null, level = 0): boolean {
   const w = watchers(m);
   const queued = new Uint8Array(m.constraints.length);
   const queue: number[] = [];
@@ -121,7 +122,7 @@ function closure(m: Model, k: Doms, dirty: readonly number[] | null): boolean {
   const changed: number[] = [];
   let bad = false;
   const emit: Emit = (d) => {
-    if (d.level > 0) return false;
+    if (d.level > level) return false;
     if (!narrow(k, d, changed)) bad = true;
     return bad;
   };
@@ -135,25 +136,33 @@ function closure(m: Model, k: Doms, dirty: readonly number[] | null): boolean {
   return true;
 }
 
-/** Level 0 to a fixpoint: local constraints, then level-0 rules, until nothing changes. */
-function settle(m: Model, k: Doms, dirty: readonly number[] | null): boolean {
-  if (!closure(m, k, dirty)) return false;
+/** Everything up to `level` to a fixpoint: local constraints, then rules, until nothing changes. */
+function settle(m: Model, k: Doms, dirty: readonly number[] | null, level = 0): boolean {
+  if (!closure(m, k, dirty, level)) return false;
   for (;;) {
     const changed: number[] = [];
     let bad = false;
     const emit: Emit = (d) => {
-      if (d.level > 0) return false;
+      if (d.level > level) return false;
       if (!narrow(k, d, changed)) bad = true;
       return bad;
     };
     for (const r of m.rules) {
-      if (r.level !== 0) continue;
+      if (r.level > level) continue;
       if (!r.run(k, emit) || bad) return false;
+      if (changed.length) break;
     }
     if (!changed.length) return true;
-    if (!closure(m, k, changed)) return false;
+    if (!closure(m, k, changed, level)) return false;
   }
 }
+
+/**
+ * Applies every deduction up to `level` to `k` in place, in no particular order (no difficulty
+ * accounting). `dirty` names the variables changed since `k` was last saturated at this level;
+ * null rechecks everything. False iff a contradiction was found.
+ */
+export const saturate = (m: Model, k: Doms, level: number, dirty: readonly number[] | null = null): boolean => settle(m, k, dirty, level);
 
 /** Applies the first deduction of level ≤ `level` anywhere; null if none, else what changed. */
 function stepAt(m: Model, k: Doms, level: number): { ok: boolean; changed: number[] } | null {
@@ -218,14 +227,15 @@ export function trialRule(m: Model, level: number, base: number, kind = "trial")
     level,
     kinds: [kind],
     run(k, emit) {
+      const s = k.slice();
+      if (!saturate(m, s, base)) return false;
       for (let v = 0; v < m.n; v++) {
-        const dom = k[v]!;
-        if (isSingle(dom)) continue;
-        for (const x of valuesOf(dom)) {
-          const t = k.slice();
+        if (isSingle(s[v]!)) continue;
+        for (const x of valuesOf(s[v]!)) {
+          const t = s.slice();
           t[v] = bit(x);
-          if (propagate(m, t, base).ok) continue;
-          if (emit({ kind, level, vars: [v], keep: dom & ~bit(x), because: [], data: { var: v, value: x } })) return true;
+          if (saturate(m, t, base, [v])) continue;
+          if (emit({ kind, level, vars: [v], keep: k[v]! & ~bit(x), because: [], data: { var: v, value: x } })) return true;
         }
       }
       return true;
@@ -260,8 +270,8 @@ export function scan(m: Model, k: Doms, accept: (d: Deduction) => boolean, kinds
 export function countSolutions(m: Model, start: Doms, limit = 2): { count: number; first: Doms | null } {
   const out = { count: 0, first: null as Doms | null };
   const level = m.countLevel ?? 0;
-  const search = (k: Doms): void => {
-    if (out.count >= limit || !propagate(m, k, level).ok) return;
+  const search = (k: Doms, dirty: number[] | null): void => {
+    if (out.count >= limit || !saturate(m, k, level, dirty)) return;
     let pick = -1, best = 99;
     for (let v = 0; v < m.n; v++) {
       const c = popcount(k[v]!);
@@ -280,10 +290,10 @@ export function countSolutions(m: Model, start: Doms, limit = 2): { count: numbe
     for (const x of valuesOf(k[pick]!)) {
       const t = k.slice();
       t[pick] = bit(x);
-      search(t);
+      search(t, [pick]);
     }
   };
-  search(start.slice());
+  search(start.slice(), null);
   return out;
 }
 
@@ -324,4 +334,24 @@ export function solveLevel(m: Model, start: Doms, maxLevel: number): number | nu
   const r = propagate(m, k, maxLevel, finished);
   if (!r.ok || !finished(k)) return null;
   return m.done || !m.complete || m.complete(k) ? r.used : null;
+}
+
+/** Deductions up to `level` decide every variable (so the solution is unique), in no particular order. */
+export function decides(m: Model, start: Doms, level: number): boolean {
+  const k = start.slice();
+  return saturate(m, k, level) && isDecided(k) && (!m.complete || m.complete(k));
+}
+
+/**
+ * Least level ≤ maxLevel at which logic finishes the puzzle (see Model.done), found by saturating
+ * at each level in turn. Same answer as solveLevel, without step-by-step bookkeeping.
+ */
+export function levelNeeded(m: Model, start: Doms, maxLevel: number): number | null {
+  const finished = m.done ?? isDecided;
+  for (let level = 0; level <= maxLevel; level++) {
+    const k = start.slice();
+    if (!saturate(m, k, level)) return null;
+    if (finished(k) && (m.done || !m.complete || m.complete(k))) return level;
+  }
+  return null;
 }

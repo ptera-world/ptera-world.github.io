@@ -297,50 +297,6 @@ export function countSolutions(m: Model, start: Doms, limit = 2): { count: numbe
   return out;
 }
 
-/**
- * A random full solution reachable from `start` (deterministic in rng), or null if none: depth
- * first, branching on a random undecided variable with the fewest values, values in random order.
- * Gives up (null) after `budget` dead ends.
- */
-export function randomSolution(m: Model, start: Doms, rng: { int(n: number): number; shuffle<T>(a: T[]): T[] }, budget = 2000): Doms | null {
-  const level = m.countLevel ?? 0;
-  let dead = 0;
-  const search = (k: Doms, dirty: number[] | null): Doms | null => {
-    if (!saturate(m, k, level, dirty)) {
-      dead++;
-      return null;
-    }
-    let best = 99;
-    const picks: number[] = [];
-    for (let v = 0; v < m.n; v++) {
-      const c = popcount(k[v]!);
-      if (c < 2) continue;
-      if (c < best) {
-        best = c;
-        picks.length = 0;
-      }
-      if (c === best) picks.push(v);
-    }
-    if (!picks.length) {
-      if (m.complete && !m.complete(k)) {
-        dead++;
-        return null;
-      }
-      return k;
-    }
-    const pick = picks[rng.int(picks.length)]!;
-    for (const x of rng.shuffle(valuesOf(k[pick]!))) {
-      if (dead > budget) return null;
-      const t = k.slice();
-      t[pick] = bit(x);
-      const r = search(t, [pick]);
-      if (r) return r;
-    }
-    return null;
-  };
-  return search(start.slice(), null);
-}
-
 export interface Analysis {
   /** 0 none, 1 unique, 2 several (counting stops at 2). */
   count: 0 | 1 | 2;

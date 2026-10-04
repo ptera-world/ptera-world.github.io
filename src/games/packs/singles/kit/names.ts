@@ -23,6 +23,8 @@ export interface Focus {
   because: number[];
   /** Other cells the text talks about. */
   related?: number[];
+  /** Grid points (corners, on the (w + 1)-wide lattice) the hint is about. */
+  points?: number[];
 }
 
 /** What the board establishes, as domains over the puzzle's model. */
@@ -47,6 +49,7 @@ export interface TechniqueSpec<Pz, S, A extends Action> {
   explain(p: Pz, s: S, d: Deduction, vars: number[], k: Doms): Step<A>;
   /** True if `d` is about `target` (a view target). Default: it changes or comes from that cell. */
   aim?(p: Pz, d: Deduction, vars: number[], target: unknown): boolean;
+  requires?: Technique["requires"];
   defaults?: Technique["defaults"];
   practice?: Technique["practice"];
 }
@@ -76,6 +79,7 @@ export function technique<Pz, S, A extends { type: string }>(spec: TechniqueSpec
     description: spec.description,
     find: (p, s) => find(p, s),
     findAt: (p, s, target) => find(p, s, target),
+    ...(spec.requires ? { requires: spec.requires } : {}),
     ...(spec.defaults ? { defaults: spec.defaults } : {}),
     ...(spec.practice ? { practice: spec.practice } : {}),
   };

@@ -33,6 +33,9 @@ export interface Frame {
   /** Left / top of cell c's box. */
   cx(c: number): number;
   cy(c: number): number;
+  /** Position of grid point v on the (w + 1)-wide lattice of cell corners. */
+  px(v: number): number;
+  py(v: number): number;
   /** Cell under a pointer event, or -1. */
   cellAt(e: { clientX: number; clientY: number }): number;
   /** The pointer position in grid units (cell (0,0) spans 0..SIZE), or null. */
@@ -92,6 +95,8 @@ export function frame(root: HTMLElement, p: { w: number; h: number }, cls: strin
     svg, base, marks, ghost, over,
     cx: (c) => (c % p.w) * SIZE,
     cy: (c) => Math.floor(c / p.w) * SIZE,
+    px: (v) => (v % (p.w + 1)) * SIZE,
+    py: (v) => Math.floor(v / (p.w + 1)) * SIZE,
     point,
     cellAt(e) {
       const pt = point(e);
@@ -115,6 +120,7 @@ export function drawFocus(layer: SVGGElement, f: Frame, focus: Focus | undefined
   for (const [list, cls] of [[focus.related ?? [], "focus related"], [focus.because, "focus why"], [focus.cells, "focus"]] as const) {
     for (const c of list) layer.append(s("rect", { x: f.cx(c) + 0.5, y: f.cy(c) + 0.5, width: SIZE - 1, height: SIZE - 1, rx: 1, class: cls }));
   }
+  for (const v of focus.points ?? []) layer.append(s("circle", { cx: f.px(v), cy: f.py(v), r: 3.2, class: "focus" }));
 }
 
 export const focusCells = (focus: unknown): number[] => {
