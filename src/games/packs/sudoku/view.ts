@@ -8,6 +8,7 @@ import { modelOf } from "./engine/model";
 import { constraintTypes } from "./engine/registry";
 import { colName, type Margins, type RenderCtx } from "./engine/types";
 import { boardCommands } from "./commands";
+import { legendFor } from "./legend";
 import { input, setSelection, selectSame } from "./input";
 import { CANDIDATES, CONFLICTS, MISTAKES, PEERS, SAME, type SameDigit } from "./keys";
 import type { GridAction, GridInteraction, GridState, HintFocus, LatinPuzzle } from "./puzzle";
@@ -143,16 +144,22 @@ const CONTROLS = [
   { how: "shift + a digit key", what: "write a corner mark, whatever the input mode" },
 ];
 
-export function latinView(board: BoardPrefs = noLabels): View<LatinPuzzle, GridState, GridAction, GridInteraction> {
+export function latinView(board: BoardPrefs = noLabels, puzzleId = "sudoku"): View<LatinPuzzle, GridState, GridAction, GridInteraction> {
+  // the legend depends on the puzzle (its clue types), so it describes the one last mounted
+  let shown: LatinPuzzle | null = null;
   return {
-    id: "sudoku.svg",
+    id: `${puzzleId}.svg`,
     name: "grid",
-    puzzle: "sudoku",
+    puzzle: puzzleId,
     settings,
     controls: CONTROLS,
+    get legend() {
+      return shown ? legendFor(shown) : [];
+    },
     mount(root, { session, settings: cfg }) {
       style("sudoku", CSS);
       const p = session.puzzle;
+      shown = p;
       const n = p.n, size = n * n;
       const sides = board.labelSides();
       const clueMg = margins(p);
@@ -460,6 +467,5 @@ export function latinView(board: BoardPrefs = noLabels): View<LatinPuzzle, GridS
 
 /** The same view registered for each puzzle on the engine. */
 export function viewFor(puzzleId: string, board?: BoardPrefs): View<LatinPuzzle, GridState, GridAction, GridInteraction> {
-  const v = latinView(board);
-  return puzzleId === "sudoku" ? v : { ...v, id: `${puzzleId}.svg`, puzzle: puzzleId };
+  return latinView(board, puzzleId);
 }
