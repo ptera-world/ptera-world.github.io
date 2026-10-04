@@ -355,3 +355,12 @@ export function levelNeeded(m: Model, start: Doms, maxLevel: number): number | n
   }
   return null;
 }
+
+/** How many variables deductions up to `level` decide from `start` (in no particular order); -1 on a contradiction. */
+export function decidedBy(m: Model, start: Doms, level: number): number {
+  const k = start.slice();
+  if (!saturate(m, k, level)) return -1;
+  let count = 0;
+  for (const v of k) if (isSingle(v)) count++;
+  return count;
+}
