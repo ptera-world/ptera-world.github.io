@@ -1,6 +1,8 @@
+import type { Session } from "../../core/session";
 import type { Plugin } from "../../core/types";
-import { D, DIRS, R, connectedFrom, link, opp, orientations, type NetPuzzle } from "./grid";
-import { analyse, type NetAction, type NetInteraction, type NetState } from "./logic";
+import { D, DIRS, R, connectedFrom, coord, isTree, link, opp, type NetPuzzle } from "./grid";
+import { analyse, type NetAction, type NetHintFocus, type NetInteraction, type NetState } from "./logic";
+import { solveLogic } from "./solver";
 
 /**
  * Derived-annotation keys shared by the assists and the view.
@@ -20,6 +22,7 @@ export const KEYS = {
 } as const;
 
 type NetPlugin = Plugin<NetPuzzle, NetState, NetAction, NetInteraction>;
+type NetSession = Session<NetPuzzle, NetState, NetAction, NetInteraction>;
 
 /** Sides of matched connections that lie on a cycle (i.e. are not bridges). */
 export function loopSides(p: NetPuzzle, tiles: readonly number[]): Uint8Array {
@@ -146,6 +149,32 @@ const loose: NetPlugin = {
   },
 };
 
+/** Cells set in `now` but not in `before`. */
+function fresh(before: Uint8Array, now: Uint8Array): number[] {
+  const out: number[] = [];
+  now.forEach((v, i) => { if (v && !before[i]) out.push(i); });
+  return out;
+}
+
+/** Fires a mistake effect whenever a move adds cells to `marks`. */
+function flagNew(session: NetSession, owner: string, marks: (p: NetPuzzle, s: NetState) => Uint8Array | null): void {
+  session.hooks.change.tap(({ prev, state, cause }) => {
+    if (cause !== "action") return;
+    const now = marks(session.puzzle, state);
+    const before = now && marks(session.puzzle, prev);
+    if (!now || !before) return;
+    const added = fresh(before, now);
+    if (added.length) session.hooks.fx.call({ kind: "mistake", focus: { cell: added[0]!, cells: added } satisfies NetHintFocus });
+  }, { owner });
+}
+
+function wrongLocks(p: NetPuzzle, s: NetState): Uint8Array | null {
+  const a = analyse(p);
+  if (!a.solution || !a.unique) return null;
+  const sol = a.solution;
+  return Uint8Array.from(s.tiles, (m, i) => (s.locked[i] && m !== sol[i] ? 1 : 0));
+}
+
 const conflicts: NetPlugin = {
   id: "net.conflicts",
   name: "flag clashing locked tiles",
@@ -155,6 +184,7 @@ const conflicts: NetPlugin = {
   enabledByDefault: true,
   setup({ session, owner }) {
     session.hooks.derive.tap((d, { puzzle, state }) => ({ ...d, [KEYS.conflicts]: lockConflicts(puzzle, state) }), { owner });
+    flagNew(session, owner, lockConflicts);
   },
 };
 
@@ -167,32 +197,42 @@ const check: NetPlugin = {
   enabledByDefault: false,
   setup({ session, owner }) {
     session.hooks.derive.tap((d, { puzzle, state }) => {
-      const a = analyse(puzzle);
-      if (!a.solution || !a.unique) return d;
-      const sol = a.solution;
-      return { ...d, [KEYS.wrong]: Uint8Array.from(state.tiles, (m, i) => (state.locked[i] && m !== sol[i] ? 1 : 0)) };
+      const wrong = wrongLocks(puzzle, state);
+      return wrong ? { ...d, [KEYS.wrong]: wrong } : d;
     }, { owner });
+    flagNew(session, owner, wrongLocks);
   },
 };
 
-const jumble: NetPlugin = {
-  id: "net.jumble",
-  name: "jumble command",
-  description: "a key that randomly turns every unlocked tile",
-  category: "tools",
+/** Runs before technique hints, so a wrong lock is pointed out before anything is built on it. */
+const mistakes: NetPlugin = {
+  id: "net.mistakes",
+  name: "hints point out wrong locks first",
+  description: "before suggesting a move, a hint checks your locked tiles against the solution",
+  category: "assists",
   appliesTo: ["net"],
   enabledByDefault: true,
-  commands: ({ session }) => [{
-    id: "net.jumble",
-    label: "jumble unlocked tiles",
-    category: "net",
-    keys: ["j"],
-    run: () => {
-      const { state } = session;
-      const cells = state.tiles.flatMap((m, i) => (!state.locked[i] && orientations(m).length > 1 ? [i] : []));
-      session.dispatch({ type: "rotateMany", cells, turns: cells.map(() => Math.floor(Math.random() * 4)) });
-    },
-  }],
+  setup({ session, owner }) {
+    session.hooks.hint.tap(({ puzzle: p, state: s }) => {
+      if (isTree(p, s.tiles)) return undefined;
+      const a = analyse(p);
+      if (!a.solution) return { message: "this puzzle has no solution" };
+      const wrong = wrongLocks(p, s);
+      const bad = wrong ? fresh(new Uint8Array(wrong.length), wrong) : [];
+      if (bad.length) {
+        return {
+          message: `${coord(p, bad[0]!)} is locked the wrong way round`,
+          focus: { cell: bad[0]!, cells: bad } satisfies NetHintFocus,
+          actions: [{ type: "lock", cells: [bad[0]!], on: false }],
+        };
+      }
+      if (!s.locked.some(Boolean)) return undefined;
+      const givens = s.tiles.map((m, i) => (s.locked[i] ? m : -1));
+      if (solveLogic(p, { tier: 2, givens }).status !== "contradiction") return undefined;
+      const locked = s.locked.flatMap((l, i) => (l ? [i] : []));
+      return { message: "the locked tiles can't all be right", focus: { cell: -1, cells: locked } satisfies NetHintFocus };
+    }, { owner, priority: 50 });
+  },
 };
 
-export const assists: NetPlugin[] = [powered, loops, loose, conflicts, check, jumble];
+export const assists: NetPlugin[] = [powered, loops, loose, conflicts, check, mistakes];

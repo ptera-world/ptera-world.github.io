@@ -16,7 +16,9 @@ export type Rule = "local" | "deadend" | "loop" | "island" | "lookahead";
 export type Tier = 1 | 2 | 3;
 
 export const RULE_TIER: Record<Rule, Tier> = { local: 1, deadend: 1, loop: 2, island: 2, lookahead: 3 };
+/** Easiest first. */
 export const RULES = Object.keys(RULE_TIER) as Rule[];
+const tierRules = (t: Tier): Set<Rule> => new Set(RULES.filter((r) => RULE_TIER[r] <= t));
 
 export interface Step {
   rule: Rule;
@@ -65,6 +67,15 @@ class Solver {
   contra = false;
   trace: Step[] | null;
   used: Record<Rule, number> = { local: 0, deadend: 0, loop: 0, island: 0, lookahead: 0 };
+  /** Rules in force. "local" always applies. */
+  on: Set<Rule> = tierRules(3);
+  /** When set, the first cell a step determines that this accepts halts the solver (`halted`). */
+  watch: ((cell: number) => boolean) | null = null;
+  halted = -1;
+
+  get stopped(): boolean {
+    return this.contra || this.halted >= 0;
+  }
 
   constructor(readonly p: NetPuzzle, trace: boolean) {
     const n = this.n = p.w * p.h;
@@ -131,9 +142,19 @@ class Solver {
     return this.setCand(i, next);
   }
 
+  enqueueAll(): void {
+    for (let i = 0; i < this.n; i++) this.enqueue(i);
+  }
+
   record(rule: Rule, cells: number[], focus: () => number[]): void {
     this.used[rule]++;
-    this.trace?.push({ rule, cells, focus: focus(), determined: cells.filter((c) => popcount(this.cand[c]!) === 1) });
+    if (!this.trace && !this.watch) return;
+    const determined = cells.filter((c) => popcount(this.cand[c]!) === 1);
+    this.trace?.push({ rule, cells, focus: focus(), determined });
+    if (this.watch) {
+      const hit = determined.find(this.watch);
+      if (hit !== undefined) this.halted = hit;
+    }
   }
 
   neighbours(i: number): number[] {
@@ -155,8 +176,8 @@ class Solver {
   }
 
   local(): void {
-    const deadends = this.n > 2;
-    while (this.queue.length && !this.contra) {
+    const deadends = this.n > 2 && this.on.has("deadend");
+    while (this.queue.length && !this.stopped) {
       const i = this.queue.pop()!;
       this.queued[i] = 0;
       let shut = 0, open = 0, pair = 0;
@@ -172,7 +193,7 @@ class Solver {
         if (deadends && this.deg[i] === 1 && this.deg[j] === 1) pair |= d;
       }
       if (this.restrict(i, shut, open)) this.record("local", [i], () => [i, ...this.neighbours(i)]);
-      if (pair && !this.contra && this.restrict(i, pair, 0)) {
+      if (pair && !this.stopped && this.restrict(i, pair, 0)) {
         this.record("deadend", [i], () => [i, ...this.neighbours(i).filter((j) => this.deg[j] === 1)]);
       }
     }
@@ -237,6 +258,7 @@ class Solver {
       return out;
     };
 
+    const loops = this.on.has("loop"), islands = this.on.has("island");
     let changed = false;
     const roots: number[] = [];
     const touch: number[] = [];
@@ -261,15 +283,17 @@ class Solver {
           roots.push(root[j]!);
         }
         if (loopAt >= 0) {
+          if (!loops) continue;
           this.setCand(c, this.cand[c]! & ~(1 << ko));
           this.record("loop", [c], () => {
             const other = touch.length > 1 ? touch.find((t) => t !== loopAt && root[t] === root[loopAt]) ?? c : c;
             return [c, ...this.path(other, loopAt)];
           });
           changed = true;
-          if (this.contra) return true;
+          if (this.stopped) return true;
           continue;
         }
+        if (!islands) continue;
         let total = 0;
         for (const r of roots) total += size[r]!;
         if (total >= n || this.canLeave(c, o, roots, root, frontier)) continue;
@@ -277,7 +301,7 @@ class Solver {
         const group = [...roots];
         this.record("island", [c], () => [c, ...members(group).filter((x) => x !== c)]);
         changed = true;
-        if (this.contra) return true;
+        if (this.stopped) return true;
       }
     }
     return changed;
@@ -333,12 +357,12 @@ class Solver {
     return out;
   }
 
-  propagate(tier: Tier): void {
+  propagate(): void {
     for (;;) {
       this.local();
-      if (this.contra) return;
-      if (tier >= 2 && this.global()) {
-        if (this.contra) return;
+      if (this.stopped) return;
+      if ((this.on.has("loop") || this.on.has("island")) && this.global()) {
+        if (this.stopped) return;
         continue;
       }
       break;
@@ -365,14 +389,15 @@ class Solver {
       for (let bit = 1; bit <= c; bit <<= 1) {
         if (!(c & bit)) continue;
         const snap = this.snapshot();
-        const trace = this.trace, used = { ...this.used };
+        const { trace, watch, on } = this, used = { ...this.used };
         this.trace = null;
+        this.watch = null;
+        this.on = tierRules(2);
         this.setCand(i, bit);
-        this.propagate(2);
+        this.propagate();
         const bad = this.contra;
         this.restore(snap);
-        this.trace = trace;
-        this.used = used;
+        Object.assign(this, { trace, watch, on, used });
         if (bad) {
           this.setCand(i, c & ~bit);
           this.record("lookahead", [i], () => [i]);
@@ -382,21 +407,60 @@ class Solver {
     }
     return false;
   }
+
+  /** Propagate, plus lookahead while it's on, until nothing changes or the solver stops. */
+  run(): void {
+    while (!this.stopped) {
+      this.propagate();
+      if (this.stopped || this.determined()) break;
+      if (this.on.has("lookahead") && this.lookahead()) continue;
+      break;
+    }
+  }
 }
 
 /** Run the logic solver as far as the allowed rules reach. */
 export function solveLogic(p: NetPuzzle, opts: SolveOptions = {}): SolveResult {
-  const tier = opts.tier ?? 3;
   const s = new Solver(p, opts.trace ?? false);
+  s.on = tierRules(opts.tier ?? 3);
   if (opts.givens) applyGivens(s, opts.givens);
-  while (!s.contra) {
-    s.propagate(tier);
-    if (s.contra || s.determined()) break;
-    if (tier >= 3 && s.lookahead()) continue;
-    break;
-  }
+  s.run();
   const status = s.contra ? "contradiction" : s.determined() ? "solved" : "stuck";
   return { status, masks: s.masks(), steps: s.trace ?? [], used: s.used };
+}
+
+/** A tile pinned down by `rule`: the rules easier than it don't determine it from the givens, the rule does. */
+export interface Deduction {
+  cell: number;
+  mask: number;
+  rule: Rule;
+  /** Steps after the easier rules ran out, ending with the one that determined `cell`. */
+  steps: Step[];
+}
+
+/**
+ * The first tile that `rule` (with every easier rule) determines and the easier rules alone
+ * don't, given `givens` (mask per cell, -1 where unknown). Null if there is none or the givens
+ * contradict each other.
+ */
+export function deduce(p: NetPuzzle, givens: readonly number[], rule: Rule): Deduction | null {
+  const idx = RULES.indexOf(rule);
+  const s = new Solver(p, false);
+  applyGivens(s, givens);
+  if (s.contra) return null;
+  if (idx > 0) {
+    s.on = new Set(RULES.slice(0, idx));
+    s.run();
+    if (s.contra) return null;
+  }
+  const known = Uint8Array.from(s.cand, (c) => (popcount(c) === 1 ? 1 : 0));
+  s.on = new Set(RULES.slice(0, idx + 1));
+  s.trace = [];
+  s.watch = (c) => !known[c];
+  s.enqueueAll();
+  s.run();
+  if (s.halted < 0 || s.contra) return null;
+  return { cell: s.halted, mask: s.masks()[s.halted]!, rule, steps: s.trace };
 }
 
 function applyGivens(s: Solver, givens: readonly number[]): void {
@@ -414,11 +478,12 @@ function applyGivens(s: Solver, givens: readonly number[]): void {
  */
 export function searchSolutions(p: NetPuzzle, limit = 2, givens?: readonly number[]): { count: number; first: number[] | null } {
   const s = new Solver(p, false);
+  s.on = tierRules(2);
   if (givens) applyGivens(s, givens);
   let count = 0;
   let first: number[] | null = null;
   const dfs = (): void => {
-    s.propagate(2);
+    s.propagate();
     if (s.contra) return;
     let best = -1, bestPop = 5;
     for (let i = 0; i < s.n; i++) {

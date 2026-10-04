@@ -2,7 +2,7 @@ import type { Hint, PuzzleDef, Rating } from "../../core/types";
 import { formats } from "./formats";
 import { generate, params, tierNeeded } from "./generate";
 import { coord, isTree, rotate, turnsBetween, type NetPuzzle } from "./grid";
-import { RULE_TIER, TIER_LABEL, searchSolutions, solveLogic, type Rule, type Step } from "./solver";
+import { TIER_LABEL, searchSolutions, solveLogic, type Rule } from "./solver";
 
 export interface NetState {
   /** Current mask per cell; always a rotation of the puzzle's tile there. */
@@ -32,10 +32,12 @@ export interface NetInteraction {
 }
 
 export interface NetHintFocus {
-  /** The tile the hint is about. */
+  /** The tile the hint is about; -1 when the hint only points at an area. */
   cell: number;
   /** Tiles that justify it. */
   cells: number[];
+  /** Orientation `cell` should take, shown as a ghost. */
+  mask?: number;
 }
 
 interface Analysis {
@@ -105,63 +107,17 @@ function reduce(p: NetPuzzle, s: NetState, a: NetAction): NetState {
   }
 }
 
-const REASON: Record<Rule, string> = {
-  local: "it's the only way it fits the walls and the tiles around it",
-  deadend: "any other way joins two dead ends into a pair that's cut off from everything",
-  loop: "the other ways it could turn would close a loop",
-  island: "the other ways it could turn would seal off a group from the rest of the network",
-  lookahead: "try any other way and it runs into a contradiction a few moves later",
-};
-
+/** Last resort when no hint-enabled technique applies: one tile straight from the solution. */
 function hint(p: NetPuzzle, s: NetState): Hint<NetAction> | null {
   if (isTree(p, s.tiles)) return null;
-  const a = analyse(p);
-  if (!a.solution) return { message: "this puzzle has no solution" };
-  const sol = a.solution;
-  if (a.unique) {
-    const wrong = s.locked.flatMap((l, i) => (l && s.tiles[i] !== sol[i] ? [i] : []));
-    if (wrong.length) {
-      return {
-        message: `${coord(p, wrong[0]!)} is locked the wrong way round`,
-        focus: { cell: wrong[0]!, cells: wrong } satisfies NetHintFocus,
-        actions: [{ type: "lock", cells: [wrong[0]!], on: false }],
-      };
-    }
-  }
-  const givens = s.tiles.map((m, i) => (s.locked[i] ? m : -1));
-  const r = solveLogic(p, { givens, trace: true });
-  if (r.status === "contradiction") {
-    const locked = s.locked.flatMap((l, i) => (l ? [i] : []));
-    return { message: "the locked tiles can't all be right", focus: { cell: locked[0] ?? 0, cells: locked } satisfies NetHintFocus };
-  }
-  const steps = r.steps;
-  for (let k = 0; k < steps.length; k++) {
-    for (const c of steps[k]!.determined) {
-      if (s.locked[c] || s.tiles[c] === r.masks[c]) continue;
-      return explain(p, c, r.masks[c]!, steps.slice(0, k + 1));
-    }
-  }
+  const sol = analyse(p).solution;
+  if (!sol) return { message: "this puzzle has no solution" };
   const c = s.tiles.findIndex((m, i) => !s.locked[i] && m !== sol[i]);
   if (c < 0) return null;
   return {
-    message: `logic gets stuck here, so this one's straight from the solution: turn ${coord(p, c)} like this`,
-    focus: { cell: c, cells: [c] } satisfies NetHintFocus,
+    message: `no technique you have hints on finds anything here, so this one's straight from the solution: turn ${coord(p, c)} like this`,
+    focus: { cell: c, cells: [c], mask: sol[c]! } satisfies NetHintFocus,
     actions: [{ type: "set", cell: c, mask: sol[c]!, lock: true }],
-  };
-}
-
-function explain(p: NetPuzzle, c: number, mask: number, steps: Step[]): Hint<NetAction> {
-  let rule: Rule = "local";
-  const focus = new Set<number>([c]);
-  for (const st of steps) {
-    if (!st.cells.includes(c)) continue;
-    if (RULE_TIER[st.rule] >= RULE_TIER[rule]) rule = st.rule;
-  }
-  for (const st of steps) if (st.cells.includes(c) && st.rule === rule) for (const f of st.focus) focus.add(f);
-  return {
-    message: `turn ${coord(p, c)} like this: ${REASON[rule]}`,
-    focus: { cell: c, cells: [...focus] } satisfies NetHintFocus,
-    actions: [{ type: "set", cell: c, mask, lock: true }],
   };
 }
 
@@ -175,7 +131,9 @@ function rate(p: NetPuzzle): Rating {
 
 export const net: PuzzleDef<NetPuzzle, NetState, NetAction, NetInteraction, typeof params> = {
   id: "net",
-  name: "net",
+  name: "pipes",
+  aliases: ["net", "netwalk", "network", "knetwalk", "freenet"],
+  tags: ["logic", "grid", "rotation", "connection"],
   description: "turn the tiles so every pipe joins up into one network, with no loops and no loose ends.",
   generatorVersion: 1,
   params,
@@ -198,6 +156,14 @@ export const net: PuzzleDef<NetPuzzle, NetState, NetAction, NetInteraction, type
     return sol ? { tiles: sol.slice(), locked: sol.map(() => 0) } : null;
   },
   hint,
+  isRetraction: (a) => a.type === "lock" && a.on === false,
+  rules: (p) => [
+    "turn the tiles. every pipe end has to meet a pipe end on the next tile.",
+    "everything joins up into one network, with no loops.",
+    ...(p.barriers.some((b) => b) ? ["pipes can't cross the thick walls."] : []),
+    p.wrap ? "the edges wrap round: a pipe off one side comes back on the opposite side." : "pipes can't point off the edge of the board.",
+  ],
+  features: (p) => [...(p.wrap ? ["wrap"] : []), ...(p.barriers.some((b) => b) ? ["walls"] : [])],
   rate,
   describe: (p) => `${p.w}×${p.h}${p.wrap ? " wrapping" : ""}${p.barriers.some((b) => b) ? " with walls" : ""}`,
 };

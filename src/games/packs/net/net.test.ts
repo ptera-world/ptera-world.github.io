@@ -1,11 +1,16 @@
 import { expect, test } from "bun:test";
 import { generate as coreGenerate } from "../../core/generate";
 import { createRng } from "../../core/rng";
+import { PluginHost } from "../../core/plugins";
+import { Registry } from "../../core/registry";
 import { Session } from "../../core/session";
+import { TechniqueHost, applyStep, findPracticePosition, firstStep } from "../../core/techniques";
+import { register } from "./index";
+import { techniques } from "./techniques";
 import { loopSides, lockConflicts } from "./assists";
 import { compactFormat, gridFormat, sgtFormat } from "./formats";
 import { D, DIRS, L, R, U, isTree, neighbour, opp, rotate, type NetPuzzle } from "./grid";
-import { net, type NetAction, type NetState } from "./logic";
+import { net, type NetAction, type NetHintFocus, type NetState } from "./logic";
 import { searchSolutions, solveLogic, type Tier } from "./solver";
 
 const gen = (params: Record<string, unknown>, seed: string) =>
@@ -135,24 +140,124 @@ test("reducer: locks block turning, invalid sets are ignored, no-ops keep identi
   expect(before.tiles[0]).toBe(9);
 });
 
-test("following hints from scratch solves the puzzle", async () => {
+function hosted(p: NetPuzzle) {
+  const registry = new Registry();
+  register(registry);
+  const session = new Session(net, p, { kind: "imported" });
+  const host = new TechniqueHost(registry, session);
+  const plugins = new PluginHost(registry, session);
+  return { registry, session, host, plugins };
+}
+
+test("techniques alone solve generated puzzles, each step matching the solution", async () => {
+  const hardestFor: Record<string, number> = { easy: 2, normal: 4, hard: 5 };
+  for (const params of [
+    { width: 6, height: 6, difficulty: "easy" },
+    { width: 7, height: 7, difficulty: "normal" },
+    { width: 6, height: 5, wrap: true, difficulty: "hard" },
+    { width: 8, height: 8, barriers: 40, difficulty: "normal" },
+  ]) {
+    for (const seed of ["a", "b"]) {
+      const p = await gen(params, seed);
+      const sol = net.solve!(p)!.tiles;
+      let s = net.init(p);
+      let hardest = 0;
+      for (let k = 0; k < 500 && !net.isSolved(p, s); k++) {
+        const hit = firstStep(net, techniques, p, s);
+        expect(hit).not.toBeNull();
+        const act = hit!.step.actions[0] as Extract<NetAction, { type: "set" }>;
+        expect(act.mask).toBe(sol[act.cell]!);
+        hardest = Math.max(hardest, hit!.technique.level);
+        s = applyStep(net, p, s, hit!.step);
+      }
+      expect(net.isSolved(p, s)).toBe(true);
+      expect(hardest).toBeLessThanOrEqual(hardestFor[params.difficulty]!);
+    }
+  }
+});
+
+test("a technique only reports tiles the easier ones can't pin down", async () => {
+  const p = await gen({ width: 7, height: 7, difficulty: "hard" }, "label");
+  const cellOf = (st: { actions: NetAction[] }) => (st.actions[0] as Extract<NetAction, { type: "set" }>).cell;
+  let s = net.init(p);
+  const seen = new Set<string>();
+  for (let k = 0; k < 500 && !net.isSolved(p, s); k++) {
+    for (const t of techniques) {
+      if (t.level === 1) continue;
+      const step = t.find(p, s);
+      if (!step) continue;
+      seen.add(t.id);
+      const easier = techniques.filter((e) => e.level < t.level);
+      let e = s;
+      for (let guard = 0; guard < 500; guard++) {
+        const hit = firstStep(net, easier, p, e);
+        if (!hit) break;
+        e = applyStep(net, p, e, hit.step);
+      }
+      expect(e.locked[cellOf(step)]).toBe(0);
+    }
+    s = applyStep(net, p, s, firstStep(net, techniques, p, s)!.step);
+  }
+  expect(seen.size).toBeGreaterThan(0);
+});
+
+test("hints: wrong locks come first, then techniques carry the puzzle through", async () => {
   for (const params of [{ width: 6, height: 6, difficulty: "normal" }, { width: 6, height: 5, wrap: true, difficulty: "hard" }]) {
     const p = await gen(params, "hints");
-    const session = new Session(net, p, { kind: "imported" });
-    session.dispatch({ type: "lock", cells: [0] });
-    const firstWrong = session.hint();
-    if (session.state.tiles[0] !== net.solve!(p)!.tiles[0]) {
-      expect(firstWrong?.actions?.[0]).toEqual({ type: "lock", cells: [0], on: false });
-    }
+    const { session } = hosted(p);
+    const sol = net.solve!(p)!.tiles;
+    const bad = session.state.tiles.findIndex((m, i) => m !== sol[i]);
+    session.dispatch({ type: "lock", cells: [bad], on: true });
+    const first = session.hint();
+    expect(first?.actions?.[0]).toEqual({ type: "lock", cells: [bad], on: false });
     for (let k = 0; k < 400 && !session.solved; k++) {
       const h = session.hint();
-      expect(h?.actions?.[0]).toBeDefined();
+      const actions = h?.actions ?? h?.more?.actions;
+      expect(actions?.length).toBeGreaterThan(0);
       expect(h!.message.length).toBeGreaterThan(0);
-      expect(session.dispatch(h!.actions![0]!)).toBe(true);
+      session.batch(() => { for (const a of actions!) session.dispatch(a); });
     }
     expect(session.solved).toBe(true);
   }
 });
+
+test("technique hints nudge first, then explain with a ghost of the answer", async () => {
+  const p = await gen({ width: 5, height: 5, difficulty: "easy" }, "nudge");
+  const { session } = hosted(p);
+  const h = session.hint()!;
+  expect(h.level).toBe(1);
+  expect((h.focus as NetHintFocus).cell).toBe(-1);
+  const full = h.more!;
+  const f = full.focus as NetHintFocus;
+  expect(f.cell).toBeGreaterThanOrEqual(0);
+  expect(f.mask).toBe(net.solve!(p)!.tiles[f.cell]);
+  expect(full.message).toMatch(/lock it/);
+});
+
+test("unlocking is a retraction; locking and turning aren't", () => {
+  expect(net.isRetraction!({ type: "lock", cells: [0], on: false })).toBe(true);
+  expect(net.isRetraction!({ type: "lock", cells: [0], on: true })).toBe(false);
+  expect(net.isRetraction!({ type: "rotate", cell: 0, turns: 1 })).toBe(false);
+});
+
+test("features and wrap-only widget", async () => {
+  const wrap = await gen({ width: 5, height: 5, wrap: true }, "f");
+  const flat = await gen({ width: 5, height: 5, barriers: 50 }, "f");
+  expect(net.features!(wrap)).toEqual(["wrap"]);
+  expect(net.features!(flat)).toEqual(["walls"]);
+  const registry = new Registry();
+  register(registry);
+  expect(registry.widgetsFor("net", wrap).map((w) => w.id)).toContain("net.scroll");
+  expect(registry.widgetsFor("net", flat).map((w) => w.id)).not.toContain("net.scroll");
+});
+
+test("every technique has a practice position", async () => {
+  for (const t of techniques) {
+    const pos = await findPracticePosition(net, techniques, t, "practice", new AbortController().signal);
+    expect(pos).not.toBeNull();
+    expect(pos!.step.actions.length).toBe(1);
+  }
+}, 60_000);
 
 test("loop and conflict annotations", () => {
   const p: NetPuzzle = { w: 2, h: 2, wrap: false, tiles: [9, 12, 3, 6], barriers: [0, 0, 0, 0], source: 0 };
