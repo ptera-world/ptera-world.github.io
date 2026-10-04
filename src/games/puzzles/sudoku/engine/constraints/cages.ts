@@ -48,6 +48,7 @@ export const killer: ConstraintType<KillerSpec> = {
   label: "killer cage",
   rule: "digits in a dashed cage don't repeat and sum to its clue",
   kind: "clue",
+  combos: true,
   validate: (c, n) => validCells(c.cells, n, n) ?? (c.sum === undefined || Number.isInteger(c.sum) ? null : "sum must be a whole number"),
   compile(c, n) {
     const label = c.sum === undefined ? "cage" : `cage ${c.sum}`;
@@ -97,6 +98,7 @@ export const keen: ConstraintType<KeenSpec> = {
   label: "arithmetic cage",
   rule: "the digits in each cage combine with its operation to make its number (− and ÷ cages have two cells)",
   kind: "clue",
+  combos: true,
   validate(c, n) {
     const e = validCells(c.cells, n, n * n);
     if (e) return e;
@@ -125,8 +127,8 @@ export const keen: ConstraintType<KeenSpec> = {
   },
   cells: (c) => c.cells,
   render(c, ctx) {
-    ctx.layer.over.append(ctx.svg("path", { d: insetOutline(ctx.n, ctx.S, c.cells, ctx.S * 0.04), class: "sdk-keen" }));
-    cornerLabel(ctx, anchorCell(c.cells), `${c.target}${OP_GLYPH[c.op]}`, "sdk-keen-label");
+    ctx.layer.over.append(ctx.svg("path", { d: insetOutline(ctx.n, ctx.S, c.cells, 0), class: "sdk-keen" }));
+    cornerLabel(ctx, anchorCell(c.cells), `${c.target}${OP_GLYPH[c.op]}`, "sdk-keen-label", 1.3);
   },
 };
 

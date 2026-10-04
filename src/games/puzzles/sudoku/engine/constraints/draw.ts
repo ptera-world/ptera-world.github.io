@@ -22,13 +22,13 @@ export function insetOutline(n: number, S: number, cells: readonly number[], ins
 /** Top-left-most cell (smallest row, then column), where cage labels go. */
 export const anchorCell = (cells: readonly number[]): number => Math.min(...cells);
 
-export function cornerLabel(ctx: RenderCtx, cell: number, text: string, cls: string): void {
+export function cornerLabel(ctx: RenderCtx, cell: number, text: string, cls: string, scale = 1): void {
   const { S, n } = ctx;
   const x = (cell % n) * S + S * 0.05, y = Math.floor(cell / n) * S + S * 0.05;
-  const w = Math.max(1, text.length) * S * 0.13 + S * 0.04;
+  const w = (Math.max(1, text.length) * S * 0.12 + S * 0.04) * scale;
   ctx.layer.over.append(
-    ctx.svg("rect", { x, y, width: w, height: S * 0.24, class: "sdk-label-bg" }),
-    ctx.svg("text", { x: x + S * 0.02, y: y + S * 0.2, class: `sdk-label ${cls}` }, text));
+    ctx.svg("rect", { x, y, width: w, height: S * 0.24 * scale, class: "sdk-label-bg" }),
+    ctx.svg("text", { x: x + S * 0.02, y: y + S * 0.2 * scale, class: `sdk-label ${cls}`, style: scale === 1 ? null : `font-size:${S * 0.19 * scale}px` }, text));
   ctx.reserveCorner(cell);
 }
 

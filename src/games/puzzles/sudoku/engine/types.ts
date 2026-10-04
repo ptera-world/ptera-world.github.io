@@ -99,6 +99,8 @@ export interface ConstraintType<C extends ConstraintSpec = ConstraintSpec> {
    */
   repair?(c: C, cell: number, solution: readonly number[], n: number): C[] | null;
   cells?(c: C, n: number): number[];
+  /** Players benefit from seeing this rule's possible digit combinations (cages). */
+  combos?: boolean;
   margin?(c: C, n: number): Margins;
   render?(c: C, ctx: RenderCtx): void;
 }

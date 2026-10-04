@@ -34,7 +34,7 @@ export const kropki: ConstraintType<KropkiSpec> = {
   cells: (c) => [c.a, c.b],
   render(c, ctx) {
     const [x, y] = midpoint(ctx, c.a, c.b);
-    ctx.layer.over.append(ctx.svg("circle", { cx: x, cy: y, r: ctx.S * 0.11, class: `sdk-kropki sdk-kropki-${c.color}` }));
+    ctx.layer.over.append(ctx.svg("circle", { cx: x, cy: y, r: ctx.S * 0.12, class: `sdk-kropki sdk-kropki-${c.color}` }));
   },
 };
 
@@ -60,7 +60,7 @@ export const xv: ConstraintType<XvSpec> = {
 };
 
 function edgeGlyph(ctx: RenderCtx, x: number, y: number, text: string, cls: string): void {
-  const r = ctx.S * 0.14;
+  const r = ctx.S * 0.16;
   ctx.layer.over.append(
     ctx.svg("rect", { x: x - r, y: y - r, width: 2 * r, height: 2 * r, rx: r * 0.4, class: "sdk-label-bg" }),
     ctx.svg("text", { x, y, class: cls }, text));

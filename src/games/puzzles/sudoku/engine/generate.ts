@@ -90,6 +90,7 @@ async function makeUnique(d: Draft, rng: Rng, ctx: GenerateContext, nodes: numbe
 /**
  * Drop givens (in symmetry groups) and removable clues whenever the solution stays unique.
  * "givens-first" strips every given it can before touching clues; "mixed" interleaves them.
+ * The last instance of each clue type always stays, so a requested variant never vanishes.
  */
 async function minimize(d: Draft, rng: Rng, ctx: GenerateContext, sym: Symmetry, nodes: number, order: RemovalOrder): Promise<void> {
   let model: Model = compile(d.n, d.constraints);
@@ -105,6 +106,7 @@ async function minimize(d: Draft, rng: Rng, ctx: GenerateContext, sym: Symmetry,
       if (uniqueness(model, d.givens, nodes) !== 1) it.group.forEach((c, i) => { d.givens[c] = saved[i]!; });
     } else {
       const without = d.constraints.filter((s) => s !== it.spec);
+      if (!without.some((s) => s.type === it.spec.type)) continue;
       const m = compile(d.n, without);
       if (uniqueness(m, d.givens, nodes) === 1) {
         d.constraints = without;
