@@ -74,6 +74,34 @@ export interface Labels {
 
 const noLabels: Labels = { labelSides: () => new Set() };
 
+const sw = (body: string) => `<svg viewBox="0 0 20 20">${body}</svg>`;
+const edge = (stroke: string, width: number, extra = "") => `<line x1="3" y1="10" x2="17" y2="10" stroke="${stroke}" stroke-width="${width}" stroke-linecap="round" ${extra}/>`;
+const dots = `<circle cx="3" cy="10" r="1.2" fill="var(--text-dim)"/><circle cx="17" cy="10" r="1.2" fill="var(--text-dim)"/>`;
+const dot = (fill: string) => `<circle cx="10" cy="10" r="2.6" fill="${fill}"/>`;
+const num = (fill: string, extra = "") => `<text x="10" y="11" font-size="13" font-weight="600" text-anchor="middle" dominant-baseline="central" fill="${fill}" ${extra}>3</text>`;
+const cell = (fill: string) => `<rect x="2" y="2" width="16" height="16" fill="${fill}" stroke="var(--border)" stroke-width="0.6"/>`;
+const cross = (stroke: string) => `${edge("var(--border)", 0.6)}<path d="M8 8L12 12M8 12L12 8" stroke="${stroke}" stroke-width="1.2" stroke-linecap="round"/>`;
+
+/** Every colour and mark the board can show, for the how-to-play card. */
+const LEGEND: readonly { sample: string; meaning: string }[] = [
+  { sample: sw(edge("var(--border)", 0.6) + dots), meaning: "an undecided edge between two dots" },
+  { sample: sw(edge("var(--text)", 2.4) + dots), meaning: "a line you drew: part of the loop" },
+  { sample: sw(cross("var(--text-dim)")), meaning: "a cross: your note that this edge isn't part of the loop" },
+  { sample: sw(num("var(--text)")), meaning: "a number: how many sides of its cell the loop uses" },
+  { sample: sw(num("var(--text-dim)", 'opacity="0.35" style="opacity: var(--done-opacity)"')), meaning: "a faded number already has all its lines" },
+  { sample: sw(cell("var(--danger-soft)") + num("var(--danger)")), meaning: "a red number has too many lines, or too few edges left to reach its count" },
+  { sample: sw(dot("var(--danger)")), meaning: "a red dot has three or more lines, or a line that can't carry on" },
+  { sample: sw(dot("var(--warn)")), meaning: "an orange dot is where a line stops for now (a loose end)" },
+  { sample: sw(edge("var(--warn)", 2.4) + dots), meaning: "orange lines form a loop that closed too early, leaving other lines out" },
+  { sample: sw(edge("var(--danger)", 2.4) + dots), meaning: "a red line or cross disagrees with the answer (when \"show mistakes\" is on)" },
+  { sample: sw(`<line x1="3" y1="10" x2="10" y2="10" stroke="var(--loopy-seg0, #e8a46a)" stroke-width="2.4" stroke-linecap="round"/><line x1="10" y1="10" x2="17" y2="10" stroke="var(--loopy-seg1, #7ab8e8)" stroke-width="2.4" stroke-linecap="round"/>`), meaning: "each separate piece of line in its own colour (when that check is on)" },
+  { sample: sw(cell("var(--accent-soft)")), meaning: "shaded inside the loop, worked out from your lines and crosses (when shading is on)" },
+  { sample: sw(cell("var(--surface-2)")), meaning: "shaded outside the loop (when outside shading is on)" },
+  { sample: sw(cell("var(--hint-soft)") + edge("var(--hint)", 2.4, 'stroke-dasharray="2 1.6"')), meaning: "what the current hint is talking about" },
+  { sample: sw(edge("var(--focus)", 4, 'opacity="0.55"')), meaning: "the keyboard cursor (only while you use the keyboard)" },
+  { sample: sw(edge("var(--accent)", 2.4) + dots), meaning: "lines turn this colour once the puzzle is solved" },
+];
+
 /** A touch held this long without moving 10px opens the shell's board menu, so it isn't also a tap. */
 const MENU_HOLD_MS = 550;
 
@@ -175,6 +203,7 @@ export function makeLoopyView(look: Look = plainLook, labels: Labels = noLabels)
     name: "board",
     puzzle: "loopy",
     settings,
+    legend: LEGEND,
     controls: [
       { how: "tap an edge (touch)", what: "cycles it: line, then cross, then empty. in settings, taps can draw lines only" },
       { how: "drag along the dots (touch)", what: "draws a line through them; starting on a line rubs lines out instead" },
