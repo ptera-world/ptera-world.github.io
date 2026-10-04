@@ -316,6 +316,7 @@ export function netView({ look = (_id, fallback) => fallback, labelSides = () =>
       const toggleLock = (cell: number) => session.dispatch({ type: "lock", cells: [cell], on: !session.state.locked[cell] });
       const setCursor = (cell: number) => session.setInteraction((i) => (i.cursor === cell ? i : { ...i, cursor: cell }));
       const startPaint = (cell: number) => {
+        if (session.locked) return;
         session.setInteraction((i) => ({ ...i, cursor: cell, drag: { on: !session.state.locked[cell], cells: [cell] } }));
       };
       const extendPaint = (cell: number) => {
