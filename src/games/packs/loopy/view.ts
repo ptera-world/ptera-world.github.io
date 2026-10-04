@@ -1,5 +1,6 @@
 import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
+import { colName, rowName, type Side } from "../../ui/board";
 import { s, style } from "../../ui/dom";
 import { CROSS, LINE, UNKNOWN, type EdgeState } from "./board";
 import { gridOf, type LoopyAction, type LoopyFocus, type LoopyInteraction, type LoopyPuzzle, type LoopyState } from "./def";
@@ -42,6 +43,7 @@ const CSS = `
 .loopy-board .over.preview.erase { stroke: var(--danger); stroke-width: var(--uw); }
 .loopy-board .over.preview.cross { stroke: var(--text-dim); stroke-width: var(--xw); }
 .loopy-board:focus { outline: none; }
+.loopy-board .label { fill: var(--text-dim); font-family: var(--mono); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
 `;
 
 const settings = defineSchema({
@@ -49,7 +51,7 @@ const settings = defineSchema({
     type: "enum", label: "tap on touch screens", default: "cycle",
     options: [
       { value: "cycle", label: "cycles line → cross → empty" },
-      { value: "line", label: "toggles a line (long-press to cross)" },
+      { value: "line", label: "toggles a line (hold for the menu to cross)" },
     ],
   },
   hover: { type: "bool", label: "highlight the edge under the mouse", default: true },
@@ -65,6 +67,16 @@ export interface Look {
 
 const plainLook: Look = { asset: (_id, fallback) => fallback };
 
+/** Which board edges carry column/row labels (a player setting owned by the shell). */
+export interface Labels {
+  labelSides(): ReadonlySet<Side>;
+}
+
+const noLabels: Labels = { labelSides: () => new Set() };
+
+/** A touch held this long without moving 10px opens the shell's board menu, so it isn't also a tap. */
+const MENU_HOLD_MS = 550;
+
 /** Default cross mark; its colour follows the mark's state (currentColor / inherited stroke). */
 const CROSS_MARK = `<path d="M-1 -1L1 1M-1 1L1 -1" fill="none" stroke-width="0.5" stroke-linecap="round"/>`;
 
@@ -76,6 +88,9 @@ interface Gesture {
   touch: boolean;
   x0: number;
   y0: number;
+  /** Where it went down on screen, to tell a hold from a drag the same way the shell does. */
+  cx: number;
+  cy: number;
   edge0: number;
   dragging: boolean;
   value: EdgeState | null;
@@ -154,21 +169,29 @@ function inradius(g: Grid, f: number): number {
 }
 
 /** The board. Every input goes through commands (keys and mouse buttons are rebindable); touch is handled here. */
-export function makeLoopyView(look: Look = plainLook): View<LoopyPuzzle, LoopyState, LoopyAction, LoopyInteraction> {
+export function makeLoopyView(look: Look = plainLook, labels: Labels = noLabels): View<LoopyPuzzle, LoopyState, LoopyAction, LoopyInteraction> {
   return {
     id: "loopy.svg",
     name: "board",
     puzzle: "loopy",
     settings,
+    controls: [
+      { how: "tap an edge (touch)", what: "cycles it: line, then cross, then empty. in settings, taps can draw lines only" },
+      { how: "drag along the dots (touch)", what: "draws a line through them; starting on a line rubs lines out instead" },
+      { how: "hold an edge (touch)", what: "opens a menu to draw, cross or clear that edge" },
+    ],
     mount(root, { session, settings: cfg }) {
       style("loopy", CSS);
       const p = session.puzzle;
       const g = gridOf(p);
       const u = g.unit;
       const pad = u * 0.5;
-      const vbW = g.maxX - g.minX + 2 * pad, vbH = g.maxY - g.minY + 2 * pad;
+      const sides = g.cells ? labels.labelSides() : new Set<Side>();
+      const lab = u * 0.6;
+      const x0 = g.minX - pad - (sides.has("left") ? lab : 0), y0 = g.minY - pad - (sides.has("top") ? lab : 0);
+      const vbW = g.maxX + pad + (sides.has("right") ? lab : 0) - x0, vbH = g.maxY + pad + (sides.has("bottom") ? lab : 0) - y0;
       const svg = s("svg", {
-        viewBox: `${g.minX - pad} ${g.minY - pad} ${vbW} ${vbH}`,
+        viewBox: `${x0} ${y0} ${vbW} ${vbH}`,
         class: "loopy-board", role: "application", "aria-label": `slitherlink puzzle, ${g.nf} cells`,
         style: `--lw:${u * 0.11};--uw:${u * 0.025};--xw:${u * 0.05};--cw:${u * 0.22};--dash:${u * 0.12} ${u * 0.1}`,
       });
@@ -177,8 +200,27 @@ export function makeLoopyView(look: Look = plainLook): View<LoopyPuzzle, LoopySt
       const art = look.asset("loopy.cross", CROSS_MARK).trim();
       if (art.startsWith("<")) mark.innerHTML = art;
       else mark.append(s("image", { href: art, x: -1, y: -1, width: 2, height: 2 }));
-      const gFaces = s("g"), gEdges = s("g"), gX = s("g"), gDots = s("g"), gClues = s("g"), gOver = s("g");
-      svg.append(s("defs", null, mark), gFaces, gEdges, gX, gDots, gClues, gOver);
+      const gFaces = s("g"), gEdges = s("g"), gX = s("g"), gDots = s("g"), gClues = s("g"), gOver = s("g"), gLabels = s("g");
+      svg.append(s("defs", null, mark), gFaces, gEdges, gX, gDots, gClues, gOver, gLabels);
+      if (g.cells && sides.size) {
+        // a column's label sits at the mean x of its cells' centres; a row's at the mean y
+        const colX = new Map<number, number[]>(), rowY = new Map<number, number[]>();
+        g.cells.forEach(([c, r], f) => {
+          (colX.get(c) ?? colX.set(c, []).get(c)!).push(g.fcx[f]!);
+          (rowY.get(r) ?? rowY.set(r, []).get(r)!).push(g.fcy[f]!);
+        });
+        const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
+        const size = u * 0.36;
+        const text = (x: number, y: number, t: string) => gLabels.append(s("text", { class: "label", x, y, "font-size": size }, t));
+        for (const [c, xs] of colX) {
+          if (sides.has("top")) text(mean(xs), g.minY - pad - lab / 2 + pad / 2, colName(c));
+          if (sides.has("bottom")) text(mean(xs), g.maxY + pad + lab / 2 - pad / 2, colName(c));
+        }
+        for (const [r, ys] of rowY) {
+          if (sides.has("left")) text(g.minX - pad - lab / 2 + pad / 2, mean(ys), rowName(r));
+          if (sides.has("right")) text(g.maxX + pad + lab / 2 - pad / 2, mean(ys), rowName(r));
+        }
+      }
 
       const faceEls = g.fv.map((vs) => {
         const el = s("polygon", { class: "face", points: vs.map((v) => `${g.vx[v]},${g.vy[v]}`).join(" ") });
@@ -219,8 +261,11 @@ export function makeLoopyView(look: Look = plainLook): View<LoopyPuzzle, LoopySt
 
       let hover = -1;
       let gesture: Gesture | null = null;
-      /** The mouse pointer that last went down on the board; mouse commands continue its drag. */
+      /** The mouse pointer that last went down on the board, and its button; mouse commands continue its drag. */
       let mousePointer = -1;
+      let mouseButton = -1;
+      /** A mouse command started a drag with this button (so its context menu is suppressed). */
+      let draggedButton = -1;
 
       const render = () => {
         const st = session.state;
@@ -324,7 +369,7 @@ export function makeLoopyView(look: Look = plainLook): View<LoopyPuzzle, LoopySt
         const [x, y] = toLocal(ev);
         const v = nearestVertex(g, x, y, u * 0.6);
         gesture = {
-          id, mode, touch, x0: x, y0: y,
+          id, mode, touch, x0: x, y0: y, cx: ev.clientX, cy: ev.clientY,
           edge0: nearestEdge(g, x, y, u * 0.5), dragging: false, value: null,
           path: v >= 0 ? [v] : [], edges: [], longPress: 0, longFired: false,
         };
@@ -340,26 +385,32 @@ export function makeLoopyView(look: Look = plainLook): View<LoopyPuzzle, LoopySt
           // pointer already released
         }
         if (ev.pointerType === "mouse") {
-          // the mousedown that follows runs whichever pointer command is bound to it
+          // the mousedown that follows runs whichever command is bound to this button
           mousePointer = ev.pointerId;
+          mouseButton = ev.button;
+          draggedButton = -1;
           return;
         }
         ev.preventDefault();
         const gs = begin(ev, ev.pointerId, "line", true);
-        if (cfg.touch === "line") {
-          gs.longPress = window.setTimeout(() => {
-            if (gesture !== gs || gs.dragging || gs.edge0 < 0) return;
-            gs.longFired = true;
-            toggle(gs.edge0, "cross");
-            navigator.vibrate?.(15);
-          }, 450);
-        }
+        // the board menu (opened by holding) acts on the cursor, so it must be the held edge
+        if (gs.edge0 >= 0) session.setInteraction((i) => ({ ...i, cursor: gs.edge0 }));
+        gs.longPress = window.setTimeout(() => { gs.longFired = !gs.dragging; }, MENU_HOLD_MS);
       };
 
-      /** Pointer command: starts a drag in `mode` if the mouse went down on the board. */
-      const pointerStart = (mode: Mode) => (_ctx: Record<string, unknown>, ev?: Event) => {
-        if (!(ev instanceof MouseEvent) || !(ev.target instanceof Node) || !svg.contains(ev.target) || gesture || mousePointer < 0) return false;
-        begin(ev, mousePointer, mode, false);
+      /**
+       * One command per mark. From a mouse button pressed on the board it starts a drag in that
+       * mode; from a key, the palette or the board menu it toggles the cursor edge (which pointer
+       * presses move, so the menu acts on the edge it was opened on).
+       */
+      const markCmd = (mode: Mode) => (_ctx: Record<string, unknown>, ev?: Event) => {
+        if (ev instanceof MouseEvent) {
+          if (!(ev.target instanceof Node) || !svg.contains(ev.target) || gesture || mousePointer < 0) return false;
+          begin(ev, mousePointer, mode, false);
+          draggedButton = mouseButton;
+          return true;
+        }
+        toggle(session.interaction.cursor, mode);
         return true;
       };
 
@@ -377,6 +428,7 @@ export function makeLoopyView(look: Look = plainLook): View<LoopyPuzzle, LoopySt
         }
         const gs = gesture;
         if (ev.pointerId !== gs.id || gs.longFired) return;
+        if (Math.hypot(ev.clientX - gs.cx, ev.clientY - gs.cy) > 10) clearTimeout(gs.longPress);
         if (!gs.dragging) {
           if (Math.hypot(x - gs.x0, y - gs.y0) < u * 0.3) return;
           gs.dragging = true;
@@ -426,7 +478,17 @@ export function makeLoopyView(look: Look = plainLook): View<LoopyPuzzle, LoopySt
           render();
         }
       });
-      svg.addEventListener("contextmenu", (ev) => ev.preventDefault());
+      // a button that drew or crossed doesn't also open a menu; otherwise the shell's board menu
+      // opens, acting on the edge under the pointer
+      svg.addEventListener("contextmenu", (ev) => {
+        if (draggedButton === 2 || gesture) {
+          ev.preventDefault();
+          return;
+        }
+        const [x, y] = toLocal(ev);
+        const e = nearestEdge(g, x, y, u * 0.5);
+        if (e >= 0) session.setInteraction((i) => ({ ...i, cursor: e }));
+      });
 
       const move = (dx: number, dy: number) => () => {
         session.setInteraction((i) => ({ ...i, cursor: step(g, i.cursor, dx, dy) }));
@@ -460,26 +522,33 @@ export function makeLoopyView(look: Look = plainLook): View<LoopyPuzzle, LoopySt
         ];
       };
 
+      const cursorMove = (id: string, label: string, keys: string[], dx: number, dy: number): CommandDef => ({
+        id, label, category: "slitherlink", keys, run: move(dx, dy),
+        description: "moves the keyboard cursor (the outlined edge) one edge over; draw line, cross out and clear edge keys act on it",
+      });
       const commands: CommandDef[] = [
-        { id: "loopy.left", label: "cursor left", category: "slitherlink", keys: ["ArrowLeft", "a"], run: move(-1, 0) },
-        { id: "loopy.right", label: "cursor right", category: "slitherlink", keys: ["ArrowRight", "d"], run: move(1, 0) },
-        { id: "loopy.up", label: "cursor up", category: "slitherlink", keys: ["ArrowUp", "w"], run: move(0, -1) },
-        { id: "loopy.down", label: "cursor down", category: "slitherlink", keys: ["ArrowDown", "s"], run: move(0, 1) },
-        { id: "loopy.line", label: "line on/off at the cursor", category: "slitherlink", keys: ["space", "Enter"], run: () => toggle(session.interaction.cursor, "line") },
-        { id: "loopy.cross", label: "cross on/off at the cursor", category: "slitherlink", keys: ["x"], run: () => toggle(session.interaction.cursor, "cross") },
-        { id: "loopy.clear", label: "clear the edge at the cursor", category: "slitherlink", keys: ["Backspace", "Delete"], run: () => toggle(session.interaction.cursor, "erase") },
         {
-          id: "loopy.draw-at", label: "draw lines (press on an edge, or drag along dots)", category: "slitherlink",
-          mouse: ["click"], hidden: true, run: pointerStart("line"),
+          id: "loopy.line", label: "draw line", category: "slitherlink", menu: "board",
+          keys: ["space", "Enter"], mouse: ["click"],
+          description: "puts a line on an edge, or takes it away if there is one. press an edge, or hold the button and drag from dot to dot to draw several; a drag that starts on a line rubs lines out",
+          run: markCmd("line"),
         },
         {
-          id: "loopy.cross-at", label: "cross edges (press, or drag across edges)", category: "slitherlink",
-          mouse: ["rightclick", "shift+click", "$mod+click"], hidden: true, run: pointerStart("cross"),
+          id: "loopy.cross", label: "cross out", category: "slitherlink", menu: "board",
+          keys: ["x"], mouse: ["rightclick", "shift+click", "$mod+click"],
+          description: "marks an edge as not part of the loop (a note for yourself), or removes the cross. press an edge, or drag across several",
+          run: markCmd("cross"),
         },
         {
-          id: "loopy.erase-at", label: "clear edges (press, or drag across edges)", category: "slitherlink",
-          mouse: ["middleclick"], hidden: true, run: pointerStart("erase"),
+          id: "loopy.clear", label: "clear edge", category: "slitherlink", menu: "board",
+          keys: ["Backspace", "Delete"], mouse: ["middleclick"],
+          description: "empties an edge: no line and no cross. press an edge, or drag across several",
+          run: markCmd("erase"),
         },
+        cursorMove("loopy.left", "cursor left", ["ArrowLeft", "a"], -1, 0),
+        cursorMove("loopy.right", "cursor right", ["ArrowRight", "d"], 1, 0),
+        cursorMove("loopy.up", "cursor up", ["ArrowUp", "w"], 0, -1),
+        cursorMove("loopy.down", "cursor down", ["ArrowDown", "s"], 0, 1),
       ];
 
       const offs = [

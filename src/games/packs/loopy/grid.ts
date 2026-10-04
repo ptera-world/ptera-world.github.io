@@ -32,6 +32,8 @@ export interface Grid {
   maxY: number;
   /** Typical edge length, for scaling strokes and hit radii. */
   unit: number;
+  /** Column and row of each face (from the top-left) when the tiling has them, for naming cells like "C5". */
+  cells?: readonly (readonly [number, number])[];
 }
 
 type Pt = readonly [number, number];
@@ -51,6 +53,8 @@ export interface Tiling {
   hidden?: boolean;
   /** Faces in a fixed order; that order is the clue order in every text format. */
   faces(w: number, h: number): Polys;
+  /** Column and row (zero-based, from the top-left) of a face, for tilings laid out in rows and columns. */
+  cell?(face: number, w: number, h: number): readonly [number, number];
 }
 
 const tilings = new Map<string, Tiling>();
@@ -77,6 +81,8 @@ export function getGrid(tiling: string, w: number, h: number): Grid {
     const t = tilings.get(tiling);
     if (!t) throw new Error(`unknown tiling "${tiling}"`);
     g = buildGrid(key, t.faces(w, h));
+    const cell = t.cell;
+    if (cell) g = { ...g, cells: Array.from({ length: g.nf }, (_, f) => cell(f, w, h)) };
     if (cache.size > 64) cache.delete(cache.keys().next().value!);
     cache.set(key, g);
   }
@@ -238,6 +244,7 @@ registerTiling({
     const a = 20, px = a * x, py = a * y;
     out.push([[px, py], [px + a, py], [px + a, py + a], [px, py + a]]);
   }),
+  cell: (f, w) => [f % w, Math.floor(f / w)],
 });
 
 function triangular(w: number, h: number, legacy: boolean): Polys {

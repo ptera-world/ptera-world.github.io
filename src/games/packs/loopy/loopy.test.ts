@@ -10,6 +10,7 @@ import pack, { register } from ".";
 import { assists } from "./assists";
 import { CROSS, LINE, UNKNOWN, check } from "./board";
 import { cluesOf, gridOf, loopy, type LoopyAction, type LoopyPuzzle, type LoopyState } from "./def";
+import { dotRef, edgeRef } from "./names";
 import { techniques } from "./techniques";
 import { decodePzpr, encodePzpr, formats, gridFormat, nativeFormat, pzprFileFormat, pzprFormat, sgtFormat } from "./formats";
 import { getGrid, listTilings } from "./grid";
@@ -296,4 +297,19 @@ test("inside/outside assist shades from the user's marks", () => {
   const left = g.fe[0]!.find((e) => g.ef[2 * e + 1] === -1 && g.ef[2 * e] === 0 && g.vx[g.ev[2 * e]!] === 0 && g.vx[g.ev[2 * e + 1]!] === 0)!;
   session.dispatch({ type: "set", edges: [left], value: LINE });
   expect((session.derived()["loopy.sides"] as number[])[0]).toBe(1);
+});
+
+test("hints name cells like the board labels on square grids, and say \"this\" elsewhere", () => {
+  const p = nativeFormat.parse("square:2x2:1c");
+  const g = gridOf(p);
+  const top = g.fe[0]!.find((e) => g.vy[g.ev[2 * e]!] === 0 && g.vy[g.ev[2 * e + 1]!] === 0)!;
+  expect(edgeRef(g, top)).toBe("the top edge of A1");
+  expect(dotRef(g, g.fv[3]![0]!)).toBe("the top-left corner of B2");
+  const s = loopy.reduce(p, loopy.init(p), { type: "set", edges: [top], value: LINE });
+  const step = techniques.find((t) => t.id === "loopy.clue-full")!.find(p, s)!;
+  expect(step.message).toContain("the 1 in A1");
+  expect(step.nudge).toBe("look at the 1 in A1");
+  const hex = nativeFormat.parse(nativeFormat.serialize!({ tiling: "honeycomb", w: 3, h: 3, clues: Array.from({ length: getGrid("honeycomb", 3, 3).nf }, (_, i) => (i === 0 ? 0 : -1)) }));
+  const hs = techniques.find((t) => t.id === "loopy.clue-full")!.find(hex, loopy.init(hex))!;
+  expect(hs.message).toContain("this 0");
 });

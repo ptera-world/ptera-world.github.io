@@ -1,6 +1,8 @@
 import type { Step, Technique } from "../../core/types";
 import { boardFrom, dotRule, faceRule, loopEarly, type Board, type Deduction } from "./board";
 import { cluesOf, gridOf, type LoopyAction, type LoopyFocus, type LoopyPuzzle, type LoopyState } from "./def";
+import type { Grid } from "./grid";
+import { clueRef, dotRef, edgeRef } from "./names";
 import { findParity, findTrial, findWindow, type WindowKind } from "./solver";
 
 type LoopyTechnique = Technique<LoopyPuzzle, LoopyState, LoopyAction>;
@@ -16,21 +18,24 @@ function boardOf(p: LoopyPuzzle, s: LoopyState): Board {
   return b;
 }
 
-/** Where-to-look text for a focus, without the answer. */
-function lookAt(f: LoopyFocus): string {
-  const faces = f.faces?.length ?? 0, dots = f.vertices?.length ?? 0;
-  if (dots && faces) return "look at the highlighted dot and the numbers next to it";
-  if (dots) return dots > 1 ? "look at the highlighted dots" : "look at the highlighted dot";
-  if (faces) return faces > 1 ? "look at the highlighted numbers together" : "look at the highlighted number";
-  return "look at the highlighted edge";
+const list = (xs: string[]) => (xs.length < 2 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);
+
+/** Where-to-look text naming everything the nudge highlights, without the answer. */
+function lookAt(g: Grid, clues: ArrayLike<number>, f: LoopyFocus): string {
+  const things = [
+    ...(f.vertices ?? []).map((v) => dotRef(g, v)),
+    ...(f.faces ?? []).map((x) => clueRef(g, clues[x]!, x)),
+    ...(f.edges ?? []).map((e) => edgeRef(g, e)),
+  ];
+  return things.length ? `look at ${list(things)}` : "look at the highlighted part of the board";
 }
 
-function stepOf(d: Deduction, nudge?: { text: string; focus: LoopyFocus }): Step<LoopyAction> {
+function stepOf(b: Board, d: Deduction, nudge?: { text: string; focus: LoopyFocus }): Step<LoopyAction> {
   const x = d.explain();
   const where: LoopyFocus = { faces: x.faces, vertices: x.vertices };
   return {
     message: x.message,
-    nudge: nudge?.text ?? lookAt(where),
+    nudge: nudge?.text ?? lookAt(b.g, b.clues, where),
     focus: { faces: x.faces, vertices: x.vertices, edges: d.edges } satisfies LoopyFocus,
     nudgeFocus: nudge?.focus ?? where,
     actions: [{ type: "set", edges: d.edges, value: d.value }],
@@ -47,19 +52,19 @@ function local(kind: string, scan: "faces" | "dots"): (p: LoopyPuzzle, s: LoopyS
     const n = scan === "faces" ? b.g.nf : b.g.nv;
     for (let i = 0; i < n; i++) {
       const d = scan === "faces" ? faceRule(b, i) : dotRule(b, i);
-      if (d && d.technique === kind) return stepOf(d);
+      if (d && d.technique === kind) return stepOf(b, d);
     }
     return null;
   };
 }
 
 /** Rules that need the whole board to be consistent; null while it has a contradiction. */
-function whole(find: (b: Board) => Deduction | null, nudge?: (d: Deduction) => { text: string; focus: LoopyFocus }) {
+function whole(find: (b: Board) => Deduction | null, nudge?: (g: Grid, d: Deduction) => { text: string; focus: LoopyFocus }) {
   return (p: LoopyPuzzle, s: LoopyState): Step<LoopyAction> | null => {
     const base = boardOf(p, s);
     if (base.conflict) return null;
     const d = find(base.clone());
-    return d ? stepOf(d, nudge?.(d)) : null;
+    return d ? stepOf(base, d, nudge?.(base.g, d)) : null;
   };
 }
 
@@ -143,7 +148,7 @@ export const techniques: LoopyTechnique[] = [
   def({
     id: "trial", name: "what if", level: 30,
     description: "suppose an edge is a line (or crossed) and follow the consequences with the simpler rules. if that runs into something impossible, the edge must be the other way.",
-    find: whole(findTrial, (d) => ({ text: "suppose the highlighted edge is a line, or crossed, and follow it through", focus: { edges: d.edges } })),
+    find: whole(findTrial, (g, d) => ({ text: `suppose ${edgeRef(g, d.edges[0]!)} is a line, or crossed, and follow it through`, focus: { edges: d.edges } })),
     practice: { params: HARD },
   }),
 ];

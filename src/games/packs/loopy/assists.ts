@@ -3,6 +3,7 @@ import type { Hint, Plugin } from "../../core/types";
 import { LINE, UNKNOWN, check } from "./board";
 import { gridOf, wrongMarks, type LoopyAction, type LoopyFocus, type LoopyInteraction, type LoopyPuzzle, type LoopyState } from "./def";
 import type { Grid } from "./grid";
+import { edgeRef } from "./names";
 import { KEYS } from "./keys";
 import { sidesOf } from "./solver";
 
@@ -10,12 +11,13 @@ type LoopyPlugin = Plugin<LoopyPuzzle, LoopyState, LoopyAction, LoopyInteraction
 
 const clueErrors: LoopyPlugin = {
   id: "loopy.clue-errors",
-  name: "highlight broken clues",
+  name: "highlight broken numbers",
+  description: "numbers turn red when they have too many lines around them",
   category: "checks",
   appliesTo: ["loopy"],
   enabledByDefault: true,
   settings: defineSchema({
-    crosses: { type: "bool", label: "also when crosses leave too few edges", default: true },
+    crosses: { type: "bool", label: "also when crosses leave too few edges", default: true, description: "a number also turns red when there aren't enough uncrossed edges left around it to reach its count" },
   }),
   setup({ session, settings, owner }) {
     const crosses = settings.crosses as boolean;
@@ -40,7 +42,7 @@ const clueErrors: LoopyPlugin = {
 const dotErrors: LoopyPlugin = {
   id: "loopy.dot-errors",
   name: "highlight branches and dead ends",
-  description: "dots with three or more lines, or a line with nowhere left to go",
+  description: "dots turn red when three or more lines meet there, or when a line ends there with no edge left to carry on",
   category: "checks",
   appliesTo: ["loopy"],
   enabledByDefault: true,
@@ -56,7 +58,7 @@ const PALETTE_SIZE = 6;
 const loopStatus: LoopyPlugin = {
   id: "loopy.loop-status",
   name: "loop status",
-  description: "flag loops that close too early and show where lines stop",
+  description: "a loop closed while other lines are still outside it turns orange, and dots where a line stops are marked",
   category: "checks",
   appliesTo: ["loopy"],
   enabledByDefault: true,
@@ -104,7 +106,7 @@ function segments(g: Grid, edges: number[]): number[] {
 const insideOutside: LoopyPlugin = {
   id: "loopy.inside-outside",
   name: "shade inside and outside",
-  description: "shade cells your lines and crosses already place inside the loop",
+  description: "shades the cells your lines and crosses already prove are inside the loop (everything beyond the outer edge counts as outside)",
   category: "assists",
   appliesTo: ["loopy"],
   enabledByDefault: false,
@@ -128,7 +130,8 @@ const insideOutside: LoopyPlugin = {
 
 const dimDone: LoopyPlugin = {
   id: "loopy.dim-done",
-  name: "dim finished clues",
+  name: "dim finished numbers",
+  description: "fades a number once it's done, so the ones still needing work stand out",
   category: "assists",
   appliesTo: ["loopy"],
   enabledByDefault: true,
@@ -184,7 +187,8 @@ const mistakeHints: LoopyPlugin = {
       const wrong = wrongMarks(puzzle, state);
       if (!wrong?.length) return undefined;
       const e = wrong[0]!;
-      const what = state.edges[e] === LINE ? "this line shouldn't be here" : "this edge shouldn't be crossed";
+      const where = edgeRef(gridOf(puzzle), e);
+      const what = state.edges[e] === LINE ? `the line on ${where} shouldn't be there` : `${where} shouldn't be crossed`;
       const more = wrong.length - 1;
       return {
         message: more ? `${what} (and ${more} more mark${more > 1 ? "s are" : " is"} wrong)` : what,

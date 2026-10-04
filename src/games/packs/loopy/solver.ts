@@ -1,5 +1,6 @@
 import { Board, CROSS, LINE, UNKNOWN, check, propagateEasy, type Deduction, type EdgeState } from "./board";
 import type { Grid } from "./grid";
+import { clueRef, dotRef, edgeRef, edgesRef } from "./names";
 
 export const TIERS = ["easy", "normal", "tricky", "hard"] as const;
 export type TierName = (typeof TIERS)[number];
@@ -282,25 +283,24 @@ function loopOk(b: Board, vars: number[], val: Uint8Array): boolean {
   return true;
 }
 
-function clueText(b: Board, f: number): string {
-  return String(b.clues[f]);
-}
+const clueOf = (b: Board, f: number) => clueRef(b.g, b.clues[f]!, f);
 
 function windowLead(b: Board, w: Window): string {
-  if (w.kind === "face") return `look at this ${clueText(b, w.faces[0]!)} and the dots at its corners`;
+  if (w.kind === "face") return `look at ${clueOf(b, w.faces[0]!)} and the dots at its corners`;
   if (w.kind === "dot") {
+    const dot = dotRef(b.g, w.vertices[0]!);
     return w.faces.length === 1
-      ? `look at this dot and the ${clueText(b, w.faces[0]!)} next to it`
-      : `look at this dot and the clues around it`;
+      ? `look at ${dot} and ${clueOf(b, w.faces[0]!)} next to it`
+      : `look at ${dot} and the numbers around it`;
   }
-  return `look at the ${clueText(b, w.faces[0]!)} and the ${clueText(b, w.faces[1]!)} together`;
+  return `look at ${clueOf(b, w.faces[0]!)} and ${clueOf(b, w.faces[1]!)} together`;
 }
 
 function windowDeductions(b: Board, w: Window, tier: number): Deduction[] | null {
   const r = enumerate(b, w);
   if (!r) return null;
   if (r.count === 0) {
-    b.fail({ why: "no way to fill this area works", faces: w.faces, vertices: w.vertices });
+    b.fail({ why: () => "no way to fill in the highlighted area works", faces: w.faces, vertices: w.vertices });
     return null;
   }
   const out: Deduction[] = [];
@@ -313,9 +313,10 @@ function windowDeductions(b: Board, w: Window, tier: number): Deduction[] | null
       technique: `window-${w.kind}`, tier, edges, value,
       explain: () => {
         const many = edges.length > 1;
+        const which = edgesRef(b.g, edges);
         const verb = value === LINE
-          ? (many ? "makes these edges lines" : "makes this edge a line")
-          : (many ? "leaves these edges crossed" : "leaves this edge crossed");
+          ? (many ? "makes the highlighted edges lines" : `makes ${which} a line`)
+          : (many ? "leaves the highlighted edges crossed" : `leaves ${which} crossed`);
         const loop = viaLoop ? ", since anything else would close a loop too early" : "";
         return {
           message: `${windowLead(b, w)}: every way to fill it in ${verb}${loop}`,
@@ -418,8 +419,8 @@ export function parityDirect(b: Board, first: boolean): Deduction | boolean | nu
       technique: "inside-outside", tier: 2, edges: [e], value,
       explain: () => ({
         message: value === LINE
-          ? "following the lines and crosses, the cells on either side of this edge end up on opposite sides of the loop, so it's a line"
-          : "following the lines and crosses, the cells on either side of this edge end up on the same side of the loop, so it's crossed",
+          ? `following the lines and crosses, the cells either side of ${edgeRef(g, e)} end up on opposite sides of the loop (one inside, one outside), so it's a line`
+          : `following the lines and crosses, the cells either side of ${edgeRef(g, e)} end up on the same side of the loop, so it's crossed`,
         faces: [fa, fb].filter((f) => f >= 0),
       }),
     };
@@ -471,7 +472,7 @@ export function parityGroup(b: Board, first: boolean): Deduction | boolean | nul
       vals.forEach((v, i) => { seen[i]! |= v ? 1 : 2; });
     }
     if (!any) {
-      b.fail({ why: "the inside/outside shading can't work here", ...label() });
+      b.fail({ why: () => "no way to shade the cells inside and outside works here", ...label() });
       return null;
     }
     for (const value of [LINE, CROSS] as const) {
@@ -482,7 +483,8 @@ export function parityGroup(b: Board, first: boolean): Deduction | boolean | nul
           technique: "inside-outside-group", tier: 2, edges, value,
           explain: () => {
             const l = label();
-            return { ...l, message: `${l.message} ${value === LINE ? (edges.length > 1 ? "these edges are lines" : "this edge is a line") : (edges.length > 1 ? "these edges are crossed" : "this edge is crossed")}` };
+            const which = edges.length > 1 ? "the highlighted edges" : edgeRef(g, edges[0]!);
+            return { ...l, message: `${l.message} ${which} ${value === LINE ? (edges.length > 1 ? "are lines" : "is a line") : (edges.length > 1 ? "are crossed" : "is crossed")}` };
           },
         };
       }
@@ -494,7 +496,7 @@ export function parityGroup(b: Board, first: boolean): Deduction | boolean | nul
     if (c < 0 || !b.fUnk[f]) continue;
     const es = g.fe[f]!.filter((e) => b.e[e] === UNKNOWN);
     const d = consider(es, b.fLine[f]! - c, true, () => ({
-      message: `shade the cells around this ${c} as inside or outside the loop: the neighbours already tied together on one side mean`,
+      message: `shade the cells around ${clueRef(g, c, f)} as inside or outside the loop: the neighbours already tied together mean`,
       faces: [f],
     }));
     if (b.conflict) return first ? null : false;
@@ -507,7 +509,7 @@ export function parityGroup(b: Board, first: boolean): Deduction | boolean | nul
     if (!b.vUnk[v]) continue;
     const es = g.ve[v]!.filter((e) => b.e[e] === UNKNOWN);
     const d = consider(es, b.vLine[v]!, false, () => ({
-      message: "shade the cells around this dot as inside or outside the loop: the cells already tied together mean",
+      message: `shade the cells around ${dotRef(g, v)} as inside or outside the loop: the cells already tied together mean`,
       vertices: [v],
     }));
     if (b.conflict) return first ? null : false;
@@ -559,7 +561,7 @@ const trial: Pass = {
         const d: Deduction = {
           technique: "trial", tier: 3, edges: [e], value,
           explain: () => ({
-            message: `suppose this edge were ${guess === LINE ? "a line" : "crossed"}: following on from that, ${c.why}. so it's ${value === LINE ? "a line" : "crossed"}`,
+            message: `suppose ${edgeRef(g, e)} were ${guess === LINE ? "a line" : "crossed"}: following on from that, ${c.why()}. so it's ${value === LINE ? "a line" : "crossed"}`,
             faces: c.faces,
             vertices: c.vertices,
           }),

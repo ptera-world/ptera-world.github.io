@@ -5,6 +5,7 @@ import { CROSS, LINE, UNKNOWN, check, type EdgeState } from "./board";
 import { formats, type LoopyPuzzle } from "./formats";
 import { generateClues } from "./generator";
 import { getGrid, getTiling, listTilings, type Grid } from "./grid";
+import { edgeRef } from "./names";
 import { TIERS, analyse, type Analysis } from "./solver";
 
 export type { LoopyPuzzle };
@@ -38,15 +39,15 @@ export const params = defineSchema({
   difficulty: {
     type: "enum", label: "difficulty", default: "normal",
     options: [
-      { value: "easy", label: "easy", description: "one clue or one dot at a time" },
-      { value: "normal", label: "normal", description: "a clue together with the dots around it" },
-      { value: "tricky", label: "tricky", description: "pairs of clues, and inside/outside reasoning" },
-      { value: "hard", label: "hard", description: "following a supposition to a contradiction" },
+      { value: "easy", label: "easy", description: "solvable by looking at one number or one dot at a time" },
+      { value: "normal", label: "normal", description: "needs a number together with the dots at its corners" },
+      { value: "tricky", label: "tricky", description: "needs two numbers at once, and working out which cells are inside the loop" },
+      { value: "hard", label: "hard", description: "needs \"what if this edge were a line?\" reasoning" },
     ],
   },
   symmetric: { type: "bool", label: "symmetric clues", default: false, description: "clues come in half-turn pairs, when the grid allows it" },
-  loopSize: { type: "int", label: "loop size (% of cells inside)", default: 55, min: 20, max: 80 },
-  wiggle: { type: "int", label: "loop wiggliness (%)", default: 60, min: 0, max: 100 },
+  loopSize: { type: "int", label: "loop size (% of cells inside)", default: 55, min: 20, max: 80, description: "how much of the board the answer loop encloses" },
+  wiggle: { type: "int", label: "loop wiggliness (%)", default: 60, min: 0, max: 100, description: "higher makes the answer loop twist through thin corridors; lower makes it round and blobby" },
 });
 
 export type LoopyParams = Values<typeof params>;
@@ -106,7 +107,7 @@ function hint(p: LoopyPuzzle, s: LoopyState): Hint<LoopyAction> | null {
   for (let e = 0; e < s.edges.length; e++) {
     if (s.edges[e] === UNKNOWN && sol[e] === LINE) {
       return {
-        message: "none of your hint techniques apply here, but this edge is a line",
+        message: `none of your hint techniques apply here, but ${edgeRef(gridOf(p), e)} is a line`,
         focus: { edges: [e] } satisfies LoopyFocus,
         actions: [{ type: "set", edges: [e], value: LINE }],
       };
@@ -134,7 +135,7 @@ export const loopy: PuzzleDef<LoopyPuzzle, LoopyState, LoopyAction, LoopyInterac
   name: "slitherlink",
   aliases: ["loopy", "fences", "loop the loop", "takegaki"],
   tags: ["logic", "loop", "edges", "nikoli"],
-  description: "draw one closed loop along the grid lines. each number says how many of its cell's edges the loop uses.",
+  description: "draw a single closed loop along the lines between the dots. a number in a cell tells you how many of that cell's sides the loop runs along.",
   generatorVersion: 1,
   params,
   presets: [
@@ -168,10 +169,12 @@ export const loopy: PuzzleDef<LoopyPuzzle, LoopyState, LoopyAction, LoopyInterac
   },
   hint,
   isRetraction: (a) => a.value === UNKNOWN,
-  rules: () => [
-    "draw a single loop along the grid lines. it never branches or crosses itself, so every dot has two lines or none.",
-    "a number says how many of the edges around its cell are part of the loop. cells without a number can have any count.",
-    "crosses are your own notes for edges that aren't part of the loop.",
+  rules: (p) => [
+    "the loop runs along the edges between dots and comes back to where it started. there is exactly one loop.",
+    "it never branches, crosses itself or stops, so every dot has either two lines or none.",
+    "a number counts how many sides of its cell the loop uses. empty cells can have any number of sides used.",
+    "crosses are notes you make for edges you know aren't part of the loop. they don't count toward anything.",
+    ...(gridOf(p).cells ? ["hints name cells by column letter and row number, like C5. the \"board labels\" command writes them along the edges."] : []),
   ],
   features: (p) => [`tiling:${p.tiling}`, ...(analysisOf(p).count === 1 ? ["solution"] : [])],
   rate(p) {

@@ -1,4 +1,5 @@
 import { edgeBetween, otherEnd, type Grid } from "./grid";
+import { clueRef, dotRef, edgeRef } from "./names";
 
 export const UNKNOWN = 0;
 export const LINE = 1;
@@ -7,7 +8,8 @@ export type EdgeState = typeof UNKNOWN | typeof LINE | typeof CROSS;
 
 /** Where a contradiction was found, for explanations. */
 export interface Conflict {
-  why: string;
+  /** Built only when shown, so solving never pays for the text. */
+  why(): string;
   faces?: number[];
   vertices?: number[];
   edges?: number[];
@@ -81,7 +83,7 @@ export class Board {
     const cur = this.e[e]!;
     if (cur === v) return false;
     if (cur !== UNKNOWN) {
-      this.fail({ why: "an edge would need to be both a line and crossed", edges: [e] });
+      this.fail({ why: () => `${edgeRef(this.g, e)} would need to be both a line and crossed`, edges: [e] });
       return false;
     }
     const g = this.g;
@@ -97,7 +99,7 @@ export class Board {
     if (f1 >= 0) this.fUnk[f1]!--;
     if (f2 >= 0) this.fUnk[f2]!--;
     if (v === LINE) {
-      if (this.closed) this.fail({ why: "a line would be left outside the finished loop", edges: [e] });
+      if (this.closed) this.fail({ why: () => `the line on ${edgeRef(this.g, e)} would be left outside the finished loop`, edges: [e] });
       this.lines++;
       this.vLine[a]!++;
       this.vLine[b]!++;
@@ -122,7 +124,7 @@ export class Board {
     if (ea === b && eb === a) {
       // closes a cycle: a and b were the two ends of one chain
       this.closed = true;
-      if (this.chainLen[a]! + 1 !== this.lines) this.fail({ why: "this would close a loop that leaves other lines out", edges: [e] });
+      if (this.chainLen[a]! + 1 !== this.lines) this.fail({ why: () => `a line on ${edgeRef(this.g, e)} would close a loop that leaves other lines out`, edges: [e] });
       return;
     }
     if (this.vLine[a]! > 2 || this.vLine[b]! > 2) return;
@@ -135,13 +137,13 @@ export class Board {
   private checkFace(f: number): void {
     const c = this.clues[f]!;
     if (c < 0) return;
-    if (this.fLine[f]! > c) this.fail({ why: `the ${c} would have too many lines`, faces: [f] });
-    else if (this.fLine[f]! + this.fUnk[f]! < c) this.fail({ why: `the ${c} couldn't get enough lines`, faces: [f] });
+    if (this.fLine[f]! > c) this.fail({ why: () => `${clueRef(this.g, c, f)} would have too many lines`, faces: [f] });
+    else if (this.fLine[f]! + this.fUnk[f]! < c) this.fail({ why: () => `${clueRef(this.g, c, f)} couldn't get enough lines`, faces: [f] });
   }
 
   private checkVertex(v: number): void {
-    if (this.vLine[v]! > 2) this.fail({ why: "a dot would have more than two lines", vertices: [v] });
-    else if (this.vLine[v] === 1 && this.vUnk[v] === 0) this.fail({ why: "a line would hit a dead end", vertices: [v] });
+    if (this.vLine[v]! > 2) this.fail({ why: () => `${dotRef(this.g, v)} would have more than two lines`, vertices: [v] });
+    else if (this.vLine[v] === 1 && this.vUnk[v] === 0) this.fail({ why: () => `a line would hit a dead end at ${dotRef(this.g, v)}`, vertices: [v] });
   }
 
   fail(c: Conflict): void {
@@ -216,8 +218,8 @@ export function faceRule(b: Board, f: number): Deduction | null {
       technique: "clue-full", tier: 0, edges: unk, value: CROSS,
       explain: () => ({
         message: c === 0
-          ? "a 0 has no lines around it, so all its edges are crossed"
-          : `this ${n(c)} already has ${c === 1 ? "its line" : `all ${n(c)} lines`}, so its other edges are crossed`,
+          ? `${clueRef(g, c, f)} has no lines around it, so all its edges are crossed`
+          : `${clueRef(g, c, f)} already has ${c === 1 ? "its line" : `all ${n(c)} of its lines`}, so its other edges are crossed`,
         faces: [f],
       }),
     };
@@ -225,7 +227,7 @@ export function faceRule(b: Board, f: number): Deduction | null {
   if (b.fLine[f]! + b.fUnk[f]! === c) {
     return {
       technique: "clue-needs-all", tier: 0, edges: unk, value: LINE,
-      explain: () => ({ message: `this ${n(c)} needs every edge it has left to be a line`, faces: [f] }),
+      explain: () => ({ message: `${clueRef(g, c, f)} needs every edge it has left to be a line`, faces: [f] }),
     };
   }
   return null;
@@ -239,19 +241,19 @@ export function dotRule(b: Board, v: number): Deduction | null {
   if (lines === 2) {
     return {
       technique: "dot-full", tier: 0, edges: unk, value: CROSS,
-      explain: () => ({ message: "this dot already has two lines, so its other edges are crossed", vertices: [v] }),
+      explain: () => ({ message: `${dotRef(b.g, v)} already has two lines, so its other edges are crossed`, vertices: [v] }),
     };
   }
   if (lines === 1 && unk.length === 1) {
     return {
       technique: "dot-continue", tier: 0, edges: unk, value: LINE,
-      explain: () => ({ message: "the line coming into this dot has only one way to go", vertices: [v] }),
+      explain: () => ({ message: `the line coming into ${dotRef(b.g, v)} has only one way to go`, vertices: [v] }),
     };
   }
   if (lines === 0 && unk.length === 1) {
     return {
       technique: "dot-dead-end", tier: 0, edges: unk, value: CROSS,
-      explain: () => ({ message: "only one edge is left at this dot, and a line can't stop here, so it's crossed", vertices: [v] }),
+      explain: () => ({ message: `only one edge is left at ${dotRef(b.g, v)}, and the loop can't stop there, so it's crossed`, vertices: [v] }),
     };
   }
   return null;
@@ -332,8 +334,8 @@ export function loopEarly(b: Board): Deduction | null {
       technique: "loop-early", tier: 0, edges: [e], value: CROSS,
       explain: () => ({
         message: others
-          ? "this edge would close a loop that leaves other lines out, so it's crossed"
-          : "closing the loop here would leave some clues unfinished, so it's crossed",
+          ? `a line on ${edgeRef(g, e)} would join the two ends of one line into a loop that leaves other lines out, so it's crossed`
+          : `a line on ${edgeRef(g, e)} would close the loop while some numbers still need lines, so it's crossed`,
         vertices: [v, w],
       }),
     };
