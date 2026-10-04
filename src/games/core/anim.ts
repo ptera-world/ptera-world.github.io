@@ -39,7 +39,8 @@ export function animate(ms: number, frame: (p: number) => void, curve: Ease = ea
     }
     const start = performance.now();
     const step = (now: number) => {
-      const t = Math.min(1, (now - start) / ms);
+      // the first frame's timestamp can precede the start time
+      const t = Math.max(0, Math.min(1, (now - start) / ms));
       frame(curve(t));
       if (t < 1) raf = requestAnimationFrame(step);
       else resolve(true);

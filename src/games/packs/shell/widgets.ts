@@ -20,7 +20,7 @@ const prefs = namespace("prefs");
 
 const CSS = `
 .widget:empty { display: none; }
-.slot:not(:has(> .widget:not(:empty))) { display: none; }
+.sh-slot:not(:has(> .widget:not(:empty))) { display: none; }
 /* reserves two lines, so a message appearing or wrapping never moves what sits above or beside it */
 .w-status { min-height: 2.9em; line-height: 1.45; text-align: center; color: var(--text-dim); width: min(60ch, 100%); }
 [data-solved] .w-status { color: var(--accent); }

@@ -68,7 +68,7 @@ Primitives (see `src/games/core/types.ts`): Technique, CommandDef, WidgetDef, Th
 - [ ] **full translation**: core/i18n exists (locale + catalogues, US English at the call site as fallback); no strings are routed through it yet and there is no translation pack. Paraglide (used in busiless) would fit per pack, reading the shared locale
 - [ ] **collaboration (maybe, not mandatory)**: shared games (CRDTs such as yjs, presence/awareness). Where it would plug in: every change is an action with a source, and history already exports exact per-step patches, so a sync layer can sit on dispatch/patches without touching packs. Open questions: transport (WebRTC alone isn't enough, needs signalling/relay), and who owns game rules (auto-apply, timer, undo); a host-authoritative session with per-player permissions is the likely shape
 - [ ] **several games on screen at once**: games no longer share global state, but the shell renders one session/board. Needs the shell to own N sessions + per-board command scopes
-- [ ] **more puzzles**: numberlink / flow and beyond (all 40 of Simon Tatham’s collection are in). Each is a pack directory
+- [ ] **more puzzles**: kakuro, nurikabe and the region puzzles above; anything beyond. Each is a pack directory
 - [ ] **layout presets** beyond zen (named, shareable placements)
 - [ ] **hold-to-show keys** (e.g. labels while held): commands are press-only; needs keydown/keyup pairs in CommandDef
 - [ ] **multi-file third-party packs**: a url pack runs from its stored copy, so it can't import sibling files. Bundle step or import maps
@@ -78,6 +78,13 @@ Primitives (see `src/games/core/types.ts`): Technique, CommandDef, WidgetDef, Th
 - [ ] **shared "something completed" effect** (a line, box, cage), and hint focus that reaches margins (clues outside the grid)
 
 ### Core / shell
+- [ ] **hint search off the main thread** (solitaire, sokoban, rush hour hints can stall 0.5–1s off the known line), same as generation; or cancellable hints
+- [ ] **wide boards push the sidebar below** (spider, mahjong at 1200×900): the layout picks the biggest board; whether the panel should stay beside at the cost of board size is open
+- [ ] **region puzzles waiting on a generator decision**: norinori, heyawake, LITS, star battle, queens (random regions are almost never unique; edge repair gets stuck). shade-kit (lib/shade-kit) and norinori's rules/solver/formats exist but aren't loaded. kakuro and nurikabe not started
+- [ ] **"marks that agree with the unique solution" readers (~20 in 18 packs) and hold/drag pointer code (~15 views)** are still per pack; candidates for lib
+- [ ] **deliberate "find it yourself" nudges** (palisade, range, singles, tents, rect, dominosa, guess) highlight nothing; trial techniques have nudge = full
+- [ ] **card games**: klondike solver wins ~75% draw-one / 63% draw-three deals; 4-suit spider rarely solves within its limit ("not known winnable"); no explainers; no standard import formats for klondike / spider / mahjong deals
+- [ ] **numberlink "no loops" and all 2048 techniques have no practice boards**; zip has only its own text format
 - [ ] **shared pack code**: `cellName`/cell lists, "marks that agree with the unique solution", hold/drag pointer handling and the grid-logic `kit/` are copied into many packs (identical copies kept in sync by hand). Needs a way for packs to share code (a shared pack library, or growing the stateless SDK)
 - [ ] **hint focus for edges and corner points** (palisade, rect, slant draw their own; `locate` falls back to nearby cells), and for clues outside the grid
 - [ ] **generic digit pad widget** (filling and the sudoku family each bring their own)

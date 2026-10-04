@@ -1116,14 +1116,14 @@ export class Shell {
       pauseMark: h("span", { class: "pause-mark", "aria-hidden": "true" }, "paused"),
       stage: h("div", { class: "stage", "data-panel": "right", "data-side": "right" }),
       main: h("div", { class: "main" }),
-      top: h("div", { class: "slot slot-top" }),
+      top: h("div", { class: "sh-slot sh-slot-top" }),
       middle: h("div", { class: "middle" }),
       boardbox: h("div", { class: "boardbox" }),
       boardwrap: h("div", { class: "boardwrap" }),
       scroller: h("div", { class: "board-scroller" }),
-      overlay: h("div", { class: "slot slot-overlay" }),
-      side: h("div", { class: "slot slot-side" }),
-      bottom: h("div", { class: "slot slot-bottom" }),
+      overlay: h("div", { class: "sh-slot sh-slot-overlay" }),
+      side: h("div", { class: "sh-slot sh-slot-side" }),
+      bottom: h("div", { class: "sh-slot sh-slot-bottom" }),
       panel: h("aside", { class: "panel" }),
       tabs: h("div", { class: "tabs", role: "tablist" }),
       panelBody: h("div", { class: "panel-body" }),
@@ -1314,17 +1314,17 @@ const SHELL_CSS = `
 .boardwrap[data-zoomed] .board-scroller { overflow: auto; overscroll-behavior: contain; }
 .board-scroller > .boardbox { margin: auto; }
 .boardbox { position: relative; flex: none; display: flex; align-items: center; justify-content: center; }
-.slot-overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 10px; }
-.slot-overlay > .widget { pointer-events: auto; }
+.sh-slot-overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 10px; }
+.sh-slot-overlay > .widget { pointer-events: auto; }
 [data-lost] .boardbox { box-shadow: 0 0 0 3px var(--danger); border-radius: 10px; }
 [data-solved] .boardbox { box-shadow: 0 0 0 3px var(--accent); border-radius: 10px; }
 .boardbox > .view { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
-.slot { display: flex; flex-direction: column; gap: 10px; }
-.slot:empty { display: none; }
-.slot-top, .slot-bottom { width: 100%; align-items: center; }
-.slot-top > .widget, .slot-bottom > .widget { width: 100%; display: flex; justify-content: center; }
-.slot-side { width: 240px; flex: none; }
-.stage[data-side="below"] .slot-side { width: min(100%, 520px); }
+.sh-slot { display: flex; flex-direction: column; gap: 10px; }
+.sh-slot:empty { display: none; }
+.sh-slot-top, .sh-slot-bottom { width: 100%; align-items: center; }
+.sh-slot-top > .widget, .sh-slot-bottom > .widget { width: 100%; display: flex; justify-content: center; }
+.sh-slot-side { width: 240px; flex: none; }
+.stage[data-side="below"] .sh-slot-side { width: min(100%, 520px); }
 
 .panel { width: 320px; flex: none; border-left: 1px solid var(--border); display: flex; flex-direction: column; min-height: 0; }
 .stage[data-panel="below"] .panel { width: auto; border-left: none; border-top: 1px solid var(--border); min-height: auto; }
@@ -1336,7 +1336,7 @@ const SHELL_CSS = `
 .panel-body > .widget { display: flex; flex-direction: column; gap: 10px; }
 
 [data-paused] .boardbox .view { filter: blur(14px); pointer-events: none; }
-[data-zen] .slot-top, [data-zen] .slot-side, [data-zen] .slot-bottom, [data-zen] .panel, [data-zen] .bar .meta { display: none; }
+[data-zen] .sh-slot-top, [data-zen] .sh-slot-side, [data-zen] .sh-slot-bottom, [data-zen] .panel, [data-zen] .bar .meta { display: none; }
 [data-mode="index"] .stage { display: none; }
 #games:not([data-mode="index"]) .index-wrap { display: none; }
 .index-wrap { padding: 16px; display: flex; justify-content: center; }
