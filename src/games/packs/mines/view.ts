@@ -241,7 +241,7 @@ export function minesView(look: Look): View<MinesPuzzle, MinesState, MinesAction
       };
       const showPressed = (cell: number, button: number) => {
         const st = session.state;
-        if (st.dead >= 0) pressed = [];
+        if (session.locked) pressed = [];
         else if (st.open[cell] || button === 1) pressed = neighbours(cell).filter((d) => !st.open[d] && !st.flags[d]);
         else pressed = st.flags[cell] || session.interaction.flagMode ? [] : [cell];
         render();
@@ -308,12 +308,7 @@ export function minesView(look: Look): View<MinesPuzzle, MinesState, MinesAction
       const atCursor = (f: (c: number) => void) => () => f(session.interaction.cursor);
 
       const offs = [
-        session.hooks.change.tap(({ prev, state, cause }) => {
-          if (cause === "action" && prev.dead < 0 && state.dead >= 0) {
-            session.hooks.fx.call({ kind: "mistake", focus: { cells: [state.dead], sources: [] } satisfies MinesFocus });
-          }
-          render();
-        }, { owner: "view" }),
+        session.hooks.change.tap(render, { owner: "view" }),
         session.hooks.interaction.tap(render, { owner: "view" }),
         session.hooks.refresh.tap(render, { owner: "view" }),
       ];
@@ -341,6 +336,7 @@ export function minesView(look: Look): View<MinesPuzzle, MinesState, MinesAction
       });
       return {
         aspect: vw / vh,
+        gestures: { secondaryClick: true, hold: true },
         commands,
         context: () => ({ minesFlagMode: session.interaction.flagMode, minesLost: session.state.dead >= 0 }),
         locate: (focus) => {

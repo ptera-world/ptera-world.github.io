@@ -10,8 +10,6 @@ const CSS = `
 .mines-mode button { border: none; border-radius: 0; padding: 6px 14px; }
 .mines-mode button[aria-pressed="true"] { background: var(--accent-soft); color: var(--text); }
 .mines-mode button.flag[aria-pressed="true"] { background: var(--danger-soft); }
-.w-results.mines-lost { border-color: var(--danger); }
-.w-results.mines-lost .big { color: var(--danger); }
 `;
 
 const coarse = (): boolean => typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
@@ -59,44 +57,4 @@ export const flagMode: MinesWidget = {
   },
 };
 
-/** The losing counterpart of the shell's results card. */
-export const lost: MinesWidget = {
-  id: "mines.lost",
-  name: "mine hit",
-  description: "what to do after opening a mine",
-  puzzles: ["mines"],
-  defaultSlot: "overlay",
-  order: 0,
-  mount(el, { session, owner, run }) {
-    style("mines-widgets", CSS);
-    let dismissed = false;
-    const render = () => {
-      el.replaceChildren();
-      if (session.state.dead < 0) {
-        dismissed = false;
-        return;
-      }
-      if (dismissed) return;
-      const safeLeft = session.puzzle.mines.reduce((a, m, c) => a + (!m && !session.state.open[c] ? 1 : 0), 0);
-      el.append(h("div", { class: "w-results mines-lost", role: "alert" },
-        h("strong", { class: "big" }, "you hit a mine"),
-        h("div", { class: "w-dim" }, `${safeLeft} safe ${safeLeft === 1 ? "cell" : "cells"} were left`),
-        h("div", { class: "w-inline" },
-          h("button", { class: "primary", onclick: () => run("shell.undo") }, "undo"),
-          h("button", { onclick: () => run("shell.new") }, "new game"),
-          h("button", { onclick: () => { dismissed = true; render(); } }, "look at the board"))));
-    };
-    session.hooks.change.tap(render, { owner });
-    // a move on a lost board does nothing, so bring the card back to say why
-    session.hooks.action.tap((a, { state }) => {
-      if (state.dead >= 0 && dismissed) {
-        dismissed = false;
-        render();
-      }
-      return a;
-    }, { owner });
-    render();
-  },
-};
-
-export const minesWidgets = [counter, flagMode, lost];
+export const minesWidgets = [counter, flagMode];
