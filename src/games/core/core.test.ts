@@ -77,3 +77,32 @@ test("action hook can veto", () => {
   session.hooks.action.tap(() => null, { owner: "veto" });
   expect(session.dispatch({ type: "press", cell: 0 })).toBe(false);
 });
+
+test("cross-event batch is one undo step; restart clears solved", () => {
+  const puzzle = flip.formats[0]!.parse("1x2:cross:11");
+  const session = new Session(flip, puzzle, { kind: "imported" });
+  let solvedCount = 0;
+  session.hooks.solved.tap(() => { solvedCount++; });
+  session.beginBatch();
+  session.dispatch({ type: "press", cell: 0 });
+  expect(session.solved).toBe(false);
+  session.endBatch();
+  expect(session.solved).toBe(true);
+  expect(solvedCount).toBe(1);
+  session.restart();
+  expect(session.solved).toBe(false);
+  expect(session.elapsedMs()).toBeLessThan(50);
+  session.dispatch({ type: "press", cell: 1 });
+  expect(solvedCount).toBe(2);
+  session.undo();
+  session.undo();
+  expect(session.state.lights).toEqual([0, 0]);
+});
+
+test("checkSolved fires for a puzzle that opens already solved", () => {
+  const session = new Session(flip, flip.formats[0]!.parse("2x1:cross:00"), { kind: "imported" });
+  let fired = false;
+  session.hooks.solved.tap(() => { fired = true; });
+  session.checkSolved();
+  expect(fired).toBe(true);
+});

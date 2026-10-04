@@ -214,6 +214,7 @@ export class Shell {
       session.hooks.change.tap(() => {
         this.scheduleSave();
         this.renderToolbar();
+        this.syncSolvedStatus();
       }, { owner: "shell" }),
       session.hooks.solved.tap(({ elapsedMs }) => {
         this.setStatus(`solved in ${formatTime(elapsedMs)}`);
@@ -230,7 +231,21 @@ export class Shell {
     this.renderPanel();
     this.setStatus(session.solved ? `solved in ${formatTime(session.solvedAtMs!)}` : "");
     this.hooks.sessionStart.call({ session });
+    session.checkSolved();
     this.saveNow();
+  }
+
+  /** Status line reflects the current board: a hint or solved message never outlives the state it was about. */
+  private syncSolvedStatus(): void {
+    const s = this.session;
+    if (!s) return;
+    if (s.solved) {
+      this.root.dataset.solved = "";
+      this.setStatus(`solved in ${formatTime(s.solvedAtMs!)}`);
+    } else {
+      delete this.root.dataset.solved;
+      this.setStatus("");
+    }
   }
 
   private teardownSession(): void {

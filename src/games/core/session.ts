@@ -145,20 +145,40 @@ export class Session<Pz = unknown, S = unknown, A extends Action = Action, I = u
    * Nested batches merge into the outermost.
    */
   batch(fn: () => void): void {
+    this.beginBatch();
+    try {
+      fn();
+    } finally {
+      this.endBatch();
+    }
+  }
+
+  /**
+   * Open a history step spanning several event handlers (pointerdown → pointermove → pointerup).
+   * Each beginBatch needs exactly one endBatch; nesting merges into the outermost.
+   */
+  beginBatch(): void {
     if (this.batchDepth++ === 0) {
       this.batchStart = this._state;
       this.batchActions = [];
     }
-    try {
-      fn();
-    } finally {
-      if (--this.batchDepth === 0) {
-        const start = this.batchStart!;
-        this.batchStart = null;
-        if (!Object.is(start, this._state)) this.pushHistory(start, this.batchActions);
-        this.checkSolved();
-      }
-    }
+  }
+
+  endBatch(): void {
+    if (this.batchDepth === 0) return;
+    if (--this.batchDepth > 0) return;
+    const start = this.batchStart!;
+    this.batchStart = null;
+    if (!Object.is(start, this._state)) this.pushHistory(start, this.batchActions);
+    this.checkSolved();
+  }
+
+  get batching(): boolean {
+    return this.batchDepth > 0;
+  }
+
+  private endAllBatches(): void {
+    while (this.batchDepth > 0) this.endBatch();
   }
 
   private commit(prev: S, next: S, actions: A[]): void {
@@ -179,8 +199,9 @@ export class Session<Pz = unknown, S = unknown, A extends Action = Action, I = u
     if (checkSolved) this.checkSolved();
   }
 
-  private checkSolved(): void {
-    if (this._solvedAtMs !== null) return;
+  /** Fire `solved` if the current state is solved and it hasn't fired yet. Safe to call any time. */
+  checkSolved(): void {
+    if (this.batchDepth > 0 || this._solvedAtMs !== null) return;
     if (!this.def.isSolved(this.puzzle, this._state)) return;
     this._solvedAtMs = this.elapsedMs();
     this.runningSince = null;
@@ -216,8 +237,16 @@ export class Session<Pz = unknown, S = unknown, A extends Action = Action, I = u
     return true;
   }
 
-  /** Back to the initial state, as one undoable step. */
+  /**
+   * Back to the initial state as one undoable step. Also clears the solved mark and zeroes the
+   * timer so a replay is timed from scratch; undoing a restart restores the board only.
+   */
   restart(): void {
+    this.endAllBatches();
+    const wasTiming = this.runningSince !== null || this._solvedAtMs !== null;
+    this._solvedAtMs = null;
+    this.elapsedBase = 0;
+    this.runningSince = wasTiming ? performance.now() : null;
     const fresh = this.def.init(this.puzzle);
     const prev = this._state;
     if (Object.is(fresh, prev)) return;
