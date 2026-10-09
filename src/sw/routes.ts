@@ -16,9 +16,15 @@ export function keysForPath(pathname: string): string[] {
   return pathname.endsWith("/") ? [pathname] : [pathname, `${pathname}/`];
 }
 
+/** A file's identity in the manifest: the first 16 hex digits of the SHA-256 of its bytes. */
+export async function fileHash(bytes: BufferSource): Promise<string> {
+  const buf = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(buf).slice(0, 8), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 export interface SwManifest {
   /** Identifies the exact set of files; changes whenever any listed file changes. */
   version: string;
-  /** Keys of every file the worker keeps for offline use. */
-  files: string[];
+  /** Key of every file the worker may keep, to the hash of its bytes in this deploy. */
+  files: Record<string, string>;
 }

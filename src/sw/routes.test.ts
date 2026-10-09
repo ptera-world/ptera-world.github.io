@@ -18,17 +18,20 @@ test("a bare directory path also matches the directory", () => {
   expect(keysForPath("/prose/")).toEqual(["/prose/"]);
 });
 
-test("the version changes with any listed file and ignores excluded ones", () => {
+test("each file has its own hash; the version changes with any of them and ignores excluded ones", async () => {
   const root = mkdtempSync(join(tmpdir(), "sw-"));
   mkdirSync(join(root, "a"));
   writeFileSync(join(root, "index.html"), "x");
   writeFileSync(join(root, "a", "f.js"), "1");
   writeFileSync(join(root, "sw.js"), "worker");
   const exclude = new Set(["/sw.js"]);
-  const v1 = buildManifest(root, { exclude });
-  expect(v1.files).toEqual(["/", "/a/f.js"]);
+  const v1 = await buildManifest(root, { exclude });
+  expect(Object.keys(v1.files)).toEqual(["/", "/a/f.js"]);
   writeFileSync(join(root, "sw.js"), "worker2");
-  expect(buildManifest(root, { exclude }).version).toBe(v1.version);
+  expect((await buildManifest(root, { exclude })).version).toBe(v1.version);
   writeFileSync(join(root, "a", "f.js"), "2");
-  expect(buildManifest(root, { exclude }).version).not.toBe(v1.version);
+  const v2 = await buildManifest(root, { exclude });
+  expect(v2.version).not.toBe(v1.version);
+  expect(v2.files["/"]).toBe(v1.files["/"]);
+  expect(v2.files["/a/f.js"]).not.toBe(v1.files["/a/f.js"]);
 });

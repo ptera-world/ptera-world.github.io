@@ -6,7 +6,7 @@ import { buildManifest } from "./manifest";
  * `root` is final; `exclude` holds the keys of files the worker must leave alone.
  */
 export async function writeServiceWorker(root: string, exclude: ReadonlySet<string>): Promise<void> {
-  const manifest = buildManifest(root, { exclude: new Set([...exclude, "/sw.js"]) });
+  const manifest = await buildManifest(root, { exclude: new Set([...exclude, "/sw.js"]) });
   const result = await Bun.build({
     entrypoints: [join(import.meta.dir, "worker.ts")],
     target: "browser",
@@ -15,5 +15,5 @@ export async function writeServiceWorker(root: string, exclude: ReadonlySet<stri
   });
   if (!result.success) throw new AggregateError(result.logs, result.logs.map(String).join("\n"));
   await Bun.write(join(root, "sw.js"), result.outputs[0]!);
-  console.log(`service worker ${manifest.version}: ${manifest.files.length} files`);
+  console.log(`service worker ${manifest.version}: ${Object.keys(manifest.files).length} files`);
 }

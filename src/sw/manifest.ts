@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from "fs";
 import { join, relative, sep } from "path";
-import { keyForFile, type SwManifest } from "./routes";
+import { fileHash, keyForFile, type SwManifest } from "./routes";
 
 /** Files left out of the manifest. */
 export interface ManifestOptions {
@@ -12,18 +12,14 @@ function walk(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((d) => (d.isDirectory() ? walk(join(dir, d.name)) : [join(dir, d.name)]));
 }
 
-/** Lists every file under `root` except `exclude`, with a version that is a digest of their keys and bytes. */
-export function buildManifest(root: string, opts: ManifestOptions): SwManifest {
+/** Every file under `root` except `exclude`, with its hash; the version is a digest of all of them. */
+export async function buildManifest(root: string, opts: ManifestOptions): Promise<SwManifest> {
   const entries = walk(root)
     .map((p) => ({ path: p, key: keyForFile(relative(root, p).split(sep).join("/")) }))
     .filter((e) => !opts.exclude.has(e.key))
     .sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
-  const hash = new Bun.CryptoHasher("sha256");
-  for (const e of entries) {
-    hash.update(e.key);
-    hash.update("\0");
-    hash.update(readFileSync(e.path));
-    hash.update("\0");
-  }
-  return { version: hash.digest("hex").slice(0, 16), files: entries.map((e) => e.key) };
+  const files: Record<string, string> = {};
+  for (const e of entries) files[e.key] = await fileHash(readFileSync(e.path));
+  const version = await fileHash(new TextEncoder().encode(JSON.stringify(files)));
+  return { version, files };
 }
