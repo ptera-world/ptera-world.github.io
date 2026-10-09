@@ -8,10 +8,21 @@ import { namespace } from "./storage";
  * A source is a pack module URL, a pack list URL (JSON, see PackList), or inline module code.
  */
 
+/**
+ * A pack list doubles as the manifest of its packs: one request tells which of them changed.
+ * Each `url` resolves against the list's own URL, so one list may name packs on any number of hosts.
+ */
 export interface PackList {
   name: string;
-  /** `error`: the pack failed to build and is listed only so the failure is visible. */
-  packs: { id?: string; name?: string; url: string; error?: string }[];
+  packs: {
+    id?: string;
+    name?: string;
+    url: string;
+    /** `packHash` of the module's bytes. A pack whose hash is already stored runs without a request. */
+    hash?: string;
+    /** The pack failed to build and is listed only so the failure is visible. */
+    error?: string;
+  }[];
 }
 
 export interface ModEntry {
@@ -92,8 +103,9 @@ const KEEP_VERSIONS = 5;
 const CACHE = "games-packs";
 const memory = new Map<string, string>();
 
-async function sha(text: string): Promise<string> {
-  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+/** A pack version's identity: the first 12 hex digits of the SHA-256 of the module's bytes. */
+export async function packHash(bytes: BufferSource): Promise<string> {
+  const buf = await crypto.subtle.digest("SHA-256", bytes);
   return Array.from(new Uint8Array(buf).slice(0, 6), (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
@@ -139,8 +151,9 @@ export function setTrack(url: string, track: Track): void {
 async function fetchVersion(url: string): Promise<PackVersion> {
   const res = await fetch(url, { cache: "no-cache" });
   if (!res.ok) throw new Error(`${url}: ${res.status}`);
-  const code = await res.text();
-  const v = { hash: await sha(code), fetchedAt: Date.now() };
+  const bytes = await res.arrayBuffer();
+  const code = new TextDecoder().decode(bytes);
+  const v = { hash: await packHash(bytes), fetchedAt: Date.now() };
   await putCode(url, v.hash, code);
   return v;
 }
@@ -150,11 +163,33 @@ function remember(rec: PackRecord, v: PackVersion): void {
   rec.versions = rec.versions.slice(0, KEEP_VERSIONS);
 }
 
-/** Fetch upstream; if it differs from every stored version, remember it as available. */
+const lists = namespace("packlists");
+/** Pack key → URL of the list that named it, for this page load. */
+const listOf = new Map<string, string>();
+
+/** Fetch a list fresh and keep a copy for when it can't be reached. */
+async function fetchList(url: string): Promise<PackList> {
+  const res = await fetch(url, { cache: "no-cache" });
+  if (!res.ok) throw new Error(`list ${url}: ${res.status}`);
+  const data = (await res.json()) as PackList;
+  if (!Array.isArray(data.packs)) throw new Error("list has no \"packs\" array");
+  lists.set(url, data);
+  return data;
+}
+
+const listedHash = (list: PackList, listUrl: string, key: string): string | undefined =>
+  list.packs.find((p) => new URL(p.url, listUrl).href === key)?.hash;
+
+/**
+ * Check upstream; if it differs from every stored version, remember it as available. A pack
+ * named by a list is checked against the list, and its code is fetched only when it changed.
+ */
 export async function checkForUpdate(url: string): Promise<PackVersion | null> {
   const rec = packRecord(url);
-  const v = await fetchVersion(url);
-  if (rec.versions.some((x) => x.hash === v.hash)) {
+  const list = listOf.get(url);
+  const listed = list ? listedHash(await fetchList(list), list, url) : undefined;
+  const v = listed !== undefined && rec.versions.some((x) => x.hash === listed) ? null : await fetchVersion(url);
+  if (!v || rec.versions.some((x) => x.hash === v.hash)) {
     delete rec.available;
     savePackRecord(url, rec);
     return null;
@@ -176,10 +211,23 @@ export function selectPackVersion(url: string, hash?: string): void {
   savePackRecord(url, rec);
 }
 
-/** The code a pack runs: latest upstream when following, else the selected stored version. */
-async function resolveCode(url: string, defaultTrack: Track, force?: Track): Promise<string> {
+/**
+ * The code a pack runs: latest upstream when following, else the selected stored version.
+ * `listed` is the hash its list gives for it; when that version is stored, nothing is fetched.
+ */
+async function resolveCode(url: string, defaultTrack: Track, force?: Track, listed?: string): Promise<string> {
   const rec = packRecord(url);
   const track = force ?? rec.track ?? defaultTrack;
+  if (track === "latest" && listed !== undefined && rec.versions.some((v) => v.hash === listed)) {
+    const code = await getCode(url, listed);
+    if (code !== null) {
+      if (rec.selected !== listed) {
+        rec.selected = listed;
+        savePackRecord(url, rec);
+      }
+      return code;
+    }
+  }
   if (track === "latest" || !rec.versions.length) {
     try {
       const v = await fetchVersion(url);
@@ -210,70 +258,96 @@ async function runCode(code: string, api: unknown): Promise<void> {
 }
 
 /**
- * Load `baseList` first, then the player's own sources, in order. Each pack is isolated: a
- * failing pack is reported and skipped. Sources only come from the built-in list and the
- * player's stored list, never from the page URL.
+ * Load `baseList` first, then the player's own sources, in order. Code for every pack is fetched
+ * at once, but packs run one at a time in that order. Each pack is isolated: a failing pack is
+ * reported and skipped. Sources only come from the built-in list and the player's stored list,
+ * never from the page URL. A list that can't be reached is used as last fetched.
  */
 export async function loadPacks(api: unknown, baseList: string, opts: { safe?: boolean } = {}): Promise<{ packs: LoadedPack[]; sources: ModLoadResult[] }> {
   // safe mode: the built-in list only, every pack on, latest versions; player settings untouched
   const disabled = new Set(opts.safe ? [] : disabledPacks());
   const packs: LoadedPack[] = [];
-  const sources: ModLoadResult[] = [];
   const seen = new Set<string>();
+  const queue: { entry: LoadedPack; code: Promise<string>; source?: ModLoadResult }[] = [];
+
+  const getList = async (url: string): Promise<PackList> => {
+    try {
+      return await fetchList(url);
+    } catch (e) {
+      const kept = lists.get<PackList | null>(url, null);
+      if (kept && e instanceof TypeError) return kept; // network failure, not an answer from the host
+      throw e;
+    }
+  };
 
   /** One path for every pack; where it came from only sets its default track. */
-  const loadUrl = async (url: string, name: string, list: string | undefined, defaultTrack: Track): Promise<void> => {
+  const addUrl = (url: string, name: string, list: string | undefined, defaultTrack: Track, listed?: string): void => {
     const key = new URL(url, location.href).href;
     if (seen.has(key)) return;
     seen.add(key);
     const entry: LoadedPack = { key, name, list, enabled: !disabled.has(key), versioned: true, defaultTrack };
     packs.push(entry);
     if (!entry.enabled) return;
-    try {
-      await runCode(await resolveCode(key, defaultTrack, opts.safe ? "latest" : undefined), api);
-    } catch (e) {
-      console.error(`[games] pack ${name} failed`, e);
-      entry.error = e instanceof Error ? e.message : String(e);
-    }
+    const code = resolveCode(key, defaultTrack, opts.safe ? "latest" : undefined, listed);
+    code.catch(() => {}); // rejection is reported when its turn to run comes
+    queue.push({ entry, code });
   };
 
-  const loadList = async (url: string, defaultTrack: Track): Promise<void> => {
+  const addList = (url: string, data: PackList, defaultTrack: Track): void => {
     const base = new URL(url, location.href);
-    const res = await fetch(base);
-    if (!res.ok) throw new Error(`list ${url}: ${res.status}`);
-    const data = (await res.json()) as PackList;
-    if (!Array.isArray(data.packs)) throw new Error("list has no \"packs\" array");
     for (const p of data.packs) {
+      const key = new URL(p.url, base).href;
       if (p.error) {
-        packs.push({ key: new URL(p.url, base).href, name: p.name ?? p.id ?? p.url, list: data.name, enabled: false, error: p.error });
+        packs.push({ key, name: p.name ?? p.id ?? p.url, list: data.name, enabled: false, error: p.error });
         continue;
       }
-      await loadUrl(new URL(p.url, base).href, p.name ?? p.id ?? p.url, data.name, defaultTrack);
+      listOf.set(key, base.href);
+      addUrl(key, p.name ?? p.id ?? p.url, data.name, defaultTrack, p.hash);
     }
   };
 
+  const mods = opts.safe ? [] : listMods().filter((m) => m.enabled);
+  const fetched = new Map<string, Promise<PackList>>();
+  for (const url of [baseList, ...mods.flatMap((m) => ("url" in m.source && isList(m.source.url) ? [m.source.url] : []))]) {
+    const p = getList(new URL(url, location.href).href);
+    p.catch(() => {});
+    fetched.set(url, p);
+  }
+
   try {
-    await loadList(baseList, "latest");
+    addList(baseList, await fetched.get(baseList)!, "latest");
   } catch (e) {
     console.error("[games] built-in pack list failed", e);
   }
 
-  for (const mod of opts.safe ? [] : listMods()) {
-    if (!mod.enabled) continue;
+  const sources: ModLoadResult[] = [];
+  for (const mod of mods) {
+    const result: ModLoadResult = { mod };
+    sources.push(result);
     try {
       if ("url" in mod.source) {
-        if (isList(mod.source.url)) await loadList(mod.source.url, "pinned");
-        else await loadUrl(mod.source.url, mod.name, undefined, "pinned");
+        if (isList(mod.source.url)) addList(mod.source.url, await fetched.get(mod.source.url)!, "pinned");
+        else addUrl(mod.source.url, mod.name, undefined, "pinned");
       } else {
         const key = `inline:${mod.id}`;
         const entry: LoadedPack = { key, name: mod.name, enabled: !disabled.has(key) };
         packs.push(entry);
-        if (entry.enabled) await runCode(mod.source.code, api);
+        if (entry.enabled) queue.push({ entry, code: Promise.resolve(mod.source.code), source: result });
       }
-      sources.push({ mod });
     } catch (e) {
       console.error(`[games] source ${mod.name} failed`, e);
-      sources.push({ mod, error: e instanceof Error ? e.message : String(e) });
+      result.error = e instanceof Error ? e.message : String(e);
+    }
+  }
+
+  for (const { entry, code, source } of queue) {
+    try {
+      await runCode(await code, api);
+    } catch (e) {
+      console.error(`[games] pack ${entry.name} failed`, e);
+      const msg = e instanceof Error ? e.message : String(e);
+      if (source) source.error = msg;
+      else entry.error = msg;
     }
   }
   return { packs, sources };

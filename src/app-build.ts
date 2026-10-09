@@ -1,7 +1,8 @@
 import { readdirSync, existsSync } from "fs";
-import { join, dirname, relative, resolve } from "path";
+import { basename, join, dirname, relative, resolve } from "path";
 import type { BunPlugin } from "bun";
 import type { AppConfig } from "./site-config";
+import { packHash, type PackList } from "./games/core/mods";
 
 export interface AppOutput {
   /** Path relative to the app's URL root, e.g. "main.js", "packs/sudoku/index.js", "packs.json". */
@@ -72,32 +73,41 @@ async function bundle(entry: string, root: string, outName: string, opts: { mini
 }
 
 /**
- * Bundle an app: the engine entry on its own, every pack directory as its own self-contained
- * module (one file, no shared chunks, loadable from anywhere), and a pack list (packs.json)
- * naming every pack in directory order. A pack that fails to build is listed with its error
- * and never takes the others down; `failed` names every such pack, for callers to report.
+ * Bundle pack directories (each with an index.ts) into self-contained modules (one file, no
+ * shared chunks, loadable from anywhere) at `<base><id>/index.js`, plus their list at `packs.json`: the
+ * manifest naming every pack with its hash, in the given order. `root` is the app root the
+ * packs may reach into (see PACK_SDK). A pack that fails to build is listed with its error and
+ * never takes the others down; `failed` names every such pack.
  */
-export async function buildApp(app: AppConfig, opts: { minify: boolean }): Promise<{ outputs: AppOutput[]; failed: { id: string; error: string }[] }> {
-  const root = resolve(dirname(app.entry));
-  const packsDir = app.packs ? resolve(app.packs) : "";
-  const packIds = packsDir && existsSync(packsDir)
-    ? readdirSync(packsDir, { withFileTypes: true }).filter((d) => d.isDirectory() && existsSync(join(packsDir, d.name, "index.ts"))).map((d) => d.name).sort()
-    : [];
-  const out: AppOutput[] = [await bundle(app.entry, root, "main.js", opts)];
-  const packsBase = relative(root, packsDir);
-  const list: { id: string; name: string; url: string; error?: string }[] = [];
+export async function buildPacks(dirs: string[], root: string, base: string, listName: string, opts: { minify: boolean }): Promise<{ outputs: AppOutput[]; failed: { id: string; error: string }[] }> {
+  const out: AppOutput[] = [];
+  const list: PackList["packs"] = [];
   const failed: { id: string; error: string }[] = [];
-  for (const id of packIds) {
-    const path = `${packsBase}/${id}/index.js`;
+  for (const dir of dirs) {
+    const id = basename(dir);
+    const path = `${base}${id}/index.js`;
     try {
-      out.push({ ...(await bundle(join(packsDir, id, "index.ts"), root, path, opts, [packBoundary(root, join(packsDir, id))])), pack: true });
-      list.push({ id, name: id, url: `./${path}` });
+      const o = await bundle(join(dir, "index.ts"), root, path, opts, [packBoundary(root, dir)]);
+      out.push({ ...o, pack: true });
+      list.push({ id, name: id, url: `./${path}`, hash: await packHash(await new Response(o.body).arrayBuffer()) });
     } catch (e) {
       const error = String(e instanceof Error ? e.message : e);
       failed.push({ id, error });
       list.push({ id, name: id, url: `./${path}`, error: error.slice(0, 800) });
     }
   }
-  out.push({ path: "packs.json", type: "application/json", body: JSON.stringify({ name: "built-in", packs: list }, null, 2) });
+  const manifest: PackList = { name: listName, packs: list };
+  out.push({ path: "packs.json", type: "application/json", body: JSON.stringify(manifest, null, 2) });
   return { outputs: out, failed };
+}
+
+/** Bundle an app: the engine entry on its own, and every pack directory through buildPacks. */
+export async function buildApp(app: AppConfig, opts: { minify: boolean }): Promise<{ outputs: AppOutput[]; failed: { id: string; error: string }[] }> {
+  const root = resolve(dirname(app.entry));
+  const packsDir = app.packs ? resolve(app.packs) : "";
+  const packDirs = packsDir && existsSync(packsDir)
+    ? readdirSync(packsDir, { withFileTypes: true }).filter((d) => d.isDirectory() && existsSync(join(packsDir, d.name, "index.ts"))).map((d) => join(packsDir, d.name)).sort()
+    : [];
+  const packs = await buildPacks(packDirs, root, `${relative(root, packsDir)}/`, "built-in", opts);
+  return { outputs: [await bundle(app.entry, root, "main.js", opts), ...packs.outputs], failed: packs.failed };
 }
