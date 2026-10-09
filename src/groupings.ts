@@ -6,7 +6,6 @@
  * Grouping data is generated at build time from content files.
  */
 
-import { generatedGroupings } from "./generated-groupings";
 
 export interface Region {
   id: string;
@@ -34,7 +33,8 @@ export interface Grouping {
   positions: Record<string, NodePosition>;
 }
 
-export const groupings: Grouping[] = generatedGroupings;
+/** The collection's groupings; filled from its data before anything reads them. */
+export const groupings: Grouping[] = [];
 
 export function getGrouping(id: string): Grouping | undefined {
   return groupings.find((g) => g.id === id);

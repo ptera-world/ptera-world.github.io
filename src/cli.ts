@@ -62,7 +62,7 @@ async function buildCollection(id: CollectionId): Promise<void> {
 
   // 1. Generate graph
   console.log(`\nGenerating graph for [${config.contentDirs.join(", ")}]...`);
-  await generateGraph(config.contentDirs, id);
+  const data = await generateGraph(config.contentDirs, id);
 
   // 2. Generate headings
   const headingsPath = join(outDir, "headings.json");
@@ -70,12 +70,16 @@ async function buildCollection(id: CollectionId): Promise<void> {
   console.log(`\nGenerating headings → ${headingsPath}...`);
   await generateHeadings(config.contentDirs, headingsPath);
 
-  // 3. Bundle JS
-  const jsOutDir = prefix ? `dist/${prefix}` : "dist";
-  console.log(`\nBundling → ${jsOutDir}/main.js...`);
+  // 3. Graph data, loaded by the shared page script
+  await Bun.write(join(outDir, "graph.json"), JSON.stringify(data));
+}
+
+/** The page script every collection shares; each page loads its collection's graph.json. */
+async function bundlePageScript(): Promise<void> {
+  console.log("\nBundling → dist/main.js...");
   const result = await Bun.build({
     entrypoints: ["src/main.ts"],
-    outdir: jsOutDir,
+    outdir: "dist",
     minify: true,
   });
   if (!result.success) {
@@ -99,6 +103,7 @@ async function buildAll(collectionFilter?: CollectionId): Promise<void> {
   for (const id of Object.keys(collections) as CollectionId[]) {
     await buildCollection(id);
   }
+  await bundlePageScript();
 
   // After all collections are built, restore generated-graph.ts to the default
   // collection so dev server and tooling see the correct data.

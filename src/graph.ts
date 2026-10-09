@@ -1,4 +1,4 @@
-import { generatedNodes, generatedEdges } from "./generated-graph";
+import type { Grouping } from "./groupings";
 
 /** Node in the world graph. */
 export interface Node {
@@ -45,12 +45,19 @@ export interface Graph {
   edges: Edge[];
 }
 
-export function createGraph(): Graph {
-  const nodes: Node[] = generatedNodes.map((n) => ({ ...n, baseX: n.x, baseY: n.y }));
+/** A collection's content as the build writes it (`graph.json` next to the collection's page). */
+export interface GraphData {
+  nodes: Omit<Node, "baseX" | "baseY">[];
+  edges: Edge[];
+  groupings: Grouping[];
+}
+
+export function createGraph(data: Pick<GraphData, "nodes" | "edges">): Graph {
+  const nodes: Node[] = data.nodes.map((n) => ({ ...n, baseX: n.x, baseY: n.y }));
 
   const containmentEdges: Edge[] = nodes
     .filter((n) => n.parent)
     .map((n) => ({ from: n.parent!, to: n.id, strength: 0.7 }));
 
-  return { nodes, edges: [...containmentEdges, ...generatedEdges] };
+  return { nodes, edges: [...containmentEdges, ...data.edges] };
 }

@@ -1,5 +1,6 @@
 import { parseMarkdown } from "./markdown";
-import { createGraph } from "./graph";
+import { createGraph, type GraphData } from "./graph";
+import { generatedNodes, generatedEdges } from "./generated-graph";
 import { siteConfig, type CollectionId } from "./site-config";
 import { generateGraph } from "./gen-graph";
 import { buildApp, type AppOutput } from "./app-build";
@@ -14,28 +15,20 @@ const port = portArg ?? (Bun.env.PORT ? Number(Bun.env.PORT) : 3000);
 
 const dir = isProduction ? "dist" : "public";
 
-// In dev mode, generate graph for each collection at startup and cache bundles
-const bundleCache = new Map<CollectionId, { js: ArrayBuffer; timestamp: number }>();
+// In dev mode, generate each collection's graph data at startup and bundle the page script once
+const dataCache = new Map<string, GraphData>();
+let pageScript: ArrayBuffer | null = null;
 
 if (!isProduction) {
   for (const [id, config] of Object.entries(siteConfig.collections) as [CollectionId, typeof siteConfig.collections[CollectionId]][]) {
     console.log(`Generating graph for ${config.name} [${config.contentDirs.join(", ")}]...`);
-    await generateGraph(config.contentDirs);
-
-    // Bundle immediately after generating
-    const result = await Bun.build({
-      entrypoints: ["src/main.ts"],
-      target: "browser",
-    });
-    const output = result.outputs[0];
-    if (output) {
-      bundleCache.set(id, { js: await output.arrayBuffer(), timestamp: Date.now() });
-    }
-    console.log(`Cached bundle for ${config.name}`);
+    dataCache.set(id === "default" ? "/graph.json" : `/${id}/graph.json`, await generateGraph(config.contentDirs, id));
   }
+  const result = await Bun.build({ entrypoints: ["src/main.ts"], target: "browser" });
+  if (result.outputs[0]) pageScript = await result.outputs[0].arrayBuffer();
 }
 
-const graph = isProduction ? createGraph() : null;
+const graph = isProduction ? createGraph({ nodes: generatedNodes, edges: generatedEdges }) : null;
 const nodeMap = graph ? new Map(graph.nodes.map((n) => [n.id, n])) : null;
 
 function contentPage(id: string, html: string): string {
@@ -137,27 +130,11 @@ const server = Bun.serve({
       path = "/index.html";
     }
 
-    // Serve collection-specific JS bundles
+    // The page script (shared by every collection) and each collection's graph data
     if (!isProduction) {
-      // /main.js → default bundle, /<collection>/main.js → collection bundle
-      if (path === "/main.js") {
-        const cached = bundleCache.get("default");
-        if (cached) {
-          return new Response(cached.js, {
-            headers: { "Content-Type": "application/javascript" },
-          });
-        }
-      }
-      for (const id of Object.keys(siteConfig.collections) as CollectionId[]) {
-        if (id !== "default" && path === `/${id}/main.js`) {
-          const cached = bundleCache.get(id);
-          if (cached) {
-            return new Response(cached.js, {
-              headers: { "Content-Type": "application/javascript" },
-            });
-          }
-        }
-      }
+      if (path === "/main.js" && pageScript) return new Response(pageScript, { headers: { "Content-Type": "application/javascript" } });
+      const data = dataCache.get(path);
+      if (data) return Response.json(data);
     }
 
     const file = Bun.file(dir + path);

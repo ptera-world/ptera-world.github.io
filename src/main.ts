@@ -10,16 +10,23 @@ import { createFocusLayout } from "./focus-layout";
 import { loadSettingsFromUrl } from "./settings";
 import { createMinimap } from "./minimap";
 import { initGroupingState, buildGroupingUI, restoreGroupingFromUrl, getTagColor, setOnGroupingChange, resetToCurrentGrouping } from "./grouping-state";
-import { siteConfig, getActiveCollection, type CollectionConfig } from "./site-config";
+import { siteConfig, getActiveCollection, siteUrl, type CollectionConfig } from "./site-config";
+import { groupings } from "./groupings";
+import type { GraphData } from "./graph";
 import { landingEl } from "./dom";
 
 loadSettingsFromUrl();
 import { getSettings } from "./settings";
+const collectionId = getActiveCollection();
+const dataRes = await fetch(siteUrl(`${collectionId === "default" ? "" : `/${collectionId}`}/graph.json`));
+if (!dataRes.ok) throw new Error(`graph.json: ${dataRes.status}`);
+const data = (await dataRes.json()) as GraphData;
+groupings.push(...data.groupings);
 const camera = createCamera();
-const graph = createGraph();
+const graph = createGraph(data);
 
 // Center camera on the active collection's meta node
-const collectionMeta: CollectionConfig = siteConfig.collections[getActiveCollection()];
+const collectionMeta: CollectionConfig = siteConfig.collections[collectionId];
 const metaNode = graph.nodes.find((n) => n.id === collectionMeta.metaNodeId);
 if (metaNode) { camera.x = metaNode.x; camera.y = metaNode.y; }
 

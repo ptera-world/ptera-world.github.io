@@ -12,6 +12,7 @@ import { parseFrontmatter, stripFrontmatter } from "./frontmatter";
 import { parseMarkdown } from "./markdown";
 import { type Point, convexHull, expandHull, filterOutliers, hullSeparation } from "./hull";
 import { findMarkdownFiles, CONTENT_DIR } from "./content";
+import type { GraphData } from "./graph";
 
 const outFile = join(import.meta.dir, "generated-graph.ts");
 const groupingsOutFile = join(import.meta.dir, "generated-groupings.ts");
@@ -377,7 +378,8 @@ function runForceLayoutAdaptive(
  * Generate the graph for specified content directories.
  * If dirs is omitted, scans all content directories.
  */
-export async function generateGraph(dirs?: string[], collectionId?: string): Promise<void> {
+/** Writes the generated TS modules (for build tooling) and returns the same data for the page. */
+export async function generateGraph(dirs?: string[], collectionId?: string): Promise<GraphData> {
 
 const allFiles = await findMarkdownFiles(CONTENT_DIR, dirs);
 
@@ -1520,6 +1522,27 @@ ${groupingLines}
 
 await writeFile(groupingsOutFile, groupingsContent);
 console.log(`wrote ${nonEmptyGroupings.length} groupings to ${groupingsOutFile}`);
+
+const pageNodes: GraphData["nodes"] = nodes.map((n) => ({
+  id: n.id,
+  label: n.label,
+  description: n.description,
+  ...(n.url ? { url: n.url } : {}),
+  ...(n.parent ? { parent: n.parent } : {}),
+  ...(n.cluster ? { cluster: n.cluster } : {}),
+  x: n.x,
+  y: n.y,
+  radius: n.radius,
+  ...(n.iconRadius != null ? { iconRadius: n.iconRadius } : {}),
+  ...(n.collisionRadius != null ? { collisionRadius: Math.round(n.collisionRadius) } : {}),
+  color: n.color,
+  ...(n.status ? { status: n.status } : {}),
+  tags: n.tags,
+  ...(n.body ? { body: n.body } : {}),
+  ...(n.bodyHtml ? { bodyHtml: n.bodyHtml } : {}),
+  ...(n.trail ? { trail: n.trail } : {}),
+}));
+return { nodes: pageNodes, edges: edges.map((e) => ({ from: e.from, to: e.to, strength: e.strength })), groupings: nonEmptyGroupings };
 
 } // end generateGraph
 

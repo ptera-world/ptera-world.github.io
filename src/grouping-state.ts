@@ -7,12 +7,13 @@ import { groupings, getGrouping, type Grouping } from "./groupings";
 import { updatePositions, animateTo, fadeOutRegions, fadeInRegions, snapNodePositions, nodeEls, worldEl, type NodePositionWithRegion } from "./dom";
 import type { Camera } from "./camera";
 
-let currentLayoutGrouping: Grouping | undefined = groupings[0];
-let currentColorGrouping: Grouping | undefined = groupings[0];
+let currentLayoutGrouping: Grouping | undefined;
+let currentColorGrouping: Grouping | undefined;
 let graphRef: Graph;
 let cameraRef: Camera;
 
 export function initGroupingState(graph: Graph, camera: Camera): void {
+  currentLayoutGrouping = currentColorGrouping = groupings[0];
   if (groupings.length === 0) return;
   graphRef = graph;
   cameraRef = camera;
