@@ -10,17 +10,18 @@
  *   pages              Generate static HTML content pages
  *   inspect            ASCII layout visualization
  *   dev                Dev server (--production for production mode, --port <n> to override, or PORT env var)
+ *   pack <app> <dirs...> --out <dir> --name <name>   Build pack directories and their list (packs.json)
  *
  * Options:
  *   --help             Show this help
  *   --collection <id>  Build only this collection (for build command)
  */
 import { mkdir, cp, rm } from "fs/promises";
-import { join } from "path";
+import { dirname, join, resolve } from "path";
 import { generateGraph } from "./gen-graph";
 import { generateHeadings } from "./gen-headings";
 import { generatePages } from "./gen-pages";
-import { buildApp } from "./app-build";
+import { buildApp, buildPacks } from "./app-build";
 import { writeServiceWorker } from "./sw/build";
 import { siteConfig, type AppConfig, type AppId, type CollectionId } from "./site-config";
 
@@ -37,6 +38,10 @@ Commands:
   pages              Generate static HTML content pages
   inspect            ASCII layout visualization
   dev                Dev server (--production for production mode, --port <n> to override, or PORT env var)
+  pack <app> <dirs...> --out <dir> --name <name>
+                     Build pack directories (each with an index.ts) and the list naming
+                     them with their hashes. Publish the whole --out directory; players
+                     add the packs.json URL
 
 Options:
   --help             Show this help
@@ -171,6 +176,28 @@ switch (command) {
 
   case "pages": {
     await generatePages();
+    break;
+  }
+
+  case "pack": {
+    const flag = (name: string): string | undefined => {
+      const i = args.indexOf(name);
+      return i === -1 ? undefined : args[i + 1];
+    };
+    const out = flag("--out");
+    const name = flag("--name");
+    const positional = args.slice(1).filter((a, i, all) => !a.startsWith("--") && !["--out", "--name"].includes(all[i - 1]!));
+    const [appId, ...dirs] = positional;
+    const app = siteConfig.apps[appId as AppId] as AppConfig | undefined;
+    if (!app || !out || !name || !dirs.length) {
+      console.error(`Usage: bun run src/cli.ts pack <app> <dirs...> --out <dir> --name <name>\nApps: ${Object.keys(siteConfig.apps).join(", ")}`);
+      process.exit(1);
+    }
+    const { outputs, failed } = await buildPacks(dirs.map((d) => resolve(d)), resolve(import.meta.dir, "..", dirname(app.entry)), "", name, { minify: true });
+    for (const o of outputs) await Bun.write(join(out, o.path), o.body);
+    for (const f of failed) console.error(`pack ${f.id} failed to build:\n${f.error}\n`);
+    console.log(`${outputs.length - 1} pack(s) and packs.json → ${out}`);
+    if (failed.length) process.exit(1);
     break;
   }
 

@@ -43,7 +43,7 @@ function packBoundary(root: string, packDir: string): BunPlugin {
   return {
     name: "pack-boundary",
     setup(build) {
-      build.onResolve({ filter: /^\.\.?\// }, (args) => {
+      build.onResolve({ filter: /^\.{0,2}\// }, (args) => {
         if (!args.importer) return undefined;
         const target = resolve(dirname(args.importer), args.path);
         const withExt = existsSync(target) ? target : `${target}.ts`;
