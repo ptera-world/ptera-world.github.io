@@ -211,11 +211,32 @@ export function selectPackVersion(url: string, hash?: string): void {
   savePackRecord(url, rec);
 }
 
+
+/**
+ * Take a version fetched from upstream: a pack following updates switches to it (from the next
+ * load), a pinned one is offered it as available.
+ */
+function takeUpstream(url: string, track: Track, v: PackVersion): void {
+  const rec = packRecord(url);
+  const stored = rec.versions.some((x) => x.hash === v.hash);
+  if (track === "latest" || !rec.versions.length) {
+    remember(rec, v);
+    rec.selected = v.hash;
+  } else if (stored) {
+    delete rec.available;
+  } else {
+    rec.available = v;
+  }
+  savePackRecord(url, rec);
+}
+
 /**
  * The code a pack runs: latest upstream when following, else the selected stored version.
  * `listed` is the hash its list gives for it; when that version is stored, nothing is fetched.
+ * With `later`, a pack that has a stored version never waits on upstream: it runs the stored
+ * one, and the upstream check is handed to `later` (a listed pack's check is its list's).
  */
-async function resolveCode(url: string, defaultTrack: Track, force?: Track, listed?: string): Promise<string> {
+async function resolveCode(url: string, defaultTrack: Track, force?: Track, listed?: string, later?: (check: () => Promise<void>) => void): Promise<string> {
   const rec = packRecord(url);
   const track = force ?? rec.track ?? defaultTrack;
   if (track === "latest" && listed !== undefined && rec.versions.some((v) => v.hash === listed)) {
@@ -228,7 +249,7 @@ async function resolveCode(url: string, defaultTrack: Track, force?: Track, list
       return code;
     }
   }
-  if (track === "latest" || !rec.versions.length) {
+  if (!rec.versions.length || (track === "latest" && !later)) {
     try {
       const v = await fetchVersion(url);
       remember(rec, v);
@@ -237,6 +258,8 @@ async function resolveCode(url: string, defaultTrack: Track, force?: Track, list
     } catch (e) {
       if (!rec.versions.length) throw e;
     }
+  } else if (track === "latest" && later && listed === undefined) {
+    later(async () => takeUpstream(url, track, await fetchVersion(url)));
   }
   const order = [rec.selected, ...rec.versions.map((v) => v.hash)].filter((h): h is string => !!h);
   for (const h of order) {
@@ -257,20 +280,34 @@ async function runCode(code: string, api: unknown): Promise<void> {
   }
 }
 
+
 /**
  * Load `baseList` first, then the player's own sources, in order. Code for every pack is fetched
  * at once, but packs run one at a time in that order. Each pack is isolated: a failing pack is
  * reported and skipped. Sources only come from the built-in list and the player's stored list,
- * never from the page URL. A list that can't be reached is used as last fetched.
+ * never from the page URL.
+ *
+ * `baseList` is fetched before anything runs (a list that can't be reached is used as last
+ * fetched). A player's source never holds up the load once it has been loaded before: it runs as
+ * last stored, and all of them are checked upstream in parallel afterwards. What a check finds
+ * (new and changed packs, fetched in full) is used from the next load, or offered as an update
+ * for a pinned pack; a failed check is reported as the source's error. `checked` settles when
+ * every check has.
  */
-export async function loadPacks(api: unknown, baseList: string, opts: { safe?: boolean } = {}): Promise<{ packs: LoadedPack[]; sources: ModLoadResult[] }> {
+export async function loadPacks(api: unknown, baseList: string, opts: { safe?: boolean } = {}): Promise<{ packs: LoadedPack[]; sources: ModLoadResult[]; checked: Promise<void> }> {
   // safe mode: the built-in list only, every pack on, latest versions; player settings untouched
   const disabled = new Set(opts.safe ? [] : disabledPacks());
   const packs: LoadedPack[] = [];
   const seen = new Set<string>();
   const queue: { entry: LoadedPack; code: Promise<string>; source?: ModLoadResult }[] = [];
+  const checks: (() => Promise<void>)[] = [];
+  const reporting = (result: ModLoadResult) => (check: () => Promise<void>) =>
+    checks.push(() => check().catch((e) => {
+      console.warn(`[games] update check for ${result.mod.name} failed`, e);
+      result.error = `couldn't check for updates: ${e instanceof Error ? e.message : String(e)}`;
+    }));
 
-  const getList = async (url: string): Promise<PackList> => {
+  const freshList = async (url: string): Promise<PackList> => {
     try {
       return await fetchList(url);
     } catch (e) {
@@ -281,19 +318,19 @@ export async function loadPacks(api: unknown, baseList: string, opts: { safe?: b
   };
 
   /** One path for every pack; where it came from only sets its default track. */
-  const addUrl = (url: string, name: string, list: string | undefined, defaultTrack: Track, listed?: string): void => {
+  const addUrl = (url: string, name: string, list: string | undefined, defaultTrack: Track, listed?: string, later?: (check: () => Promise<void>) => void): void => {
     const key = new URL(url, location.href).href;
     if (seen.has(key)) return;
     seen.add(key);
     const entry: LoadedPack = { key, name, list, enabled: !disabled.has(key), versioned: true, defaultTrack };
     packs.push(entry);
     if (!entry.enabled) return;
-    const code = resolveCode(key, defaultTrack, opts.safe ? "latest" : undefined, listed);
+    const code = resolveCode(key, defaultTrack, opts.safe ? "latest" : undefined, listed, later);
     code.catch(() => {}); // rejection is reported when its turn to run comes
     queue.push({ entry, code });
   };
 
-  const addList = (url: string, data: PackList, defaultTrack: Track): void => {
+  const addList = (url: string, data: PackList, defaultTrack: Track, later?: (check: () => Promise<void>) => void): void => {
     const base = new URL(url, location.href);
     for (const p of data.packs) {
       const key = new URL(p.url, base).href;
@@ -302,32 +339,52 @@ export async function loadPacks(api: unknown, baseList: string, opts: { safe?: b
         continue;
       }
       listOf.set(key, base.href);
-      addUrl(key, p.name ?? p.id ?? p.url, data.name, defaultTrack, p.hash);
+      addUrl(key, p.name ?? p.id ?? p.url, data.name, defaultTrack, p.hash, later);
     }
   };
 
+  /** Fetch a player's list and every enabled pack in it that changed. */
+  const refreshList = async (url: string, defaultTrack: Track): Promise<void> => {
+    const data = await fetchList(url);
+    await Promise.all(data.packs.map(async (p) => {
+      const key = new URL(p.url, url).href;
+      if (p.error || disabled.has(key)) return;
+      const rec = packRecord(key);
+      const track = rec.track ?? defaultTrack;
+      if (p.hash !== undefined && rec.versions.some((v) => v.hash === p.hash)) return;
+      if (p.hash === undefined && track === "pinned" && rec.versions.length) return;
+      takeUpstream(key, track, await fetchVersion(key));
+    }));
+  };
+
+  const baseData = freshList(new URL(baseList, location.href).href);
+  baseData.catch(() => {});
   const mods = opts.safe ? [] : listMods().filter((m) => m.enabled);
-  const fetched = new Map<string, Promise<PackList>>();
-  for (const url of [baseList, ...mods.flatMap((m) => ("url" in m.source && isList(m.source.url) ? [m.source.url] : []))]) {
-    const p = getList(new URL(url, location.href).href);
-    p.catch(() => {});
-    fetched.set(url, p);
-  }
+  const sources: ModLoadResult[] = mods.map((mod) => ({ mod }));
+  const playerLists = new Map<string, Promise<PackList>>();
+  mods.forEach((mod, i) => {
+    if (!("url" in mod.source) || !isList(mod.source.url)) return;
+    const url = new URL(mod.source.url, location.href).href;
+    const kept = lists.get<PackList | null>(url, null);
+    const data = kept ? Promise.resolve(kept) : freshList(url);
+    if (kept) reporting(sources[i]!)(() => refreshList(url, "pinned"));
+    data.catch(() => {});
+    playerLists.set(url, data);
+  });
 
   try {
-    addList(baseList, await fetched.get(baseList)!, "latest");
+    addList(baseList, await baseData, "latest");
   } catch (e) {
     console.error("[games] built-in pack list failed", e);
   }
 
-  const sources: ModLoadResult[] = [];
-  for (const mod of mods) {
-    const result: ModLoadResult = { mod };
-    sources.push(result);
+  for (const [i, mod] of mods.entries()) {
+    const result = sources[i]!;
     try {
       if ("url" in mod.source) {
-        if (isList(mod.source.url)) addList(mod.source.url, await fetched.get(mod.source.url)!, "pinned");
-        else addUrl(mod.source.url, mod.name, undefined, "pinned");
+        const url = new URL(mod.source.url, location.href).href;
+        if (isList(url)) addList(url, await playerLists.get(url)!, "pinned", () => {});
+        else addUrl(url, mod.name, undefined, "pinned", undefined, reporting(result));
       } else {
         const key = `inline:${mod.id}`;
         const entry: LoadedPack = { key, name: mod.name, enabled: !disabled.has(key) };
@@ -350,5 +407,6 @@ export async function loadPacks(api: unknown, baseList: string, opts: { safe?: b
       else entry.error = msg;
     }
   }
-  return { packs, sources };
+  const checked = Promise.all(checks.map((c) => c())).then(() => {});
+  return { packs, sources, checked };
 }

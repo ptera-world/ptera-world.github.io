@@ -83,3 +83,65 @@ test("checking a listed pack for updates costs one request when nothing changed"
   expect(await checkForUpdate(X)).not.toBeNull();
   expect(requests).toEqual([LIST, X]);
 });
+
+const MINE = "https://c.test/mine/packs.json";
+const Z = "https://c.test/mine/z.js";
+async function publishMine(z: string): Promise<void> {
+  files.set(Z, z);
+  files.set(MINE, JSON.stringify({ name: "mine", packs: [{ url: "./z.js", hash: await packHash(new TextEncoder().encode(z)) }] } satisfies PackList));
+}
+
+test("a player's list runs as stored and is checked after loading; changes apply from the next load", async () => {
+  await publish(pack(1), pack(2));
+  await publishMine(pack(7));
+  ls.set("games:mods:list", JSON.stringify([{ id: "m", name: "mine", enabled: true, source: { url: MINE } }]));
+  setTrack(Z, "latest");
+  const run = async () => {
+    const api = { ran: [] as number[] };
+    requests = [];
+    const r = await loadPacks(api, LIST);
+    const before = [...requests];
+    await r.checked;
+    return { ran: api.ran, before, after: requests.slice(before.length), sources: r.sources };
+  };
+
+  const first = await run();
+  expect(first.ran).toEqual([1, 2, 7]);
+
+  let gate!: () => void;
+  const realFetch = g.fetch as (u: string) => Promise<Response>;
+  g.fetch = async (u: string) => {
+    if (u === MINE) await new Promise<void>((r) => (gate = r));
+    return realFetch(u);
+  };
+  await publishMine(pack(8));
+  const api = { ran: [] as number[] };
+  const r = await loadPacks(api, LIST);
+  expect(api.ran).toEqual([1, 2, 7]);
+  gate();
+  await r.checked;
+  g.fetch = realFetch;
+
+  const third = await run();
+  expect(third.ran).toEqual([1, 2, 8]);
+  expect([...third.before, ...third.after]).toEqual([LIST, MINE]);
+
+  online = false;
+  const offline = await run();
+  expect(offline.ran).toEqual([1, 2, 8]);
+  expect(offline.sources[0]!.error).toMatch(/couldn't check for updates/);
+  online = true;
+});
+
+test("a pinned pack in a player's list is offered the update instead of switching", async () => {
+  setTrack(Z, "pinned");
+  await publishMine(pack(9));
+  const r = await loadPacks({ ran: [] }, LIST);
+  await r.checked;
+  const api = { ran: [] as number[] };
+  await loadPacks(api, LIST);
+  expect(api.ran).toEqual([1, 2, 8]);
+  const { packRecord } = await import("./mods");
+  expect(packRecord(Z).available?.hash).toBe(await packHash(new TextEncoder().encode(pack(9))));
+  ls.delete("games:mods:list");
+});
