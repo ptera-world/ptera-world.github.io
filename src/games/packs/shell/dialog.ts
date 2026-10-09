@@ -1,4 +1,5 @@
 import { h, style } from "../../core/dom";
+import { openOverlays } from "./surfaces";
 
 const CSS = `
 .gm-dialog { border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); padding: 18px; max-width: min(92vw, 380px); margin: auto; }
@@ -16,7 +17,10 @@ export function confirmDialog(message: string, ok = "ok", danger = false): Promi
       h("form", { method: "dialog" },
         h("p", null, message),
         h("div", { class: "row" }, h("button", { value: "cancel" }, "cancel"), okBtn)));
+    const cancel = () => dlg.close("cancel");
+    openOverlays.add(cancel);
     dlg.addEventListener("close", () => {
+      openOverlays.delete(cancel);
       resolve(dlg.returnValue === "ok");
       dlg.remove();
     });

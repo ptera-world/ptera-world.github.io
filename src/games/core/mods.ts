@@ -214,11 +214,12 @@ export function selectPackVersion(url: string, hash?: string): void {
 
 /**
  * Take a version fetched from upstream: a pack following updates switches to it (from the next
- * load), a pinned one is offered it as available.
+ * load), a pinned one is offered it as available. True when what the next load runs changed.
  */
-function takeUpstream(url: string, track: Track, v: PackVersion): void {
+function takeUpstream(url: string, track: Track, v: PackVersion): boolean {
   const rec = packRecord(url);
   const stored = rec.versions.some((x) => x.hash === v.hash);
+  const was = rec.selected;
   if (track === "latest" || !rec.versions.length) {
     remember(rec, v);
     rec.selected = v.hash;
@@ -228,6 +229,7 @@ function takeUpstream(url: string, track: Track, v: PackVersion): void {
     rec.available = v;
   }
   savePackRecord(url, rec);
+  return rec.selected !== was;
 }
 
 /**
@@ -236,7 +238,7 @@ function takeUpstream(url: string, track: Track, v: PackVersion): void {
  * With `later`, a pack that has a stored version never waits on upstream: it runs the stored
  * one, and the upstream check is handed to `later` (a listed pack's check is its list's).
  */
-async function resolveCode(url: string, defaultTrack: Track, force?: Track, listed?: string, later?: (check: () => Promise<void>) => void): Promise<string> {
+async function resolveCode(url: string, defaultTrack: Track, force?: Track, listed?: string, later?: (check: () => Promise<boolean>) => void): Promise<string> {
   const rec = packRecord(url);
   const track = force ?? rec.track ?? defaultTrack;
   if (track === "latest" && listed !== undefined && rec.versions.some((v) => v.hash === listed)) {
@@ -292,19 +294,20 @@ async function runCode(code: string, api: unknown): Promise<void> {
  * last stored, and all of them are checked upstream in parallel afterwards. What a check finds
  * (new and changed packs, fetched in full) is used from the next load, or offered as an update
  * for a pinned pack; a failed check is reported as the source's error. `checked` settles when
- * every check has.
+ * every check has, true when the next load would run something different.
  */
-export async function loadPacks(api: unknown, baseList: string, opts: { safe?: boolean } = {}): Promise<{ packs: LoadedPack[]; sources: ModLoadResult[]; checked: Promise<void> }> {
+export async function loadPacks(api: unknown, baseList: string, opts: { safe?: boolean } = {}): Promise<{ packs: LoadedPack[]; sources: ModLoadResult[]; checked: Promise<boolean> }> {
   // safe mode: the built-in list only, every pack on, latest versions; player settings untouched
   const disabled = new Set(opts.safe ? [] : disabledPacks());
   const packs: LoadedPack[] = [];
   const seen = new Set<string>();
   const queue: { entry: LoadedPack; code: Promise<string>; source?: ModLoadResult }[] = [];
-  const checks: (() => Promise<void>)[] = [];
-  const reporting = (result: ModLoadResult) => (check: () => Promise<void>) =>
+  const checks: (() => Promise<boolean>)[] = [];
+  const reporting = (result: ModLoadResult) => (check: () => Promise<boolean>) =>
     checks.push(() => check().catch((e) => {
       console.warn(`[games] update check for ${result.mod.name} failed`, e);
       result.error = `couldn't check for updates: ${e instanceof Error ? e.message : String(e)}`;
+      return false;
     }));
 
   const freshList = async (url: string): Promise<PackList> => {
@@ -318,7 +321,7 @@ export async function loadPacks(api: unknown, baseList: string, opts: { safe?: b
   };
 
   /** One path for every pack; where it came from only sets its default track. */
-  const addUrl = (url: string, name: string, list: string | undefined, defaultTrack: Track, listed?: string, later?: (check: () => Promise<void>) => void): void => {
+  const addUrl = (url: string, name: string, list: string | undefined, defaultTrack: Track, listed?: string, later?: (check: () => Promise<boolean>) => void): void => {
     const key = new URL(url, location.href).href;
     if (seen.has(key)) return;
     seen.add(key);
@@ -330,7 +333,7 @@ export async function loadPacks(api: unknown, baseList: string, opts: { safe?: b
     queue.push({ entry, code });
   };
 
-  const addList = (url: string, data: PackList, defaultTrack: Track, later?: (check: () => Promise<void>) => void): void => {
+  const addList = (url: string, data: PackList, defaultTrack: Track, later?: (check: () => Promise<boolean>) => void): void => {
     const base = new URL(url, location.href);
     for (const p of data.packs) {
       const key = new URL(p.url, base).href;
@@ -344,17 +347,20 @@ export async function loadPacks(api: unknown, baseList: string, opts: { safe?: b
   };
 
   /** Fetch a player's list and every enabled pack in it that changed. */
-  const refreshList = async (url: string, defaultTrack: Track): Promise<void> => {
+  const refreshList = async (url: string, defaultTrack: Track): Promise<boolean> => {
+    const shape = (l: PackList | null) => JSON.stringify(l && [l.name, l.packs.map((p) => [p.id, p.name, p.url, p.error])]);
+    const before = shape(lists.get<PackList | null>(url, null));
     const data = await fetchList(url);
-    await Promise.all(data.packs.map(async (p) => {
+    const switched = await Promise.all(data.packs.map(async (p) => {
       const key = new URL(p.url, url).href;
-      if (p.error || disabled.has(key)) return;
+      if (p.error || disabled.has(key)) return false;
       const rec = packRecord(key);
       const track = rec.track ?? defaultTrack;
-      if (p.hash !== undefined && rec.versions.some((v) => v.hash === p.hash)) return;
-      if (p.hash === undefined && track === "pinned" && rec.versions.length) return;
-      takeUpstream(key, track, await fetchVersion(key));
+      if (p.hash !== undefined && rec.versions.some((v) => v.hash === p.hash)) return track === "latest" && rec.selected !== p.hash;
+      if (p.hash === undefined && track === "pinned" && rec.versions.length) return false;
+      return takeUpstream(key, track, await fetchVersion(key));
     }));
+    return shape(data) !== before || switched.some(Boolean);
   };
 
   const baseData = freshList(new URL(baseList, location.href).href);
@@ -407,6 +413,6 @@ export async function loadPacks(api: unknown, baseList: string, opts: { safe?: b
       else entry.error = msg;
     }
   }
-  const checked = Promise.all(checks.map((c) => c())).then(() => {});
+  const checked = Promise.all(checks.map((c) => c())).then((r) => r.some(Boolean));
   return { packs, sources, checked };
 }

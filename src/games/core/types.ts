@@ -362,11 +362,21 @@ export type AnyWidget = WidgetDef<any, any, any, any, Schema>;
 /**
  * The page itself (chrome, panels, how games are presented). Exactly one runs: the one the player
  * chose, else the last registered. Comes from a pack like everything else.
+ *
+ * When the engine is replaced while the page stays open (a new deploy, updated packs), the old
+ * frontend's `unmount` runs first and what it returns is passed as `carried` to the new mount, so
+ * the player keeps their place. A frontend without `unmount` stays until the page is next opened.
  */
 export interface Frontend {
   id: string;
   name: string;
-  mount(root: HTMLElement): void | Promise<void>;
+  /** `carried`: what the previous frontend's unmount returned, if any. Must accept anything, including another frontend's value. */
+  mount(root: HTMLElement, carried?: unknown): void | FrontendHandle | Promise<void | FrontendHandle>;
+}
+
+export interface FrontendHandle {
+  /** Remove everything the frontend added (to `root`, the document, timers, listeners) and return what the next mount should continue from. */
+  unmount(): unknown;
 }
 
 /** A look: values for the CSS custom properties every view and widget styles with. */

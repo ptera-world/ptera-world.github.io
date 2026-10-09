@@ -45,13 +45,17 @@ export function tiles(items: readonly SurfaceItem[], run: (id: string) => void):
   }, h("span", null, it.cmd.label), it.keys.length ? h("span", { class: "k" }, it.keys[0]) : null)));
 }
 
+/** Closers of every open surface and dialog; each closes as if dismissed and removes itself. */
+export const openOverlays = new Set<() => void>();
+
 /** Open a floating surface at a point. Resolves when it closes (picked or dismissed). */
 export function popup(kind: "radial" | "tiles", x: number, y: number, items: readonly SurfaceItem[], run: (id: string) => void): Promise<void> {
   style("surfaces", CSS);
   return new Promise((resolve) => {
     const back = h("div", { class: "sf-backdrop" });
     let panel: HTMLElement;
-    const close = () => { back.remove(); panel.remove(); document.removeEventListener("keydown", onKey, true); resolve(); };
+    const close = () => { openOverlays.delete(close); back.remove(); panel.remove(); document.removeEventListener("keydown", onKey, true); resolve(); };
+    openOverlays.add(close);
     const pick = (id: string) => { close(); run(id); };
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); close(); } };
     if (kind === "tiles") {

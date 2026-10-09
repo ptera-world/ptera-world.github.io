@@ -49,6 +49,8 @@ export const api = {
   HOLD_MS,
   /** Pack management, and what this page load loaded (filled in by the loader before any frontend mounts). */
   packs: { ...mods, loaded: [] as mods.LoadedPack[], sources: [] as mods.ModLoadResult[] },
+  /** Aborts when this engine is replaced while the page stays open: release anything a pack added outside the registry. */
+  signal: new AbortController().signal,
   /** Loaded with ?safe: only the built-in packs, all on, latest versions; the player's pack settings are left alone. */
   safe: false,
   /** Whatever the running frontend wants to expose (e.g. the shell object). */

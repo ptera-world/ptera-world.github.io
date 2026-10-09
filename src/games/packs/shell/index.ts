@@ -7,12 +7,13 @@ export default function pack(games: GamesApi): void {
   games.registry.frontend({
     id: "shell",
     name: "standard",
-    async mount(root) {
+    async mount(root, carried) {
       // ui code (and the keybinds library) loads only when the page mounts, so registering never needs a DOM
       const { Shell } = await import("./shell");
       const shell = new Shell(root, games.registry, games.packs.sources, games.packs.loaded, games.safe);
       games.shell = shell;
-      await shell.start();
+      await shell.start(carried);
+      return { unmount: () => shell.stop() };
     },
   });
 }

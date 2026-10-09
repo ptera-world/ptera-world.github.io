@@ -22,11 +22,13 @@ export function setTipDelay(ms: number): void {
 /**
  * Tooltips for anything with data-command (label, what it does, its current keys) or data-tip
  * (free text). Native title tooltips on those elements are suppressed so there is one system.
+ * Everything it adds goes away when `signal` aborts.
  */
-export function installTooltips(hub: CommandHub): void {
+export function installTooltips(hub: CommandHub, signal: AbortSignal): void {
   style("tooltips", CSS);
   const tip = h("div", { class: "tip", role: "tooltip" });
   document.body.append(tip);
+  signal.addEventListener("abort", () => { clearTimeout(timer); tip.remove(); });
   let timer = 0;
   let target: HTMLElement | null = null;
 
@@ -72,8 +74,8 @@ export function installTooltips(hub: CommandHub): void {
     if (delay < 0) return;
     target = el;
     timer = window.setTimeout(() => { if (target === el && el.isConnected) show(el); }, delay);
-  });
-  document.addEventListener("pointerdown", hide, { capture: true });
-  document.addEventListener("keydown", hide, { capture: true });
-  document.addEventListener("scroll", hide, { capture: true, passive: true });
+  }, { signal });
+  document.addEventListener("pointerdown", hide, { capture: true, signal });
+  document.addEventListener("keydown", hide, { capture: true, signal });
+  document.addEventListener("scroll", hide, { capture: true, passive: true, signal });
 }

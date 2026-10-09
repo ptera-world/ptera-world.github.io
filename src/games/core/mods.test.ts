@@ -119,7 +119,7 @@ test("a player's list runs as stored and is checked after loading; changes apply
   const r = await loadPacks(api, LIST);
   expect(api.ran).toEqual([1, 2, 7]);
   gate();
-  await r.checked;
+  expect(await r.checked).toBe(true);
   g.fetch = realFetch;
 
   const third = await run();

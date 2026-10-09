@@ -27,7 +27,7 @@ import { builtinWidgets } from "./widgets";
 import { installTooltips } from "./tooltips";
 import { sessionList } from "./session-list";
 import { tagStyle } from "./tags";
-import { popup, type SurfaceItem } from "./surfaces";
+import { openOverlays, popup, type SurfaceItem } from "./surfaces";
 import { SAVE_PREFIX, INDEX_KEY, findSession, listSessions, loadSession, newSessionId, removeSession, saveSession } from "./sessions";
 
 
@@ -58,6 +58,20 @@ function originKey(def: AnyPuzzleDef, origin: Origin): string {
   return `i|${origin.source ?? ""}`;
 }
 
+
+/** What a stopped shell hands to the next one: the open game and where the player was. */
+interface Carried {
+  kind: "shell";
+  /** Saved-game id of the open game; null on the game list. */
+  sessionId: string | null;
+  tab: string;
+  unlocked: boolean;
+  practiceStart: unknown;
+  zoom: number;
+  scroll: [number, number];
+}
+
+const isCarried = (v: unknown): v is Carried => typeof v === "object" && v !== null && (v as Carried).kind === "shell";
 
 interface MountedWidget {
   def: AnyWidget;
@@ -105,6 +119,9 @@ export class Shell {
   /** Practice: the state the step was found in. */
   private practiceStart: unknown = null;
   private els: ReturnType<Shell["buildDom"]>;
+  /** Aborts on stop: every listener the shell puts outside its own elements is bound to it. */
+  private readonly life = new AbortController();
+  private ticker = 0;
 
   constructor(readonly root: HTMLElement, readonly registry: Registry, readonly modResults: ModLoadResult[], readonly packs: LoadedPack[] = [], readonly safe = false) {
     this.els = this.buildDom();
@@ -113,16 +130,18 @@ export class Shell {
     for (const w of builtinWidgets(this)) registry.widget(w);
   }
 
-  async start(): Promise<void> {
-    window.addEventListener("popstate", () => void this.fromUrl());
+  /** `carried`: what a previous shell's stop returned, to continue from; anything else is ignored. */
+  async start(carried?: unknown): Promise<void> {
+    const signal = this.life.signal;
+    window.addEventListener("popstate", () => void this.fromUrl(), { signal });
     document.addEventListener("visibilitychange", () => {
       if (!this.session) return;
       if (document.hidden) {
         this.session.pause();
         this.saveNow();
       } else if (!this.session.paused) this.session.resume();
-    });
-    window.addEventListener("pagehide", () => this.saveNow());
+    }, { signal });
+    window.addEventListener("pagehide", () => this.saveNow(), { signal });
     // another tab saved: pick up its version of this game (last write wins), refresh the list
     window.addEventListener("storage", (e) => {
       if (e.key === INDEX_KEY) this.hooks.sessions.call();
@@ -139,32 +158,72 @@ export class Shell {
         }
         this.setStatus("updated from another tab");
       }
-    });
+    }, { signal });
     if (new URLSearchParams(location.search).has("debugLayout")) watchLayoutShifts();
     let raf = 0;
     window.addEventListener("resize", () => {
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(() => this.relayout());
-    });
+    }, { signal });
+    signal.addEventListener("abort", () => cancelAnimationFrame(raf));
     this.els.boardbox.addEventListener("contextmenu", (e) => {
       if (e.defaultPrevented || this.view?.handle.gestures?.secondaryClick || !this.hub.all().some((c) => [c.menu].flat().includes("board"))) return;
       e.preventDefault();
       this.openBoardMenu(e.clientX, e.clientY, "mouse");
     });
-    setInterval(() => this.tick(), 250);
+    this.ticker = window.setInterval(() => this.tick(), 250);
     setInputKind(this.root, "pointer");
     document.addEventListener("keydown", (e) => {
       if (!["Shift", "Control", "Alt", "Meta"].includes(e.key)) setInputKind(this.root, "keyboard");
-    }, { capture: true });
-    document.addEventListener("pointerdown", () => { setInputKind(this.root, "pointer"); }, { capture: true });
-    onThemeChange(() => { if (this.session) this.mountView(); });
-    onBoardPrefsChange(() => { if (this.session) this.mountView(); });
-    installTooltips(this.hub);
+    }, { capture: true, signal });
+    document.addEventListener("pointerdown", () => { setInputKind(this.root, "pointer"); }, { capture: true, signal });
+    for (const off of [onThemeChange(() => { if (this.session) this.mountView(); }), onBoardPrefsChange(() => { if (this.session) this.mountView(); })]) {
+      signal.addEventListener("abort", off);
+    }
+    installTooltips(this.hub, signal);
     this.rearmHold();
     this.installZoom();
     this.installLongPress();
     this.hub.setSource("shell", () => this.shellCommands());
-    await this.fromUrl();
+    const c = isCarried(carried) ? carried : null;
+    if (c) this.activeTab = c.tab;
+    if (!c?.sessionId || !this.openSession(c.sessionId, false)) {
+      await this.fromUrl();
+      return;
+    }
+    if (c.unlocked) {
+      this.unlocked = true;
+      this.syncLock();
+    }
+    if (this.session?.origin.kind === "practice") this.practiceStart = c.practiceStart;
+    if (c.zoom !== 1) this.zoomBy(c.zoom);
+    this.els.scroller.scrollLeft = c.scroll[0];
+    this.els.scroller.scrollTop = c.scroll[1];
+  }
+
+  /** Save, remove everything the shell added to the page, and return what a new shell continues from. */
+  stop(): Carried {
+    const sc = this.els.scroller;
+    const carried: Carried = {
+      kind: "shell",
+      sessionId: this.session ? this.sessionId : null,
+      tab: this.activeTab,
+      unlocked: this.unlocked,
+      practiceStart: this.practiceStart,
+      zoom: this.zoom,
+      scroll: [sc.scrollLeft, sc.scrollTop],
+    };
+    this.generating?.abort();
+    this.teardownSession();
+    this.unmountWidgets();
+    this.stopHold?.();
+    this.hub.destroy();
+    for (const close of openOverlays) close();
+    clearInterval(this.ticker);
+    clearTimeout(this.saveTimer);
+    this.life.abort();
+    this.root.replaceChildren();
+    return carried;
   }
 
   /** Touch: holding on the board opens the same menu a right-click does. */

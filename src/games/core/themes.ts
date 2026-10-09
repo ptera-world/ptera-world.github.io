@@ -85,9 +85,9 @@ export function setTokenOverride(registry: Registry, token: string, value: strin
   applyTheme(registry);
 }
 
-/** Re-apply when the OS scheme flips or a theme is registered (e.g. by a pack). */
-export function watchTheme(registry: Registry): void {
-  matchMedia("(prefers-color-scheme: light)").addEventListener("change", () => applyTheme(registry));
+/** Re-apply when the OS scheme flips or a theme is registered (e.g. by a pack), until `signal` aborts. */
+export function watchTheme(registry: Registry, signal: AbortSignal): void {
+  matchMedia("(prefers-color-scheme: light)").addEventListener("change", () => applyTheme(registry), { signal });
   registry.hooks.changed.tap(({ kind }) => { if (kind === "theme") applyTheme(registry); });
   applyTheme(registry);
 }
