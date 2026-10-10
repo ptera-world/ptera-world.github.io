@@ -19,6 +19,11 @@ export function knowledge(p: PatternPuzzle, s: PatternState): Uint8Array {
   return K;
 }
 
+/** The marks on the board, as deductions start from them. */
+function boardMarks(s: PatternState): Uint8Array {
+  return Uint8Array.from(s.cells);
+}
+
 export interface LineHit {
   line: number;
   cells: Int32Array;
@@ -34,7 +39,7 @@ export function ruleHits(p: PatternPuzzle, K: ArrayLike<number>, id: LineRuleId,
     const vals = Array.from(cells, (c) => K[c]!);
     const f = ruleOnLine(id, { clue: lineClue(p, l), vals });
     if (!f) continue;
-    // only cells still blank on the board (knowledge may have blanked a wrong mark)
+    // only cells still blank on the board
     const blank = (i: number) => !s || s.cells[cells[i]!] === UNKNOWN;
     const find = { ...f, fill: f.fill.filter(blank), empty: f.empty.filter(blank) };
     if (find.fill.length || find.empty.length) out.push({ line: l, cells, find });
@@ -114,12 +119,12 @@ function lineTechnique(
     ...rest,
     puzzles: [pattern],
     instances(p, s, visit) {
-      for (const hit of ruleHits(p, knowledge(p, s), id, s).sort((a, b) => gain(b) - gain(a))) if (visit(stepOf(p, hit)!)) return;
+      for (const hit of ruleHits(p, boardMarks(s), id, s).sort((a, b) => gain(b) - gain(a))) if (visit(stepOf(p, hit)!)) return;
     },
     findAt(p, s, t) {
       const target = targetOf(t);
       if (!target) return null;
-      return stepOf(p, best(ruleHits(p, knowledge(p, s), id, s).filter((h) => target.lines.includes(h.line))));
+      return stepOf(p, best(ruleHits(p, boardMarks(s), id, s).filter((h) => target.lines.includes(h.line))));
     },
   };
 }
@@ -203,7 +208,7 @@ export const whatIf: PatternTechnique = {
   level: 8,
   description: "when no single line says anything more, pick a cell and suppose it's filled (or empty). follow the line logic that suppose leads to. if some line ends up with no way to fit its clue, the supposition was wrong, so the cell is the other way.",
   instances(p, s, visit) {
-    const K = knowledge(p, s);
+    const K = boardMarks(s);
     probes(info(p).lines, K, (probe) => {
       const step = whatIfOf(p, s, K, probe);
       return step ? visit(step) : false;
@@ -218,7 +223,7 @@ export const whatIf: PatternTechnique = {
 
 /** A what-if anywhere, or only at `at`. */
 function whatIfStep(p: PatternPuzzle, s: PatternState, at: number): Step<PatternAction> | null {
-  const K = knowledge(p, s);
+  const K = boardMarks(s);
   let step: Step<PatternAction> | null = null;
   probes(info(p).lines, K, (probe) => { step = whatIfOf(p, s, K, probe); return true; }, at, 1);
   return step;

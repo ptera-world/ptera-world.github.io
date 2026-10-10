@@ -1,15 +1,10 @@
-import type { Step, Technique } from "../../core/types";
+import { hintFrom } from "../../core/define";
+import type { Hint, Step, Technique } from "../../core/types";
 import { cellList, cellName } from "../../lib/grid-kit/names";
 import { zip, troubleText, type ZipAction, type ZipFocus, type ZipPuzzle, type ZipState } from "./logic";
-import { KIND_LEVEL, analyze, headOf, nextStep, walkOf, type Elimination, type StepKind, type ZipStep } from "./solver";
+import { KIND_LEVEL, headOf, nextStep, walkOf, type Elimination, type StepKind, type ZipStep } from "./solver";
 
 type ZipTechnique = Technique<ZipPuzzle, ZipState, ZipAction>;
-
-/** The path is still on the unique solution (or there's no unique solution to compare with). */
-function onTrack(p: ZipPuzzle, s: ZipState): boolean {
-  const a = analyze(p);
-  return !(a.count === 1 && a.solution) || s.path.every((c, i) => c === a.solution![i]);
-}
 
 function why(p: ZipPuzzle, r: Elimination): string {
   const to = `going to ${cellName(p, r.cell)}`;
@@ -40,7 +35,6 @@ function technique(def: Omit<ZipTechnique, "instances" | "puzzles" | "level"> & 
     puzzles: [zip],
     level: KIND_LEVEL[kind],
     instances(p, s, visit) {
-      if (!onTrack(p, s)) return;
       const st = nextStep(p, walkOf(p, s.path), KIND_LEVEL[kind]);
       if (!st || st.kind !== kind) return;
       const t = text(p, s, st);
@@ -94,12 +88,19 @@ export const chains = technique({
   nudge: `look at the cells with only two ways in near ${head(p, s)}`,
 }));
 
-export const trial = technique({
-  id: "zip.trial", name: "look ahead", kind: "trial", practice: { params: { width: 7, height: 7, difficulty: "hard" } },
-  description: "when nothing simpler settles it, follow each possible move a few steps ahead. every one but one gets stuck.",
-}, (p, s, st) => ({
+const trialText = (p: ZipPuzzle, s: ZipState, st: ZipStep) => ({
   message: `${st.ruled.map((r) => why(p, r)).join("; ")}. so ${then(p, st)}`,
   nudge: `try each way out of ${head(p, s)}: ${cellList(p, [...st.because, ...st.cells])}`,
-}));
+});
 
-export const zipTechniques: ZipTechnique[] = [onlyWay, deadEnd, noSplit, order, chains, trial];
+/** The puzzle's hint: the move that follows from looking each way ahead, else the puzzle's own hint. */
+export function zipHint(p: ZipPuzzle, s: ZipState): Hint<ZipAction> | null {
+  const st = nextStep(p, walkOf(p, s.path), KIND_LEVEL.trial);
+  if (st && st.kind === "trial") {
+    const t = trialText(p, s, st);
+    return hintFrom(null, build(p, s, st, t.message, t.nudge), 1) as Hint<ZipAction>;
+  }
+  return zip.hint?.(p, s) ?? null;
+}
+
+export const zipTechniques: ZipTechnique[] = [onlyWay, deadEnd, noSplit, order, chains];

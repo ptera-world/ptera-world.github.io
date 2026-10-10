@@ -235,14 +235,12 @@ export function analyze(p: PalisadePuzzle): Analysis {
   return a;
 }
 
-/** Board marks as domains; with a unique solution only marks that agree with it count. */
+/** Board marks as domains; every mark counts. */
 export function readMarks(p: PalisadePuzzle, s: PalisadeState): Doms {
-  const a = analyze(p);
-  const sol = a.count === 1 ? a.solution : null;
   const k = initialDoms(p);
   s.marks.forEach((m, e) => {
-    if (m === LINE && (!sol || sol[e] === WALL)) k[e] = Wl;
-    else if (m === GAP && (!sol || sol[e] === OPEN)) k[e] = O;
+    if (m === LINE) k[e] = Wl;
+    else if (m === GAP) k[e] = O;
   });
   return k;
 }

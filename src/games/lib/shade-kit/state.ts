@@ -35,17 +35,13 @@ export function reduceShade(n: number, fixed: (c: number) => boolean, s: ShadeSt
   return next ? { marks: next } : s;
 }
 
-/**
- * Start domains plus board marks; with a unique solution only marks that agree with it count,
- * so deductions never build on a mistake.
- */
-export function readShade(start: Doms, a: Analysis, s: ShadeState, fixed: (c: number) => boolean): Doms {
-  const sol = a.count === 1 ? a.solution : null;
+/** Start domains plus board marks; every mark counts as placed. */
+export function readShade(start: Doms, _a: Analysis, s: ShadeState, fixed: (c: number) => boolean): Doms {
   const k = start.slice();
   s.marks.forEach((m, c) => {
     if (fixed(c)) return;
-    if (m === BLACK && (!sol || sol[c] === SHADED)) k[c] = B;
-    else if (m === DOT && (!sol || sol[c] === WHITE)) k[c] = W;
+    if (m === BLACK) k[c] = B;
+    else if (m === DOT) k[c] = W;
   });
   return k;
 }

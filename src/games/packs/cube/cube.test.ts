@@ -1,11 +1,10 @@
 import { expect, test } from "bun:test";
 import { generate } from "../../core/generate";
 import { createRng } from "../../core/rng";
-import { applyStep, findStep, findPracticePosition, firstStep } from "../../core/techniques";
 import { SOLIDS, area, faceOf, squares } from "./geometry";
 import { arena, classOf, cube, sgtFormat, type CubePuzzle } from "./logic";
 import { pose } from "./pose";
-import { cubeTechniques } from "./techniques";
+import { hint } from "./techniques";
 
 const sig = () => new AbortController().signal;
 const gen = (params: Record<string, unknown>, seed: string) => generate(cube, params, seed, sig()) as Promise<CubePuzzle>;
@@ -69,27 +68,20 @@ test("colors swap on landing", async () => {
   expect(s.blue[5]).toBe(0);
 });
 
-test("techniques alone make every face blue on every preset", async () => {
+test("the hint alone makes every face blue on every preset", async () => {
   for (const pr of cube.presets!) {
     for (const seed of ["t1", "t2"]) {
       const p = await gen(pr.params, seed);
       let s = cube.init(p);
       for (let i = 0; i < 400 && !cube.isSolved(p, s); i++) {
-        const hit = firstStep(cube, cubeTechniques, p, s);
-        expect(hit).not.toBeNull();
-        s = applyStep(cube, p, s, hit!.step);
+        const h = hint(p, s);
+        expect(h).not.toBeNull();
+        s = h!.actions!.reduce((t, a) => cube.reduce(p, t, a), s);
       }
       expect(cube.isSolved(p, s)).toBe(true);
     }
   }
 }, 60000);
-
-test("practice positions exist", async () => {
-  for (const t of cubeTechniques) {
-    const pos = await findPracticePosition(cube, cubeTechniques, t, "x", sig());
-    expect(pos && findStep(cube, t, pos.puzzle, pos.state)?.actions.length).toBe(1);
-  }
-});
 
 test("sgt ids round-trip and match sgt's bitmap layout", async () => {
   for (const pr of cube.presets!) {

@@ -1,4 +1,5 @@
 import type { Rng } from "../../core/rng";
+import { work } from "../../lib/work";
 import { colName, rowName } from "../../core/names";
 
 export const UNKNOWN = 0;
@@ -38,6 +39,7 @@ export const CAN_EMPTY = 2;
  * Complete for a single line: a cell left with one bit is forced.
  */
 export function solveLine(clue: Clue, line: ArrayLike<number>): Uint8Array | null {
+  work.units++;
   const n = line.length;
   const k = clue.length;
   const N = n + 1;

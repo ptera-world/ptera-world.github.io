@@ -1,4 +1,5 @@
-import type { Step, Technique } from "../../core/types";
+import { hintFrom } from "../../core/define";
+import type { Hint, Step, Technique } from "../../core/types";
 import {
   guess, COLOUR_NAMES, REASON_LIMIT, bestGuess, candidates, codeCount, isOver, rankedGuesses,
   type GuessAction, type GuessFocus, type GuessPuzzle, type GuessState,
@@ -73,19 +74,19 @@ function guessStep(s: GuessState, best: { code: number[]; worst: number; left: n
   };
 }
 
-export const narrowDown: GuessTechnique = {
-  id: "guess.narrow-down",
-  name: "narrow it down",
-  puzzles: [guess],
-  level: 3,
-  description: "pick the guess that, whatever marks it gets, leaves the fewest codes still possible. it may even be a code that can't be the answer, if it splits the rest more evenly.",
-  instances(p, s, visit) {
-    if (!reasoning(p, s)) return;
-    const best = bestGuess(p, s);
-    if (!best) return;
-    if (visit(guessStep(s, best)) === true) return;
-    for (const g of rankedGuesses(p, s).slice(1)) if (visit(guessStep(s, g)) === true) return;
-  },
-};
+/** The puzzle's hint: the guess that leaves the fewest codes possible in the worst case, else the puzzle's own hint. */
+export function guessHint(p: GuessPuzzle, s: GuessState): Hint<GuessAction> | null {
+  const valid = (st: Step<GuessAction>) => st.actions.length > 0 && !Object.is(st.actions.reduce((t, a) => guess.reduce(p, t, a), s), s);
+  const best = reasoning(p, s) ? bestGuess(p, s) : null;
+  if (best) {
+    const first = guessStep(s, best);
+    if (valid(first)) return hintFrom(null, first, 1) as Hint<GuessAction>;
+    for (const g of rankedGuesses(p, s).slice(1)) {
+      const st = guessStep(s, g);
+      if (valid(st)) return hintFrom(null, st, 1) as Hint<GuessAction>;
+    }
+  }
+  return guess.hint?.(p, s) ?? null;
+}
 
-export const guessTechniques: GuessTechnique[] = [knownPeg, lastCode, narrowDown];
+export const guessTechniques: GuessTechnique[] = [knownPeg, lastCode];

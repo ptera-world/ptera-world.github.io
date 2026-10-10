@@ -279,15 +279,13 @@ export function analyze(p: SinglesPuzzle): Analysis {
   return a;
 }
 
-/** Board marks as domains; with a unique solution only marks that agree with it count. Null if they contradict. */
-export function readMarks(p: SinglesPuzzle, s: SinglesState, filter: boolean): Doms | null {
-  const a = filter ? analyze(p) : null;
-  const sol = a?.count === 1 ? a.solution : null;
+/** Board marks as domains. Null if they contradict. */
+export function readMarks(p: SinglesPuzzle, s: SinglesState): Doms | null {
   const k = initialDoms(p);
   for (let c = 0; c < k.length; c++) {
     const m = s.marks[c];
-    if (m === BLACK && (!sol || sol[c] === SHADED)) k[c] = B;
-    else if (m === CIRCLE && (!sol || sol[c] === WHITE)) k[c] = W;
+    if (m === BLACK) k[c] = B;
+    else if (m === CIRCLE) k[c] = W;
   }
   return k;
 }

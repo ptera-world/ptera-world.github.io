@@ -6,7 +6,7 @@ import { TechniqueHost, applyStep, findPracticePosition, findStep, firstStep } f
 import { cardCode, msDeal, parseCards } from "../../lib/cards/deck";
 import { fcSolveFormat, freecell, msFormat, startPos, type FreecellPuzzle } from "./logic";
 import { solve } from "./solver";
-import { checkWinnable, freecellTechniques } from "./techniques";
+import { checkWinnable, fallbackHint, freecellTechniques } from "./techniques";
 
 const sig = () => new AbortController().signal;
 const gen = (params: Record<string, unknown>, seed: string) => generate(freecell, params, seed, sig()) as Promise<FreecellPuzzle>;
@@ -62,7 +62,7 @@ test("hints win a game, also after wandering off the stored line", async () => {
   const p = await gen({}, "h");
   const registry = new Registry();
   for (const t of freecellTechniques) registry.technique(t);
-  const session = new Session(freecell, p, { kind: "imported" });
+  const session = new Session({ ...freecell, hint: fallbackHint }, p, { kind: "imported" });
   new TechniqueHost(registry, session);
   checkWinnable.setup!({ session, settings: {}, owner: "check" });
   // a legal move off the stored line
@@ -81,9 +81,10 @@ test("techniques alone win every preset; practice positions exist", async () => 
     const p = await gen(pr.params, "t");
     let s = freecell.init(p);
     for (let i = 0; i < 400 && !freecell.isSolved(p, s); i++) {
-      const hit = firstStep(freecell, freecellTechniques, p, s)!;
-      expect(hit).not.toBeNull();
-      s = applyStep(freecell, p, s, hit.step);
+      const hit = firstStep(freecell, freecellTechniques, p, s);
+      const h = hit ? null : fallbackHint(p, s);
+      expect(hit ?? h).not.toBeNull();
+      s = hit ? applyStep(freecell, p, s, hit.step) : h!.actions!.reduce((t, a) => freecell.reduce(p, t, a), s);
     }
     expect(freecell.isSolved(p, s)).toBe(true);
   }

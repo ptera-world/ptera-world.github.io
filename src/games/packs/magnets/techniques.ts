@@ -2,7 +2,7 @@ import type { Step, Technique } from "../../core/types";
 import { bit, valueOf, type Deduction } from "../../lib/grid-kit/csp";
 import { cellList, cellName, technique, type Focus, type Reading } from "../../lib/grid-kit/names";
 import {
-  magnets, A_MINUS, A_PLUS, FULL, MAGNET, NEUTRAL, SIGN_WORD, analyze, geometry, lineName, model, readMasks, signAt,
+  magnets, A_MINUS, A_PLUS, FULL, MAGNET, NEUTRAL, SIGN_WORD, geometry, lineName, model, readMasks, signAt,
   type MagnetsAction, type MagnetsPuzzle, type MagnetsState,
 } from "./logic";
 
@@ -10,20 +10,17 @@ type MagnetsTechnique = Technique<MagnetsPuzzle, MagnetsState, MagnetsAction>;
 
 const readings = new WeakMap<MagnetsState, Reading>();
 
-/** Board masks that agree with the unique solution (all of them when there isn't one), so steps never build on a mistake. */
+/** Board masks. */
 function read(p: MagnetsPuzzle, s: MagnetsState): Reading {
   let r = readings.get(s);
   if (!r) readings.set(s, r = { model: model(p), k: readMasks(p, s) });
   return r;
 }
 
-/** Dominoes whose board mask the deduction narrows; masks that rule out the solution are left alone. */
+/** Dominoes whose board mask the deduction narrows. */
 function changes(p: MagnetsPuzzle, s: MagnetsState, d: Deduction): number[] {
-  const a = analyze(p);
-  const sol = a.count === 1 ? a.solution : null;
   return d.vars.filter((v) => {
     const m = s.doms[v]!;
-    if (sol && !(m & bit(sol[v]!))) return false;
     const next = m & d.keep;
     return next !== 0 && next !== m;
   });

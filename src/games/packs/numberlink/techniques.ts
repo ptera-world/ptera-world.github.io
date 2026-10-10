@@ -2,7 +2,7 @@ import type { Step, Technique } from "../../core/types";
 import { LINE, NO, edgeGrid } from "../../lib/edges";
 import { cellName } from "../../lib/grid-kit/names";
 import { numberlink, CROSS, edgeList, pairName, type NumberlinkAction, type NumberlinkFocus, type NumberlinkPuzzle, type NumberlinkState } from "./logic";
-import { EMPTY_BIT, analyze, closeObvious, eachStep, freshKnowledge, pairOf, type Knowledge, type Step as SolverStep, type StepKind } from "./solver";
+import { EMPTY_BIT, closeObvious, eachStep, freshKnowledge, pairOf, type Knowledge, type Step as SolverStep, type StepKind } from "./solver";
 
 type NumberlinkTechnique = Technique<NumberlinkPuzzle, NumberlinkState, NumberlinkAction>;
 
@@ -12,17 +12,14 @@ export type NumberlinkTarget = { cell: number };
 const knowledgeCache = new WeakMap<NumberlinkState, Knowledge | null>();
 
 /**
- * Lines and crosses on the board, each counted only when it agrees with the unique solution (all of
- * them when there isn't one), plus what they make obvious. Null on a clash.
+ * Lines and crosses on the board, all counted, plus what they make obvious. Null on a clash.
  */
 export function knowledge(p: NumberlinkPuzzle, s: NumberlinkState): Knowledge | null {
   if (knowledgeCache.has(s)) return knowledgeCache.get(s)!;
-  const a = analyze(p);
-  const sol = a.count === 1 ? a.solution : null;
   const k = freshKnowledge(p);
   s.edges.forEach((v, e) => {
-    if (v === LINE && (!sol || sol[e])) k.e[e] = LINE;
-    else if (v === CROSS && (!sol || !sol[e])) k.e[e] = NO;
+    if (v === LINE) k.e[e] = LINE;
+    else if (v === CROSS) k.e[e] = NO;
   });
   const out = closeObvious(p, edgeGrid(p.w, p.h), k) ? k : null;
   knowledgeCache.set(s, out);

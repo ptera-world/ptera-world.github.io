@@ -5,6 +5,9 @@ import type { Session } from "./session";
 import { namespace } from "./storage";
 import type { Action, AnyPuzzleDef, Hint, Step, Technique } from "./types";
 
+import { hintFrom } from "./define";
+export { hintFrom };
+
 const store = namespace("technique");
 
 export interface TechniqueConfig {
@@ -85,19 +88,6 @@ export function firstStep<Pz, S>(def: AnyPuzzleDef, list: readonly Technique[], 
   return null;
 }
 
-/** Level 1 (nudge) carries level 2 (full) in `more`; level 2 alone when asked directly. */
-export function hintFrom(t: Technique, step: Step, level: number): Hint {
-  const full: Hint = { message: `${t.name}: ${step.message}`, focus: step.focus, technique: t.id, level: 2, actions: step.actions };
-  if (level >= 2) return full;
-  return {
-    message: step.nudge ? `${t.name}: ${step.nudge}` : `try a ${t.name}`,
-    focus: step.nudgeFocus,
-    technique: t.id,
-    level: 1,
-    actions: step.actions,
-    more: full,
-  };
-}
 
 const AUTO_OWNER = "techniques";
 const AUTO_GUARD = 10_000;
@@ -277,7 +267,8 @@ export function rememberedPosition(def: AnyPuzzleDef, t: Technique, all: readonl
 
 /**
  * A position where `target` is the easiest technique that applies: generated from seeded
- * puzzles, solved forward with easier techniques until target is next. Deterministic in seed.
+ * puzzles, played forward with easier techniques (or the puzzle's own hint when none applies)
+ * until target is next. Deterministic in seed.
  * Returns null if none is found within `tries` puzzles.
  */
 export async function findPracticePosition(
@@ -298,13 +289,15 @@ export async function findPracticePosition(
     let state = def.init(puzzle);
     for (let guard = 0; guard < 2000; guard++) {
       const hit = firstStep(def, all, puzzle, state);
-      if (!hit) break;
-      if (hit.technique.id === target.id) {
+      if (hit?.technique.id === target.id) {
         const shown = practiceAt(def, target, all, puzzle, state);
         if (shown) return { puzzle, state: shown, seed: s };
         break;
       }
-      state = applyStep(def, puzzle, state, hit.step);
+      const moves = hit?.step.actions ?? def.hint?.(puzzle, state)?.actions ?? [];
+      const next = applyStep(def, puzzle, state, { message: "", actions: moves });
+      if (Object.is(next, state)) break;
+      state = next;
       if (guard % 20 === 19) await new Promise((r) => setTimeout(r, 0));
     }
   }

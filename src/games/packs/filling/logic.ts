@@ -220,12 +220,10 @@ export function analyze(p: FillingPuzzle): Analysis {
   return a;
 }
 
-/** Board masks as domains; with a unique solution, masks that rule out the solution are ignored. */
+/** Clues and board masks as domains. */
 export function readMasks(p: FillingPuzzle, s: FillingState): Doms {
-  const a = analyze(p);
-  const sol = a.count === 1 ? a.solution : null;
   const g = geometry(p);
-  return Int32Array.from(s.doms, (m, c) => (p.clues[c]! > 0 ? bit(p.clues[c]!) : !sol || m & bit(sol[c]!) ? m & g.full : g.full));
+  return Int32Array.from(s.doms, (m, c) => (p.clues[c]! > 0 ? bit(p.clues[c]!) : m & g.full));
 }
 
 // --- state ---

@@ -18,5 +18,5 @@ shadeSuite<NorinoriPuzzle>({
     }
   },
   formats: [pzprFormat, textFormat],
-  presetBudgetMs: 8000,
+  presetBudgetWork: 32_000_000,
 });

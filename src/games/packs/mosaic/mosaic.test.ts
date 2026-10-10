@@ -7,7 +7,7 @@ import { TechniqueHost, applyStep, findPracticePosition, firstStep, findStep, ra
 import { countSolutions, solveLevel } from "../../lib/grid-kit/csp";
 import { cellName, type Focus } from "../../lib/grid-kit/names";
 import {
-  BLACK, DOT, NONE, SHADED, analyze, blocks, initialDoms, isSolved, model, mosaic, sgtFormat,
+  BLACK, NONE, SHADED, analyze, blocks, initialDoms, isSolved, model, mosaic, sgtFormat,
   type Level, type MosaicAction, type MosaicPuzzle,
 } from "./logic";
 import { checkMarks } from "./plugins";
@@ -102,8 +102,6 @@ test("every technique step agrees with the solution and never touches marked cel
     const p = await gen({ width: 9, height: 8, difficulty }, `sound-${difficulty}`);
     const sol = analyze(p).solution!;
     let st = mosaic.init(p);
-    const wrong = sol.findIndex((v) => v === SHADED);
-    st = mosaic.reduce(p, st, { type: "set", cells: [wrong], value: DOT });
     for (let i = 0; i < 400; i++) {
       const hit = firstStep(mosaic, mosaicTechniques, p, st);
       if (!hit) break;

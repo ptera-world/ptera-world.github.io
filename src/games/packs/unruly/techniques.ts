@@ -10,11 +10,7 @@ type UnrulyTechnique = Technique<UnrulyPuzzle, UnrulyState, UnrulyAction>;
 
 const readings = new WeakMap<UnrulyState, Reading>();
 
-/**
- * Givens plus the player's pieces, each read as a fact only when it agrees with the unique
- * solution (every piece counts when there isn't one), so an auto-applied step never builds on a
- * mistake.
- */
+/** Givens plus the player's pieces. */
 function read(p: UnrulyPuzzle, s: UnrulyState): Reading {
   let r = readings.get(s);
   if (!r) readings.set(s, r = { model: model(p), k: readMarks(p, s) });

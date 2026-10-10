@@ -1,7 +1,7 @@
 import type { Step, Technique } from "../../core/types";
 import { ALL, geometry } from "./grid";
 import { map, COLOUR_NAMES, colourList, regionList, regionName, type MapAction, type MapFocus, type MapPuzzle, type MapState } from "./logic";
-import { analyze, assign, scanSteps, startKnowledge, type Knowledge, type Step as SolverStep, type StepKind } from "./solver";
+import { assign, scanSteps, startKnowledge, type Knowledge, type Step as SolverStep, type StepKind } from "./solver";
 
 type MapTechnique = Technique<MapPuzzle, MapState, MapAction>;
 
@@ -11,23 +11,19 @@ export type MapTarget = { region: number };
 const knowledgeCache = new WeakMap<MapState, Knowledge | null>();
 
 /**
- * What the board establishes: colors and pencil marks, each counted only when it agrees with the
- * unique solution (all of them when there isn't one). Null when the counted ones clash.
+ * What the board establishes: colors and pencil marks. Null when they clash.
  */
 export function knowledge(p: MapPuzzle, s: MapState): Knowledge | null {
   if (knowledgeCache.has(s)) return knowledgeCache.get(s)!;
   const g = geometry(p);
-  const a = analyze(p);
-  const sol = a.count === 1 ? a.solution : null;
   let k = startKnowledge(p);
   for (let r = 0; r < p.n && k; r++) {
     if (p.given[r]! >= 0) continue;
     const c = s.colours[r]!;
-    if (c >= 0 && (!sol || sol[r] === c) && !assign(g, k, r, c)) k = null;
+    if (c >= 0 && !assign(g, k, r, c)) k = null;
   }
   for (let r = 0; r < p.n && k; r++) {
     if (s.colours[r]! >= 0 || !s.marks[r]) continue;
-    if (sol && !(s.marks[r]! & (1 << sol[r]!))) continue;
     k.dom[r] = k.dom[r]! & s.marks[r]!;
     if (!k.dom[r]) k = null;
   }

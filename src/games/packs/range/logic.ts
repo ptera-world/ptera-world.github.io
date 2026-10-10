@@ -210,15 +210,13 @@ export function analyze(p: RangePuzzle): Analysis {
   return a;
 }
 
-/** Numbers plus board marks as domains; with a unique solution only marks that agree with it count. */
+/** Numbers plus board marks as domains. */
 export function readMarks(p: RangePuzzle, s: RangeState): Doms {
-  const a = analyze(p);
-  const sol = a.count === 1 ? a.solution : null;
   const k = initialDoms(p);
   s.marks.forEach((m, c) => {
     if (p.nums[c]! > 0) return;
-    if (m === BLACK && (!sol || sol[c] === SHADED)) k[c] = B;
-    else if (m === DOT && (!sol || sol[c] === WHITE)) k[c] = W;
+    if (m === BLACK) k[c] = B;
+    else if (m === DOT) k[c] = W;
   });
   return k;
 }

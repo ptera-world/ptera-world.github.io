@@ -1,7 +1,7 @@
 import type { Step, Technique } from "../../core/types";
 import { LINE, NO, UNK, edgeGrid } from "../../lib/edges";
 import { tracks, CROSS, EMPTY, NONE, TRACK, cellList, cellName, countName, edgeList, type TracksAction, type TracksFocus, type TracksPuzzle, type TracksState } from "./logic";
-import { analyze, closeObvious, freshKnowledge, scanSteps, sides, target, type Knowledge, type Step as SolverStep, type StepKind } from "./solver";
+import { closeObvious, freshKnowledge, scanSteps, sides, target, type Knowledge, type Step as SolverStep, type StepKind } from "./solver";
 
 type TracksTechnique = Technique<TracksPuzzle, TracksState, TracksAction>;
 
@@ -11,26 +11,21 @@ export type TracksTarget = { cell: number };
 const knowledgeCache = new WeakMap<TracksState, Knowledge | null>();
 
 /**
- * Lines, crosses and cell marks on the board, each counted only when it agrees with the unique
- * solution (all of them when there isn't one), plus what they make obvious. Null on a clash.
+ * Lines, crosses and cell marks on the board, all counted, plus what they make obvious. Null on a clash.
  */
 export function knowledge(p: TracksPuzzle, s: TracksState): Knowledge | null {
   if (knowledgeCache.has(s)) return knowledgeCache.get(s)!;
   const g = edgeGrid(p.w, p.h);
-  const a = analyze(p);
-  const sol = a.count === 1 ? a.solution : null;
-  const on = new Set<number>();
-  if (sol) sol.forEach((v, e) => { if (v) { on.add(g.ea[e]!); on.add(g.eb[e]!); } });
   const k = freshKnowledge(p);
   s.edges.forEach((v, e) => {
     if (k.e[e] !== UNK) return;
-    if (v === LINE && (!sol || sol[e])) k.e[e] = LINE;
-    else if (v === CROSS && (!sol || !sol[e])) k.e[e] = NO;
+    if (v === LINE) k.e[e] = LINE;
+    else if (v === CROSS) k.e[e] = NO;
   });
   s.cells.forEach((v, c) => {
     if (k.c[c] !== 0 || p.given[c]) return;
-    if (v === TRACK && (!sol || on.has(c))) k.c[c] = TRACK;
-    else if (v === EMPTY && (!sol || !on.has(c))) k.c[c] = EMPTY;
+    if (v === TRACK) k.c[c] = TRACK;
+    else if (v === EMPTY) k.c[c] = EMPTY;
   });
   const out = closeObvious(p, g, k) ? k : null;
   knowledgeCache.set(s, out);

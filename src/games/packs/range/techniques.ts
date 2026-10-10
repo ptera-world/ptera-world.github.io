@@ -10,7 +10,7 @@ type RangeTechnique = Technique<RangePuzzle, RangeState, RangeAction>;
 
 const readings = new WeakMap<RangeState, Reading>();
 
-/** Blacks and dots that agree with the unique solution (all of them when there isn't one), so steps never build on a mistake. */
+/** Blacks and dots on the board. */
 function read(p: RangePuzzle, s: RangeState): Reading {
   let r = readings.get(s);
   if (!r) readings.set(s, r = { model: model(p), k: readMarks(p, s) });

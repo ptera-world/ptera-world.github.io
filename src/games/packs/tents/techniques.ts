@@ -10,7 +10,7 @@ type TentsTechnique = Technique<TentsPuzzle, TentsState, TentsAction>;
 
 const readings = new WeakMap<TentsState, Reading>();
 
-/** Tents and grass that agree with the unique solution (all of them when there isn't one), so steps never build on a mistake. */
+/** Tents and grass on the board. */
 function read(p: TentsPuzzle, s: TentsState): Reading {
   let r = readings.get(s);
   if (!r) readings.set(s, r = { model: model(p), k: readMarks(p, s) });

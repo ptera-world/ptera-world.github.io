@@ -291,11 +291,9 @@ export function analyze(p: MagnetsPuzzle): Analysis {
   return a;
 }
 
-/** Board masks as domains; with a unique solution, masks that rule out the solution are ignored. */
+/** Board masks as domains. */
 export function readMasks(p: MagnetsPuzzle, s: MagnetsState): Doms {
-  const a = analyze(p);
-  const sol = a.count === 1 ? a.solution : null;
-  return Int32Array.from(s.doms, (m, d) => (!sol || m & bit(sol[d]!) ? m : FULL));
+  return Int32Array.from(s.doms, (m) => m);
 }
 
 // --- state ---

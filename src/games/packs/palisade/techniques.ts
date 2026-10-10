@@ -13,7 +13,7 @@ export type PalisadeFocus = Focus & { edges?: number[] };
 
 const readings = new WeakMap<PalisadeState, Reading>();
 
-/** Walls and gaps that agree with the unique solution (all of them when there isn't one), so steps never build on a mistake. */
+/** Every wall and gap on the board counts. */
 function read(p: PalisadePuzzle, s: PalisadeState): Reading {
   let r = readings.get(s);
   if (!r) readings.set(s, r = { model: model(p), k: readMarks(p, s) });

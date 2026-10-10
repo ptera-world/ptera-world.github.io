@@ -145,14 +145,13 @@ export function analyze(p: RectPuzzle): Analysis {
 
 /**
  * What the board establishes, as alive boxes: a box is out when a counted wall runs through it.
- * With a unique solution, walls the solution doesn't have aren't counted.
+ * Every wall counts.
  */
 export function readBoard(p: RectPuzzle, s: RectState): Alive {
   const l = puzzleLayout(p), g = geometry(p);
   const a = freshAlive(l);
-  const sol = analyze(p).count === 1 ? analyze(p).walls : null;
   l.boxes.forEach((list, ci) => list.forEach((b, bi) => {
-    if (boxEdges(g, b.x, b.y, b.w, b.h).inside.some((e) => s.walls[e] && (!sol || sol[e]))) a[ci]![bi] = 0;
+    if (boxEdges(g, b.x, b.y, b.w, b.h).inside.some((e) => s.walls[e])) a[ci]![bi] = 0;
   }));
   return a;
 }

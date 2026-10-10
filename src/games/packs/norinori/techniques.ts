@@ -8,7 +8,7 @@ type NorinoriTechnique = Technique<NorinoriPuzzle, ShadeState, ShadeAction>;
 
 const readings = new WeakMap<ShadeState, Reading>();
 
-/** Marks that agree with the unique solution (all of them when there isn't one), so steps never build on a mistake. */
+/** Every mark on the board counts. */
 function read(p: NorinoriPuzzle, s: ShadeState): Reading {
   let r = readings.get(s);
   if (!r) readings.set(s, r = { model: model(p), k: readMarks(p, s) });

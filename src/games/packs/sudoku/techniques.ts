@@ -7,7 +7,7 @@ import { modelOf } from "./engine/model";
 import { constraintTypes } from "./engine/registry";
 import type { ConstraintType } from "./engine/types";
 import { latinDefs } from "./defs";
-import { constraintFeature, gridOf, type GridAction, type GridState, type HintFocus, type LatinPuzzle } from "./puzzle";
+import { boardGrid, constraintFeature, type GridAction, type GridState, type HintFocus, type LatinPuzzle } from "./puzzle";
 
 export type LatinTechnique = Technique<LatinPuzzle, GridState, GridAction>;
 
@@ -35,7 +35,7 @@ export interface LatinTechniqueSpec {
   instances(g: Grid, p: LatinPuzzle, visit: Visit): void;
 }
 
-/** A core technique for every puzzle on the engine, reasoning over gridOf(puzzle, state). */
+/** A core technique for every puzzle on the engine, reasoning over boardGrid(puzzle, state). */
 export function latinTechnique(spec: LatinTechniqueSpec): LatinTechnique {
   return {
     id: `sudoku.${spec.key}`,
@@ -45,7 +45,7 @@ export function latinTechnique(spec: LatinTechniqueSpec): LatinTechnique {
     level: spec.level,
     description: spec.description,
     instances(p, s, visit) {
-      spec.instances(gridOf(p, s), p, (es) => visit(toStep(es)));
+      spec.instances(boardGrid(p, s), p, (es) => visit(toStep(es)));
     },
     practice: spec.practice ? { params: spec.practice } : undefined,
   };

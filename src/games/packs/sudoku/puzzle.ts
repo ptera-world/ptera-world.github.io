@@ -160,10 +160,14 @@ export function isSolved(p: LatinPuzzle, s: GridState): boolean {
   return s.values.every((v) => v > 0) && conflicts(modelOf(p), s.values).size === 0;
 }
 
+/** The position techniques reason about: placed digits plus every candidate the player ruled out. */
+export function boardGrid(p: LatinPuzzle, s: GridState): Grid {
+  return gridFrom(modelOf(p), s.values, solutionOf(p) ?? undefined, s.struck);
+}
+
 /**
- * The position techniques reason about: placed digits plus the candidates the player ruled out.
- * A ruled-out candidate that is actually the solution is ignored, so a wrong strike never leads
- * a technique to a wrong deduction.
+ * The position the reveal hint reasons about: placed digits plus the candidates the player ruled out.
+ * A ruled-out candidate that is actually the solution is ignored.
  */
 export function gridOf(p: LatinPuzzle, s: GridState): Grid {
   const sol = solutionOf(p) ?? undefined;

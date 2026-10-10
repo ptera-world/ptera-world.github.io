@@ -1,4 +1,5 @@
-import type { Plugin, Step, Technique } from "../../core/types";
+import { hintFrom } from "../../core/define";
+import type { Hint, Plugin, Step, Technique } from "../../core/types";
 import { planner } from "../../lib/plan";
 import { mahjong, type MahjongAction, type MahjongFocus, type MahjongInteraction, type MahjongPuzzle, type MahjongState } from "./logic";
 import { boardOf, freeTiles, isFree, eachSafePair, remaining, solve, stuckPair } from "./solver";
@@ -76,40 +77,18 @@ function freeCount(p: MahjongPuzzle, s: MahjongState, i: number): number {
   return groupOf(p, s, i).filter((j) => isFree(board, s.gone, j)).length;
 }
 
-export const openUp: MahjongTechnique = {
-  id: "mahjong.open-up",
-  name: "open up the stack",
-  puzzles: [mahjong],
-  level: 2,
-  color: "#3b6fd6",
-  description: "when several pairs could go, the order matters: take the one that frees the tiles the rest of the game needs. the hint follows a search for a whole clearing order.",
-  instances(p, s, visit) {
-    const path = plan(p, s).path;
-    if (!path?.length) return;
-    const [a] = path[0]!;
-    if (freeCount(p, s, a) !== 2) return;
-    visit(solverStep(p, s, path, "they are the only free pair of their kind, and a whole clearing order takes them now"));
-  },
-};
+export const mahjongTechniques: MahjongTechnique[] = [safe];
 
-export const pickTwo: MahjongTechnique = {
-  id: "mahjong.pick-two",
-  name: "pick the right two",
-  puzzles: [mahjong],
-  level: 3,
-  color: "#8b4fc7",
-  description: "with three free tiles of a kind (the fourth still buried), which two to take is a real choice: the one left behind has to wait for the buried one. the hint takes the two a search for a whole clearing order does.",
-  instances(p, s, visit) {
-    const path = plan(p, s).path;
-    if (!path?.length) return;
-    const [a] = path[0]!;
-    const free = freeCount(p, s, a);
-    if (free < 3) return;
-    visit(solverStep(p, s, path, `${free} are free but ${groupOf(p, s, a).length === free ? "they" : "one more is buried, so"} which two go first matters, and these keep the board clearable`));
-  },
-};
-
-export const mahjongTechniques: MahjongTechnique[] = [safe, openUp, pickTwo];
+/** The first step of a whole clearing order, explained by how many of its kind are free. */
+function orderStep(p: MahjongPuzzle, s: MahjongState): Step<MahjongAction> | null {
+  const path = plan(p, s).path;
+  if (!path?.length) return null;
+  const [a] = path[0]!;
+  const free = freeCount(p, s, a);
+  if (free === 2) return solverStep(p, s, path, "they are the only free pair of their kind, and a whole clearing order takes them now");
+  if (free >= 3) return solverStep(p, s, path, `${free} are free but ${groupOf(p, s, a).length === free ? "they" : "one more is buried, so"} which two go first matters, and these keep the board clearable`);
+  return null;
+}
 
 /** Runs ahead of technique hints: a board that can't be cleared any more is pointed out first. */
 export const checkClearable: Plugin<MahjongPuzzle, MahjongState, MahjongAction, MahjongInteraction> = {
@@ -134,7 +113,9 @@ export const checkClearable: Plugin<MahjongPuzzle, MahjongState, MahjongAction, 
   },
 };
 
-export function fallbackHint(p: MahjongPuzzle, s: MahjongState) {
+export function fallbackHint(p: MahjongPuzzle, s: MahjongState): Hint<MahjongAction> | null {
+  const step = orderStep(p, s);
+  if (step) return hintFrom(null, step, 1) as Hint<MahjongAction>;
   const r = plan(p, s);
   if (r.path || r.impossible) return null;
   return { message: "the search for a clearing order ran out of time from here, so there's no suggestion. undoing a match or two may help." };

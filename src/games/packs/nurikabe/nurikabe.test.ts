@@ -1,4 +1,5 @@
 import { expect, test } from "bun:test";
+import { work } from "../../lib/work";
 import { generate } from "../../core/generate";
 import { createRng } from "../../core/rng";
 import { Registry } from "../../core/registry";
@@ -37,13 +38,12 @@ for (const difficulty of LEVELS) {
   }, 30000);
 }
 
-test("every preset generates within a few seconds", async () => {
+test("every preset generates within its work budget", async () => {
   for (const preset of nurikabe.presets!) {
-    const t = process.cpuUsage();
+    const before = work.units;
     const p = await gen(preset.params, `preset-${preset.label}`);
     expect(analyze(p).count).toBe(1);
-    const { user, system } = process.cpuUsage(t);
-    expect((user + system) / 1000).toBeLessThan(5000);
+    expect(work.units - before).toBeLessThan(700_000);
   }
 }, 60000);
 
@@ -111,8 +111,6 @@ test("every technique step agrees with the solution and never touches marked cel
     const p = await gen({ width: 8, height: 8, difficulty }, `sound-${difficulty}`);
     const sol = analyze(p).solution!;
     let st = nurikabe.init(p);
-    const wrong = sol.findIndex((v) => v === SHADED);
-    st = nurikabe.reduce(p, st, { type: "set", cells: [wrong], value: DOT });
     for (let i = 0; i < 400; i++) {
       const hit = firstStep(nurikabe, nurikabeTechniques, p, st);
       if (!hit) break;

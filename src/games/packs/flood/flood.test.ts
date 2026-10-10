@@ -4,7 +4,7 @@ import { Registry } from "../../core/registry";
 import { Session } from "../../core/session";
 import { TechniqueHost, applyStep, findStep, findPracticePosition, firstStep } from "../../core/techniques";
 import { fill, flood, gridFormat, sgtFormat, solverRun, type FloodPuzzle } from "./logic";
-import { behindPace, floodTechniques } from "./techniques";
+import { behindPace, floodTechniques, hint } from "./techniques";
 
 const sig = () => new AbortController().signal;
 const gen = (params: Record<string, unknown>, seed: string) => generate(flood, params, seed, sig()) as Promise<FloodPuzzle>;
@@ -35,9 +35,10 @@ test("techniques alone finish within the limit, even with no spare moves", async
     const p = await gen({ width: 12, height: 12, colours: 6, leniency: 0 }, seed);
     let s = flood.init(p);
     for (let i = 0; i < 200 && !flood.isSolved(p, s); i++) {
-      const hit = firstStep(flood, floodTechniques, p, s)!;
-      expect(hit).not.toBeNull();
-      s = applyStep(flood, p, s, hit.step);
+      const hit = firstStep(flood, floodTechniques, p, s);
+      const h = hit ? null : hint(p, s);
+      expect(hit ?? h).not.toBeNull();
+      s = hit ? applyStep(flood, p, s, hit.step) : h!.actions!.reduce((t, a) => flood.reduce(p, t, a), s);
     }
     expect(flood.isSolved(p, s)).toBe(true);
     expect(s.moves).toBeLessThanOrEqual(p.limit + 3);
@@ -54,7 +55,8 @@ test("wiping out a color really removes it", async () => {
       const next = applyStep(flood, p, s, step);
       expect(next.grid.filter((v) => v === c).length).toBe(next.grid.filter((v) => v === next.grid[0]).length);
     }
-    s = applyStep(flood, p, s, firstStep(flood, floodTechniques, p, s)!.step);
+    const hit = firstStep(flood, floodTechniques, p, s);
+    s = hit ? applyStep(flood, p, s, hit.step) : hint(p, s)!.actions!.reduce((t, a) => flood.reduce(p, t, a), s);
   }
 });
 
@@ -62,7 +64,7 @@ test("falling behind is pointed out before any move, and running out loses", asy
   const p = await gen({ width: 10, height: 10, colours: 6, leniency: 0 }, "pace");
   const registry = new Registry();
   for (const t of floodTechniques) registry.technique(t);
-  const session = new Session(flood, p, { kind: "imported" });
+  const session = new Session({ ...flood, hint }, p, { kind: "imported" });
   new TechniqueHost(registry, session);
   behindPace.setup!({ session, settings: {}, owner: "pace" });
   for (let i = 0; session.state.moves < p.limit && !session.solved && i < 200; i++) {
@@ -78,7 +80,7 @@ test("falling behind is pointed out before any move, and running out loses", asy
 
 test("practice positions exist", async () => {
   for (const t of floodTechniques) {
-    const pos = await findPracticePosition(flood, floodTechniques, t, "x", sig());
+    const pos = await findPracticePosition({ ...flood, hint }, floodTechniques, t, "x", sig());
     expect(pos && findStep(flood, t, pos.puzzle, pos.state)?.actions.length).toBeGreaterThan(0);
   }
 });

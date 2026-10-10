@@ -1,4 +1,5 @@
-import type { Plugin, Step, Technique } from "../../core/types";
+import { hintFrom } from "../../core/define";
+import type { Hint, Plugin, Step, Technique } from "../../core/types";
 import { cardName, safeHomeReason } from "../../lib/cards/deck";
 import { planner } from "../../lib/plan";
 import type { CardFocus } from "../../lib/cards/table";
@@ -23,15 +24,6 @@ export const plan = planner<FreecellPuzzle, FreecellState, Move>({
   search: (p, s) => solve(toPos(s, p.cells.length), HINT_BUDGET),
   known: (p) => p.solution,
 });
-
-type Kind = "home" | "build" | "park" | "empty";
-
-function kindOf(p: FreecellPuzzle, s: FreecellState, m: Move): Kind {
-  const C = p.cells.length;
-  if (m.to >= C && m.to < C + 4) return "home";
-  if (m.to < C) return "park";
-  return s.piles[m.to]!.c.length ? "build" : "empty";
-}
 
 const lead = (s: FreecellState, m: Move) => s.piles[m.from]!.c[s.piles[m.from]!.c.length - m.n]!;
 
@@ -79,18 +71,6 @@ function stepFor(p: FreecellPuzzle, s: FreecellState, path: readonly Move[]): St
   };
 }
 
-function solverTechnique(kind: Kind, t: Omit<FreecellTechnique, "instances" | "puzzles">): FreecellTechnique {
-  return {
-    ...t,
-    puzzles: [freecell],
-    instances(p, s, visit) {
-      const path = plan(p, s).path;
-      if (!path?.length || kindOf(p, s, path[0]!) !== kind) return;
-      visit(stepFor(p, s, path));
-    },
-  };
-}
-
 export const safeHome: FreecellTechnique = {
   id: "freecell.safe-home",
   name: "safe home",
@@ -112,25 +92,7 @@ export const safeHome: FreecellTechnique = {
   },
 };
 
-export const freecellTechniques: FreecellTechnique[] = [
-  safeHome,
-  solverTechnique("home", {
-    id: "freecell.home", name: "home now", level: 2, color: "#2f9e8f",
-    description: "sending a card home early isn't always safe (something might have wanted to sit on it), but a search for a whole winning line says this one can go now.",
-  }),
-  solverTechnique("build", {
-    id: "freecell.build", name: "build", level: 3, color: "#3b6fd6",
-    description: "move a card, or an ordered run, onto a card one rank higher of the other color. the hint says what the move opens up, from a search for a whole winning line.",
-  }),
-  solverTechnique("park", {
-    id: "freecell.park", name: "park in a cell", level: 4, color: "#e08a2c",
-    description: "put a card in a free cell to get at what's under it. cells are scarce, so the hint only parks a card when a search for a whole winning line does.",
-  }),
-  solverTechnique("empty", {
-    id: "freecell.empty-column", name: "use an empty column", level: 5, color: "#8b4fc7",
-    description: "an empty column takes any card or run, and doubles how many cards can move together while it stays empty, so filling one is a real decision. the hint fills one only when a search for a whole winning line does.",
-  }),
-];
+export const freecellTechniques: FreecellTechnique[] = [safeHome];
 
 /** Runs ahead of technique hints: a position no line of play can win any more is pointed out first. */
 export const checkWinnable: Plugin<FreecellPuzzle, FreecellState, FreecellAction, FreecellInteraction> = {
@@ -148,8 +110,9 @@ export const checkWinnable: Plugin<FreecellPuzzle, FreecellState, FreecellAction
   },
 };
 
-export function fallbackHint(p: FreecellPuzzle, s: FreecellState) {
+export function fallbackHint(p: FreecellPuzzle, s: FreecellState): Hint<FreecellAction> | null {
   const r = plan(p, s);
+  if (r.path?.length) return hintFrom(null, stepFor(p, s, r.path), 1) as Hint<FreecellAction>;
   if (r.path || r.impossible) return null;
   return { message: "the search for a win ran out of time from here, so there's no suggestion. undoing a move or two may help." };
 }

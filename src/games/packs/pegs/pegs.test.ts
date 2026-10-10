@@ -2,11 +2,11 @@ import { expect, test } from "bun:test";
 import { generate } from "../../core/generate";
 import { Registry } from "../../core/registry";
 import { Session } from "../../core/session";
-import { TechniqueHost, applyStep, findStep, findPracticePosition, firstStep } from "../../core/techniques";
+import { TechniqueHost } from "../../core/techniques";
 import { CROSS_SOLUTIONS, OCTAGON_SOLUTIONS } from "./known";
 import { crossGrid, gridFormat, pegCount, pegs, sgtFormat, type PegsPuzzle } from "./logic";
 import { findSolution } from "./solver";
-import { checkFinishable, pegsTechniques } from "./techniques";
+import { checkFinishable, hint } from "./techniques";
 
 const sig = () => new AbortController().signal;
 const gen = (params: Record<string, unknown>, seed: string) => generate(pegs, params, seed, sig()) as Promise<PegsPuzzle>;
@@ -55,8 +55,7 @@ test("random shapes reach all four edges", async () => {
 test("hints finish a board after a detour, and a hopeless board is pointed out first", async () => {
   const p = await gen({ board: "random", width: 7, height: 7 }, "h");
   const registry = new Registry();
-  for (const t of pegsTechniques) registry.technique(t);
-  const session = new Session(pegs, p, { kind: "imported" });
+  const session = new Session({ ...pegs, hint }, p, { kind: "imported" });
   new TechniqueHost(registry, session);
   checkFinishable.setup!({ session, settings: {}, owner: "check" });
   for (let i = 0; i < 100 && !session.solved; i++) {
@@ -66,7 +65,7 @@ test("hints finish a board after a detour, and a hopeless board is pointed out f
   }
   expect(session.solved).toBe(true);
   const q = gridFormat.parse("oo.oo\n#####");
-  const s2 = new Session(pegs, q, { kind: "imported" });
+  const s2 = new Session({ ...pegs, hint }, q, { kind: "imported" });
   checkFinishable.setup!({ session: s2, settings: {}, owner: "check" });
   expect(s2.hint()?.message).toContain("no sequence");
 });
@@ -76,15 +75,13 @@ test("the search proves small dead ends and solves small boards", () => {
   expect(findSolution(4, 1, [1, 1, 0, 0]).path?.length).toBe(1);
 });
 
-test("techniques alone finish the stored-solution boards, and practice works", async () => {
+test("the hint alone finishes the stored-solution boards", async () => {
   for (const pr of pegs.presets!) {
     const p = await gen(pr.params, "t");
     let s = pegs.init(p);
-    for (let i = 0; i < 80 && !pegs.isSolved(p, s); i++) s = applyStep(pegs, p, s, firstStep(pegs, pegsTechniques, p, s)!.step);
+    for (let i = 0; i < 80 && !pegs.isSolved(p, s); i++) s = pegs.reduce(p, s, hint(p, s)!.actions![0]!);
     expect(pegCount(s.grid)).toBe(1);
   }
-  const pos = await findPracticePosition(pegs, pegsTechniques, pegsTechniques[0]!, "x", sig());
-  expect(pos && findStep(pegs, pegsTechniques[0]!, pos.puzzle, pos.state)?.actions.length).toBe(1);
 });
 
 test("jumps and losing", () => {

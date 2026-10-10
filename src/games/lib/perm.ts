@@ -1,3 +1,5 @@
+import { work } from "./work";
+
 /**
  * Hint engine for puzzles whose moves are fixed rearrangements of cells (rows sliding, blocks
  * turning). Copied verbatim into each pack that uses it; packs can't import each other.
@@ -77,6 +79,7 @@ function macroFrom<A>(kind: MacroKind, actions: A[], to: Int32Array, turn: Int8A
 }
 
 function compose<A>(kind: MacroKind, a: Macro<A>, b: Macro<A>, turns: number): Macro<A> {
+  work.units++;
   const n = a.to.length;
   const to = new Int32Array(n);
   const turn = turns > 1 ? new Int8Array(n) : null;
@@ -216,6 +219,7 @@ function place<A>(spec: PermSpec<A>, lib: Library<A>, goal: readonly number[], s
     for (let i = 0; i < bucket.length; i++) {
       const id = bucket[i]!;
       if (dist[id] !== d) continue;
+      work.units++;
       if (id === target) {
         const path: Macro<A>[] = [];
         for (let x = id; via[x]! >= 0; x = prev[x]!) path.push(lib.macros[via[x]!]!);
@@ -270,6 +274,7 @@ function endgame<A>(spec: PermSpec<A>, lib: Library<A>, goal: readonly number[],
   while (frontier.length && parent.size < ENDGAME_STATES) {
     const next: number[] = [];
     for (const code of frontier) {
+      work.units++;
       let x = code;
       for (let i = 0; i < k; i++) { const d = x % base; x = (x - d) / base; v[i] = Math.floor(d / T); o[i] = d % T; }
       for (let mi = 0; mi < moves.length; mi++) {

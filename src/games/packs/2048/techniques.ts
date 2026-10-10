@@ -1,4 +1,5 @@
-import type { Step, Technique } from "../../core/types";
+import { hintFrom } from "../../core/define";
+import type { Hint, Step, Technique } from "../../core/types";
 import { game2048, DIR_NAMES, best, canSlide, slide, tileValue, type Action2048, type Focus2048, type Puzzle2048, type State2048 } from "./logic";
 
 type Technique2048 = Technique<Puzzle2048, State2048, Action2048>;
@@ -123,32 +124,31 @@ export const reachGoal: Technique2048 = {
   practice: false,
 };
 
-export const lookAhead: Technique2048 = {
-  id: "2048.look-ahead",
-  name: "look ahead",
-  puzzles: [game2048],
-  level: 3,
-  description: "try each slide, then every place the next tile could appear and your best reply to it, and average. a good board keeps its biggest tile in a corner, its rows and columns in order, and plenty of empty cells.",
-  instances(p, s, visit) {
-    const v = values(p, s);
-    const order = [0, 1, 2, 3].filter((d) => v[d] !== null).sort((a, b) => v[b]! - v[a]! || a - b);
-    const d = order[0];
-    if (d === undefined) return;
-    const n = p.size;
-    const after = slide(n, s.grid, d).grid;
-    const top = best(s.grid);
-    const inCorner = (g: readonly number[]) => corners(n).some((c) => g[c] === top);
-    const reasons: string[] = [];
-    const merged = mergedText(p, s, d);
-    if (merged) reasons.push(merged);
-    if (inCorner(s.grid) && inCorner(after)) reasons.push(`keeps the ${tileValue(top)} in its corner`);
-    const empty = after.filter((x) => !x).length;
-    reasons.push(`leaves ${empty} ${empty === 1 ? "cell" : "cells"} empty before the new tile`);
-    const pulled = order.slice(1).filter((o) => inCorner(s.grid) && !inCorner(slide(n, s.grid, o).grid));
-    const contrast = pulled.length ? ` sliding ${pulled.map((o) => DIR_NAMES[o]).join(" or ")} would pull the ${tileValue(top)} out of its corner.` : "";
-    visit(step(p, s, d, `slide ${DIR_NAMES[d]}: it ${reasons.join(", ")}, and looking ahead it does best on average.${contrast}`, "which slide keeps the board tidy?"));
-  },
-  practice: false,
-};
+function lookAheadStep(p: Puzzle2048, s: State2048, visit: (step: Step<Action2048>) => boolean | void): void {
+  const v = values(p, s);
+  const order = [0, 1, 2, 3].filter((d) => v[d] !== null).sort((a, b) => v[b]! - v[a]! || a - b);
+  const d = order[0];
+  if (d === undefined) return;
+  const n = p.size;
+  const after = slide(n, s.grid, d).grid;
+  const top = best(s.grid);
+  const inCorner = (g: readonly number[]) => corners(n).some((c) => g[c] === top);
+  const reasons: string[] = [];
+  const merged = mergedText(p, s, d);
+  if (merged) reasons.push(merged);
+  if (inCorner(s.grid) && inCorner(after)) reasons.push(`keeps the ${tileValue(top)} in its corner`);
+  const empty = after.filter((x) => !x).length;
+  reasons.push(`leaves ${empty} ${empty === 1 ? "cell" : "cells"} empty before the new tile`);
+  const pulled = order.slice(1).filter((o) => inCorner(s.grid) && !inCorner(slide(n, s.grid, o).grid));
+  const contrast = pulled.length ? ` sliding ${pulled.map((o) => DIR_NAMES[o]).join(" or ")} would pull the ${tileValue(top)} out of its corner.` : "";
+  visit(step(p, s, d, `slide ${DIR_NAMES[d]}: it ${reasons.join(", ")}, and looking ahead it does best on average.${contrast}`, "which slide keeps the board tidy?"));
+}
 
-export const techniques2048: Technique2048[] = [onlyMove, reachGoal, lookAhead];
+/** The puzzle's hint: the slide that does best on average looking ahead, else the puzzle's own hint. */
+export function hint2048(p: Puzzle2048, s: State2048): Hint<Action2048> | null {
+  let hit: Step<Action2048> | null = null;
+  lookAheadStep(p, s, (st) => { hit = st; return true; });
+  return hit ? (hintFrom(null, hit, 1) as Hint<Action2048>) : game2048.hint?.(p, s) ?? null;
+}
+
+export const techniques2048: Technique2048[] = [onlyMove, reachGoal];

@@ -1,7 +1,7 @@
 import type { Step, Technique } from "../../core/types";
 import { LINE, NO, UNK, around, edgeGrid } from "../../lib/edges";
 import { pearl, CROSS, NONE, cellList, cellName, edgeList, type PearlAction, type PearlFocus, type PearlPuzzle, type PearlState } from "./logic";
-import { analyze, freshKnowledge, scanSteps, type Knowledge, type Step as SolverStep, type StepKind } from "./solver";
+import { freshKnowledge, scanSteps, type Knowledge, type Step as SolverStep, type StepKind } from "./solver";
 
 type PearlTechnique = Technique<PearlPuzzle, PearlState, PearlAction>;
 
@@ -11,19 +11,16 @@ export type PearlTarget = { cell: number };
 const knowledgeCache = new WeakMap<PearlState, Knowledge>();
 
 /**
- * Lines and crosses on the board, each counted only when it agrees with the unique solution (all
- * of them when there isn't one), plus the edges a cell with two lines rules out.
+ * Lines and crosses on the board, all counted, plus the edges a cell with two lines rules out.
  */
 export function knowledge(p: PearlPuzzle, s: PearlState): Knowledge {
   const hit = knowledgeCache.get(s);
   if (hit) return hit;
   const g = edgeGrid(p.w, p.h);
-  const a = analyze(p);
-  const sol = a.count === 1 ? a.solution : null;
   const k = freshKnowledge(g);
   s.edges.forEach((v, e) => {
-    if (v === LINE && (!sol || sol[e] === 1)) k[e] = LINE;
-    else if (v === CROSS && (!sol || sol[e] === 0)) k[e] = NO;
+    if (v === LINE) k[e] = LINE;
+    else if (v === CROSS) k[e] = NO;
   });
   for (let c = 0; c < g.n; c++) {
     const { lines, unk } = around(g, k, c);

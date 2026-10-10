@@ -10,7 +10,7 @@ type SlantTechnique = Technique<SlantPuzzle, SlantState, SlantAction>;
 
 const readings = new WeakMap<SlantState, Reading>();
 
-/** Lines that agree with the unique solution (all of them when there isn't one), so steps never build on a mistake. */
+/** Every line on the board counts. */
 function read(p: SlantPuzzle, s: SlantState): Reading {
   let r = readings.get(s);
   if (!r) readings.set(s, r = { model: model(p), k: readMarks(p, s) });

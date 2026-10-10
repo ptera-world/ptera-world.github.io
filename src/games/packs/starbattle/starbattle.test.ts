@@ -18,5 +18,5 @@ shadeSuite<StarBattlePuzzle>({
     }
   },
   formats: [pzprFormat, textFormat],
-  presetBudgetMs: 8000,
+  presetBudgetWork: 5_000_000,
 });

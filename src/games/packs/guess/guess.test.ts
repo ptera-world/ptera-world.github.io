@@ -6,7 +6,7 @@ import { Session } from "../../core/session";
 import { TechniqueHost, findStep } from "../../core/techniques";
 import { allCodes, bestGuess, candidates, guess, mark, sgtFormat, type GuessPuzzle, type GuessState } from "./logic";
 import { checkRow } from "./plugins";
-import { guessTechniques, knownPeg, lastCode, narrowDown } from "./techniques";
+import { guessHint, guessTechniques, knownPeg, lastCode } from "./techniques";
 
 const sig = () => new AbortController().signal;
 const gen = (params: Record<string, unknown>, seed: string) => generate(guess, params, seed, sig()) as Promise<GuessPuzzle>;
@@ -67,7 +67,7 @@ test("following hints always cracks standard mastermind within the guesses", asy
     const p = await gen({}, `play${t}`);
     const registry = new Registry();
     for (const tq of guessTechniques) registry.technique(tq);
-    const s = new Session(guess, p, { kind: "imported" });
+    const s = new Session({ ...guess, hint: guessHint }, p, { kind: "imported" });
     new TechniqueHost(registry, s);
     checkRow.setup!({ session: s, settings: {}, owner: "check" });
     for (let i = 0; i < 40 && !s.solved && !s.lost; i++) {
@@ -115,7 +115,7 @@ test("techniques reason only from the marks", async () => {
   const p: GuessPuzzle = { colours: 3, pegs: 2, guesses: 10, blanks: false, duplicates: true, code: [2, 3] };
   const best = bestGuess(p, guess.init(p))!;
   expect(best.left).toBe(9);
-  expect(findStep(guess, narrowDown, p, guess.init(p))?.actions?.[1]).toEqual({ type: "submit" });
+  expect(guessHint(p, guess.init(p))?.actions?.[1]).toEqual({ type: "submit" });
 });
 
 test("game ids round-trip and use the original's hidden form", async () => {

@@ -1,7 +1,7 @@
 import type { Step, Technique } from "../../core/types";
 import { geometry } from "./grid";
 import { signpost, cellList, cellName, stateChains, type SignpostAction, type SignpostFocus, type SignpostPuzzle, type SignpostState } from "./logic";
-import { analyze, freshKnowledge, link, look, scanSteps, type Knowledge, type Step as SolverStep, type StepKind } from "./solver";
+import { freshKnowledge, link, look, scanSteps, type Knowledge, type Step as SolverStep, type StepKind } from "./solver";
 
 type SignpostTechnique = Technique<SignpostPuzzle, SignpostState, SignpostAction>;
 
@@ -10,16 +10,14 @@ export type SignpostTarget = { cell: number };
 
 const knowledgeCache = new WeakMap<SignpostState, Knowledge | null>();
 
-/** Player links that agree with the unique solution (every link when there isn't one). Null if they contradict. */
+/** Every player link counts. Null if they contradict. */
 export function knowledge(p: SignpostPuzzle, s: SignpostState): Knowledge | null {
   if (knowledgeCache.has(s)) return knowledgeCache.get(s)!;
   const g = geometry(p);
-  const a = analyze(p);
-  const sol = a.count === 1 ? a.solution : null;
   let k: Knowledge | null = freshKnowledge(g);
   for (let c = 0; c < g.n && k; c++) {
     const t = s.next[c]!;
-    if (t >= 0 && (!sol || sol[c] === t) && !link(k, c, t)) k = null;
+    if (t >= 0 && !link(k, c, t)) k = null;
   }
   if (k && !look(g, k).ok) k = null;
   knowledgeCache.set(s, k);

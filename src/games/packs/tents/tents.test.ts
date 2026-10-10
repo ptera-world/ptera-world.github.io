@@ -7,7 +7,7 @@ import { TechniqueHost, applyStep, findPracticePosition, firstStep, findStep, ra
 import { countSolutions, solveLevel } from "../../lib/grid-kit/csp";
 import { cellName, type Focus } from "../../lib/grid-kit/names";
 import {
-  GRASS, GRASS_HINT, NONE, OPEN, TENT, TENT_HINT, TREE, YES, analyze, geometry, initialDoms, isSolved, matchable, matchings, model, sgtFormat, tents,
+  GRASS_HINT, NONE, OPEN, TENT, TENT_HINT, TREE, YES, analyze, geometry, initialDoms, isSolved, matchable, matchings, model, sgtFormat, tents,
   type Level, type TentsAction, type TentsPuzzle,
 } from "./logic";
 import { checkMarks } from "./plugins";
@@ -116,8 +116,6 @@ test("every technique step agrees with the solution and never touches marked cel
     const p = await gen({ width: 10, height: 10, difficulty }, `sound-${difficulty}`);
     const sol = analyze(p).solution!;
     let st = tents.init(p);
-    const wrong = p.cells.findIndex((v, c) => v !== TREE && sol[c] === YES);
-    st = tents.reduce(p, st, { type: "set", cells: [wrong], value: GRASS });
     for (let i = 0; i < 400; i++) {
       const hit = firstStep(tents, tentsTechniques, p, st);
       if (!hit) break;

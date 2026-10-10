@@ -1,4 +1,5 @@
-import type { Plugin, Step, Technique } from "../../core/types";
+import { hintFrom } from "../../core/define";
+import type { Hint, Plugin, Step, Technique } from "../../core/types";
 import { cardName, safeHomeReason } from "../../lib/cards/deck";
 import { planner } from "../../lib/plan";
 import type { CardFocus } from "../../lib/cards/table";
@@ -23,21 +24,11 @@ export const plan = planner<KlondikePuzzle, KlondikeState, Move>({
   known: (p) => p.solution,
 });
 
-type Kind = "home" | "reveal" | "build" | "space" | "stock";
-
 /** The position after the plan step's stock clicks, where its move is made. */
 function drawn(p: KlondikePuzzle, s: KlondikeState, m: Move): Pos {
   const pos = toPos(s);
   applyMove(pos, { ...m, n: 0 }, rulesOf(p));
   return pos;
-}
-
-function kindOf(s: KlondikeState, m: Move): Kind {
-  if (m.draws > 0) return "stock";
-  if (m.to < COLS) return "home";
-  const src = s.piles[m.from]!;
-  if (m.from >= COLS && src.d > 0 && m.n === src.c.length - src.d) return "reveal";
-  return s.piles[m.to]!.c.length ? "build" : "space";
 }
 
 const leadOf = (s: KlondikeState, m: { from: number; n: number }) => s.piles[m.from]!.c[s.piles[m.from]!.c.length - m.n]!;
@@ -88,18 +79,6 @@ function stepFor(p: KlondikePuzzle, s: KlondikeState, path: readonly Move[]): St
   };
 }
 
-function solverTechnique(kind: Kind, t: Omit<KlondikeTechnique, "instances" | "puzzles">): KlondikeTechnique {
-  return {
-    ...t,
-    puzzles: [klondike],
-    instances(p, s, visit) {
-      const path = plan(p, s).path;
-      if (!path?.length || kindOf(s, path[0]!) !== kind) return;
-      visit(stepFor(p, s, path));
-    },
-  };
-}
-
 export const safeHome: KlondikeTechnique = {
   id: "klondike.safe-home",
   name: "safe home",
@@ -121,29 +100,7 @@ export const safeHome: KlondikeTechnique = {
   },
 };
 
-export const klondikeTechniques: KlondikeTechnique[] = [
-  safeHome,
-  solverTechnique("home", {
-    id: "klondike.home", name: "home now", level: 2, color: "#2f9e8f",
-    description: "sending a card home early isn't always safe (something might have wanted to sit on it), but a search for a whole winning line says this one can go now.",
-  }),
-  solverTechnique("reveal", {
-    id: "klondike.reveal", name: "turn a card over", level: 3, color: "#3b6fd6",
-    description: "move a column's face-up cards off so its face-down card turns over. which column to dig into first is the real choice; the hint picks the one a search for a whole winning line does.",
-  }),
-  solverTechnique("build", {
-    id: "klondike.build", name: "build", level: 4, color: "#d6a13b",
-    description: "play a card from the waste, a foundation, or the middle of a column onto a card one rank higher of the other color. the hint says what the move opens up.",
-  }),
-  solverTechnique("space", {
-    id: "klondike.king-to-space", name: "king to an empty column", level: 5, color: "#8b4fc7",
-    description: "only a king, or a run starting with one, fills an empty column. when there are several kings to choose from, the hint picks the one a search for a whole winning line does.",
-  }),
-  solverTechnique("stock", {
-    id: "klondike.dig-stock", name: "dig through the stock", level: 6, color: "#e08a2c",
-    description: "nothing showing is worth playing yet, so click through the stock to the card that is. the hint says how many clicks it takes.",
-  }),
-];
+export const klondikeTechniques: KlondikeTechnique[] = [safeHome];
 
 /** Runs ahead of technique hints: a position no line of play can win any more is pointed out first. */
 export const checkWinnable: Plugin<KlondikePuzzle, KlondikeState, KlondikeAction, KlondikeInteraction> = {
@@ -161,8 +118,9 @@ export const checkWinnable: Plugin<KlondikePuzzle, KlondikeState, KlondikeAction
   },
 };
 
-export function fallbackHint(p: KlondikePuzzle, s: KlondikeState) {
+export function fallbackHint(p: KlondikePuzzle, s: KlondikeState): Hint<KlondikeAction> | null {
   const r = plan(p, s);
+  if (r.path?.length) return hintFrom(null, stepFor(p, s, r.path), 1) as Hint<KlondikeAction>;
   if (r.path || r.impossible) return null;
   return { message: "the search for a win ran out of time from here, so there's no suggestion. undoing a move or two may help." };
 }

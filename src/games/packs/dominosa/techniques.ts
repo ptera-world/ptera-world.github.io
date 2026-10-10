@@ -4,7 +4,7 @@ import {
   dominosa, DOMINO, LINE, NONE, cellList, cellName, coveredBy, dominoName, placementList, placementName,
   type DominosaAction, type DominosaFocus, type DominosaPuzzle, type DominosaState,
 } from "./logic";
-import { NO, YES, analyze, assign, freshKnowledge, scanSteps, type Knowledge, type Step as SolverStep, type StepKind } from "./solver";
+import { NO, YES, assign, freshKnowledge, scanSteps, type Knowledge, type Step as SolverStep, type StepKind } from "./solver";
 
 type DominosaTechnique = Technique<DominosaPuzzle, DominosaState, DominosaAction>;
 
@@ -14,20 +14,17 @@ export type DominosaTarget = { cell: number } | { placement: number };
 const knowledgeCache = new WeakMap<DominosaState, Knowledge | null>();
 
 /**
- * Dominoes and lines on the board, each read as a fact only when it agrees with the unique
- * solution (every mark counts when there isn't one). Null when the counted marks contradict.
+ * Dominoes and lines on the board, each read as a fact. Null when the marks contradict.
  */
 export function knowledge(p: DominosaPuzzle, s: DominosaState): Knowledge | null {
   if (knowledgeCache.has(s)) return knowledgeCache.get(s)!;
   const g = geometry(p);
-  const a = analyze(p);
-  const sol = a.count === 1 ? a.solution : null;
   let k: Knowledge | null = freshKnowledge(g);
   for (let q = 0; q < g.np && k; q++) {
-    if (s.marks[q] === DOMINO && (!sol || sol[q] === 1) && !assign(g, k, q, YES)) k = null;
+    if (s.marks[q] === DOMINO && !assign(g, k, q, YES)) k = null;
   }
   for (let q = 0; q < g.np && k; q++) {
-    if (s.marks[q] === LINE && (!sol || sol[q] === 0) && !assign(g, k, q, NO)) k = null;
+    if (s.marks[q] === LINE && !assign(g, k, q, NO)) k = null;
   }
   knowledgeCache.set(s, k);
   return k;

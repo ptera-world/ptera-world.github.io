@@ -4,10 +4,11 @@ import { createRng, type Rng } from "../../core/rng";
 import { Registry } from "../../core/registry";
 import { Session } from "../../core/session";
 import { TechniqueHost, applyStep, findPracticePosition, firstStep, rateByTechniques } from "../../core/techniques";
+import { work } from "../work";
 import type { AnyPlugin, Format, PuzzleDef, Technique } from "../../core/types";
 import { countSolutions, solveLevel, type Analysis, type Doms, type Model } from "../grid-kit/csp";
 import { cellName, type Focus } from "../grid-kit/names";
-import { BLACK, DOT, NONE, SHADED, type ShadeAction, type ShadeInteraction, type ShadeState } from "./state";
+import { BLACK, NONE, SHADED, type ShadeAction, type ShadeInteraction, type ShadeState } from "./state";
 
 export interface ShadeSuite<Pz extends { w: number; h: number }> {
   def: PuzzleDef<Pz, ShadeState, ShadeAction, ShadeInteraction, any>;
@@ -26,8 +27,8 @@ export interface ShadeSuite<Pz extends { w: number; h: number }> {
   random(rng: Rng): Pz;
   /** Text formats with serialize, checked to round-trip. */
   formats: readonly Format<Pz>[];
-  /** Slowest acceptable generation of any preset, in milliseconds of CPU time (so a busy machine does not fail it). */
-  presetBudgetMs: number;
+  /** Most work (lib/work units) generating any preset may take. */
+  presetBudgetWork: number;
 }
 
 /** The checks every shading pack runs: generation, logic, hints, techniques, formats and preset timing. */
@@ -112,8 +113,6 @@ export function shadeSuite<Pz extends { w: number; h: number }>(o: ShadeSuite<Pz
       const p = await gen(o.params(difficulty, 1), `sound-${difficulty}`);
       const sol = o.analyze(p).solution!;
       let st = o.def.init(p);
-      const wrong = sol.findIndex((v, c) => !fixed(p, c) && v === SHADED);
-      st = o.def.reduce(p, st, { type: "set", cells: [wrong], value: DOT });
       for (let i = 0; i < 600; i++) {
         const hit = firstStep(o.def, o.techniques, p, st);
         if (!hit) break;
@@ -143,13 +142,12 @@ export function shadeSuite<Pz extends { w: number; h: number }>(o: ShadeSuite<Pz
     for (const f of o.formats) expect(f.parse(f.serialize!(p))).toEqual(p);
   });
 
-  test(`every preset generates within ${o.presetBudgetMs} ms of cpu time`, async () => {
+  test(`every preset generates within ${o.presetBudgetWork} units of work`, async () => {
     for (const preset of o.def.presets ?? []) {
       for (let i = 0; i < 2; i++) {
-        const t = process.cpuUsage();
+        const before = work.units;
         const p = await gen(preset.params as Record<string, unknown>, `preset-${i}`);
-        const { user, system } = process.cpuUsage(t);
-        expect((user + system) / 1000).toBeLessThan(o.presetBudgetMs);
+        expect(work.units - before).toBeLessThan(o.presetBudgetWork);
         expect(o.analyze(p).count).toBe(1);
       }
     }

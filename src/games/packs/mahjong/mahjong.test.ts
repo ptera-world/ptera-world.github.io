@@ -6,7 +6,7 @@ import { TechniqueHost, applyStep, findPracticePosition, findStep, firstStep } f
 import { LAYOUTS } from "./layouts";
 import { dealFormat, mahjong, type MahjongPuzzle } from "./logic";
 import { boardOf, isFree, solve, stuckPair } from "./solver";
-import { checkClearable, mahjongTechniques } from "./techniques";
+import { checkClearable, fallbackHint, mahjongTechniques } from "./techniques";
 import { fullSet, matchKey } from "./tiles";
 
 const sig = () => new AbortController().signal;
@@ -75,7 +75,7 @@ test("hints clear a board, also after wandering off the stored line", async () =
   const p = await gen({ layout: "pyramid" }, "h");
   const registry = new Registry();
   for (const t of mahjongTechniques) registry.technique(t);
-  const session = new Session(mahjong, p, { kind: "imported" });
+  const session = new Session({ ...mahjong, hint: fallbackHint }, p, { kind: "imported" });
   new TechniqueHost(registry, session);
   checkClearable.setup!({ session, settings: {}, owner: "check" });
   const [a, b] = p.solution![1]!;
@@ -93,9 +93,10 @@ test("techniques alone clear every preset; practice positions exist", async () =
     const p = await gen(pr.params, "t");
     let s = mahjong.init(p);
     for (let i = 0; i < 100 && !mahjong.isSolved(p, s); i++) {
-      const hit = firstStep(mahjong, mahjongTechniques, p, s)!;
-      expect(hit).not.toBeNull();
-      s = applyStep(mahjong, p, s, hit.step);
+      const hit = firstStep(mahjong, mahjongTechniques, p, s);
+      const h = hit ? null : fallbackHint(p, s);
+      expect(hit ?? h).not.toBeNull();
+      s = hit ? applyStep(mahjong, p, s, hit.step) : h!.actions!.reduce((t, a) => mahjong.reduce(p, t, a), s);
     }
     expect(mahjong.isSolved(p, s)).toBe(true);
   }

@@ -8,7 +8,7 @@ import { entryAt, entryOf, fireAt, hitCode, reflectCode } from "./beam";
 import { blackbox, sgtFormat, type BlackboxPuzzle } from "./logic";
 import { checkMarks } from "./plugins";
 import { expand, families, familySize } from "./reason";
-import { blackboxTechniques, evidence } from "./techniques";
+import { blackboxHint, blackboxTechniques, evidence } from "./techniques";
 
 const sig = () => new AbortController().signal;
 const gen = (params: Record<string, unknown>, seed: string) => generate(blackbox, params, seed, sig()) as Promise<BlackboxPuzzle>;
@@ -86,7 +86,7 @@ test("hints only use fired lasers, and lead to a win", async () => {
     const p = await gen({ width: 6, height: 6, minBalls: 3, maxBalls: 3 }, `play${t}`);
     const registry = new Registry();
     for (const tq of blackboxTechniques) registry.technique(tq);
-    const s = new Session(blackbox, p, { kind: "imported" });
+    const s = new Session({ ...blackbox, hint: blackboxHint }, p, { kind: "imported" });
     new TechniqueHost(registry, s);
     checkMarks.setup!({ session: s, settings: {}, owner: "check" });
     for (let i = 0; i < 80 && !s.solved; i++) {

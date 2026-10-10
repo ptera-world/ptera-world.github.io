@@ -1,5 +1,6 @@
 import { cellName as at } from "../../lib/grid-kit/names";
-import type { Step, Technique } from "../../core/types";
+import { hintFrom } from "../../core/define";
+import type { Hint, Step, Technique } from "../../core/types";
 import { netslide, GLYPHS, describeShift, hintFor, target, type NetslideAction, type NetslideFocus, type NetslidePuzzle, type NetslideState } from "./logic";
 import type { PermStep, StepKind } from "../../lib/perm";
 
@@ -48,17 +49,14 @@ export const threeCycle: NetslideTechnique = {
   practice: { params: { width: 4, height: 4, barriers: 0 } },
 };
 
-export const lastPieces: NetslideTechnique = {
-  id: "netslide.last-pieces",
-  name: "last pieces",
-  puzzles: [netslide],
-  level: 3,
-  description: "the last few pieces are sorted together, using slides and short cycles that stay among them.",
-  instances: (p, s, visit) => step(p, s, visit, ["endgame", "parity"], (h) => ({
+export const netslideTechniques: NetslideTechnique[] = [slideHome, threeCycle];
+
+/** The hint: the endgame step when there is one, else the puzzle's own hint. */
+export function hint(p: NetslidePuzzle, s: NetslideState): Hint<NetslideAction> | null {
+  let found: Step<NetslideAction> | null = null;
+  step(p, s, (st) => { found = st; return true; }, ["endgame", "parity"], (h) => ({
     message: `the last pieces are sorted together: slide ${sequence(h.actions)}${h.left ? `, then ${moves(h.left)}` : ", and the network is whole"}.`,
     nudge: "sort the last few pieces together",
-  })),
-  practice: { params: { width: 3, height: 3, barriers: 0 } },
-};
-
-export const netslideTechniques: NetslideTechnique[] = [slideHome, threeCycle, lastPieces];
+  }));
+  return found ? (hintFrom(null, found, 1) as Hint<NetslideAction>) : netslide.hint!(p, s);
+}

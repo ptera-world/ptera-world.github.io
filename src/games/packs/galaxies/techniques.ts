@@ -1,6 +1,6 @@
 import type { Step, Technique } from "../../core/types";
 import { galaxies, cellList, cellName, dotName, type GalaxiesAction, type GalaxiesFocus, type GalaxiesPuzzle, type GalaxiesState } from "./logic";
-import { analyze, freshOwners, geometry, scanSteps, type Owners, type Step as SolverStep, type StepKind } from "./solver";
+import { freshOwners, geometry, scanSteps, type Owners, type Step as SolverStep, type StepKind } from "./solver";
 
 type GalaxiesTechnique = Technique<GalaxiesPuzzle, GalaxiesState, GalaxiesAction>;
 
@@ -9,14 +9,12 @@ export type GalaxiesTarget = { tile: number };
 
 const knowledgeCache = new WeakMap<GalaxiesState, Owners>();
 
-/** The board's galaxies, counting a tile only when it is in the right one (every tile when there isn't a unique answer). */
+/** The board's galaxies: every painted tile counts. */
 export function knowledge(p: GalaxiesPuzzle, s: GalaxiesState): Owners {
   const hit = knowledgeCache.get(s);
   if (hit) return hit;
-  const a = analyze(p);
-  const sol = a.count === 1 ? a.solution : null;
   const own = freshOwners(geometry(p));
-  s.owner.forEach((d, t) => { if (d >= 0 && own[t] === -1 && (!sol || sol[t] === d)) own[t] = d; });
+  s.owner.forEach((d, t) => { if (d >= 0 && own[t] === -1) own[t] = d; });
   knowledgeCache.set(s, own);
   return own;
 }

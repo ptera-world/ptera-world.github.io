@@ -206,15 +206,13 @@ export function analyze(p: UnrulyPuzzle): Analysis {
   return a;
 }
 
-/** Givens plus board marks as domains; with a unique solution only marks that agree with it count. */
+/** Givens plus board marks as domains. */
 export function readMarks(p: UnrulyPuzzle, s: UnrulyState): Doms {
-  const a = analyze(p);
-  const sol = a.count === 1 ? a.solution : null;
   const k = initialDoms(p);
   s.marks.forEach((mk, c) => {
     if (mk === NONE || p.cells[c]! >= 0) return;
     const col = colourOf(mk);
-    if (!sol || sol[c] === col) k[c] = bit(col);
+    k[c] = bit(col);
   });
   return k;
 }

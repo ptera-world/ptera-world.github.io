@@ -1,4 +1,5 @@
-import type { Step, Technique } from "../../core/types";
+import { hintFrom } from "../../core/define";
+import type { Hint, Step, Technique } from "../../core/types";
 import { untangle, crossings, crossingsAt, type Pt, type UntangleAction, type UntangleFocus, type UntanglePuzzle, type UntangleState } from "./logic";
 
 type UntangleTechnique = Technique<UntanglePuzzle, UntangleState, UntangleAction>;
@@ -15,7 +16,7 @@ function centroid(pts: readonly Pt[], list: readonly number[]): Pt | null {
   return [x / list.length, y / list.length];
 }
 
-/** True for a point already at its place in the known untangled arrangement; local moves leave those alone. */
+/** True for a point already at its place in the known untangled arrangement. */
 const settled = (p: UntanglePuzzle, s: UntangleState, v: number) =>
   !!p.layout && Math.hypot(s.pts[v]![0] - p.layout[v]![0], s.pts[v]![1] - p.layout[v]![1]) <= 1e-9;
 
@@ -27,7 +28,6 @@ function movesByGain(p: UntanglePuzzle, s: UntangleState, spots: (v: number) => 
   const out: Move[] = [];
   for (let v = 0; v < p.n; v++) {
     if (only !== undefined && v !== only) continue;
-    if (settled(p, s, v)) continue;
     const now = crossingsAt(p, s.pts, v, s.pts[v]!);
     if (!now) continue;
     for (const to of spots(v)) {
@@ -97,24 +97,27 @@ export const bestSpot = technique({
   }
 });
 
-export const knownLayout = technique({
-  id: "untangle.known-layout",
-  name: "known layout",
-  level: 3,
-  description: "when nothing local helps, move points one at a time to an arrangement known to have no crossings (the one the puzzle was made from).",
-}, (p, s, visit, only) => {
+/** Steps toward an arrangement known to have no crossings (the one the puzzle was made from), for the hint. */
+function knownLayoutSteps(p: UntanglePuzzle, s: UntangleState, visit: Visit): void {
   if (!p.layout || !crossings(p, s.pts).length) return;
   const layout = p.layout;
   const toLayout = (v: number) => step(v, layout[v]!, "the highlighted point goes here in an arrangement with no crossings", "one point has a place in an untangled arrangement");
-  const moves = movesByGain(p, s, (v) => [layout[v]!], only);
+  const moves = movesByGain(p, s, (v) => [layout[v]!]).filter((m) => !settled(p, s, m.v));
   if (moves.length) {
     for (const m of moves) if (visit(toLayout(m.v)) === true) return;
     return;
   }
   for (let v = 0; v < p.n; v++) {
-    if (settled(p, s, v) || (only !== undefined && v !== only)) continue;
+    if (settled(p, s, v)) continue;
     if (visit(toLayout(v)) === true) return;
   }
-});
+}
 
-export const untangleTechniques: UntangleTechnique[] = [toNeighbours, bestSpot, knownLayout];
+/** The puzzle's hint: the first step toward the known untangled arrangement, else the puzzle's own hint. */
+export function untangleHint(p: UntanglePuzzle, s: UntangleState): Hint<UntangleAction> | null {
+  let hit: Step<UntangleAction> | null = null;
+  knownLayoutSteps(p, s, (st) => { hit = st; return true; });
+  return hit ? (hintFrom(null, hit, 1) as Hint<UntangleAction>) : untangle.hint?.(p, s) ?? null;
+}
+
+export const untangleTechniques: UntangleTechnique[] = [toNeighbours, bestSpot];

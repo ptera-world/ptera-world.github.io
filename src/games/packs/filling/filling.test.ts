@@ -121,15 +121,12 @@ test("every technique step keeps the solution", async () => {
     const p = await gen({ width: 7, height: 6, difficulty }, `sound-${difficulty}`);
     const sol = analyze(p).solution!;
     let st = filling.init(p);
-    const wrongCell = p.clues.findIndex((v) => v === 0);
-    st = filling.reduce(p, st, { type: "set", cells: [wrongCell], mask: bit(sol[wrongCell] === 1 ? 2 : 1) });
     for (let i = 0; i < 600; i++) {
       const hit = firstStep(filling, fillingTechniques, p, st);
       if (!hit) break;
       for (const a of hit.step.actions as FillingAction[]) {
         expect(a.type).toBe("narrow");
         for (const c of a.cells) {
-          expect(c).not.toBe(wrongCell);
           if (a.type === "narrow") expect(a.keep & bit(sol[c]!)).toBeTruthy();
         }
       }

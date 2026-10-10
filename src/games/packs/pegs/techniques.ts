@@ -1,33 +1,24 @@
-import type { Plugin, Technique } from "../../core/types";
+import { hintFrom } from "../../core/define";
+import type { Hint, Plugin, Step } from "../../core/types";
 import { pegs, cellAt, pegCount, type PegsAction, type PegsFocus, type PegsInteraction, type PegsPuzzle, type PegsState } from "./logic";
 import { jumps, solveFrom } from "./solver";
 
-type PegsTechnique = Technique<PegsPuzzle, PegsState, PegsAction>;
-
-export const oneLeft: PegsTechnique = {
-  id: "pegs.one-left",
-  name: "still one to go",
-  puzzles: [pegs],
-  level: 1,
-  description: "most jumps that look fine leave pegs stranded where nothing can reach them. this searches ahead for a whole sequence of jumps that ends with one peg, and suggests its first jump.",
-  instances(p, s, visit) {
-    if (pegCount(s.grid) <= 1) return;
-    const path = solveFrom(p, s.grid).path;
-    const j = path?.[0];
-    if (!j) return;
-    const after = path!.length - 1;
-    visit({
-      message: `jump ${cellAt(p, j.from)} over ${cellAt(p, j.over)} into ${cellAt(p, j.to)}: one peg can still be left after that${after ? ` (${after} more ${after === 1 ? "jump" : "jumps"})` : ""}.`,
-      nudge: `look at the peg at ${cellAt(p, j.from)}`,
-      focus: { from: j.from, over: j.over, to: j.to } satisfies PegsFocus,
-      nudgeFocus: { from: j.from } satisfies PegsFocus,
-      actions: [{ type: "jump", from: j.from, to: j.to }],
-    });
-  },
-  practice: { params: { board: "random", width: 5, height: 5 } },
-};
-
-export const pegsTechniques: PegsTechnique[] = [oneLeft];
+/** The first jump of a whole sequence ending with one peg, else the puzzle's own hint. */
+export function hint(p: PegsPuzzle, s: PegsState): Hint<PegsAction> | null {
+  if (pegCount(s.grid) <= 1) return pegs.hint?.(p, s) ?? null;
+  const path = solveFrom(p, s.grid).path;
+  const j = path?.[0];
+  if (!j) return pegs.hint?.(p, s) ?? null;
+  const after = path!.length - 1;
+  const found: Step<PegsAction> = {
+    message: `jump ${cellAt(p, j.from)} over ${cellAt(p, j.over)} into ${cellAt(p, j.to)}: one peg can still be left after that${after ? ` (${after} more ${after === 1 ? "jump" : "jumps"})` : ""}.`,
+    nudge: `look at the peg at ${cellAt(p, j.from)}`,
+    focus: { from: j.from, over: j.over, to: j.to } satisfies PegsFocus,
+    nudgeFocus: { from: j.from } satisfies PegsFocus,
+    actions: [{ type: "jump", from: j.from, to: j.to }],
+  };
+  return hintFrom(null, found, 1) as Hint<PegsAction>;
+}
 
 /** Runs ahead of technique hints (priority 100): a board that can't end with one peg is pointed out first. */
 export const checkFinishable: Plugin<PegsPuzzle, PegsState, PegsAction, PegsInteraction> = {

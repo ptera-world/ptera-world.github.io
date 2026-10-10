@@ -1,3 +1,5 @@
+import type { Ids } from "../../core/commands";
+import { featureTests } from "../../core/define";
 import type { Rng } from "../../core/rng";
 import { defineSchema, type Values } from "../../core/schema";
 import type { Format, Hint, PuzzleDef } from "../../core/types";
@@ -141,6 +143,11 @@ const textFormat: Format<FlipPuzzle> = {
   serialize: (p) => `${p.w}x${p.h}:${p.shape}:${p.lights.join("")}`,
 };
 
+const FEATURES = {
+  /** Presses reach up, down, left and right, so the cell under a light is the only press below that row touching it. */
+  "cross-presses": (p: FlipPuzzle) => p.shape === "cross",
+};
+
 export const flip: PuzzleDef<FlipPuzzle, FlipState, FlipAction, FlipInteraction, typeof params> = {
   id: "flip",
   name: "lights out",
@@ -191,4 +198,9 @@ export const flip: PuzzleDef<FlipPuzzle, FlipState, FlipAction, FlipInteraction,
     "turn every light off.",
   ],
   describe: (p) => `${p.w}×${p.h} ${p.shape}`,
+  features: featureTests(FEATURES),
 };
+
+declare module "../../core/types" {
+  interface FeatureNames extends Ids<typeof FEATURES> {}
+}

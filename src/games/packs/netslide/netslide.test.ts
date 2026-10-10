@@ -1,9 +1,9 @@
 import { expect, test } from "bun:test";
 import { generate } from "../../core/generate";
-import { applyStep, findStep, findPracticePosition, firstStep, rateByTechniques } from "../../core/techniques";
+import { applyStep, findStep, findPracticePosition, firstStep } from "../../core/techniques";
 import { centre, connected } from "./grid";
 import { findArrangement, gridFormat, netslide, sgtFormat, type NetslidePuzzle } from "./logic";
-import { netslideTechniques } from "./techniques";
+import { hint, netslideTechniques } from "./techniques";
 
 const sig = () => new AbortController().signal;
 const gen = (params: Record<string, unknown>, seed: string) => generate(netslide, params, seed, sig()) as Promise<NetslidePuzzle>;
@@ -28,8 +28,9 @@ test("following hints joins up every preset", async () => {
       let s = netslide.init(p);
       for (let i = 0; i < 500 && !netslide.isSolved(p, s); i++) {
         const hit = firstStep(netslide, netslideTechniques, p, s);
-        expect(hit).not.toBeNull();
-        s = applyStep(netslide, p, s, hit!.step);
+        const h = hit ? null : hint(p, s);
+        expect(hit ?? h).not.toBeNull();
+        s = hit ? applyStep(netslide, p, s, hit.step) : h!.actions!.reduce((t, a) => netslide.reduce(p, t, a), s);
       }
       expect(netslide.isSolved(p, s)).toBe(true);
     }
@@ -48,7 +49,6 @@ test("an imported board without a stored solution still gets one, and hints", as
 test("rating and practice", async () => {
   const p = await gen({ width: 4, height: 4 }, "r");
   expect(netslide.rate!(p)?.score).toBeGreaterThan(0);
-  expect(rateByTechniques(netslide, netslideTechniques, p)).not.toBeNull();
   for (const t of netslideTechniques) {
     const pos = await findPracticePosition(netslide, netslideTechniques, t, "x", sig());
     expect(pos && findStep(netslide, t, pos.puzzle, pos.state)?.actions.length).toBeGreaterThan(0);

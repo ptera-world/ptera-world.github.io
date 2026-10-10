@@ -1,3 +1,5 @@
+import { work } from "../work";
+
 /**
  * Finite-domain deduction engine shared by grid puzzles. Every variable holds a bitmask of the
  * values it can still take (bit v set = value v possible); deductions only ever narrow masks.
@@ -59,6 +61,12 @@ export interface Rule {
   /** Deduction kinds it can emit; scans for other kinds skip it. */
   kinds?: readonly string[];
   run(k: Doms, emit: Emit): boolean;
+}
+
+/** Runs a constraint or rule, counted as one unit of work. */
+function run(c: Constraint | Rule, k: Doms, emit: Emit): boolean {
+  work.units++;
+  return c.run(k, emit);
 }
 
 export interface Model {
@@ -130,7 +138,7 @@ function closure(m: Model, k: Doms, dirty: readonly number[] | null, level = 0):
     const ci = queue.pop()!;
     queued[ci] = 0;
     changed.length = 0;
-    if (!m.constraints[ci]!.run(k, emit) || bad) return false;
+    if (!run(m.constraints[ci]!, k, emit) || bad) return false;
     changed.forEach(touch);
   }
   return true;
@@ -149,7 +157,7 @@ function settle(m: Model, k: Doms, dirty: readonly number[] | null, level = 0): 
     };
     for (const r of m.rules) {
       if (r.level > level) continue;
-      if (!r.run(k, emit) || bad) return false;
+      if (!run(r, k, emit) || bad) return false;
       if (changed.length) break;
     }
     if (!changed.length) return true;
@@ -177,12 +185,12 @@ function stepAt(m: Model, k: Doms, level: number): { ok: boolean; changed: numbe
     return true;
   };
   for (const c of m.constraints) {
-    if (!c.run(k, emit)) return { ok: false, changed };
+    if (!run(c, k, emit)) return { ok: false, changed };
     if (found) return { ok, changed };
   }
   for (const r of m.rules) {
     if (r.level === 0 || r.level > level) continue;
-    if (!r.run(k, emit)) return { ok: false, changed };
+    if (!run(r, k, emit)) return { ok: false, changed };
     if (found) return { ok, changed };
   }
   return null;
@@ -255,12 +263,12 @@ export function scan(m: Model, k: Doms, accept: (d: Deduction) => boolean, kinds
     return true;
   };
   for (const c of m.constraints) {
-    c.run(k, emit);
+    run(c, k, emit);
     if (found) return found;
   }
   for (const r of m.rules) {
     if (kinds && r.kinds && !r.kinds.some((x) => kinds.includes(x))) continue;
-    r.run(k, emit);
+    run(r, k, emit);
     if (found) return found;
   }
   return null;

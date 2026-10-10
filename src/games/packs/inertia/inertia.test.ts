@@ -2,9 +2,9 @@ import { expect, test } from "bun:test";
 import { generate } from "../../core/generate";
 import { Registry } from "../../core/registry";
 import { Session } from "../../core/session";
-import { TechniqueHost, applyStep, findStep, findPracticePosition, firstStep } from "../../core/techniques";
+import { TechniqueHost } from "../../core/techniques";
 import { GEM, MINE, STOP, canCollectAll, gridFormat, inertia, roll, sgtFormat, type InertiaPuzzle } from "./logic";
-import { checkReachable, inertiaTechniques } from "./techniques";
+import { checkReachable, hint } from "./techniques";
 
 const sig = () => new AbortController().signal;
 const gen = (params: Record<string, unknown>, seed: string) => generate(inertia, params, seed, sig()) as Promise<InertiaPuzzle>;
@@ -19,16 +19,16 @@ test("generation is deterministic with sgt's proportions", async () => {
   expect(count(STOP)).toBe(17);
 });
 
-test("every generated board can be fully collected, and techniques alone do it without dying", async () => {
+test("every generated board can be fully collected, and the hint alone does it without dying", async () => {
   for (const pr of [...inertia.presets!.map((x) => x.params), { width: 5, height: 9 }]) {
     for (const seed of ["s1", "s2", "s3"]) {
       const p = await gen(pr, seed);
       let s = inertia.init(p);
       expect(canCollectAll(p, s.pos, s.gems)).toBe(true);
       for (let i = 0; i < 2000 && !inertia.isSolved(p, s); i++) {
-        const hit = firstStep(inertia, inertiaTechniques, p, s);
-        expect(hit).not.toBeNull();
-        s = applyStep(inertia, p, s, hit!.step);
+        const h = hint(p, s);
+        expect(h).not.toBeNull();
+        s = h!.actions!.reduce((t, a) => inertia.reduce(p, t, a), s);
         expect(s.dead).toBe(false);
       }
       expect(inertia.isSolved(p, s)).toBe(true);
@@ -70,10 +70,9 @@ test("a roll that cuts a gem off is never hinted, and is pointed out once made",
     if (!found) continue;
     const bad = found.bad;
     checked++;
-    const session = new Session(inertia, p, { kind: "imported" });
+    const session = new Session({ ...inertia, hint }, p, { kind: "imported" });
     for (const d of found.path) session.dispatch({ type: "move", dir: d });
     const registry = new Registry();
-    for (const tq of inertiaTechniques) registry.technique(tq);
     new TechniqueHost(registry, session);
     checkReachable.setup!({ session, settings: {}, owner: "check" });
     expect(session.hint()?.actions?.[0]).not.toEqual({ type: "move", dir: bad });
@@ -81,11 +80,6 @@ test("a roll that cuts a gem off is never hinted, and is pointed out once made",
     expect(session.hint()?.message).toMatch(/never reach|no single route/);
   }
   expect(checked).toBeGreaterThan(0);
-});
-
-test("practice positions exist", async () => {
-  const pos = await findPracticePosition(inertia, inertiaTechniques, inertiaTechniques[0]!, "x", sig());
-  expect(pos && findStep(inertia, inertiaTechniques[0]!, pos.puzzle, pos.state)?.actions.length).toBe(1);
 });
 
 test("formats round-trip; sgt ids parse", async () => {

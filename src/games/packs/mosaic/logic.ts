@@ -179,14 +179,12 @@ export function analyze(p: MosaicPuzzle): Analysis {
   return a;
 }
 
-/** Board marks as domains; with a unique solution only marks that agree with it count. */
+/** Board marks as domains. */
 export function readMarks(p: MosaicPuzzle, s: MosaicState): Doms {
-  const a = analyze(p);
-  const sol = a.count === 1 ? a.solution : null;
   const k = initialDoms(p);
   s.marks.forEach((m, c) => {
-    if (m === BLACK && (!sol || sol[c] === SHADED)) k[c] = B;
-    else if (m === DOT && (!sol || sol[c] === WHITE)) k[c] = W;
+    if (m === BLACK) k[c] = B;
+    else if (m === DOT) k[c] = W;
   });
   return k;
 }

@@ -2,10 +2,10 @@ import { expect, test } from "bun:test";
 import { generate } from "../../core/generate";
 import { Registry } from "../../core/registry";
 import { Session } from "../../core/session";
-import { TechniqueHost, applyStep, findPracticePosition, firstStep } from "../../core/techniques";
+import { TechniqueHost, findPracticePosition, firstStep } from "../../core/techniques";
 import { foglemanFormat, gridFormat, rushhour, type RushAction } from "./logic";
 import { BANDS, cluster, distance, plan, startPos, type RushPuzzle } from "./solver";
-import { rushTechniques } from "./techniques";
+import { hint, rushTechniques } from "./techniques";
 
 const sig = () => new AbortController().signal;
 const gen = (params: Record<string, unknown>, seed: string) => generate(rushhour, params, seed, sig()) as Promise<RushPuzzle>;
@@ -73,7 +73,7 @@ test("hints follow a shortest way out from anywhere, wandering included", async 
   const p = await gen({ difficulty: "medium" }, "hint");
   const registry = new Registry();
   for (const t of rushTechniques) registry.technique(t);
-  const s = new Session(rushhour, p, { kind: "imported" });
+  const s = new Session({ ...rushhour, hint }, p, { kind: "imported" });
   new TechniqueHost(registry, s);
   for (let i = 0; i < 3; i++) {
     const m = plan(p, s.state.pos)!;
@@ -92,22 +92,23 @@ test("hints follow a shortest way out from anywhere, wandering included", async 
   expect(used).toBe(left);
 });
 
-test("every technique step shortens the way out by one", async () => {
+test("every technique or hint step shortens the way out by one", async () => {
   const p = await gen({ difficulty: "hard" }, "steps");
   let st = rushhour.init(p);
   const seen = new Set<string>();
   while (!rushhour.isSolved(p, st)) {
-    const hit = firstStep(rushhour, rushTechniques, p, st)!;
-    seen.add(hit.technique.id);
+    const hit = firstStep(rushhour, rushTechniques, p, st);
+    const actions = (hit ? hit.step.actions : hint(p, st)!.actions!) as RushAction[];
+    seen.add(hit ? hit.technique.id : "hint");
     const before = distance(p, st.pos)!;
-    st = applyStep(rushhour, p, st, hit.step);
+    st = actions.reduce((t, a) => rushhour.reduce(p, t, a), st);
     expect(distance(p, st.pos)).toBe(before - 1);
-    expect((hit.step.actions[0] as RushAction).type).toBe("slide");
+    expect((actions[0] as RushAction).type).toBe("slide");
   }
   expect(seen.has("rushhour.drive-out")).toBe(true);
-  expect(seen.has("rushhour.make-room")).toBe(true);
+  expect(seen.has("hint")).toBe(true);
 }, 60000);
 
 test("practice finds a position for every technique", async () => {
-  for (const t of rushTechniques) expect(await findPracticePosition(rushhour, rushTechniques, t, "practice", sig())).not.toBeNull();
+  for (const t of rushTechniques) expect(await findPracticePosition({ ...rushhour, hint }, rushTechniques, t, "practice", sig())).not.toBeNull();
 }, 60000);

@@ -1,8 +1,9 @@
+import type { Step } from "../../core/types";
 import { expect, test } from "bun:test";
 import { generate } from "../../core/generate";
 import { applyStep, findStep, firstStep } from "../../core/techniques";
 import { canSlide, game2048, gridFormat, slide, spawn, type Puzzle2048 } from "./logic";
-import { lookAhead, onlyMove, reachGoal, techniques2048 } from "./techniques";
+import { hint2048, onlyMove, reachGoal, techniques2048 } from "./techniques";
 
 const sig = () => new AbortController().signal;
 const gen = (params: Record<string, unknown>, seed: string) => generate(game2048, params, seed, sig()) as Promise<Puzzle2048>;
@@ -38,7 +39,7 @@ test("the same moves always bring the same tiles; replays are exact", async () =
 test("look-ahead reaches the goal on a small goal, and the game ends when nothing moves", async () => {
   const p = await gen({ size: 4, target: "256" }, "play");
   let s = game2048.init(p);
-  for (let i = 0; i < 2000 && !game2048.isSolved(p, s); i++) s = applyStep(game2048, p, s, firstStep(game2048, techniques2048, p, s)!.step);
+  for (let i = 0; i < 2000 && !game2048.isSolved(p, s); i++) s = applyStep(game2048, p, s, firstStep(game2048, techniques2048, p, s)?.step ?? hint2048(p, s)!.more! as Step);
   expect(game2048.isSolved(p, s)).toBe(true);
   const full = gridFormat.parse("2 4 2\n4 2 4\n2 4 2");
   expect(game2048.isLost!(full, game2048.init(full))).toBe(true);
@@ -50,7 +51,7 @@ test("techniques: only move, making the goal tile", () => {
   const goal = gridFormat.parse("32 32 .\n. . .\n. . .\ngoal 64");
   const st = findStep(game2048, reachGoal, goal, game2048.init(goal))!;
   expect([1, 3]).toContain((st.actions[0] as unknown as { dir: number }).dir);
-  expect(findStep(game2048, lookAhead, goal, game2048.init(goal))).not.toBeNull();
+  expect(hint2048(goal, game2048.init(goal))).not.toBeNull();
 });
 
 test("the grid format round-trips with its goal and seed", async () => {

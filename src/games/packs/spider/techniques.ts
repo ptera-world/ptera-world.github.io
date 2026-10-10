@@ -1,11 +1,10 @@
-import type { Plugin, Step, Technique } from "../../core/types";
+import { hintFrom } from "../../core/define";
+import type { Hint, Plugin, Step } from "../../core/types";
 import { cardName, suitOf, SUIT_NAMES } from "../../lib/cards/deck";
 import { planner } from "../../lib/plan";
 import type { CardFocus } from "../../lib/cards/table";
 import { actionOf, dealPos, describeMove, fromPos, pileName, spider, toPos, whereTo, type SpiderAction, type SpiderInteraction, type SpiderPuzzle, type SpiderState } from "./logic";
 import { applyMove, clonePos, COLS, solve, STOCK, type Move } from "./solver";
-
-type SpiderTechnique = Technique<SpiderPuzzle, SpiderState, SpiderAction>;
 
 const HINT_BUDGET = 20_000;
 
@@ -86,42 +85,6 @@ function stepFor(p: SpiderPuzzle, s: SpiderState, path: readonly Move[]): Step<S
   };
 }
 
-function solverTechnique(kind: Kind, t: Omit<SpiderTechnique, "instances" | "puzzles">): SpiderTechnique {
-  return {
-    ...t,
-    puzzles: [spider],
-    instances(p, s, visit) {
-      const path = plan(p, s).path;
-      if (!path?.length || kindOf(p, s, path[0]!) !== kind) return;
-      visit(stepFor(p, s, path));
-    },
-  };
-}
-
-export const spiderTechniques: SpiderTechnique[] = [
-  solverTechnique("suit", {
-    id: "spider.same-suit", name: "join the same suit", level: 1, color: "#3fa34d",
-    description: "a card on one of its own suit becomes part of a run that moves together and, from king to ace, leaves the table.",
-  }),
-  solverTechnique("reveal", {
-    id: "spider.reveal", name: "turn a card over", level: 2, color: "#3b6fd6",
-    description: "move a whole run off a face-down card so it turns over. which column to dig into is the real choice; the hint picks the one a search for a whole winning line does.",
-  }),
-  solverTechnique("build", {
-    id: "spider.build", name: "build", level: 3, color: "#d6a13b",
-    description: "move a run onto a card one higher of another suit, to get at what's under it or make room. the hint says what the move opens up.",
-    practice: { params: { suits: "2" } },
-  }),
-  solverTechnique("space", {
-    id: "spider.empty-column", name: "use an empty column", level: 4, color: "#8b4fc7",
-    description: "an empty column takes any card or run, which makes it the most useful space on the table; the hint fills one only when a search for a whole winning line does.",
-  }),
-  solverTechnique("deal", {
-    id: "spider.deal", name: "deal a row", level: 5, color: "#e08a2c",
-    description: "when nothing on the table is worth moving, deal a new row from the stock. every column must have a card first.",
-  }),
-];
-
 /** Runs ahead of technique hints: a position no line of play can win any more is pointed out first. */
 export const checkWinnable: Plugin<SpiderPuzzle, SpiderState, SpiderAction, SpiderInteraction> = {
   id: "spider.check-winnable",
@@ -138,8 +101,9 @@ export const checkWinnable: Plugin<SpiderPuzzle, SpiderState, SpiderAction, Spid
   },
 };
 
-export function fallbackHint(p: SpiderPuzzle, s: SpiderState) {
+export function fallbackHint(p: SpiderPuzzle, s: SpiderState): Hint<SpiderAction> | null {
   const r = plan(p, s);
+  if (r.path?.length) return hintFrom(null, stepFor(p, s, r.path), 1) as Hint<SpiderAction>;
   if (r.path || r.impossible) return null;
   return { message: "the search for a win ran out of time from here, so there's no suggestion. undoing a move or two may help." };
 }

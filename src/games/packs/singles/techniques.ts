@@ -10,14 +10,10 @@ type SinglesTechnique = Technique<SinglesPuzzle, SinglesState, SinglesAction>;
 
 const readings = new WeakMap<SinglesState, Reading | null>();
 
-/**
- * What the board establishes: blacks and circles, each read as a fact only when it agrees with
- * the unique solution (every mark counts when there isn't one). Deductions from it stay true
- * however wrong the board is, so an auto-applied step never builds on a mistake.
- */
+/** What the board establishes: blacks and circles. */
 function read(p: SinglesPuzzle, s: SinglesState): Reading | null {
   if (readings.has(s)) return readings.get(s)!;
-  const k = readMarks(p, s, true);
+  const k = readMarks(p, s);
   const r = k ? { model: model(p), k } : null;
   readings.set(s, r);
   return r;

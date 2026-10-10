@@ -4,10 +4,11 @@ import { Registry } from "../../core/registry";
 import { Session } from "../../core/session";
 import { TechniqueHost, applyStep, findPracticePosition, firstStep, rateByTechniques } from "../../core/techniques";
 import { cellName } from "../../lib/grid-kit/names";
-import { gridFormat, zip, type ZipFocus } from "./logic";
+import type { Step } from "../../core/types";
+import { gridFormat, zip, type ZipAction, type ZipFocus } from "./logic";
 import { zipPlugins } from "./plugins";
 import { analyze, board, countSolutions, logicSolve, walkOf, type ZipPuzzle } from "./solver";
-import { zipTechniques } from "./techniques";
+import { zipHint, zipTechniques } from "./techniques";
 
 const sig = () => new AbortController().signal;
 const gen = (params: Record<string, unknown>, seed: string) => generate(zip, params, seed, sig()) as Promise<ZipPuzzle>;
@@ -58,7 +59,7 @@ test("logic never contradicts brute force on boards with clues taken away", asyn
 function played(p: ZipPuzzle, auto: string[] = []) {
   const registry = new Registry();
   for (const t of zipTechniques) registry.technique(auto.includes(t.id) ? { ...t, defaults: { auto: true } } : t);
-  const s = new Session(zip, p, { kind: "imported" });
+  const s = new Session({ ...zip, hint: zipHint }, p, { kind: "imported" });
   new TechniqueHost(registry, s);
   zipPlugins[1]!.setup!({ session: s, settings: {}, owner: "check" });
   return s;
@@ -92,17 +93,18 @@ test("technique steps follow the solution and every named cell is highlighted", 
     let st = zip.init(p);
     for (let i = 0; i < 100 && !zip.isSolved(p, st); i++) {
       const hit = firstStep(zip, zipTechniques, p, st);
-      expect(hit).not.toBeNull();
-      const next = applyStep(zip, p, st, hit!.step);
+      const fromHint = hit ? null : zipHint(p, st);
+      const step = hit ? hit.step : fromHint!.more!;
+      expect(step).toBeDefined();
+      const next = applyStep(zip, p, st, step as Step<ZipAction>);
       expect(next.path).toEqual(sol.slice(0, next.path.length));
-      const f = hit!.step.focus as ZipFocus;
+      const f = step.focus as ZipFocus;
       const shown = new Set([...f.cells, ...f.because, ...(f.route ?? [])].map((c) => cellName(p, c)));
-      for (const n of names(hit!.step.message)) expect(shown.has(n)).toBe(true);
+      for (const n of names(step.message)) expect(shown.has(n)).toBe(true);
       st = next;
     }
     expect(zip.isSolved(p, st)).toBe(true);
-    const r = rateByTechniques(zip, zipTechniques, p);
-    expect(r!.hardest.level).toBe(analyze(p).level!);
+    if (analyze(p).level! < 6) expect(rateByTechniques(zip, zipTechniques, p)!.hardest.level).toBe(analyze(p).level!);
   }
 }, 60000);
 

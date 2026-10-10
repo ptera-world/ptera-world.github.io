@@ -117,7 +117,6 @@ test("technique steps only draw walls the solution has", async () => {
     const p = await gen({ width: 9, height: 9, difficulty }, `sound-${difficulty}`);
     const sol = analyze(p).walls!;
     let st = rect.init(p);
-    st = rect.reduce(p, st, { type: "edges", on: [sol.findIndex((v) => !v)], off: [] });
     for (let i = 0; i < 600; i++) {
       const hit = firstStep(rect, rectTechniques, p, st);
       if (!hit) break;

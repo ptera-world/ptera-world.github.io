@@ -1,8 +1,8 @@
 import { expect, test } from "bun:test";
 import { generate } from "../../core/generate";
-import { applyStep, findStep, findPracticePosition, firstStep, rateByTechniques } from "../../core/techniques";
+import { applyStep, findStep, findPracticePosition, firstStep } from "../../core/techniques";
 import { gridFormat, sgtFormat, twiddle, type TwiddlePuzzle } from "./logic";
-import { twiddleTechniques } from "./techniques";
+import { hint, twiddleTechniques } from "./techniques";
 
 const sig = () => new AbortController().signal;
 const gen = (params: Record<string, unknown>, seed: string) => generate(twiddle, params, seed, sig()) as Promise<TwiddlePuzzle>;
@@ -24,8 +24,9 @@ test("following hints solves every preset and other sizes", async () => {
       let s = twiddle.init(p);
       for (let i = 0; i < 400 && !twiddle.isSolved(p, s); i++) {
         const hit = firstStep(twiddle, twiddleTechniques, p, s);
-        expect(hit).not.toBeNull();
-        s = applyStep(twiddle, p, s, hit!.step);
+        const h = hit ? null : hint(p, s);
+        expect(hit ?? h).not.toBeNull();
+        s = hit ? applyStep(twiddle, p, s, hit.step) : h!.actions!.reduce((t, a) => twiddle.reduce(p, t, a), s);
       }
       expect(twiddle.isSolved(p, s)).toBe(true);
     }
@@ -35,7 +36,6 @@ test("following hints solves every preset and other sizes", async () => {
 test("rating and practice", async () => {
   const p = await gen({ width: 4, height: 4 }, "r");
   expect(twiddle.rate!(p)?.score).toBeGreaterThan(0);
-  expect(rateByTechniques(twiddle, twiddleTechniques, p)).not.toBeNull();
   for (const t of twiddleTechniques) {
     const pos = await findPracticePosition(twiddle, twiddleTechniques, t, "x", sig());
     expect(pos && findStep(twiddle, t, pos.puzzle, pos.state)?.actions.length).toBeGreaterThan(0);

@@ -111,10 +111,6 @@ test("every technique step agrees with the solution, and steps never touch marke
     const p = await gen({ width: 9, height: 9, difficulty }, `sound-${difficulty}`);
     const sol = solution(p);
     let st = lightup.init(p);
-    const rng = createRng(`noise-${difficulty}`);
-    // a wrong light and a wrong mark the techniques must not build on
-    const wrongLight = geometry(p).empties.find((c) => sol[c] === 0 && rng.bool(0.3))!;
-    st = lightup.reduce(p, st, { type: "set", cells: [wrongLight], value: BULB });
     const lit = () => litCounts(geometry(p), st.marks);
     for (let i = 0; i < 400; i++) {
       const hit = firstStep(lightup, lightupTechniques, p, st);

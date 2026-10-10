@@ -1,5 +1,6 @@
 import { cellName as at } from "../../lib/grid-kit/names";
-import type { Step, Technique } from "../../core/types";
+import { hintFrom } from "../../core/define";
+import type { Hint, Step, Technique } from "../../core/types";
 import { sixteen, describeShift, hintFor, type SixteenAction, type SixteenFocus, type SixteenPuzzle, type SixteenState } from "./logic";
 import type { PermStep, StepKind } from "../../lib/perm";
 
@@ -54,13 +55,12 @@ export const threeCycle: SixteenTechnique = {
   practice: { params: { width: 4, height: 4 } },
 };
 
-export const lastTiles: SixteenTechnique = {
-  id: "sixteen.last-tiles",
-  name: "last tiles",
-  puzzles: [sixteen],
-  level: 3,
-  description: "the last few numbers are sorted together, using row slides and three-tile cycles that stay inside them. on some sizes an arrangement can be 'odd': no amount of three-tile cycles can finish it. one slide of a whole line flips that, and is best done before anything is finished.",
-  instances: (p, s, visit) => step(p, s, visit, ["endgame", "parity"], (h) => h.kind === "parity"
+export const sixteenTechniques: SixteenTechnique[] = [slideHome, threeCycle];
+
+/** The hint: the endgame step when there is one, else the puzzle's own hint. */
+export function hint(p: SixteenPuzzle, s: SixteenState): Hint<SixteenAction> | null {
+  let found: Step<SixteenAction> | null = null;
+  step(p, s, (st) => { found = st; return true; }, ["endgame", "parity"], (h) => h.kind === "parity"
     ? {
       message: `this arrangement is odd: once everything else is in place, the last two numbers would need a swap that no sequence of three-tile cycles can make. slide ${sequence(h.actions)} now, which flips that, then carry on.`,
       nudge: "this arrangement needs one extra slide before the end can work out",
@@ -68,8 +68,6 @@ export const lastTiles: SixteenTechnique = {
     : {
       message: `the last numbers are sorted together: slide ${sequence(h.actions)}${h.left ? `, then ${moves(h.left)}` : ", and the grid is done"}.`,
       nudge: "sort the last few numbers together",
-    }),
-  practice: { params: { width: 3, height: 3 } },
-};
-
-export const sixteenTechniques: SixteenTechnique[] = [slideHome, threeCycle, lastTiles];
+    });
+  return found ? (hintFrom(null, found, 1) as Hint<SixteenAction>) : sixteen.hint?.(p, s) ?? null;
+}

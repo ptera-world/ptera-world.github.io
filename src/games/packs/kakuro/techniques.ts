@@ -1,8 +1,8 @@
 import type { Step, Technique } from "../../core/types";
-import { bit, isSingle, valueOf, valuesOf, type Deduction } from "../../lib/grid-kit/csp";
+import { isSingle, valueOf, valuesOf, type Deduction } from "../../lib/grid-kit/csp";
 import { cellList, cellName, technique, type Focus, type Reading } from "../../lib/grid-kit/names";
 import {
-  DIGIT_MASK, analyze, geometry, kakuro, model, readMasks, runName,
+  DIGIT_MASK, geometry, kakuro, model, readMasks, runName,
   type KakuroAction, type KakuroPuzzle, type KakuroState,
 } from "./logic";
 
@@ -10,21 +10,18 @@ type KakuroTechnique = Technique<KakuroPuzzle, KakuroState, KakuroAction>;
 
 const readings = new WeakMap<KakuroState, Reading>();
 
-/** Board digits and notes that agree with the unique solution (all of them when there isn't one). */
+/** Board digits and notes. */
 function read(p: KakuroPuzzle, s: KakuroState): Reading {
   let r = readings.get(s);
   if (!r) readings.set(s, r = { model: model(p), k: readMasks(p, s) });
   return r;
 }
 
-/** Cells whose board mask the deduction narrows; masks that rule out the solution are left alone. */
+/** Cells whose board mask the deduction narrows. */
 function changes(p: KakuroPuzzle, s: KakuroState, d: Deduction): number[] {
-  const a = analyze(p);
-  const sol = a.count === 1 ? a.solution : null;
   return d.vars.filter((c) => {
     if (!p.white[c]) return false;
     const m = s.doms[c]!;
-    if (sol && !(m & bit(sol[c]!))) return false;
     const next = m & d.keep;
     return next !== 0 && next !== m;
   });

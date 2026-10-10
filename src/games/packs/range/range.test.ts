@@ -7,7 +7,7 @@ import { TechniqueHost, applyStep, findPracticePosition, firstStep, findStep, ra
 import { countSolutions, solveLevel } from "../../lib/grid-kit/csp";
 import { cellName, type Focus } from "../../lib/grid-kit/names";
 import {
-  BLACK, DOT, NONE, SHADED, analyze, initialDoms, isSolved, model, range, sgtFormat,
+  BLACK, NONE, SHADED, analyze, initialDoms, isSolved, model, range, sgtFormat,
   type Level, type RangeAction, type RangePuzzle,
 } from "./logic";
 import { checkMarks } from "./plugins";
@@ -101,8 +101,6 @@ test("every technique step agrees with the solution and never touches marked cel
     const p = await gen({ width: 9, height: 8, difficulty }, `sound-${difficulty}`);
     const sol = analyze(p).solution!;
     let st = range.init(p);
-    const wrong = p.nums.findIndex((v, c) => v === 0 && sol[c] === SHADED);
-    st = range.reduce(p, st, { type: "set", cells: [wrong], value: DOT });
     for (let i = 0; i < 400; i++) {
       const hit = firstStep(range, rangeTechniques, p, st);
       if (!hit) break;

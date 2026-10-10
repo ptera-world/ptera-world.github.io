@@ -133,14 +133,12 @@ test("every technique step keeps the solution", async () => {
     const p = await gen({ width: 7, height: 6, difficulty }, `sound-${difficulty}`);
     const sol = analyze(p).solution!;
     let st = magnets.init(p);
-    st = magnets.reduce(p, st, { type: "set", doms: [1], mask: FULL & ~bit(sol[1]!) });
     for (let i = 0; i < 400; i++) {
       const hit = firstStep(magnets, magnetsTechniques, p, st);
       if (!hit) break;
       for (const a of hit.step.actions as MagnetsAction[]) {
         expect(a.type).toBe("narrow");
         for (const d of a.doms) {
-          expect(d).not.toBe(1);
           if (a.type === "narrow") expect(a.keep & bit(sol[d]!)).toBeTruthy();
         }
       }

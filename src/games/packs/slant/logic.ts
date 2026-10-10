@@ -196,15 +196,12 @@ export function analyze(p: SlantPuzzle): Analysis {
   return a;
 }
 
-/** Board slashes as domains; with a unique solution only slashes that agree with it count. */
+/** Board slashes as domains; every slash counts. */
 export function readMarks(p: SlantPuzzle, s: SlantState): Doms {
-  const a = analyze(p);
-  const sol = a.count === 1 ? a.solution : null;
   const k = initialDoms(p);
   s.marks.forEach((m, c) => {
     if (m === NONE) return;
-    const v = valueOfMark(m);
-    if (!sol || sol[c] === v) k[c] = bit(v);
+    k[c] = bit(valueOfMark(m));
   });
   return k;
 }

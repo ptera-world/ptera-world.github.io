@@ -1,4 +1,5 @@
 import { expect, test } from "bun:test";
+import { work } from "../../lib/work";
 import { generate } from "../../core/generate";
 import { createRng } from "../../core/rng";
 import { Registry } from "../../core/registry";
@@ -37,12 +38,11 @@ for (const difficulty of LEVELS) {
   }, 60000);
 }
 
-test("every preset generates within a few seconds", async () => {
+test("every preset generates within its work budget", async () => {
   for (const preset of kakuro.presets!) {
-    const t = process.cpuUsage();
+    const before = work.units;
     const p = await gen(preset.params, `preset-${preset.label}`);
-    const { user, system } = process.cpuUsage(t);
-    expect((user + system) / 1000).toBeLessThan(5000);
+    expect(work.units - before).toBeLessThan(4_000_000);
     expect(analyze(p).count).toBe(1);
   }
 }, 60000);
@@ -181,15 +181,12 @@ test("every technique step keeps the solution", async () => {
     const p = await gen({ width: 6, height: 6, difficulty }, `sound-${difficulty}`);
     const sol = analyze(p).solution!;
     let st = kakuro.init(p);
-    const wrongCell = firstWhite(p);
-    st = kakuro.reduce(p, st, { type: "set", cells: [wrongCell], mask: bit(sol[wrongCell] === 1 ? 2 : 1) });
     for (let i = 0; i < 600; i++) {
       const hit = firstStep(kakuro, kakuroTechniques, p, st);
       if (!hit) break;
       for (const a of hit.step.actions as KakuroAction[]) {
         expect(a.type).toBe("narrow");
         for (const c of a.cells) {
-          expect(c).not.toBe(wrongCell);
           if (a.type === "narrow") expect(a.keep & bit(sol[c]!)).toBeTruthy();
         }
       }

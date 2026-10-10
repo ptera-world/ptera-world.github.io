@@ -8,7 +8,7 @@ type HeyawakeTechnique = Technique<HeyawakePuzzle, ShadeState, ShadeAction>;
 
 const readings = new WeakMap<ShadeState, Reading>();
 
-/** Shaded cells and dots that agree with the unique solution (all of them when there isn't one), so steps never build on a mistake. */
+/** Every shaded cell and dot on the board counts. */
 function read(p: HeyawakePuzzle, s: ShadeState): Reading {
   let r = readings.get(s);
   if (!r) readings.set(s, r = { model: model(p), k: readMarks(p, s) });

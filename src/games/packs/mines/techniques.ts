@@ -1,18 +1,15 @@
-import type { Step, Technique } from "../../core/types";
+import { hintFrom } from "../../core/define";
+import type { Hint, Step, Technique } from "../../core/types";
 import { plural } from "../../lib/grid-kit/names";
 import { mines, cellName, mineCount, numbers, visibleKnowledge, type MinesAction, type MinesFocus, type MinesPuzzle, type MinesState } from "./logic";
 import { MINE, UNKNOWN, deduceAt, deduceCount, deduceGlobal, deducePairs, neighbourTable, type Deduction } from "./solver";
 
 type MinesTechnique = Technique<MinesPuzzle, MinesState, MinesAction>;
 
-/**
- * What the board shows: opened numbers, plus flags as known mines. Flags that aren't on a mine
- * are ignored, so every deduction stays sound (an auto-applied step can never open a mine
- * because of a wrong flag).
- */
+/** What the board shows: opened numbers, plus every flag as a known mine. */
 export function knowledge(p: MinesPuzzle, s: MinesState): Int8Array {
   const K = visibleKnowledge(p, s);
-  for (let c = 0; c < K.length; c++) if (s.flags[c] && p.mines[c] && K[c] === UNKNOWN) K[c] = MINE;
+  for (let c = 0; c < K.length; c++) if (s.flags[c] && K[c] === UNKNOWN) K[c] = MINE;
   return K;
 }
 
@@ -182,28 +179,24 @@ function overlapStep(p: MinesPuzzle, d: Deduction | undefined): Step<MinesAction
   };
 }
 
-export const region: MinesTechnique = {
-  id: "mines.region",
-  name: "whole region",
-  puzzles: [mines],
-  level: 5,
-  description: "list every way the mines could sit along a stretch of hidden cells next to opened numbers, together with how many mines are left in total. a cell that is the same in every possible way is decided.",
-  instances(p, s, visit) {
-    const d = regionDeduction(p, s);
-    if (!d) return;
-    const first = d.sources[0];
-    visit({
-      message: `trying every way the ${d.remaining} remaining mines can fit: ${outcome(d)}`,
-      nudge: first === undefined ? "think about where the remaining mines can go" : `try every way the mines can fit near ${cellName(p, first)}`,
-      focus: focusOf(d),
-      nudgeFocus: { cells: [], sources: d.sources } satisfies MinesFocus,
-      actions: actionsOf(d),
-    });
-  },
-  practice: { params: { width: 12, height: 12, mines: 30, difficulty: "hard" } },
-};
+function regionStep(p: MinesPuzzle, d: Deduction): Step<MinesAction> {
+  const first = d.sources[0];
+  return {
+    message: `trying every way the ${d.remaining} remaining mines can fit: ${outcome(d)}`,
+    nudge: first === undefined ? "think about where the remaining mines can go" : `try every way the mines can fit near ${cellName(p, first)}`,
+    focus: focusOf(d),
+    nudgeFocus: { cells: [], sources: d.sources } satisfies MinesFocus,
+    actions: actionsOf(d),
+  };
+}
 
-export const minesTechniques: MinesTechnique[] = [forcedFlags, satisfied, mineCountTechnique, overlap, region];
+/** The puzzle's hint: what trying every way the remaining mines fit decides, else the puzzle's own hint. */
+export function minesHint(p: MinesPuzzle, s: MinesState): Hint<MinesAction> | null {
+  const d = regionDeduction(p, s);
+  return d ? (hintFrom(null, regionStep(p, d), 1) as Hint<MinesAction>) : mines.hint?.(p, s) ?? null;
+}
+
+export const minesTechniques: MinesTechnique[] = [forcedFlags, satisfied, mineCountTechnique, overlap];
 
 /** Cells provable right now with logic up to `maxLevel` (technique levels above). */
 export function provable(p: MinesPuzzle, s: MinesState, maxLevel: number): { safe: number[]; mines: number[] } {

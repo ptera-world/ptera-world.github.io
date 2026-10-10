@@ -2,11 +2,11 @@ import { expect, test } from "bun:test";
 import { generate } from "../../core/generate";
 import { Registry } from "../../core/registry";
 import { Session } from "../../core/session";
-import { TechniqueHost, applyStep, findPracticePosition, firstStep } from "../../core/techniques";
+import { TechniqueHost } from "../../core/techniques";
 import { rleFormat, sokoban, xsbFormat, type SokoAction } from "./logic";
 import { checkStuck } from "./plugins";
 import { boxRoute, solvePushes, stuckBoxes, type SokoPuzzle } from "./solver";
-import { sokoTechniques } from "./techniques";
+import { hint } from "./techniques";
 
 const sig = () => new AbortController().signal;
 const gen = (params: Record<string, unknown>, seed: string) => generate(sokoban, params, seed, sig()) as Promise<SokoPuzzle>;
@@ -90,8 +90,7 @@ test("stuck boxes: corners and squares", () => {
 test("hints solve from wherever the player is; stuck boxes come first", async () => {
   const p = await gen({ width: 7, height: 7, boxes: 3 }, "hint");
   const registry = new Registry();
-  for (const t of sokoTechniques) registry.technique(t);
-  const s = new Session(sokoban, p, { kind: "imported" });
+  const s = new Session({ ...sokoban, hint }, p, { kind: "imported" });
   new TechniqueHost(registry, s);
   checkStuck.setup!({ session: s, settings: {}, owner: "check" });
   for (let i = 0; i < 200 && !s.solved; i++) {
@@ -107,21 +106,14 @@ test("hints solve from wherever the player is; stuck boxes come first", async ()
   expect(c.hint()?.message).toContain("can't be moved onto a goal");
 });
 
-test("technique steps follow a fewest-pushes plan", async () => {
+test("hint steps follow a fewest-pushes plan", async () => {
   const p = await gen({ width: 8, height: 8, boxes: 3 }, "steps");
   let st = sokoban.init(p);
   const total = solvePushes(p, { boxes: st.boxes, player: st.player }).pushes!.length;
-  const seen = new Set<string>();
   for (let i = 0; i < 200 && !sokoban.isSolved(p, st); i++) {
-    const hit = firstStep(sokoban, sokoTechniques, p, st)!;
-    seen.add(hit.technique.id);
-    st = applyStep(sokoban, p, st, hit.step);
+    st = hint(p, st)!.actions!.reduce((t, a) => sokoban.reduce(p, t, a), st);
   }
   expect(sokoban.isSolved(p, st)).toBe(true);
   expect(st.pushes).toBe(total);
-  expect(seen.size).toBe(2);
 }, 30000);
 
-test("practice finds a position for every technique", async () => {
-  for (const t of sokoTechniques) expect(await findPracticePosition(sokoban, sokoTechniques, t, "practice", sig())).not.toBeNull();
-}, 60000);

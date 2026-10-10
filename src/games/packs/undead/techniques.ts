@@ -4,7 +4,7 @@ import {
   undead, MONSTER_NAMES, MONSTER_PLURALS, cellList, cellName, clueName, monstersText,
   type UndeadAction, type UndeadFocus, type UndeadPuzzle, type UndeadState,
 } from "./logic";
-import { analyze, freshKnowledge, scanSteps, type Knowledge, type Step as SolverStep, type StepKind } from "./solver";
+import { freshKnowledge, scanSteps, type Knowledge, type Step as SolverStep, type StepKind } from "./solver";
 
 type UndeadTechnique = Technique<UndeadPuzzle, UndeadState, UndeadAction>;
 
@@ -14,20 +14,17 @@ export type UndeadTarget = { cell: number } | { clue: number };
 const knowledgeCache = new WeakMap<UndeadState, Knowledge>();
 
 /**
- * Candidates per cell from the board: a placed monster or pencil marks count only when they
- * agree with the unique solution (all of them when there isn't one); anything else is unknown.
+ * Candidates per cell from the board: a placed monster, or else pencil marks; anything else is unknown.
  */
 export function knowledge(p: UndeadPuzzle, s: UndeadState): Knowledge {
   const hit = knowledgeCache.get(s);
   if (hit) return hit;
-  const a = analyze(p);
-  const sol = a.count === 1 ? a.solution : null;
   const k = freshKnowledge(p);
   for (const c of geometry(p).empties) {
     if (p.given[c]) continue;
     const m = s.monsters[c]!;
-    if (m && (!sol || sol[c] === m)) k[c] = bit(m);
-    else if (!m && s.marks[c] && (!sol || s.marks[c]! & bit(sol[c]!))) k[c] = s.marks[c]!;
+    if (m) k[c] = bit(m);
+    else if (s.marks[c]) k[c] = s.marks[c]!;
   }
   knowledgeCache.set(s, k);
   return k;

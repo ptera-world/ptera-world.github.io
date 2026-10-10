@@ -340,15 +340,13 @@ export function analyze(p: TentsPuzzle): Analysis {
   return a;
 }
 
-/** Board marks as domains; with a unique solution only marks that agree with it count. */
+/** Board marks as domains. */
 export function readMarks(p: TentsPuzzle, s: TentsState): Doms {
-  const a = analyze(p);
-  const sol = a.count === 1 ? a.solution : null;
   const k = initialDoms(p);
   s.marks.forEach((m, c) => {
     if (p.cells[c] === TREE) return;
-    if (m === TENT && (!sol || sol[c] === YES)) k[c] = Y;
-    else if (m === GRASS && (!sol || sol[c] === NO)) k[c] = N;
+    if (m === TENT) k[c] = Y;
+    else if (m === GRASS) k[c] = N;
   });
   return k;
 }

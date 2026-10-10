@@ -195,7 +195,7 @@ export function hint(p: SokoPuzzle, s: SokoState): Hint<SokoAction> | null {
   const r = solveFrom(p, s);
   if (r.gaveUp) return { message: "this level is too big for the hint search" };
   if (!r.pushes) return { message: "the boxes can't all reach goals from here any more. undo to get back." };
-  return { message: "none of the techniques you have hints on applies here" };
+  return { message: "no suggestion from here" };
 }
 
 function describeAction(p: SokoPuzzle, a: SokoAction, before: SokoState, after: SokoState): string {

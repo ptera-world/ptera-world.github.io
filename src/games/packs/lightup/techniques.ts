@@ -6,7 +6,7 @@ import {
   type LightupAction, type LightupFocus, type LightupPuzzle, type LightupState,
 } from "./logic";
 import {
-  DARK, LIGHT, UNK, analyze, assign, freshKnowledge, scanSteps,
+  DARK, LIGHT, UNK, assign, freshKnowledge, scanSteps,
   type Knowledge, type Step as SolverStep, type StepKind,
 } from "./solver";
 
@@ -15,23 +15,18 @@ type LightupTechnique = Technique<LightupPuzzle, LightupState, LightupAction>;
 const knowledgeCache = new WeakMap<LightupState, Knowledge | null>();
 
 /**
- * What the board establishes: lights and no-light marks, each read as a fact only when it agrees
- * with the unique solution (every mark counts when there isn't one). Deductions from it stay
- * true however wrong the board is, so an auto-applied step never builds on a mistake. Null when
- * the counted marks contradict each other.
+ * What the board establishes: lights and no-light marks. Null when the marks contradict each other.
  */
 export function knowledge(p: LightupPuzzle, s: LightupState): Knowledge | null {
   if (knowledgeCache.has(s)) return knowledgeCache.get(s)!;
   const g = geometry(p);
-  const a = analyze(p);
-  const sol = a.count === 1 ? a.solution : null;
   let k: Knowledge | null = freshKnowledge(g);
   for (const c of g.empties) {
-    if (s.marks[c] === BULB && (!sol || sol[c] === 1) && !assign(g, k, c, LIGHT)) { k = null; break; }
+    if (s.marks[c] === BULB && !assign(g, k, c, LIGHT)) { k = null; break; }
   }
   if (k) {
     for (const c of g.empties) {
-      if (s.marks[c] === DOT && (!sol || sol[c] === 0) && !assign(g, k, c, DARK)) { k = null; break; }
+      if (s.marks[c] === DOT && !assign(g, k, c, DARK)) { k = null; break; }
     }
   }
   knowledgeCache.set(s, k);

@@ -1,4 +1,5 @@
-import type { Plugin, Technique } from "../../core/types";
+import { hintFrom } from "../../core/define";
+import type { Hint, Plugin, Step, Technique } from "../../core/types";
 import { flood, COLOUR_NAMES, bestFill, fill, isComplete, region, solverMoves, type FloodAction, type FloodFocus, type FloodPuzzle, type FloodState } from "./logic";
 
 type FloodTechnique = Technique<FloodPuzzle, FloodState, FloodAction>;
@@ -45,33 +46,26 @@ export const clearColour: FloodTechnique = {
   },
 };
 
-export const lookahead: FloodTechnique = {
-  id: "flood.lookahead",
-  name: "three moves ahead",
-  puzzles: [flood],
-  level: 2,
-  description: "think of each cell's distance as how many fills it takes to reach it. try every sequence of three fills and pick the start that leaves the farthest cell nearest (then the fewest cells that far, then the biggest area). this is the method the move limit is set from.",
-  instances(p, s, visit) {
-    if (!playable(p, s)) return;
-    const c = bestFill(p, s.grid);
-    if (c < 0) return;
-    const name = COLOUR_NAMES[c]!;
-    const got = gained(p, s.grid, c);
-    const finishes = isComplete(fill(p.w, p.h, s.grid, c));
-    const left = solverMoves(p, s.grid).length;
-    visit({
-      message: finishes
-        ? `flood ${name}: that finishes the board.`
-        : `flood ${name} (${plural(got.length, "cell joins", "cells join")}): of every three-fill sequence, starting with ${name} brings the farthest cells closest. the method finishes in ${plural(left, "fill", "fills")} from here.`,
-      nudge: "look for the color that opens up the most of the board, a few moves ahead",
-      focus: { gained: got } satisfies FloodFocus,
-      actions: [{ type: "fill", colour: c }],
-    });
-  },
-  practice: { params: { width: 8, height: 8, colours: 5, leniency: 0 } },
-};
+export const floodTechniques: FloodTechnique[] = [clearColour];
 
-export const floodTechniques: FloodTechnique[] = [clearColour, lookahead];
+/** The first fill of the built-in three-moves-ahead method, else the puzzle's own hint. */
+export function hint(p: FloodPuzzle, s: FloodState): Hint<FloodAction> | null {
+  const c = playable(p, s) ? bestFill(p, s.grid) : -1;
+  if (c < 0) return flood.hint?.(p, s) ?? null;
+  const name = COLOUR_NAMES[c]!;
+  const got = gained(p, s.grid, c);
+  const finishes = isComplete(fill(p.w, p.h, s.grid, c));
+  const left = solverMoves(p, s.grid).length;
+  const found: Step<FloodAction> = {
+    message: finishes
+      ? `flood ${name}: that finishes the board.`
+      : `flood ${name} (${plural(got.length, "cell joins", "cells join")}): of every three-fill sequence, starting with ${name} brings the farthest cells closest. the method finishes in ${plural(left, "fill", "fills")} from here.`,
+    nudge: "look for the color that opens up the most of the board, a few moves ahead",
+    focus: { gained: got } satisfies FloodFocus,
+    actions: [{ type: "fill", colour: c }],
+  };
+  return hintFrom(null, found, 1) as Hint<FloodAction>;
+}
 
 /** Runs ahead of technique hints (priority 100), so falling behind the limit is pointed out first. */
 export const behindPace: Plugin<FloodPuzzle, FloodState, FloodAction, null> = {

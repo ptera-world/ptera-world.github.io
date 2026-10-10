@@ -106,7 +106,6 @@ test("technique steps agree with the solution and never touch marked or covered 
     const g = geometry(p);
     const sol = solution(p);
     let st = dominosa.init(p);
-    st = dominosa.reduce(p, st, { type: "set", placements: [sol.findIndex((v) => v === 0)], value: DOMINO });
     for (let i = 0; i < 400; i++) {
       const hit = firstStep(dominosa, dominosaTechniques, p, st);
       if (!hit) break;

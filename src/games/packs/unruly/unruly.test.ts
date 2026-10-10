@@ -117,8 +117,6 @@ test("every technique step agrees with the solution and never touches filled cel
     const p = await gen({ width: 8, height: 8, difficulty, unique: difficulty === "normal" }, `sound-${difficulty}`);
     const sol = analyze(p).solution!;
     let st = unruly.init(p);
-    const wrong = p.cells.findIndex((v) => v === -1);
-    st = unruly.reduce(p, st, { type: "set", cells: [wrong], value: markOf(1 - sol[wrong]!) });
     for (let i = 0; i < 400; i++) {
       const hit = firstStep(unruly, unrulyTechniques, p, st);
       if (!hit) break;

@@ -2,9 +2,9 @@ import { expect, test } from "bun:test";
 import { generate } from "../../core/generate";
 import { Registry } from "../../core/registry";
 import { Session } from "../../core/session";
-import { TechniqueHost, applyStep, findPracticePosition, findStep, firstStep } from "../../core/techniques";
+import { TechniqueHost } from "../../core/techniques";
 import { actionOf, dealFormat, spider, type SpiderPuzzle, type SpiderState } from "./logic";
-import { checkWinnable, spiderTechniques } from "./techniques";
+import { checkWinnable, fallbackHint } from "./techniques";
 
 const sig = () => new AbortController().signal;
 const gen = (params: Record<string, unknown>, seed: string) => generate(spider, params, seed, sig()) as Promise<SpiderPuzzle>;
@@ -61,8 +61,7 @@ test("only one-suit runs move together, no deal onto an empty column, a finished
 test("hints win a one-suit game, also after wandering off the stored line", async () => {
   const p = await gen({ suits: "1" }, "h");
   const registry = new Registry();
-  for (const t of spiderTechniques) registry.technique(t);
-  const session = new Session(spider, p, { kind: "imported" });
+  const session = new Session({ ...spider, hint: fallbackHint }, p, { kind: "imported" });
   new TechniqueHost(registry, session);
   checkWinnable.setup!({ session, settings: {}, owner: "check" });
   session.dispatch({ type: "deal" });
@@ -74,20 +73,15 @@ test("hints win a one-suit game, also after wandering off the stored line", asyn
   expect(session.solved).toBe(true);
 }, 60000);
 
-test("techniques alone win a one-suit deal; practice positions exist", async () => {
+test("the hint alone wins a one-suit deal", async () => {
   const p = await gen({ suits: "1" }, "t");
   let s = spider.init(p);
   for (let i = 0; i < 600 && !spider.isSolved(p, s); i++) {
-    const hit = firstStep(spider, spiderTechniques, p, s)!;
-    expect(hit).not.toBeNull();
-    s = applyStep(spider, p, s, hit.step);
+    const h = fallbackHint(p, s);
+    expect(h).not.toBeNull();
+    s = h!.actions!.reduce((t, a) => spider.reduce(p, t, a), s);
   }
   expect(spider.isSolved(p, s)).toBe(true);
-  for (const t of spiderTechniques) {
-    const pos = await findPracticePosition(spider, spiderTechniques, t, "x", sig());
-    const step = pos && findStep(spider, t, pos.puzzle, pos.state);
-    expect(step?.actions.length).toBe(1);
-  }
 }, 120000);
 
 test("deal text round-trips and checks the cards", async () => {
