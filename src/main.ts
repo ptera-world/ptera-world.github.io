@@ -1,6 +1,6 @@
 import { createCamera } from "./camera";
 import { createGraph } from "./graph";
-import { buildWorld, updateTransform, setFilterRef, updatePositions, animateTo, worldEl, setOnTierChange, landingEl } from "./dom";
+import { buildWorld, updateTransform, setFilterRef, updatePositions, animateTo, worldEl, setOnTierChange, landingEl, nudges } from "./dom";
 import { setupInput } from "./input";
 import { initPanel, openPanel, fetchContent, panelState, restorePanel, type PanelState } from "./panel";
 import { showCard, hideCard, getCurrentCardNode, setCardToggleFilter, setCardIsTagActive, setCardGetTagColor } from "./card";
@@ -12,7 +12,7 @@ import { createMinimap } from "./minimap";
 import { initGroupingState, buildGroupingUI, restoreGroupingFromUrl, getTagColor, setOnGroupingChange, resetToCurrentGrouping } from "./grouping-state";
 import { siteConfig, getActiveCollection, siteUrl, type CollectionConfig } from "./site-config";
 import { groupings } from "./groupings";
-import type { GraphData } from "./graph";
+import type { GraphData, Node as GraphNode } from "./graph";
 import { getSettings } from "./settings";
 import { life, signal, onFrame, animating } from "./life";
 
@@ -26,8 +26,11 @@ import { life, signal, onFrame, animating } from "./life";
 /** UI state a stopped copy hands to its replacement. Every field may be missing. */
 interface Carried {
   camera?: { x: number; y: number; zoom: number };
-  /** Each node's displacement from its rest position (filter layout, focus layout, landing nudge). */
-  offsets?: [id: string, dx: number, dy: number][];
+  /**
+   * Each node's position without the landing nudge (the replacement redoes that for its own
+   * landing), and the rest position it was laid out from.
+   */
+  positions?: [id: string, x: number, y: number, restX: number, restY: number][];
   panel?: PanelState;
   card?: string | null;
   /** The element with keyboard focus: by id, by the graph node it belongs to, or by its path from the nearest element with an id. */
@@ -95,7 +98,7 @@ try {
   life.abort();
   throw e;
 }
-const offsets = carried?.offsets;
+const positions = carried?.positions;
 groupings.push(...data.groupings);
 const camera = createCamera();
 const graph = createGraph(data);
@@ -201,6 +204,8 @@ const input = setupInput(document.getElementById("viewport")!, camera, graph, {
 });
 initPanel(camera, graph);
 
+// where a fresh load has the nodes when it nudges them
+const beforeNudge = new Map(graph.nodes.map((n) => [n.id, [n.x, n.y] as const]));
 const focusId = new URLSearchParams(location.search).get("focus");
 const focusNode = focusId ? graph.nodes.find((n) => n.id === focusId) : undefined;
 if (!carried) {
@@ -212,17 +217,20 @@ if (!carried) {
     }
   }
 } else {
-  if (offsets) {
+  if (positions) {
     const byId = new Map(graph.nodes.map((n) => [n.id, n]));
-    for (const [id, dx, dy] of offsets) {
+    for (const [id, x, y, restX, restY] of positions) {
       const node = byId.get(id);
-      if (node) { node.x = node.baseX + dx; node.y = node.baseY + dy; }
+      if (!node) continue;
+      const same = node.baseX === restX && node.baseY === restY;
+      node.x = same ? x : node.baseX + (x - restX);
+      node.y = same ? y : node.baseY + (y - restY);
     }
     updatePositions(graph);
   }
   if (focusNode) {
     input.restoreFocus(focusNode);
-    focusLayout.onFocusChange(focusNode, !!offsets);
+    focusLayout.onFocusChange(focusNode, !!positions);
   }
   if (carried.camera) {
     camera.x = carried.camera.x;
@@ -246,28 +254,31 @@ if (!settings.nodeGrowth) worldEl.dataset.noGrowth = "";
 // Keep noTransition active until this completes to prevent visible animation.
 document.fonts.ready.then(() => {
   if (signal.aborted) return;
-  const rect = landingEl.getBoundingClientRect();
-  const worldRect = worldEl.getBoundingClientRect();
-  const zoom = camera.zoom || 1;
-  // Convert landing pixel rect to world-space bounds
-  const lCx = (rect.left + rect.width / 2 - worldRect.left) / zoom;
-  const lCy = (rect.top + rect.height / 2 - worldRect.top) / zoom;
-  const halfW = rect.width / zoom / 2 + 20; // 20px padding
-  const halfH = rect.height / zoom / 2 + 20;
+  // World-space bounds from layout, not from the screen, so the camera can't change the result
+  const style = getComputedStyle(landingEl);
+  const shift = new DOMMatrix(style.transform);
+  const w = parseFloat(style.width);
+  const h = parseFloat(style.height);
+  const lCx = landingEl.offsetLeft + shift.e + w / 2;
+  const lCy = landingEl.offsetTop + shift.f + h / 2;
+  const halfW = w / 2 + 20; // 20px padding
+  const halfH = h / 2 + 20;
 
   let nudged = false;
-  // carried offsets already hold the nudge
-  for (const node of offsets ? [] : graph.nodes) {
+  for (const node of graph.nodes) {
     if (node.tags.includes("meta")) continue;
-    const dx = node.x - lCx;
-    const dy = node.y - lCy;
+    const [x, y] = (positions ? beforeNudge.get(node.id) : undefined) ?? [node.x, node.y];
+    const dx = x - lCx;
+    const dy = y - lCy;
     if (Math.abs(dx) < halfW + node.radius && Math.abs(dy) < halfH + node.radius) {
       // Push radially outward from landing center
       const dist = Math.hypot(dx, dy) || 1;
       const pushDist = Math.hypot(halfW + node.radius, halfH + node.radius) - dist + 5;
       if (pushDist > 0) {
+        const from: [number, number] = [node.x, node.y];
         node.x += (dx / dist) * pushDist;
         node.y += (dy / dist) * pushDist;
+        nudges.set(node.id, { from, to: [node.x, node.y] });
         nudged = true;
       }
     }
@@ -323,7 +334,7 @@ g[PAGE] = {
   stop() {
     const state: Carried = {
       camera: { x: camera.x, y: camera.y, zoom: camera.zoom },
-      offsets: graph.nodes.map((n) => [n.id, n.x - n.baseX, n.y - n.baseY]),
+      positions: graph.nodes.map((n) => [n.id, ...withoutNudge(n), n.baseX, n.baseY]),
       panel: panelState(),
       card: getCurrentCardNode()?.id ?? null,
       focus: focusOf(document.activeElement),
@@ -359,6 +370,14 @@ async function replace(): Promise<void> {
   } finally {
     replacing = false;
   }
+}
+
+/** A node's position minus the landing nudge it still includes; exact while it hasn't moved since. */
+function withoutNudge(n: GraphNode): [number, number] {
+  const nudge = nudges.get(n.id);
+  if (!nudge) return [n.x, n.y];
+  if (n.x === nudge.to[0] && n.y === nudge.to[1]) return nudge.from;
+  return [n.x - (nudge.to[0] - nudge.from[0]), n.y - (nudge.to[1] - nudge.from[1])];
 }
 
 /** Identifies an element so the same control can be found in a rebuilt page. */

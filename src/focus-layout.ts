@@ -4,7 +4,7 @@
  * requestAnimationFrame for smooth visual transitions.
  */
 import type { Graph, Node } from "./graph";
-import { updatePositions, nodeEls, edgeRefs, regionEls, worldEl } from "./dom";
+import { updatePositions, nodeEls, nudges, edgeRefs, regionEls, worldEl } from "./dom";
 import { getSettings } from "./settings";
 import { onFrame, cancelFrame } from "./life";
 
@@ -112,6 +112,7 @@ export function createFocusLayout(graph: Graph, defaultFocusId: string | null = 
           n.x = n.baseX;
           n.y = n.baseY;
         }
+        nudges.clear();
         updatePositions(graph);
         setTimeout(() => { delete worldEl.dataset.settling; }, 350);
       }

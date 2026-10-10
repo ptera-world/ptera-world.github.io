@@ -1,4 +1,5 @@
 import type { Graph } from "./graph";
+import { nudges } from "./dom";
 
 /**
  * Run a synchronous force-directed simulation on visible non-meta nodes.
@@ -131,5 +132,6 @@ export function resetLayout(graph: Graph): void {
   for (const node of graph.nodes) {
     node.x = node.baseX;
     node.y = node.baseY;
+    nudges.delete(node.id);
   }
 }

@@ -4,7 +4,7 @@
 
 import type { Graph, Node } from "./graph";
 import { groupings, getGrouping, type Grouping } from "./groupings";
-import { updatePositions, animateTo, fadeOutRegions, fadeInRegions, snapNodePositions, nodeEls, worldEl, type NodePositionWithRegion } from "./dom";
+import { updatePositions, animateTo, fadeOutRegions, fadeInRegions, snapNodePositions, nodeEls, nudges, worldEl, type NodePositionWithRegion } from "./dom";
 import type { Camera } from "./camera";
 import { onFrame } from "./life";
 
@@ -42,12 +42,12 @@ export function setOnGroupingChange(fn: () => void): void {
 /** Restore all nodes to the current grouping's rest positions (used instead of resetLayout when a grouping is active). */
 export function resetToCurrentGrouping(graph: Graph): void {
   if (!currentLayoutGrouping) {
-    for (const node of graph.nodes) { node.x = node.baseX; node.y = node.baseY; }
+    for (const node of graph.nodes) { node.x = node.baseX; node.y = node.baseY; nudges.delete(node.id); }
     return;
   }
   for (const node of graph.nodes) {
     const pos = currentLayoutGrouping.positions[node.id];
-    if (pos) { node.x = pos.x; node.y = pos.y; }
+    if (pos) { node.x = pos.x; node.y = pos.y; nudges.delete(node.id); }
   }
 }
 
@@ -155,7 +155,7 @@ function applyGroupingPositions(animate = true): void {
 
   for (const node of graphRef.nodes) {
     const pos = currentLayoutGrouping.positions[node.id];
-    if (pos) targets.set(node.id, { x: pos.x, y: pos.y });
+    if (pos) { targets.set(node.id, { x: pos.x, y: pos.y }); nudges.delete(node.id); }
   }
 
   // Apply colors from color grouping

@@ -27,6 +27,8 @@ interface EdgeRef {
   fromY?: number;
 }
 
+/** The landing nudge each node's position still includes; an entry goes when the node is put back at a rest position. */
+export const nudges = new Map<string, { from: [number, number]; to: [number, number] }>();
 export const nodeEls = new Map<string, HTMLElement>();
 const hitNodes = new Map<HTMLElement, Node>();
 export const edgeRefs: EdgeRef[] = [];
