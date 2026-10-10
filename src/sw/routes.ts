@@ -22,6 +22,20 @@ export async function fileHash(bytes: BufferSource): Promise<string> {
   return Array.from(new Uint8Array(buf).slice(0, 8), (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+/** Every cache the site worker owns starts with this; other caches (e.g. games-packs) are not its. */
+export const CACHE_PREFIX = "site-";
+
+/**
+ * The worker the dev server serves at /sw.js: it deletes the site worker's caches and unregisters,
+ * so pages served by the dev server are never answered from a stored deploy.
+ */
+export const RETIRING_WORKER = `self.addEventListener("install", () => self.skipWaiting());
+self.addEventListener("activate", (e) => e.waitUntil((async () => {
+  for (const k of await caches.keys()) if (k.startsWith(${JSON.stringify(CACHE_PREFIX)})) await caches.delete(k);
+  await self.registration.unregister();
+})()));
+`;
+
 export interface SwManifest {
   /** Identifies the exact set of files; changes whenever any listed file changes. */
   version: string;

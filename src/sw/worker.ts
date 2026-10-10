@@ -1,4 +1,4 @@
-import { fileHash, keysForPath, type SwManifest } from "./routes";
+import { CACHE_PREFIX, fileHash, keysForPath, type SwManifest } from "./routes";
 
 /**
  * Offline copy of the parts of the site this browser has used. Replaced at build time with the
@@ -41,7 +41,7 @@ interface Worker {
 }
 const sw = self as unknown as Worker;
 
-const PREFIX = "site-";
+const PREFIX = CACHE_PREFIX;
 const CACHE = `${PREFIX}${__MANIFEST__.version}`;
 const LEGACY = ["pteraworld-v1"];
 /** Written last into each deploy's cache: the manifest it holds. A cache without it is incomplete. */

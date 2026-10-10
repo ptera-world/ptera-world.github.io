@@ -4,6 +4,7 @@ import { generatedNodes, generatedEdges } from "./generated-graph";
 import { siteConfig, type CollectionId } from "./site-config";
 import { generateGraph } from "./gen-graph";
 import { buildApp, skippedWarning, type AppOutput } from "./app-build";
+import { RETIRING_WORKER } from "./sw/routes";
 
 const appCache = new Map<string, Map<string, AppOutput>>();
 
@@ -133,6 +134,7 @@ const server = Bun.serve({
 
     // The page script (shared by every collection) and each collection's graph data
     if (!isProduction) {
+      if (path === "/sw.js") return new Response(RETIRING_WORKER, { headers: { "Content-Type": "text/javascript" } });
       if (path === "/main.js" && pageScript) return new Response(pageScript, { headers: { "Content-Type": "application/javascript" } });
       const data = dataCache.get(path);
       if (data) return Response.json(data);
