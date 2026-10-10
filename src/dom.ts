@@ -5,10 +5,11 @@ import type { FilterState } from "./filter";
 import { updateMinimap } from "./minimap";
 import { siteConfig, getActiveCollection } from "./site-config";
 import { getSettings } from "./settings";
+import { signal } from "./life";
 
-
-const viewport = document.getElementById("viewport")!;
-export const worldEl = document.getElementById("world")!;
+// Looked up by buildWorld: a copy of this script loads while another still owns the page.
+let viewport: HTMLElement;
+export let worldEl: HTMLElement;
 
 let lastTier: ReturnType<typeof currentTier> | null = null;
 let onTierChange: ((tier: ReturnType<typeof currentTier>) => void) | null = null;
@@ -36,7 +37,7 @@ let svgLayer: SVGSVGElement;
 
 let filterRef: FilterState | null = null;
 const surfacedNodes = new Set<string>();
-const liveRegion = document.getElementById("live-region");
+let liveRegion: HTMLElement | null;
 
 function announce(text: string): void {
   if (liveRegion) liveRegion.textContent = text;
@@ -47,6 +48,10 @@ export function setFilterRef(filter: FilterState): void {
 }
 
 export function buildWorld(graph: Graph): void {
+  viewport = document.getElementById("viewport")!;
+  worldEl = document.getElementById("world")!;
+  liveRegion = document.getElementById("live-region");
+
   // Landing intro
   landingEl = document.createElement("div");
   landingEl.className = "landing";
@@ -178,6 +183,7 @@ export function animateTo(camera: Camera, tx: number, ty: number, tz: number): v
   const sx = camera.x, sy = camera.y, sz = camera.zoom;
   const start = performance.now();
   function step(now: number) {
+    if (signal.aborted) return;
     const t = Math.min(1, (now - start) / 300);
     const ease = t * (2 - t);
     camera.x = sx + (tx - sx) * ease;

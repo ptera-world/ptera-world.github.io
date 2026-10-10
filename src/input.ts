@@ -7,6 +7,7 @@ import { isPanelOpen, closePanel, openPanel } from "./panel";
 
 import { siteConfig, getActiveCollection, siteUrl } from "./site-config";
 import { getSettings } from "./settings";
+import { signal } from "./life";
 import { keybinds, defineSchema, fromBindings, registerComponents, fuzzyMatcher } from "keybinds";
 import type { Command } from "keybinds";
 
@@ -16,6 +17,8 @@ export interface InputCallbacks {
 
 export interface InputHandle {
   navigateTo(node: Node, push?: boolean, animate?: boolean): void;
+  /** Mark a node focused as it already was: no camera move, card, panel, history entry, announcement or onFocusChange. */
+  restoreFocus(node: Node): void;
   commands: Command[];
 }
 
@@ -338,7 +341,7 @@ export function setupInput(
     };
   }
 
-  keybinds(commands, getContext);
+  signal.addEventListener("abort", keybinds(commands, getContext));
 
   // --- History (popstate) ---
 
@@ -351,7 +354,7 @@ export function setupInput(
     } else {
       clearFocus(false);
     }
-  });
+  }, { signal });
 
   // --- Touch ---
 
@@ -403,7 +406,7 @@ export function setupInput(
   }
 
   function panLoop(now: number): void {
-    if (heldKeys.size === 0) { panRAF = 0; return; }
+    if (heldKeys.size === 0 || signal.aborted) { panRAF = 0; return; }
     const dt = lastPanTime ? (now - lastPanTime) / 1000 : 0;
     lastPanTime = now;
     let dx = 0, dy = 0;
@@ -430,15 +433,15 @@ export function setupInput(
       lastPanTime = 0;
       panRAF = requestAnimationFrame(panLoop);
     }
-  });
+  }, { signal });
 
   window.addEventListener("keyup", (e) => {
     heldKeys.delete(e.key.toLowerCase());
-  });
+  }, { signal });
 
   window.addEventListener("blur", () => {
     heldKeys.clear();
-  });
+  }, { signal });
 
   // --- Search init ---
 
@@ -565,7 +568,12 @@ export function setupInput(
     ctxMenu.context = getContext();
   }, { capture: true });
 
-  return { navigateTo, commands: allCommands };
+  function restoreFocus(node: Node): void {
+    focusedNode = node;
+    setFocus(graph, node);
+  }
+
+  return { navigateTo, restoreFocus, commands: allCommands };
 }
 
 function bestNeighbor(from: Node, dir: [number, number], graph: Graph, camera: Camera): Node | null {

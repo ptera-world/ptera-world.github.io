@@ -6,6 +6,7 @@
 import type { Graph, Node } from "./graph";
 import { updatePositions, nodeEls, edgeRefs, regionEls, worldEl } from "./dom";
 import { getSettings } from "./settings";
+import { signal } from "./life";
 
 const REPEL = 4000;
 const SPRING_K = 0.018;
@@ -94,7 +95,8 @@ export function createFocusLayout(graph: Graph, defaultFocusId: string | null = 
     return result;
   }
 
-  function onFocusChange(node: Node | null): void {
+  /** `settled`: node positions already are this focus's layout, so none is run. */
+  function onFocusChange(node: Node | null, settled = false): void {
     const settings = getSettings();
     const newId = node?.id ?? null;
     if (newId === focusedId) return;
@@ -131,7 +133,7 @@ export function createFocusLayout(graph: Graph, defaultFocusId: string | null = 
     neighborIds = getNeighborhood(focusedId, NEIGHBORHOOD_HOPS[tier]!);
     applyNeighborhoodAttr();
 
-    if (!settings.dynamicLayout) return;
+    if (!settings.dynamicLayout || settled) return;
 
     vx.clear();
     vy.clear();
@@ -157,7 +159,7 @@ export function createFocusLayout(graph: Graph, defaultFocusId: string | null = 
     );
 
     function frame(): void {
-      if (!focusedId) return;
+      if (!focusedId || signal.aborted) return;
 
       for (let step = 0; step < STEPS_PER_FRAME && iterCount < MAX_ITERS; step++, iterCount++) {
         let maxV = 0;

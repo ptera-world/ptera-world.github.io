@@ -1,8 +1,8 @@
 import { createCamera } from "./camera";
 import { createGraph } from "./graph";
-import { buildWorld, updateTransform, setFilterRef, updatePositions, animateTo, worldEl, setOnTierChange } from "./dom";
+import { buildWorld, updateTransform, setFilterRef, updatePositions, animateTo, worldEl, setOnTierChange, landingEl } from "./dom";
 import { setupInput } from "./input";
-import { initPanel, openPanel } from "./panel";
+import { initPanel, openPanel, fetchContent, panelState, restorePanel, type PanelState } from "./panel";
 import { showCard, hideCard, getCurrentCardNode, setCardToggleFilter, setCardIsTagActive, setCardGetTagColor } from "./card";
 import { createFilter, buildFilterUI, applyFilter, getVisibleIds, setActive, updateFilterPillColors } from "./filter";
 import { runLayout } from "./layout";
@@ -13,14 +13,53 @@ import { initGroupingState, buildGroupingUI, restoreGroupingFromUrl, getTagColor
 import { siteConfig, getActiveCollection, siteUrl, type CollectionConfig } from "./site-config";
 import { groupings } from "./groupings";
 import type { GraphData } from "./graph";
-import { landingEl } from "./dom";
+import { getSettings } from "./settings";
+import { life, signal } from "./life";
+
+/**
+ * The page is replaced while it stays open when a deploy changes a file it reads. This module is
+ * imported again under a new URL, a fresh copy of the whole page script, which loads the deploy's
+ * data and page while the running copy keeps going, then stops it, puts the deploy's page body in
+ * place and mounts there, continuing from what the stopped copy carried.
+ */
+
+/** UI state a stopped copy hands to its replacement. Every field may be missing. */
+interface Carried {
+  camera?: { x: number; y: number; zoom: number };
+  /** Each node's displacement from its rest position (filter layout, focus layout, landing nudge). */
+  offsets?: [id: string, dx: number, dy: number][];
+  panel?: PanelState;
+  card?: string | null;
+  /** The element with keyboard focus, by id or by the graph node it belongs to. */
+  focus?: { id?: string; node?: string };
+}
+interface Page {
+  /** Release every listener, loop and timer; the caller replaces the page body. */
+  stop(): Carried;
+}
+const PAGE = Symbol.for("pteraworld.graph.page");
+const g = globalThis as { [PAGE]?: Page };
+const previous = g[PAGE];
 
 loadSettingsFromUrl();
-import { getSettings } from "./settings";
 const collectionId = getActiveCollection();
-const dataRes = await fetch(siteUrl(`${collectionId === "default" ? "" : `/${collectionId}`}/graph.json`));
+const dataUrl = siteUrl(`${collectionId === "default" ? "" : `/${collectionId}`}/graph.json`);
+const dataRes = await fetch(dataUrl);
 if (!dataRes.ok) throw new Error(`graph.json: ${dataRes.status}`);
 const data = (await dataRes.json()) as GraphData;
+let carried: Carried | undefined;
+if (previous) {
+  const pageRes = await fetch(location.href);
+  if (!pageRes.ok) throw new Error(`${location.pathname}: ${pageRes.status}`);
+  const next = new DOMParser().parseFromString(await pageRes.text(), "text/html");
+  const focus = new URLSearchParams(location.search).get("focus");
+  // a focused node's card or panel shows its content; fragments have neither
+  if (data.nodes.some((n) => n.id === focus && !n.tags.includes("fragment"))) await fetchContent(focus!);
+  carried = previous.stop();
+  document.title = next.title;
+  document.body.replaceWith(next.body);
+}
+const offsets = carried?.offsets;
 groupings.push(...data.groupings);
 const camera = createCamera();
 const graph = createGraph(data);
@@ -30,10 +69,9 @@ const collectionMeta: CollectionConfig = siteConfig.collections[collectionId];
 const metaNode = graph.nodes.find((n) => n.id === collectionMeta.metaNodeId);
 if (metaNode) { camera.x = metaNode.x; camera.y = metaNode.y; }
 
+buildWorld(graph);
 // Disable transitions during initial setup
 worldEl.dataset.noTransition = "";
-
-buildWorld(graph);
 
 // Initialize grouping state and restore from URL
 initGroupingState(graph, camera);
@@ -118,7 +156,7 @@ createMinimap(camera, graph, (x, y, animate) => {
   }
 });
 updateTransform(camera);
-window.addEventListener("resize", () => updateTransform(camera));
+window.addEventListener("resize", () => updateTransform(camera), { signal });
 const neighborhoodEnabled = collectionMeta.neighborhoodFocus ?? getSettings().neighborhoodFocus;
 const focusLayout = createFocusLayout(graph, collectionMeta.metaNodeId, neighborhoodEnabled);
 setOnTierChange((tier) => focusLayout.onTierChange(tier));
@@ -127,16 +165,41 @@ const input = setupInput(document.getElementById("viewport")!, camera, graph, {
 });
 initPanel(camera, graph);
 
-// Handle ?focus= query param (snap without animation on page load)
 const focusId = new URLSearchParams(location.search).get("focus");
-if (focusId) {
-  const node = graph.nodes.find((n) => n.id === focusId);
-  if (node) {
-    input.navigateTo(node, false, false);
-    if (!node.tags.includes("fragment")) {
-      openPanel(node.id, node.label, false);
+const focusNode = focusId ? graph.nodes.find((n) => n.id === focusId) : undefined;
+if (!carried) {
+  // snap without animation on page load
+  if (focusNode) {
+    input.navigateTo(focusNode, false, false);
+    if (!focusNode.tags.includes("fragment")) {
+      openPanel(focusNode.id, focusNode.label, false);
     }
   }
+} else {
+  if (offsets) {
+    const byId = new Map(graph.nodes.map((n) => [n.id, n]));
+    for (const [id, dx, dy] of offsets) {
+      const node = byId.get(id);
+      if (node) { node.x = node.baseX + dx; node.y = node.baseY + dy; }
+    }
+    updatePositions(graph);
+  }
+  if (focusNode) {
+    input.restoreFocus(focusNode);
+    focusLayout.onFocusChange(focusNode, !!offsets);
+  }
+  if (carried.camera) {
+    camera.x = carried.camera.x;
+    camera.y = carried.camera.y;
+    camera.zoom = carried.camera.zoom;
+  }
+  updateTransform(camera);
+  if (carried.panel) restorePanel(carried.panel);
+  const cardNode = carried.card ? graph.nodes.find((n) => n.id === carried.card) : undefined;
+  if (cardNode && !carried.panel?.open) showCard(cardNode, graph);
+  const f = carried.focus;
+  const focusEl = f?.id ? document.getElementById(f.id) : f?.node ? document.querySelector<HTMLElement>(`.node[data-id="${CSS.escape(f.node)}"] .node-hit`) : null;
+  focusEl?.focus({ preventScroll: true });
 }
 
 // Apply settings-driven attributes
@@ -148,6 +211,7 @@ if (!settings.nodeGrowth) worldEl.dataset.noGrowth = "";
 // Nudge nodes that overlap the landing element after fonts are ready.
 // Keep noTransition active until this completes to prevent visible animation.
 document.fonts.ready.then(() => {
+  if (signal.aborted) return;
   const rect = landingEl.getBoundingClientRect();
   const worldRect = worldEl.getBoundingClientRect();
   const zoom = camera.zoom || 1;
@@ -158,7 +222,8 @@ document.fonts.ready.then(() => {
   const halfH = rect.height / zoom / 2 + 20;
 
   let nudged = false;
-  for (const node of graph.nodes) {
+  // carried offsets already hold the nudge
+  for (const node of offsets ? [] : graph.nodes) {
     if (node.tags.includes("meta")) continue;
     const dx = node.x - lCx;
     const dy = node.y - lCy;
@@ -213,4 +278,67 @@ window.addEventListener("popstate", () => {
     updatePositions(graph);
     syncFilterPills();
   }
-});
+}, { signal });
+
+g[PAGE] = {
+  stop() {
+    const state: Carried = {
+      camera: { x: camera.x, y: camera.y, zoom: camera.zoom },
+      offsets: graph.nodes.map((n) => [n.id, n.x - n.baseX, n.y - n.baseY]),
+      panel: panelState(),
+      card: getCurrentCardNode()?.id ?? null,
+      focus: focusOf(document.activeElement),
+    };
+    life.abort();
+    return state;
+  },
+};
+watchForReplacement();
+
+function focusOf(el: Element | null): Carried["focus"] {
+  if (!el || el === document.body) return undefined;
+  if (el.id) return { id: el.id };
+  const node = el.closest<HTMLElement>(".node[data-id]")?.dataset.id;
+  return node ? { node } : undefined;
+}
+
+/** Replace this copy when a deploy changes a file the page reads. */
+function watchForReplacement(): void {
+  const script = new URL(import.meta.url).pathname;
+  const page = location.pathname;
+  const content = siteUrl("/content/");
+  const reads = new Set([script, dataUrl, siteUrl("/headings.json"), page, `${page}/`]);
+  let pressed = 0;
+  let released: (() => void) | null = null;
+  const opts = { capture: true, signal };
+  addEventListener("pointerdown", () => { pressed++; }, opts);
+  for (const t of ["pointerup", "pointercancel"]) {
+    addEventListener(t, () => {
+      pressed = Math.max(0, pressed - 1);
+      if (!pressed) released?.();
+    }, opts);
+  }
+  let replacing = false;
+  const replace = async (version: string): Promise<void> => {
+    if (replacing || signal.aborted) return;
+    replacing = true;
+    try {
+      // never mid-gesture: the new copy would get half of it
+      if (pressed) await new Promise<void>((r) => { released = r; });
+      released = null;
+      const next = new URL(import.meta.url);
+      next.search = `?v=${encodeURIComponent(version)}`;
+      await import(/* @vite-ignore */ next.href);
+    } catch (e) {
+      console.error("[graph] couldn't replace the page script", e);
+    } finally {
+      replacing = false;
+    }
+  };
+  addEventListener("deploy", (e) => {
+    const { version, changed } = (e as CustomEvent<{ version: string; changed: string[] }>).detail;
+    if (!changed.some((k) => reads.has(k) || k.startsWith(content))) return;
+    e.preventDefault();
+    void replace(version);
+  }, { signal });
+}

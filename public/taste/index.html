@@ -6,6 +6,7 @@
   <title>taste — ptera.world</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/style.css">
+  <link rel="preload" href="/taste/graph.json" as="fetch" crossorigin>
 </head>
 <body>
   <div id="app">
@@ -31,7 +32,6 @@
     </div>
   </div>
   <div id="live-region" class="sr-only" aria-live="polite"></div>
-  <link rel="preload" href="/taste/graph.json" as="fetch" crossorigin>
   <script type="module" src="/main.js"></script>
   <script src="/register-sw.js" defer></script>
 </body>

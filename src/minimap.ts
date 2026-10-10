@@ -1,5 +1,6 @@
 import type { Camera } from "./camera";
 import type { Graph } from "./graph";
+import { signal } from "./life";
 
 // World bounds (encompass all node positions with padding)
 const WORLD_X_MIN = -590;
@@ -85,11 +86,11 @@ export function createMinimap(
     if (!dragging) return;
     const [wx, wy] = eventToWorld(e);
     panTo(wx + grabOffsetX, wy + grabOffsetY, false);
-  });
+  }, { signal });
 
   window.addEventListener("mouseup", () => {
     dragging = false;
-  });
+  }, { signal });
 }
 
 export function updateMinimap(camera: Camera): void {

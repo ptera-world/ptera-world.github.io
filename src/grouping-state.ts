@@ -6,6 +6,7 @@ import type { Graph, Node } from "./graph";
 import { groupings, getGrouping, type Grouping } from "./groupings";
 import { updatePositions, animateTo, fadeOutRegions, fadeInRegions, snapNodePositions, nodeEls, worldEl, type NodePositionWithRegion } from "./dom";
 import type { Camera } from "./camera";
+import { signal } from "./life";
 
 let currentLayoutGrouping: Grouping | undefined;
 let currentColorGrouping: Grouping | undefined;
@@ -183,7 +184,7 @@ function applyGroupingPositions(animate = true): void {
   }
 
   function step(now: number) {
-    if (generation !== animationGeneration) return; // cancelled by newer animation
+    if (generation !== animationGeneration || signal.aborted) return; // cancelled by newer animation or by stop
     const t = Math.min(1, (now - start) / duration);
     const ease = t * (2 - t); // ease-out
 

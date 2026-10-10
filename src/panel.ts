@@ -4,6 +4,7 @@ import { updateTransform, setFocus, animateTo } from "./dom";
 import { hideCard } from "./card";
 import { parseMarkdown } from "./markdown";
 import { siteUrl } from "./site-config";
+import { signal } from "./life";
 
 let panel: HTMLElement;
 let panelTitle: HTMLElement;
@@ -150,8 +151,8 @@ export function initPanel(camera: Camera, graph: Graph): void {
   }
 
   divider.addEventListener("mousedown", startDrag);
-  window.addEventListener("mousemove", (e) => onDrag(e.clientX, e.clientY));
-  window.addEventListener("mouseup", endDrag);
+  window.addEventListener("mousemove", (e) => onDrag(e.clientX, e.clientY), { signal });
+  window.addEventListener("mouseup", endDrag, { signal });
 
   divider.addEventListener("touchstart", startDrag, { passive: false });
   window.addEventListener("touchmove", (e) => {
@@ -160,8 +161,8 @@ export function initPanel(camera: Camera, graph: Graph): void {
     if (t) {
       onDrag(t.clientX, t.clientY);
     }
-  });
-  window.addEventListener("touchend", endDrag);
+  }, { signal });
+  window.addEventListener("touchend", endDrag, { signal });
 
   // Link interception — crosslinks and in-page anchors
   panelBody.addEventListener("click", (e) => {
@@ -192,7 +193,7 @@ export function initPanel(camera: Camera, graph: Graph): void {
   });
 }
 
-export function openPanel(nodeId: string, nodeLabel?: string, push = true): void {
+export function openPanel(nodeId: string, nodeLabel?: string, push = true, moveCamera = true): void {
   hideCard();
   currentNodeId = nodeId;
   panel.hidden = false;
@@ -205,7 +206,7 @@ export function openPanel(nodeId: string, nodeLabel?: string, push = true): void
   const isEssay = node?.tags.includes("essay") ?? false;
   if (node) {
     setFocus(graphRef, node);
-    animateTo(cam, node.x, node.y, Math.max(cam.zoom, 1.5));
+    if (moveCamera) animateTo(cam, node.x, node.y, Math.max(cam.zoom, 1.5));
   }
   if (push) {
     const params = new URLSearchParams(location.search);
@@ -246,4 +247,42 @@ export function isPanelOpen(): boolean {
 export function panelNode(): Node | null {
   if (!currentNodeId || panel.hidden) return null;
   return graphRef.nodes.find(n => n.id === currentNodeId) ?? null;
+}
+
+/** What the panel shows and how it is sized; carried to a replacement copy of the page script. */
+export interface PanelState {
+  width: string;
+  height: string;
+  /** Null when the panel is closed. */
+  open: { id: string; label: string; scrollTop: number; expanded: string[] } | null;
+}
+
+export function panelState(): PanelState {
+  return {
+    width: panel.style.width,
+    height: panel.style.height,
+    open: currentNodeId && !panel.hidden
+      ? {
+        id: currentNodeId,
+        label: panelTitle.textContent ?? currentNodeId,
+        scrollTop: panelBody.scrollTop,
+        expanded: [...panelBody.querySelectorAll<HTMLElement>(".collapsible-section.expanded")].map((s) => s.id),
+      }
+      : null,
+  };
+}
+
+/** Show a carried panel state without moving the camera or adding a history entry. */
+export function restorePanel(s: PanelState): void {
+  panel.style.width = s.width;
+  panel.style.height = s.height;
+  if (!s.open) return;
+  openPanel(s.open.id, s.open.label, false, false);
+  for (const id of s.open.expanded) {
+    const sec = panelBody.querySelector<HTMLElement>(`#${CSS.escape(id)}`);
+    if (!sec?.classList.contains("collapsible-section")) continue;
+    sec.classList.add("expanded");
+    sec.querySelector("h2")?.setAttribute("aria-expanded", "true");
+  }
+  panelBody.scrollTop = s.open.scrollTop;
 }
