@@ -70,19 +70,25 @@ export function applyMove(p: Pos, m: Move): void {
   else p.cols[m.to - C - 4]!.push(...cards);
 }
 
-/** The first safe move home, scanning free cells then columns, or null. */
-export function safeHomeMove(p: Pos): Move | null {
+/** Calls `visit` with every safe move home, scanning free cells then columns, until it returns true. */
+export function eachSafeHomeMove(p: Pos, visit: (m: Move) => boolean | void): void {
   const C = p.cells.length;
   for (let i = 0; i < C; i++) {
     const c = p.cells[i]!;
-    if (c >= 0 && isSafeHome(p.found, c)) return { from: i, to: C + suitOf(c), n: 1 };
+    if (c >= 0 && isSafeHome(p.found, c) && visit({ from: i, to: C + suitOf(c), n: 1 }) === true) return;
   }
   for (let j = 0; j < p.cols.length; j++) {
     const col = p.cols[j]!;
     const c = col[col.length - 1];
-    if (c !== undefined && isSafeHome(p.found, c)) return { from: C + 4 + j, to: C + suitOf(c), n: 1 };
+    if (c !== undefined && isSafeHome(p.found, c) && visit({ from: C + 4 + j, to: C + suitOf(c), n: 1 }) === true) return;
   }
-  return null;
+}
+
+/** The first safe move home, scanning free cells then columns, or null. */
+export function safeHomeMove(p: Pos): Move | null {
+  let found: Move | null = null;
+  eachSafeHomeMove(p, (m) => { found = m; return true; });
+  return found;
 }
 
 /** Every legal move worth searching (never a whole column into an empty one, only the first empty column or cell). */

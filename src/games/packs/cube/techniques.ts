@@ -6,19 +6,19 @@ type CubeTechnique = Technique<CubePuzzle, CubeState, CubeAction>;
 
 const rolls = (n: number) => (n === 1 ? "1 roll" : `${n} rolls`);
 
-function step(p: CubePuzzle, s: CubeState, drops: boolean, say: (pl: Plan, d: string) => { message: string; nudge: string }): Step<CubeAction> | null {
-  if (s.faces.every(Boolean)) return null;
+function step(p: CubePuzzle, s: CubeState, visit: (step: Step<CubeAction>) => boolean | void, drops: boolean, say: (pl: Plan, d: string) => { message: string; nudge: string }): void {
+  if (s.faces.every(Boolean)) return;
   const pl = plan(p, s);
-  if (!pl || pl.drops !== drops) return null;
+  if (!pl || pl.drops !== drops) return;
   const { route } = pl;
   const { message, nudge } = say(pl, direction(p, s.square, route.squares[0]!));
-  return {
+  visit({
     message,
     nudge,
     focus: { route: route.squares, target: route.target >= 0 ? route.target : undefined } satisfies CubeFocus,
     nudgeFocus: { route: route.squares.slice(0, 1) } satisfies CubeFocus,
     actions: [{ type: "roll", to: route.squares[0]! }],
-  };
+  });
 }
 
 export const fetchBlue: CubeTechnique = {
@@ -27,7 +27,7 @@ export const fetchBlue: CubeTechnique = {
   puzzles: [cube],
   level: 1,
   description: "roll toward a blue square along a route that lands a plain face on it, without setting a blue face down on a plain square on the way.",
-  find: (p, s) => step(p, s, false, (pl, d) => ({
+  instances: (p, s, visit) => step(p, s, visit, false, (pl, d) => ({
     message: pl.whole
       ? `roll ${d}: it doesn't set any blue down, and ${rolls(pl.route.squares.length)} from here make every face blue.`
       : `roll ${d}: ${rolls(pl.route.squares.length)} land a plain face on the highlighted blue square, without setting a blue face down on the way.`,
@@ -41,7 +41,7 @@ export const makeRoom: CubeTechnique = {
   puzzles: [cube],
   level: 2,
   description: "sometimes no blue square can be reached without setting a blue face down first. drop it where it can be picked up again later: a search for a whole route to every face blue decides where.",
-  find: (p, s) => step(p, s, true, (pl, d) => ({
+  instances: (p, s, visit) => step(p, s, visit, true, (pl, d) => ({
     message: `roll ${d}: this sets a blue face down for now, but ${rolls(pl.route.squares.length)} from here make every face blue.`,
     nudge: "a blue face has to go down somewhere to get at the rest",
   })),

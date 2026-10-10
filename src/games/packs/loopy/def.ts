@@ -185,7 +185,7 @@ export const loopy: PuzzleDef<LoopyPuzzle, LoopyState, LoopyAction, LoopyInterac
   isSolved: (p, s) => check(gridOf(p), p.clues, s.edges).solved,
   solve(p) {
     const sol = analysisOf(p).solution;
-    return sol ? { edges: Array.from(sol, (m) => (m === LINE ? LINE : CROSS)) } : null;
+    return sol ? { board: { edges: Array.from(sol, (m) => (m === LINE ? LINE : CROSS)) } } : null;
   },
   hint,
   isRetraction: (a) => a.value === UNKNOWN,

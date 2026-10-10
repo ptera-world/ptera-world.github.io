@@ -2,7 +2,7 @@ import type { Step, Technique } from "../../core/types";
 import { cellName as cellAt, plural } from "../../lib/grid-kit/names";
 import { pattern, info, type PatternAction, type PatternFocus, type PatternPuzzle, type PatternState, type PatternTarget, type GuideSpan } from "./logic";
 import { ruleOnLine, type LineFind, type LineRuleId } from "./rules";
-import { EMPTY, FILLED, Lines, UNKNOWN, findProbe, lineClue, lineName } from "./solver";
+import { EMPTY, FILLED, UNKNOWN, lineClue, lineName, probes, type ProbeDeduction } from "./solver";
 
 type PatternTechnique = Technique<PatternPuzzle, PatternState, PatternAction>;
 
@@ -42,10 +42,12 @@ export function ruleHits(p: PatternPuzzle, K: ArrayLike<number>, id: LineRuleId,
   return out;
 }
 
+const gain = (h: LineHit) => h.find.fill.length + h.find.empty.length;
+
 /** The line with the most to gain; ties go to the first line (rows, then columns). */
 function best(hits: LineHit[]): LineHit | null {
   let b: LineHit | null = null;
-  for (const x of hits) if (!b || x.find.fill.length + x.find.empty.length > b.find.fill.length + b.find.empty.length) b = x;
+  for (const x of hits) if (!b || gain(x) > gain(b)) b = x;
   return b;
 }
 
@@ -84,10 +86,10 @@ function legend(row: boolean, id: LineRuleId, f: LineFind): string {
 const targetOf = (t: unknown): PatternTarget | null =>
   t && typeof t === "object" && Array.isArray((t as PatternTarget).lines) ? t as PatternTarget : null;
 
-/** A line rule as a technique: one line per step, chosen by most cells decided (among the target's lines when aimed). */
+/** A line rule as a technique: one line per step, most cells decided first (among the target's lines when aimed). */
 function lineTechnique(
   id: LineRuleId,
-  def: Omit<PatternTechnique, "find" | "puzzles"> & { explain(p: PatternPuzzle, line: number, f: LineFind): string },
+  def: Omit<PatternTechnique, "instances" | "puzzles"> & { explain(p: PatternPuzzle, line: number, f: LineFind): string },
 ): PatternTechnique {
   const { explain, ...rest } = def;
   const stepOf = (p: PatternPuzzle, hit: LineHit | null): Step<PatternAction> | null => {
@@ -111,7 +113,9 @@ function lineTechnique(
   return {
     ...rest,
     puzzles: [pattern],
-    find: (p, s) => stepOf(p, best(ruleHits(p, knowledge(p, s), id, s))),
+    instances(p, s, visit) {
+      for (const hit of ruleHits(p, knowledge(p, s), id, s).sort((a, b) => gain(b) - gain(a))) if (visit(stepOf(p, hit)!)) return;
+    },
     findAt(p, s, t) {
       const target = targetOf(t);
       if (!target) return null;
@@ -198,7 +202,13 @@ export const whatIf: PatternTechnique = {
   puzzles: [pattern],
   level: 8,
   description: "when no single line says anything more, pick a cell and suppose it's filled (or empty). follow the line logic that suppose leads to. if some line ends up with no way to fit its clue, the supposition was wrong, so the cell is the other way.",
-  find: (p, s) => whatIfStep(p, s),
+  instances(p, s, visit) {
+    const K = knowledge(p, s);
+    probes(info(p).lines, K, (probe) => {
+      const step = whatIfOf(p, s, K, probe);
+      return step ? visit(step) : false;
+    });
+  },
   findAt(p, s, t) {
     const cell = targetOf(t)?.cell;
     return cell === undefined ? null : whatIfStep(p, s, cell);
@@ -207,11 +217,15 @@ export const whatIf: PatternTechnique = {
 };
 
 /** A what-if anywhere, or only at `at`. */
-function whatIfStep(p: PatternPuzzle, s: PatternState, at?: number): Step<PatternAction> | null {
+function whatIfStep(p: PatternPuzzle, s: PatternState, at: number): Step<PatternAction> | null {
   const K = knowledge(p, s);
-  const L: Lines = info(p).lines;
-  const probe = at === undefined ? findProbe(L, K) : findProbe(L, K, at, 1);
-  if (!probe || s.cells[probe.cell] !== UNKNOWN) return null;
+  let step: Step<PatternAction> | null = null;
+  probes(info(p).lines, K, (probe) => { step = whatIfOf(p, s, K, probe); return true; }, at, 1);
+  return step;
+}
+
+function whatIfOf(p: PatternPuzzle, s: PatternState, K: Uint8Array, probe: ProbeDeduction): Step<PatternAction> | null {
+  if (s.cells[probe.cell] !== UNKNOWN) return null;
   const other = probe.tried === FILLED ? EMPTY : FILLED;
   const fill: number[] = [], empty: number[] = [];
   probe.after.forEach((v, c) => {

@@ -324,7 +324,7 @@ export function latinDef<P extends Schema>(cfg: LatinDefConfig<P>): PuzzleDef<La
     describeAction,
     solve(p) {
       const sol = solutionOf(p);
-      return sol ? { ...initState(p), values: sol.slice() } : null;
+      return sol ? { board: { ...initState(p), values: sol.slice() } } : null;
     },
     hint: (p, s) => mistakeHint(p, s) ?? revealHint(p, s),
     rules: rulesOf,

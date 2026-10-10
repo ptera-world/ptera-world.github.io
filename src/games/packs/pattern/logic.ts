@@ -317,7 +317,7 @@ export const pattern: PuzzleDef<PatternPuzzle, PatternState, PatternAction, Patt
   isSolved,
   solve(p) {
     const sol = info(p).solution;
-    return sol ? { cells: Array.from(sol) } : null;
+    return sol ? { board: { cells: Array.from(sol) } } : null;
   },
   hint,
   rate(p) {

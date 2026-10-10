@@ -435,7 +435,7 @@ export const rect: PuzzleDef<RectPuzzle, RectState, RectAction, RectInteraction,
   isSolved,
   solve(p) {
     const a = analyze(p);
-    return a.walls ? { walls: a.walls.slice() } : null;
+    return a.walls ? { board: { walls: a.walls.slice() } } : null;
   },
   hint,
   rate,

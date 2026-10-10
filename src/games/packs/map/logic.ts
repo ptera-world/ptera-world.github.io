@@ -326,7 +326,7 @@ export const map: PuzzleDef<MapPuzzle, MapState, MapAction, MapInteraction, type
   isSolved,
   solve(p) {
     const a = analyze(p);
-    return a.solution ? { colours: a.solution.slice(), marks: p.given.map(() => 0) } : null;
+    return a.solution ? { board: { colours: a.solution.slice(), marks: p.given.map(() => 0) } } : null;
   },
   hint,
   rate,

@@ -169,7 +169,10 @@ export const flip: PuzzleDef<FlipPuzzle, FlipState, FlipAction, FlipInteraction,
   },
   describeAction: (p, a) => `press ${cellName(p, a.cell)}`,
   isSolved: (_p, s) => s.lights.every((l) => l === 0),
-  solve: (p) => ({ lights: p.lights.map(() => 0) }),
+  solve(p, s) {
+    const x = solvePresses(p, s.lights);
+    return x ? { moves: x.flatMap((v, cell): FlipAction[] => (v ? [{ type: "press", cell }] : [])) } : null;
+  },
   hint(p, s): Hint<FlipAction> | null {
     const x = solvePresses(p, s.lights);
     if (!x) return null;

@@ -30,7 +30,8 @@ for (const difficulty of ["easy", "medium", "hard"] as const) {
       const brute = countSolutions(p, start(p), 2);
       expect(brute.count).toBe(1);
       expect(r.path).toEqual(brute.first!);
-      expect(zip.isSolved(p, zip.solve!(p)!)).toBe(true);
+      const ans = zip.solve!(p, zip.init(p))!;
+      expect("board" in ans && zip.isSolved(p, ans.board)).toBe(true);
     }
   }, 60000);
 }

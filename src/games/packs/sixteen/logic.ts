@@ -215,7 +215,10 @@ export const sixteen: PuzzleDef<SixteenPuzzle, SixteenState, SixteenAction, Sixt
   },
   describeAction: (_p, a) => describeShift(a),
   isSolved: (_p, s) => isSolvedTiles(s.tiles),
-  solve: (p) => ({ tiles: goal(p.w * p.h).slice(), moves: 0 }),
+  solve(p, s) {
+    const moves = solveAll(spec(p.w, p.h), goal(p.w * p.h), { values: s.tiles });
+    return moves ? { moves } : null;
+  },
   rate,
   rules: (p) => [
     `the numbers 1 to ${p.w * p.h} fill a ${p.w}×${p.h} grid.`,

@@ -62,11 +62,15 @@ function touches(st: SolverStep, target: UndeadTarget): boolean {
   return st.cells.includes(target.cell);
 }
 
-function first(p: UndeadPuzzle, s: UndeadState, kinds: readonly StepKind[], target?: UndeadTarget): { raw: SolverStep; cells: number[]; actions: UndeadAction[] } | null {
+type Hit = { raw: SolverStep; cells: number[]; actions: UndeadAction[] };
+
+function each(p: UndeadPuzzle, s: UndeadState, kinds: readonly StepKind[], visit: (hit: Hit) => boolean | void, target?: UndeadTarget): void {
   const k = knowledge(p, s);
-  let ch: ReturnType<typeof changes> = { cells: [], actions: [] };
-  const raw = scanSteps(p, k, kinds, (st) => (!target || touches(st, target)) && (ch = changes(p, s, st)).cells.length > 0);
-  return raw ? { raw, ...ch } : null;
+  scanSteps(p, k, kinds, (raw) => {
+    if (target && !touches(raw, target)) return false;
+    const ch = changes(p, s, raw);
+    return ch.cells.length > 0 && visit({ raw, ...ch }) === true;
+  });
 }
 
 /** "C3 is a ghost, D4 can't be a vampire". */
@@ -79,10 +83,19 @@ function outcome(p: UndeadPuzzle, s: UndeadState, raw: SolverStep, cells: readon
   }).join(", ");
 }
 
-type Finder = (p: UndeadPuzzle, s: UndeadState, target?: UndeadTarget) => Step<UndeadAction> | null;
+type Make = (p: UndeadPuzzle, s: UndeadState, hit: Hit) => Step<UndeadAction>;
 
-function technique(def: Omit<UndeadTechnique, "find" | "findAt" | "puzzles">, find: Finder): UndeadTechnique {
-  return { ...def, puzzles: [undead], find: (p, s) => find(p, s), findAt: (p, s, t) => find(p, s, t as UndeadTarget) };
+function technique(def: Omit<UndeadTechnique, "instances" | "findAt" | "puzzles">, kinds: readonly StepKind[], make: Make): UndeadTechnique {
+  return {
+    ...def,
+    puzzles: [undead],
+    instances: (p, s, visit) => each(p, s, kinds, (hit) => visit(make(p, s, hit)) === true),
+    findAt: (p, s, t) => {
+      let found: Step<UndeadAction> | null = null;
+      each(p, s, kinds, (hit) => { found = make(p, s, hit); return true; }, t as UndeadTarget);
+      return found;
+    },
+  };
 }
 
 const EASY = { width: 5, height: 5, difficulty: "easy" };
@@ -95,9 +108,7 @@ export const totalsFull = technique({
   level: 1,
   description: "once every monster of one kind is on the board, no other cell can be that kind.",
   practice: { params: EASY },
-}, (p, s, target) => {
-  const hit = first(p, s, ["count-full"], target);
-  if (!hit) return null;
+}, ["count-full"], (p, s, hit) => {
   const m = hit.raw.monster!;
   const n = p.counts[m - 1]!;
   return {
@@ -115,9 +126,7 @@ export const totalsNeedAll = technique({
   level: 2,
   description: "if a kind of monster has only as many cells left that could be it as there are still to place, every one of those cells is that monster.",
   practice: { params: EASY },
-}, (p, s, target) => {
-  const hit = first(p, s, ["count-needs-all"], target);
-  if (!hit) return null;
+}, ["count-needs-all"], (p, s, hit) => {
   const m = hit.raw.monster!;
   return {
     message: `only ${cellList(p, hit.raw.cells)} can still hold the ${MONSTER_PLURALS[m]} that are left, so ${outcome(p, s, hit.raw, hit.cells)}`,
@@ -134,9 +143,7 @@ export const sightLimits = technique({
   level: 3,
   description: "add up the fewest and the most monsters a line of sight could still see. a monster that would push it past its number, or leave it short however the rest turn out, can't be there. a 0 sees no zombies at all, no vampires before the first mirror and no ghosts after it.",
   practice: { params: EASY },
-}, (p, s, target) => {
-  const hit = first(p, s, ["bounds"], target);
-  if (!hit) return null;
+}, ["bounds"], (p, s, hit) => {
   const i = hit.raw.clue!;
   return {
     message: `looking in from ${clueName(p, i)}, anything else would see too many or too few, so ${outcome(p, s, hit.raw, hit.cells)}`,
@@ -153,9 +160,7 @@ export const wholeLine = technique({
   level: 4,
   description: "work through every way to fill the open cells on one line of sight that gives its number, using only the monsters still left to place. a monster that turns up in none of them can't be there.",
   practice: { params: MEDIUM },
-}, (p, s, target) => {
-  const hit = first(p, s, ["line"], target);
-  if (!hit) return null;
+}, ["line"], (p, s, hit) => {
   const i = hit.raw.clue!;
   return {
     message: `of all the ways to fill the line from ${clueName(p, i)} with the monsters still left, none fits unless ${outcome(p, s, hit.raw, hit.cells)}`,
@@ -172,9 +177,7 @@ export const trial = technique({
   level: 5,
   description: "pretend a cell holds a particular monster and follow the easier techniques from there. if that breaks a number or a total, the cell can't hold that monster.",
   practice: { params: HARD },
-}, (p, s, target) => {
-  const hit = first(p, s, ["trial"], target);
-  if (!hit) return null;
+}, ["trial"], (p, s, hit) => {
   const c = hit.raw.cells[0]!;
   const m = hit.raw.monster!;
   return {

@@ -60,6 +60,13 @@ Primitives (see `src/games/core/types.ts`): Technique, CommandDef, WidgetDef, Th
 - [ ] **net right-click**: keep right-click = turn anticlockwise (Simon Tatham's convention; the board declares `gestures.secondaryClick` and the how-to card adapts) vs right-click = board menu (same everywhere). Currently: menu
 - [ ] **undo after solving**: the solved mark and time stay after undoing (and after unlocking + changing the board). Left as is on request
 - [ ] **restart timing**: `restart()` zeroes the timer and clears solved; undoing a restart restores the board but not the old time. Chosen without input
+- [ ] **restart after a reveal**: restart clears the outcome, so a revealed game restarted and then solved counts as solved. The other way: a reveal sticks to that board for good. Chosen without input
+- [ ] **reveal on move puzzles**: the answer's moves land as one undo step (history lists them all in that one row). The other way: one undo step per move, so replay and scrub walk through the route. Chosen without input
+- [ ] **solver-backed "techniques"**: these pick a move by asking a solver or search, not by a rule a person learns: untangle known-layout; netslide / sixteen / twiddle endgame (BFS); freecell / klondike / spider every technique but safe-home (planner's winning line); mahjong open-up, pick-two; samegame keep-clearable; pegs one-left; cube fetch, make-room; rushhour clear-way, make-room; sokoban push-home, next-push; inertia next-gem; flood lookahead; blackbox all-agree, best-shot; guess narrow-down; 2048 look-ahead; mines region (exhaustive frontier); zip trial (counts solutions). lights out's "solution press" was removed (its fallback hint still presses from the solver). Keep them as techniques, or move them to each puzzle's fallback hint (losing auto-apply, practice, rating by them)?
+- [ ] **lights out techniques**: it has none now. Light chasing is the human method for the cross shape (press under every lit light, row by row, then fix the top row); x and square shapes have no simple equivalent. Add which? Also: "(hex)" and wayout-style holes came up; neither exists in the pack
+- [ ] **timing tests still load-sensitive**: generation budgets now count CPU time, not wall time, but under a busy machine starbattle's last preset still went from ~4.8s to ~9.4s of CPU (8s budget). Options: budget relative to a reference workload timed alongside, count generator work instead of time, or move timing checks out of the default test run
+- [ ] **lessons that still know one instance**: bridges and rect techniques build each finding on the previous one, so their lessons ask for the first instance only; 2048 look-ahead and untangle known-layout also visit one (their step text or fallback doesn't say how to describe the others)
+- [ ] **techniques read through the stored answer**: in most grid packs a step first drops the player's marks that disagree with the solution, so a wrong mark never misleads a step. A person applying the same rule would be misled. Keep, or reason from the marks as placed?
 
 ### Bigger ideas (designed for, not built)
 - [ ] **puzzlescript-style engine**: puzzles described as data/rules. Would be a pack that turns a description into a PuzzleDef (+ techniques from rule-level deductions); nothing in core blocks it
@@ -101,7 +108,6 @@ Primitives (see `src/games/core/types.ts`): Technique, CommandDef, WidgetDef, Th
 - [ ] **layout shift on load**: the board area moves once from where "generating…" sat (`?debugLayout` shows it)
 
 ### Simon Tatham collection packs
-- [ ] untangle: crossing check uses a tolerance, so a point dropped exactly onto a line may not count as crossing (could mark solved when Tatham's wouldn't)
 - [ ] twiddle: 3×3 / 4×4 rotating blocks cut (hint engine gets stuck); netslide hints can fail on big imported boards; pegs / samegame hints can time out off the known path on big boards
 - [ ] slow generation: palisade hard 15×12 (several s), mosaic 25×25 medium/hard (~3s), filling hard 9×7 (2–3s), pearl 10×10 (~0.6s, capped at 12); palisade region size 3 rarely generates
 - [ ] guess, blackbox, untangle: no practice boards; imported untangle has no layout hint or solve; blackbox hints partial on big boards with many balls

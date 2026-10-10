@@ -350,7 +350,7 @@ export const mines: PuzzleDef<MinesPuzzle, MinesState, MinesAction, MinesInterac
   ],
   isLost: (_p, s) => (s.dead >= 0 ? { focus: { cells: [s.dead], sources: [] } satisfies MinesFocus } : false),
   isSolved: (p, s) => s.dead < 0 && p.mines.every((m, c) => m || s.open[c]),
-  solve: (p) => ({ open: p.mines.map((m) => (m ? 0 : 1)), flags: p.mines.slice(), dead: -1 }),
+  solve: (p) => ({ board: { open: p.mines.map((m) => (m ? 0 : 1)), flags: p.mines.slice(), dead: -1 } }),
   hint,
   rate,
   describe: (p) => `${p.w}×${p.h} · ${mineCount(p)} mines`,

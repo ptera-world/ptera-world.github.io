@@ -33,18 +33,18 @@ function build(p: ZipPuzzle, s: ZipState, st: ZipStep, message: string, nudge: s
   };
 }
 
-function technique(def: Omit<ZipTechnique, "find" | "puzzles" | "level"> & { kind: StepKind }, text: (p: ZipPuzzle, s: ZipState, st: ZipStep) => { message: string; nudge: string }): ZipTechnique {
+function technique(def: Omit<ZipTechnique, "instances" | "puzzles" | "level"> & { kind: StepKind }, text: (p: ZipPuzzle, s: ZipState, st: ZipStep) => { message: string; nudge: string }): ZipTechnique {
   const { kind, ...rest } = def;
   return {
     ...rest,
     puzzles: [zip],
     level: KIND_LEVEL[kind],
-    find(p, s) {
-      if (!onTrack(p, s)) return null;
+    instances(p, s, visit) {
+      if (!onTrack(p, s)) return;
       const st = nextStep(p, walkOf(p, s.path), KIND_LEVEL[kind]);
-      if (!st || st.kind !== kind) return null;
+      if (!st || st.kind !== kind) return;
       const t = text(p, s, st);
-      return build(p, s, st, t.message, t.nudge);
+      visit(build(p, s, st, t.message, t.nudge));
     },
   };
 }

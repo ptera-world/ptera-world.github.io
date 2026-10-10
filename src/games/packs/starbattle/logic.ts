@@ -411,7 +411,7 @@ export const starbattle: PuzzleDef<StarBattlePuzzle, ShadeState, ShadeAction, Sh
   isSolved,
   solve(p) {
     const a = analyze(p);
-    return a.solution ? solvedShade(a.solution, never) : null;
+    return a.solution ? { board: solvedShade(a.solution, never) } : null;
   },
   hint,
   rate,

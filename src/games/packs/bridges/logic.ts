@@ -225,7 +225,7 @@ export const bridges: PuzzleDef<BridgesPuzzle, BridgesState, BridgesAction, Brid
   isSolved: (p, s) => isValidSolution(p, s.b),
   solve(p) {
     const sol = analyze(p).solution;
-    return sol ? { b: sol.slice(), no: sol.map(() => 0) } : null;
+    return sol ? { board: { b: sol.slice(), no: sol.map(() => 0) } } : null;
   },
   hint,
   rules: (p) => [

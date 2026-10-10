@@ -44,14 +44,18 @@ function changes(p: PearlPuzzle, s: PearlState, st: SolverStep): { lines: number
   };
 }
 
-function first(p: PearlPuzzle, s: PearlState, kinds: readonly StepKind[], target?: PearlTarget) {
+type Hit = { raw: SolverStep; lines: number[]; crosses: number[] };
+
+function each(p: PearlPuzzle, s: PearlState, kinds: readonly StepKind[], visit: (hit: Hit) => boolean | void, target?: PearlTarget): void {
   const k = knowledge(p, s);
   const g = edgeGrid(p.w, p.h);
-  let ch = { lines: [] as number[], crosses: [] as number[] };
   const touches = (st: SolverStep) => !target || st.because.includes(target.cell)
     || [...st.lines, ...st.nos].some((e) => g.ea[e] === target.cell || g.eb[e] === target.cell);
-  const raw = scanSteps(p, k, kinds, (st) => touches(st) && ((ch = changes(p, s, st)).lines.length + ch.crosses.length) > 0);
-  return raw ? { raw, ...ch } : null;
+  scanSteps(p, k, kinds, (raw) => {
+    if (!touches(raw)) return false;
+    const ch = changes(p, s, raw);
+    return ch.lines.length + ch.crosses.length > 0 && visit({ raw, ...ch }) === true;
+  });
 }
 
 function step(raw: SolverStep, lines: number[], crosses: number[], message: string, nudge: string, nudgeFocus: PearlFocus): Step<PearlAction> {
@@ -69,10 +73,19 @@ function outcome(p: PearlPuzzle, lines: readonly number[], crosses: readonly num
   return parts.join(", ");
 }
 
-type Finder = (p: PearlPuzzle, s: PearlState, target?: PearlTarget) => Step<PearlAction> | null;
+type Make = (p: PearlPuzzle, hit: Hit) => Step<PearlAction>;
 
-function technique(def: Omit<PearlTechnique, "find" | "findAt" | "puzzles">, find: Finder): PearlTechnique {
-  return { ...def, puzzles: [pearl], find: (p, s) => find(p, s), findAt: (p, s, t) => find(p, s, t as PearlTarget) };
+function technique(def: Omit<PearlTechnique, "instances" | "findAt" | "puzzles">, kinds: readonly StepKind[], make: Make): PearlTechnique {
+  return {
+    ...def,
+    puzzles: [pearl],
+    instances: (p, s, visit) => each(p, s, kinds, (hit) => visit(make(p, hit)) === true),
+    findAt: (p, s, t) => {
+      let found: Step<PearlAction> | null = null;
+      each(p, s, kinds, (hit) => { found = make(p, hit); return true; }, t as PearlTarget);
+      return found;
+    },
+  };
 }
 
 const EASY = { width: 6, height: 6, difficulty: "easy" };
@@ -80,9 +93,7 @@ const HARD = { width: 6, height: 6, difficulty: "hard" };
 
 /** A technique built from one solver step kind whose explanation only needs the cell(s) behind it. */
 function simple(id: string, name: string, level: number, description: string, kind: StepKind, why: (p: PearlPuzzle, cells: number[]) => string, nudge: (p: PearlPuzzle, cells: number[]) => string, practice = EASY): PearlTechnique {
-  return technique({ id, name, level, description, practice: { params: practice } }, (p, s, target) => {
-    const hit = first(p, s, [kind], target);
-    if (!hit) return null;
+  return technique({ id, name, level, description, practice: { params: practice } }, [kind], (p, hit) => {
     const cells = hit.raw.because;
     return step(hit.raw, hit.lines, hit.crosses, `${why(p, cells)}, so ${outcome(p, hit.lines, hit.crosses)}`, nudge(p, cells), { edges: [], because: cells.slice(0, 1) });
   });
@@ -106,9 +117,7 @@ export const blackPearl = technique({
   level: 4,
   description: "the loop turns on a black pearl and runs straight for two cells each way. a direction without room for two straight cells (the edge, a cross, another black pearl, or a cell that turns) can't be used, so the opposite one is, all the way.",
   practice: { params: EASY },
-}, (p, s, target) => {
-  const hit = first(p, s, ["black"], target);
-  if (!hit) return null;
+}, ["black"], (p, hit) => {
   const c = hit.raw.because[0]!;
   return step(hit.raw, hit.lines, hit.crosses,
     `the black pearl at ${cellName(p, c)} turns, and leaves straight for two cells on each side, so ${outcome(p, hit.lines, hit.crosses)}`,
@@ -121,9 +130,7 @@ export const whitePearl = technique({
   level: 5,
   description: "the loop goes straight through a white pearl. if one direction is blocked (the edge, a cross, or a line coming in from the side), it goes straight the other way.",
   practice: { params: EASY },
-}, (p, s, target) => {
-  const hit = first(p, s, ["white"], target);
-  if (!hit) return null;
+}, ["white"], (p, hit) => {
   const c = hit.raw.because[0]!;
   return step(hit.raw, hit.lines, hit.crosses,
     `the loop goes straight through the white pearl at ${cellName(p, c)}, and only one direction is open, so ${outcome(p, hit.lines, hit.crosses)}`,
@@ -136,9 +143,7 @@ export const whiteTurn = technique({
   level: 6,
   description: "the loop must turn just before or just after a white pearl. if it runs straight on one side, it has to turn on the other.",
   practice: { params: EASY },
-}, (p, s, target) => {
-  const hit = first(p, s, ["white-turn"], target);
-  if (!hit) return null;
+}, ["white-turn"], (p, hit) => {
   const [c, n1] = hit.raw.because as [number, number];
   return step(hit.raw, hit.lines, hit.crosses,
     `the loop goes straight on through ${cellName(p, n1)}, so it must turn on the other side of the white pearl at ${cellName(p, c)}: ${outcome(p, hit.lines, hit.crosses)}`,
@@ -151,9 +156,7 @@ export const whiteNoRoom = technique({
   level: 7,
   description: "if going one way through a white pearl would leave neither neighbor able to turn, the loop must cross it the other way.",
   practice: { params: EASY },
-}, (p, s, target) => {
-  const hit = first(p, s, ["white-needs-turn"], target);
-  if (!hit) return null;
+}, ["white-needs-turn"], (p, hit) => {
   const [c, ...ns] = hit.raw.because as [number, ...number[]];
   return step(hit.raw, hit.lines, hit.crosses,
     `going the other way, neither ${cellList(p, ns)} could turn, so the loop crosses the white pearl at ${cellName(p, c)} this way: ${outcome(p, hit.lines, hit.crosses)}`,
@@ -166,9 +169,7 @@ export const noEarlyLoop = technique({
   level: 8,
   description: "joining the two ends of the same piece of line would close a loop. unless that loop would already be the whole answer (every pearl on it, nothing else drawn), the edge between the ends is crossed off.",
   practice: { params: EASY },
-}, (p, s, target) => {
-  const hit = first(p, s, ["loop"], target);
-  if (!hit) return null;
+}, ["loop"], (p, hit) => {
   const [a, b] = hit.raw.because as [number, number];
   return step(hit.raw, hit.lines, hit.crosses,
     `${cellName(p, a)} and ${cellName(p, b)} are the two ends of one piece of line, and joining them would close a loop too early, so ${outcome(p, hit.lines, hit.crosses)}`,
@@ -181,9 +182,7 @@ export const trial = technique({
   level: 9,
   description: "pretend an edge is part of the loop (or isn't) and follow the easier techniques. if that breaks a rule, the edge is the other way.",
   practice: { params: HARD },
-}, (p, s, target) => {
-  const hit = first(p, s, ["trial"], target);
-  if (!hit) return null;
+}, ["trial"], (p, hit) => {
   const e = [...hit.raw.lines, ...hit.raw.nos][0]!;
   const tried = hit.raw.lines.length ? "weren't" : "were";
   return step(hit.raw, hit.lines, hit.crosses,

@@ -322,15 +322,15 @@ function loopClosed(b: Board): Deduction | null {
   };
 }
 
-/** First edge that would close a loop too early. */
-export function loopEarly(b: Board): Deduction | null {
+/** Calls `visit` with every edge that would close a loop too early, in dot order, until it returns true. */
+export function eachLoopEarly(b: Board, visit: (d: Deduction) => boolean | void): void {
   const g = b.g;
   for (let v = 0; v < g.nv; v++) {
     const e = prematureClosure(b, v);
     if (e < 0) continue;
     const others = b.chainAt(v) < b.lines;
     const w = otherEnd(g, e, v);
-    return {
+    const d: Deduction = {
       technique: "loop-early", tier: 0, edges: [e], value: CROSS,
       explain: () => ({
         message: others
@@ -339,8 +339,15 @@ export function loopEarly(b: Board): Deduction | null {
         vertices: [v, w],
       }),
     };
+    if (visit(d)) return;
   }
-  return null;
+}
+
+/** First edge that would close a loop too early. */
+export function loopEarly(b: Board): Deduction | null {
+  let hit: Deduction | null = null;
+  eachLoopEarly(b, (d) => { hit = d; return true; });
+  return hit;
 }
 
 /** Result of checking a full set of marks against the rules. */

@@ -33,16 +33,27 @@ export function applyStep<Pz, S, A extends Action>(def: AnyPuzzleDef, puzzle: Pz
   return s;
 }
 
-/** Safe find: a throwing or no-op technique counts as "not found". */
-export function findStep<Pz, S>(def: AnyPuzzleDef, t: Technique, puzzle: Pz, state: S): Step | null {
+/** Instances that change the state, visited until `visit` returns true. A throwing technique visits nothing more. */
+function validInstances<Pz, S>(def: AnyPuzzleDef, t: Technique, puzzle: Pz, state: S, visit: (step: Step) => boolean | void): void {
   try {
-    const step = t.find(puzzle, state);
-    if (!step || step.actions.length === 0) return null;
-    return Object.is(applyStep(def, puzzle, state, step), state) ? null : step;
+    t.instances(puzzle, state, (step) => step.actions.length > 0 && !Object.is(applyStep(def, puzzle, state, step), state) && visit(step) === true);
   } catch (e) {
     console.error(`[games] technique ${t.id} threw`, e);
-    return null;
   }
+}
+
+/** First instance that changes the state, or null. */
+export function findStep<Pz, S>(def: AnyPuzzleDef, t: Technique, puzzle: Pz, state: S): Step | null {
+  let hit: Step | null = null;
+  validInstances(def, t, puzzle, state, (step) => { hit = step; return true; });
+  return hit;
+}
+
+/** Every instance that changes the state, preferred first. */
+export function stepsOf<Pz, S>(def: AnyPuzzleDef, t: Technique, puzzle: Pz, state: S): Step[] {
+  const out: Step[] = [];
+  validInstances(def, t, puzzle, state, (step) => { out.push(step); });
+  return out;
 }
 
 /** A technique's color: its own, else a hue spread evenly by its position among `list` (its puzzle's techniques). */
@@ -164,7 +175,7 @@ export class TechniqueHost {
   private kick(): void {
     this.stop();
     const pace = loadPace();
-    if (pace === 0 || this.session.solved) return;
+    if (pace === 0 || this.session.finished) return;
     this.timer = setTimeout(() => {
       this.timer = 0;
       const s = this.session;
@@ -225,18 +236,13 @@ export class TechniqueHost {
   }
 }
 
+/** A board to practice `technique` on: every instance of it in `state` is the lesson. */
 export interface PracticePosition {
   puzzle: unknown;
   state: unknown;
-  step: Step;
   seed: string;
 }
 
-/**
- * A position where `target` is the easiest technique that applies: generated from seeded
- * puzzles, solved forward with easier techniques until target is next. Deterministic in seed.
- * Returns null if none is found within `tries` puzzles.
- */
 const seen = namespace("technique-positions");
 const SEEN_PER_TECHNIQUE = 3;
 
@@ -253,18 +259,27 @@ export function rememberPosition(t: Technique, puzzleId: string, puzzle: unknown
   seen.set(key, [{ puzzle, state }, ...list].slice(0, SEEN_PER_TECHNIQUE));
 }
 
-/** A remembered position where `t` still applies (its step is recomputed, so stale entries are skipped). */
+/** `state` as the player is shown it, if `t` is the easiest technique there and still applies once shown. */
+function practiceAt(def: AnyPuzzleDef, t: Technique, all: readonly Technique[], puzzle: unknown, state: unknown): unknown {
+  if (firstStep(def, all, puzzle, state)?.technique.id !== t.id) return null;
+  const shown = (t.practice || undefined)?.prepare?.(puzzle, state) ?? state;
+  return findStep(def, t, puzzle, shown) ? shown : null;
+}
+
+/** A remembered position where `t` still applies (stale entries are skipped). */
 export function rememberedPosition(def: AnyPuzzleDef, t: Technique, all: readonly Technique[]): PracticePosition | null {
   for (const p of seen.get<{ puzzle: unknown; state: unknown }[]>(`${def.id}:${t.id}`, [])) {
-    const hit = firstStep(def, all, p.puzzle, p.state);
-    if (hit?.technique.id !== t.id) continue;
-    const shown = (t.practice || undefined)?.prepare?.(p.puzzle, p.state) ?? p.state;
-    const step = findStep(def, t, p.puzzle, shown) ?? hit.step;
-    return { puzzle: p.puzzle, state: shown, step, seed: "remembered" };
+    const shown = practiceAt(def, t, all, p.puzzle, p.state);
+    if (shown) return { puzzle: p.puzzle, state: shown, seed: "remembered" };
   }
   return null;
 }
 
+/**
+ * A position where `target` is the easiest technique that applies: generated from seeded
+ * puzzles, solved forward with easier techniques until target is next. Deterministic in seed.
+ * Returns null if none is found within `tries` puzzles.
+ */
 export async function findPracticePosition(
   def: AnyPuzzleDef,
   all: readonly Technique[],
@@ -285,9 +300,9 @@ export async function findPracticePosition(
       const hit = firstStep(def, all, puzzle, state);
       if (!hit) break;
       if (hit.technique.id === target.id) {
-        const shown = (target.practice || undefined)?.prepare?.(puzzle, state) ?? state;
-        const step = findStep(def, target, puzzle, shown) ?? hit.step;
-        return { puzzle, state: shown, step, seed: s };
+        const shown = practiceAt(def, target, all, puzzle, state);
+        if (shown) return { puzzle, state: shown, seed: s };
+        break;
       }
       state = applyStep(def, puzzle, state, hit.step);
       if (guard % 20 === 19) await new Promise((r) => setTimeout(r, 0));
@@ -316,26 +331,42 @@ function leafChanges(a: unknown, b: unknown, path = "", out = new Map<string, st
 const same = (a: unknown, b: unknown): boolean => Object.is(a, b) || JSON.stringify(a) === JSON.stringify(b);
 
 /**
- * True if the move prev → next is part of `step`. Either test suffices:
- * - every leaf the move changed now holds the value the completed step gives it (handles toggles);
- * - finishing the step from next lands where finishing it from prev would (handles several facts
+ * True if the move prev → next is part of carrying out `steps` (all to do from prev). Any test suffices:
+ * - every leaf the move changed holds the value one step gives it, so it is part of that step
+ *   (other steps may become impossible: they were alternatives to it);
+ * - finishing one step from next lands where finishing it from prev would (handles several facts
  *   packed into one value, e.g. candidate bitmasks, where a partial move sets a leaf to an
- *   intermediate value).
+ *   intermediate value);
+ * - every changed leaf holds the value doing all the steps gives it, and every step can still be
+ *   finished (a move spanning several steps at once).
  */
-export function isPartOfStep(def: AnyPuzzleDef, puzzle: unknown, prev: unknown, next: unknown, step: Step): boolean {
+export function isPartOfStep(def: AnyPuzzleDef, puzzle: unknown, prev: unknown, next: unknown, steps: readonly Step[]): boolean {
   const moved = leafChanges(prev, next);
-  if (moved.size === 0) return false;
-  const target = applyStep(def, puzzle, prev, step);
-  const tLeaves = leafChanges(prev, target);
-  let leafOk = true;
-  for (const [p, v] of moved) if (tLeaves.get(p) !== v) { leafOk = false; break; }
-  return leafOk || same(applyStep(def, puzzle, next, step), target);
+  if (moved.size === 0 || steps.length === 0) return false;
+  const within = (target: unknown) => {
+    const given = leafChanges(prev, target);
+    return [...moved].every(([p, v]) => given.get(p) === v);
+  };
+  const targets = steps.map((st) => applyStep(def, puzzle, prev, st));
+  if (targets.some(within)) return true;
+  if (steps.some((st, i) => same(applyStep(def, puzzle, next, st), targets[i]))) return true;
+  return within(steps.reduce((s, st) => applyStep(def, puzzle, s, st), prev))
+    && steps.every((st) => isDone(def, puzzle, prev, next, st) || isDone(def, puzzle, prev, applyStep(def, puzzle, next, st), st));
 }
 
-/** True once `state` carries every change the step makes from `from`. */
-export function isStepDone(def: AnyPuzzleDef, puzzle: unknown, from: unknown, state: unknown, step: Step): boolean {
-  const target = applyStep(def, puzzle, from, step);
-  return same(state, target);
+/** True once `state` carries every change `step` makes from `from`. */
+function isDone(def: AnyPuzzleDef, puzzle: unknown, from: unknown, state: unknown, step: Step): boolean {
+  const target = leafChanges(from, applyStep(def, puzzle, from, step));
+  const now = leafChanges(from, state);
+  return [...target].every(([p, v]) => now.get(p) === v) || same(applyStep(def, puzzle, state, step), state);
+}
+
+/**
+ * Of `steps` (instances found in `from`), those still left to do in `state`: not done yet, and
+ * doing them now would complete them. A step another one ruled out (an alternative move) is not left.
+ */
+export function stepsLeft(def: AnyPuzzleDef, puzzle: unknown, from: unknown, state: unknown, steps: readonly Step[]): Step[] {
+  return steps.filter((st) => !isDone(def, puzzle, from, state, st) && isDone(def, puzzle, from, applyStep(def, puzzle, state, st), st));
 }
 
 /** Hardest technique needed to solve from the start using only techniques, or null if they don't suffice. */

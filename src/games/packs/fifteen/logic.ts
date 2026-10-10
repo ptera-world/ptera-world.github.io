@@ -210,7 +210,10 @@ export const fifteen: PuzzleDef<FifteenPuzzle, FifteenState, FifteenAction, null
     return `slide ${path.map((c) => before.tiles[c]).join(", ")} ${dir}`;
   },
   isSolved: (_p, s) => isSolvedTiles(s.tiles),
-  solve: (p) => ({ tiles: p.tiles.map((_, i) => solvedTile(p.tiles.length, i)), moves: 0 }),
+  solve(p, s) {
+    const cells = fullPlan(p, s);
+    return cells ? { moves: cells.map((cell) => ({ type: "move" as const, cell })) } : null;
+  },
   rate,
   rules: (p) => [
     `the tiles 1 to ${p.w * p.h - 1} sit in a ${p.w}×${p.h} frame with one gap.`,

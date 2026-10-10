@@ -86,14 +86,14 @@ function stepFor(p: SpiderPuzzle, s: SpiderState, path: readonly Move[]): Step<S
   };
 }
 
-function solverTechnique(kind: Kind, t: Omit<SpiderTechnique, "find" | "puzzles">): SpiderTechnique {
+function solverTechnique(kind: Kind, t: Omit<SpiderTechnique, "instances" | "puzzles">): SpiderTechnique {
   return {
     ...t,
     puzzles: [spider],
-    find(p, s) {
+    instances(p, s, visit) {
       const path = plan(p, s).path;
-      if (!path?.length || kindOf(p, s, path[0]!) !== kind) return null;
-      return stepFor(p, s, path);
+      if (!path?.length || kindOf(p, s, path[0]!) !== kind) return;
+      visit(stepFor(p, s, path));
     },
   };
 }
@@ -132,7 +132,7 @@ export const checkWinnable: Plugin<SpiderPuzzle, SpiderState, SpiderAction, Spid
   enabledByDefault: true,
   setup({ session, owner }) {
     session.hooks.hint.tap(({ puzzle, state }) => {
-      if (session.solved) return undefined;
+      if (session.finished) return undefined;
       return plan(puzzle, state).impossible ? { message: "no sequence of moves wins from here any more. undo to get back to a winnable position." } : undefined;
     }, { owner, priority: 90 });
   },
@@ -144,11 +144,8 @@ export function fallbackHint(p: SpiderPuzzle, s: SpiderState) {
   return { message: "the search for a win ran out of time from here, so there's no suggestion. undoing a move or two may help." };
 }
 
-/** The won position at the end of a winning line from the start, or null if none is known. */
-export function solvedState(p: SpiderPuzzle): SpiderState | null {
-  const path = plan(p, spider.init(p)).path;
-  if (!path) return null;
-  let s = spider.init(p);
-  for (const m of path) s = spider.reduce(p, s, actionOf(m));
-  return s;
+/** The actions of a winning line from `s`, or null if none is known. */
+export function solveFrom(p: SpiderPuzzle, s: SpiderState): { moves: SpiderAction[] } | null {
+  const path = plan(p, s).path;
+  return path ? { moves: path.map((m) => actionOf(m)) } : null;
 }

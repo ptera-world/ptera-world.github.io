@@ -73,5 +73,8 @@ export const toggle: PuzzleDef<Board, { lights: number[] }, Press, void, typeof 
   init: (p) => ({ lights: p.lights.slice() }),
   reduce: (p, s, a) => (a.type === "press" && a.cell >= 0 && a.cell < p.w * p.h ? { lights: press(p, s.lights, a.cell) } : s),
   isSolved: (_p, s) => s.lights.every((l) => l === 0),
-  solve: (p) => ({ lights: p.lights.map(() => 0) }),
+  solve(p, s) {
+    const x = solvePresses(p, s.lights);
+    return x ? { moves: x.flatMap((v, cell): Press[] => (v ? [{ type: "press", cell }] : [])) } : null;
+  },
 };

@@ -35,12 +35,27 @@ export interface Step {
   nudgeCells?: number[];
 }
 
+export type Visit = (step: Step) => boolean | void;
+
 export interface Technique {
   id: string;
   name: string;
   /** Rough human difficulty; also the order techniques are tried in. */
   difficulty: number;
+  /** Calls `visit` with every step in the grid, preferred first, until `visit` returns true. Steps follow from `g` alone. */
+  instances(g: Grid, visit: Visit): void;
+  /** The first step `instances` visits. */
   find(g: Grid): Step | null;
+}
+
+export function defineTechnique(def: Pick<Technique, "id" | "name" | "difficulty" | "instances"> & Partial<Pick<Technique, "find">>): Technique {
+  return { find: (g) => firstOf(def.instances, g), ...def };
+}
+
+function firstOf(instances: (g: Grid, visit: Visit) => void, g: Grid): Step | null {
+  let hit: Step | null = null;
+  instances(g, (s) => { hit = s; return true; });
+  return hit;
 }
 
 // --- grid helpers ---
@@ -117,11 +132,11 @@ function step(t: Technique, s: Omit<Step, "technique" | "name" | "difficulty"> &
 
 // --- singles ---
 
-export const fullHouse: Technique = {
+export const fullHouse: Technique = defineTechnique({
   id: "full-house",
   name: "full house",
   difficulty: 1,
-  find(g) {
+  instances(g, visit) {
     for (const h of scanOrder(g.m)) {
       const house = g.m.houses[h]!;
       const empty = emptyCells(g, house.cells);
@@ -130,21 +145,20 @@ export const fullHouse: Technique = {
       const missing = g.m.all & ~placedMask(g, house.cells);
       if (!isSingle(missing) || !(g.masks[c]! & missing)) continue;
       const d = lowDigit(missing);
-      return step(fullHouse, {
+      if (visit(step(fullHouse, {
         place: [[c, d]], eliminate: [], cells: [c], areas: [house.cells.slice()],
         message: `full house: ${name(g, c)} is the last empty cell in ${house.label}, so it's ${d}`,
         nudge: `${house.label} has one empty cell left`,
-      });
+      }))) return;
     }
-    return null;
   },
-};
+});
 
-export const hiddenSingle: Technique = {
+export const hiddenSingle: Technique = defineTechnique({
   id: "hidden-single",
   name: "hidden single",
   difficulty: 1.2,
-  find(g) {
+  instances(g, visit) {
     for (const h of scanOrder(g.m)) {
       const house = g.m.houses[h]!;
       const empty = emptyCells(g, house.cells);
@@ -155,40 +169,38 @@ export const hiddenSingle: Technique = {
         const spots = empty.filter((c) => g.masks[c]! & b);
         if (spots.length !== 1) continue;
         const c = spots[0]!, d = lowDigit(b);
-        return step(hiddenSingle, {
+        if (visit(step(hiddenSingle, {
           place: [[c, d]], eliminate: [], cells: [c], areas: [house.cells.slice()],
           message: `hidden single: in ${house.label}, ${d} only fits in ${name(g, c)}`,
           nudge: `look where ${d} can go in ${house.label}`,
-        });
+        }))) return;
       }
     }
-    return null;
   },
-};
+});
 
-export const nakedSingle: Technique = {
+export const nakedSingle: Technique = defineTechnique({
   id: "naked-single",
   name: "naked single",
   difficulty: 1.5,
-  find(g) {
+  instances(g, visit) {
     for (let c = 0; c < g.m.size; c++) {
       if (g.vals[c] || !isSingle(g.masks[c]!)) continue;
       const d = lowDigit(g.masks[c]!);
-      return step(nakedSingle, {
+      if (visit(step(nakedSingle, {
         place: [[c, d]], eliminate: [], cells: [c], areas: [],
         message: `naked single: every other digit is ruled out for ${name(g, c)}, so it's ${d}`,
         nudge: `one cell has only one digit left: check ${name(g, c)}`,
         nudgeCells: [c],
-      });
+      }))) return;
     }
-    return null;
   },
-};
+});
 
 // --- constraint rules ---
 
-/** First rule (easiest first) that rules something out; `accept` limits which rules (by index into m.rules) are tried. */
-export function findRuleStep(g: Grid, accept?: (rule: number) => boolean): Step | null {
+/** Every rule (easiest first) that rules something out; `accept` limits which rules (by index into m.rules) are tried. */
+export function ruleSteps(g: Grid, visit: Visit, accept?: (rule: number) => boolean): void {
   const sorted = g.m.rules.map((r, i) => [r, i] as const).sort((a, b) => (a[0].difficulty ?? 2) - (b[0].difficulty ?? 2) || a[1] - b[1]);
   for (const [r, i] of sorted) {
     if (accept && !accept(i)) continue;
@@ -200,29 +212,28 @@ export function findRuleStep(g: Grid, accept?: (rule: number) => boolean): Step 
       if (!g.vals[c] && next[k] !== cur[k]) elims.push([c, cur[k]! & ~next[k]!]);
     });
     if (!elims.length) continue;
-    return step(ruleLogic, {
+    if (visit(step(ruleLogic, {
       difficulty: r.difficulty ?? 2,
       place: [], eliminate: elims, cells: r.cells.slice(), areas: [r.cells.slice()],
       message: `${r.label} rules out ${describeElims(g, elims)}`,
       nudge: `think about what ${r.label} allows`,
-    });
+    }))) return;
   }
-  return null;
 }
 
-export const ruleLogic: Technique = {
+export const ruleLogic: Technique = defineTechnique({
   id: "constraint",
   name: "constraint logic",
   difficulty: 2,
-  find: (g) => findRuleStep(g),
-};
+  instances: (g, visit) => ruleSteps(g, visit),
+});
 
 // --- intersections ---
 
 export type LockedKind = "pointing" | "claiming" | "locked candidates";
 
-/** First locked-candidates elimination, optionally only of one kind. */
-export function findLocked(g: Grid, only?: LockedKind): Step | null {
+/** Every locked-candidates elimination, optionally only of one kind. */
+export function lockedSteps(g: Grid, visit: Visit, only?: LockedKind): void {
   const m = g.m;
   for (const h of scanOrder(m)) {
     const house = m.houses[h]!;
@@ -242,35 +253,34 @@ export function findLocked(g: Grid, only?: LockedKind): Step | null {
         : oh && oh.kind === "box" && (house.kind === "row" || house.kind === "col") ? "claiming" : "locked candidates";
       if (only && kind !== only) continue;
       const where = oh ? `${d} must sit where ${house.label} meets ${oh.label}` : `every spot for ${d} sees ${list(targets.map((c) => name(g, c)))}`;
-      return step(lockedCandidates, {
+      if (visit(step(lockedCandidates, {
         name: kind,
         difficulty: oh ? 2.6 : 2.8,
         place: [], eliminate: targets.map((c) => [c, b]), cells: spots, areas: oh ? [house.cells.slice(), oh.cells.slice()] : [house.cells.slice()],
         message: `${kind}: in ${house.label}, ${where}, so ${list(targets.map((c) => name(g, c)))} can't be ${d}`,
         nudge: `look at where ${d} can go in ${house.label}`,
-      });
+      }))) return;
     }
   }
-  return null;
 }
 
-export const lockedCandidates: Technique = {
+export const lockedCandidates: Technique = defineTechnique({
   id: "locked-candidates",
   name: "locked candidates",
   difficulty: 2.6,
-  find: (g) => findLocked(g),
-};
+  instances: (g, visit) => lockedSteps(g, visit),
+});
 
 // --- subsets ---
 
 const SUBSET = ["", "", "pair", "triple", "quad"];
 
 export function nakedSubset(k: number, difficulty: number): Technique {
-  const t: Technique = {
+  const t: Technique = defineTechnique({
     id: `naked-${SUBSET[k]}`,
     name: `naked ${SUBSET[k]}`,
     difficulty,
-    find(g) {
+    instances(g, visit) {
       const m = g.m;
       for (let h = 0; h < m.houses.length; h++) {
         const house = m.houses[h]!;
@@ -282,25 +292,24 @@ export function nakedSubset(k: number, difficulty: number): Technique {
           if (popcount(union) !== k) continue;
           const elims = commonPeers(g, combo).filter((c) => !g.vals[c] && g.masks[c]! & union).map((c): [number, number] => [c, g.masks[c]! & union]);
           if (!elims.length) continue;
-          return step(t, {
+          if (visit(step(t, {
             place: [], eliminate: elims, cells: combo, areas: [house.cells.slice()],
             message: `${t.name}: ${list(combo.map((c) => name(g, c)))} in ${house.label} hold exactly ${digitList(union)} between them, so remove ${describeElims(g, elims)}`,
             nudge: `${k} cells in ${house.label} share ${k} candidates`,
-          });
+          }))) return;
         }
       }
-      return null;
     },
-  };
+  });
   return t;
 }
 
 export function hiddenSubset(k: number, difficulty: number): Technique {
-  const t: Technique = {
+  const t: Technique = defineTechnique({
     id: `hidden-${SUBSET[k]}`,
     name: `hidden ${SUBSET[k]}`,
     difficulty,
-    find(g) {
+    instances(g, visit) {
       const m = g.m;
       for (const h of scanOrder(m)) {
         const house = m.houses[h]!;
@@ -315,16 +324,15 @@ export function hiddenSubset(k: number, difficulty: number): Technique {
           const keep = combo.reduce((a, d) => a | bit(d), 0);
           const elims = cells.filter((c) => g.masks[c]! & ~keep).map((c): [number, number] => [c, g.masks[c]! & ~keep]);
           if (!elims.length) continue;
-          return step(t, {
+          if (visit(step(t, {
             place: [], eliminate: elims, cells, areas: [house.cells.slice()],
             message: `${t.name}: in ${house.label}, ${digitList(keep)} only fit in ${list(cells.map((c) => name(g, c)))}, so those cells can't hold anything else`,
             nudge: `${k} digits in ${house.label} are confined to ${k} cells`,
-          });
+          }))) return;
         }
       }
-      return null;
     },
-  };
+  });
   return t;
 }
 
@@ -333,11 +341,11 @@ export function hiddenSubset(k: number, difficulty: number): Technique {
 const FISH = ["", "", "x-wing", "swordfish", "jellyfish"];
 
 export function fish(k: number, difficulty: number): Technique {
-  const t: Technique = {
+  const t: Technique = defineTechnique({
     id: FISH[k]!,
     name: FISH[k]!,
     difficulty,
-    find(g) {
+    instances(g, visit) {
       const m = g.m;
       for (const [baseKind, coverKind] of [["row", "col"], ["col", "row"]] as const) {
         const bases = m.houses.map((_, i) => i).filter((i) => m.houses[i]!.kind === baseKind && m.houses[i]!.cells.length === m.n);
@@ -360,17 +368,16 @@ export function fish(k: number, difficulty: number): Technique {
               .filter((c) => !baseCells.has(c) && !g.vals[c] && g.masks[c]! & b).map((c): [number, number] => [c, b]);
             if (!elims.length) continue;
             const bl = list(combo.map((h) => m.houses[h]!.label)), cl = list(covers.map((h) => m.houses[h]!.label));
-            return step(t, {
+            if (visit(step(t, {
               place: [], eliminate: elims, cells, areas: combo.map((h) => m.houses[h]!.cells.slice()),
               message: `${t.name}: in ${bl}, ${d} can only go in ${cl}, so remove ${d} from the rest of ${cl}`,
               nudge: `look at ${d} across ${bl}`,
-            });
+            }))) return;
           }
         }
       }
-      return null;
     },
-  };
+  });
   return t;
 }
 
@@ -392,8 +399,17 @@ export interface ChainOptions {
   maxLen?: number;
 }
 
-/** Shortest alternating inference chain allowed by `o` that proves something. */
-export function findChain(g: Grid, o: ChainOptions = {}): Step | null {
+interface Chain {
+  path: number[];
+  elims: [number, number][];
+  place: [number, number][];
+}
+
+/**
+ * The alternating inference chains allowed by `o` that prove something: each start's shortest, shortest
+ * first, ties in start order. Without `all`, only the overall shortest (the first of those), searched with pruning.
+ */
+function chainsOf(g: Grid, o: ChainOptions, all: boolean): Chain[] {
   const links = o.links ?? "any";
   const minLen = Math.max(4, o.minLen ?? 4);
   const maxLen = o.maxLen ?? MAX_CHAIN;
@@ -421,7 +437,7 @@ export function findChain(g: Grid, o: ChainOptions = {}): Step | null {
         if (s.length === 2) addStrong(node(s[0]!, d), node(s[1]!, d));
       }
     }
-    if (!strong.size) return null;
+    if (!strong.size) return [];
     const weakOf = (x: number): number[] => {
       const c = cellOf(x), d = digOf(x);
       const out: number[] = [];
@@ -432,7 +448,8 @@ export function findChain(g: Grid, o: ChainOptions = {}): Step | null {
     const weakTo = (x: number, y: number) => x !== y && (cellOf(x) === cellOf(y)
       ? true : digOf(x) === digOf(y) && m.sees[cellOf(x) * m.size + cellOf(y)] === 1);
 
-    let best: { path: number[]; elims: [number, number][]; place: [number, number][] } | null = null;
+    let best: Chain | null = null;
+    const found: Chain[] = [];
     for (const a of [...strong.keys()].sort((x, y) => x - y)) {
       if (!live(a)) continue;
       const aWeak = weakOf(a);
@@ -445,17 +462,17 @@ export function findChain(g: Grid, o: ChainOptions = {}): Step | null {
         const s = queue[qi]!;
         const x = s >> 1, arrivedStrong = s & 1;
         const len = depth.get(s)!;
-        if (best && len >= best.path.length) break;
+        if (!all && best && len >= best.path.length) break;
         if (arrivedStrong && len >= minLen) {
           const path = [];
           for (let k: number | undefined = s; k !== undefined; k = parent.get(k)) path.unshift(k >> 1);
           if (x === a) {
-            best = { path, elims: [], place: [[cellOf(a), digOf(a)]] };
+            found.push(best = { path, elims: [], place: [[cellOf(a), digOf(a)]] });
             break;
           }
           const elims = aWeak.filter((z) => z !== x && weakTo(z, x)).map((z): [number, number] => [cellOf(z), bit(digOf(z))]);
           if (elims.length) {
-            best = { path, elims, place: [] };
+            found.push(best = { path, elims, place: [] });
             break;
           }
         }
@@ -470,50 +487,64 @@ export function findChain(g: Grid, o: ChainOptions = {}): Step | null {
           queue.push(ns);
         }
       }
-      if (best && best.path.length <= minLen) break;
+      if (!all && best && best.path.length <= minLen) break;
     }
-    if (!best) return null;
-    const { path, elims, place: pl } = best;
-    const sameDigit = path.every((x) => digOf(x) === digOf(path[0]!));
-    let allCells = true;
-    for (let i = 0; i + 1 < path.length; i += 2) if (cellOf(path[i]!) !== cellOf(path[i + 1]!)) allCells = false;
-    const kind = sameDigit ? "x-chain" : allCells ? (path.length === 6 ? "xy-wing" : "xy-chain") : "alternating chain";
-    // read as a story: if the start isn't true, each strong link forces the next true, each weak link the next false
-    const at = (x: number) => `${name(g, cellOf(x))} is ${digOf(x)}`;
-    const isnt = (x: number) => `${name(g, cellOf(x))} isn't ${digOf(x)}`;
-    const story = path.slice(1).map((x, i) => (i % 2 === 0 ? at(x) : isnt(x))).join(", so ");
-    const text = `if ${isnt(path[0]!)}, then ${story}`;
-    const cells = [...new Set(path.map(cellOf))];
-    const linkCount = path.length - 1;
-    const last = path[path.length - 1]!;
-    const result = pl.length
-      ? `which contradicts the start, so ${at(path[0]!)}`
-      : `so either ${at(path[0]!)} or ${at(last)}; both rule out ${describeElims(g, elims)}`;
-    return step(chains, {
-      name: kind,
-      difficulty: 4 + 0.3 * (linkCount - 3),
-      place: pl, eliminate: elims, cells, areas: [],
-      message: `${kind}: ${text}; ${result}`,
-      nudge: `suppose ${isnt(path[0]!)} and follow what that forces`,
-      nudgeCells: [cellOf(path[0]!)],
-    });
+    if (all) return found.sort((x, y) => x.path.length - y.path.length);
+    return best ? [best] : [];
   }
 }
 
-export const chains: Technique = {
+function chainStep(g: Grid, { path, elims, place: pl }: Chain): Step {
+  const n = g.m.n;
+  const cellOf = (x: number) => Math.floor(x / n), digOf = (x: number) => (x % n) + 1;
+  const sameDigit = path.every((x) => digOf(x) === digOf(path[0]!));
+  let allCells = true;
+  for (let i = 0; i + 1 < path.length; i += 2) if (cellOf(path[i]!) !== cellOf(path[i + 1]!)) allCells = false;
+  const kind = sameDigit ? "x-chain" : allCells ? (path.length === 6 ? "xy-wing" : "xy-chain") : "alternating chain";
+  // read as a story: if the start isn't true, each strong link forces the next true, each weak link the next false
+  const at = (x: number) => `${name(g, cellOf(x))} is ${digOf(x)}`;
+  const isnt = (x: number) => `${name(g, cellOf(x))} isn't ${digOf(x)}`;
+  const story = path.slice(1).map((x, i) => (i % 2 === 0 ? at(x) : isnt(x))).join(", so ");
+  const text = `if ${isnt(path[0]!)}, then ${story}`;
+  const cells = [...new Set(path.map(cellOf))];
+  const linkCount = path.length - 1;
+  const last = path[path.length - 1]!;
+  const result = pl.length
+    ? `which contradicts the start, so ${at(path[0]!)}`
+    : `so either ${at(path[0]!)} or ${at(last)}; both rule out ${describeElims(g, elims)}`;
+  return step(chains, {
+    name: kind,
+    difficulty: 4 + 0.3 * (linkCount - 3),
+    place: pl, eliminate: elims, cells, areas: [],
+    message: `${kind}: ${text}; ${result}`,
+    nudge: `suppose ${isnt(path[0]!)} and follow what that forces`,
+    nudgeCells: [cellOf(path[0]!)],
+  });
+}
+
+/** Every chain allowed by `o`, shortest first. */
+export function chainSteps(g: Grid, visit: Visit, o: ChainOptions = {}): void {
+  for (const c of chainsOf(g, o, true)) if (visit(chainStep(g, c))) return;
+}
+
+export const chains: Technique = defineTechnique({
   id: "chain",
   name: "chain",
   difficulty: 4,
-  find: (g) => findChain(g),
-};
+  instances: (g, visit) => chainSteps(g, visit),
+  find: (g) => {
+    const [c] = chainsOf(g, {}, false);
+    return c ? chainStep(g, c) : null;
+  },
+});
 
 // --- last resorts ---
 
-export const trial: Technique = {
+export const trial: Technique = defineTechnique({
   id: "trial",
   name: "trial and error",
   difficulty: 8,
-  find(g) {
+  instances(g, visit) {
     const m = g.m;
     const order = [...Array(m.size).keys()].filter((c) => !g.vals[c] && popcount(g.masks[c]!) > 1)
       .sort((a, b) => popcount(g.masks[a]!) - popcount(g.masks[b]!) || a - b);
@@ -522,38 +553,37 @@ export const trial: Technique = {
         const st = initialState(m, g.vals, g.masks);
         st.masks[c] = bit(d);
         if (propagate(m, st)) continue;
-        return step(trial, {
+        if (visit(step(trial, {
           place: [], eliminate: [[c, bit(d)]], cells: [c], areas: [],
           message: `trial and error: putting ${d} in ${name(g, c)} leads to a contradiction, so it can't be ${d}`,
           nudge: `try a digit in ${name(g, c)} and see what breaks`,
           nudgeCells: [c],
-        });
+        }))) return;
       }
     }
-    return null;
   },
-};
+});
 
-export const reveal: Technique = {
+export const reveal: Technique = defineTechnique({
   id: "reveal",
   name: "no logical step found",
   difficulty: 10,
-  find(g) {
-    if (!g.solution) return null;
+  instances(g, visit) {
+    if (!g.solution) return;
     let best = -1;
     for (let c = 0; c < g.m.size; c++) {
       if (g.vals[c]) continue;
       if (best < 0 || popcount(g.masks[c]!) < popcount(g.masks[best]!)) best = c;
     }
-    if (best < 0) return null;
+    if (best < 0) return;
     const d = g.solution[best]!;
-    return step(reveal, {
+    visit(step(reveal, {
       place: [[best, d]], eliminate: [], cells: [best], areas: [],
       message: `no step found with the techniques i know; ${name(g, best)} is ${d}`,
       nudge: `no step found with the techniques i know; try ${name(g, best)}`,
-    });
+    }));
   },
-};
+});
 
 /** Technique list, tried in order. Mods may push/splice; keep it sorted by difficulty. */
 export const techniques: Technique[] = [

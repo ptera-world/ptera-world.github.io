@@ -39,7 +39,7 @@ export const showDeducible = plugin({
   setup({ session, settings, owner }) {
     const level = Number(settings.level) || 3;
     session.hooks.derive.tap((d, { puzzle, state }) => {
-      if (state.dead >= 0 || session.solved) return d;
+      if (state.dead >= 0 || session.finished) return d;
       return { ...d, [DEDUCED_KEY]: provable(puzzle, state, level) };
     }, { owner });
   },

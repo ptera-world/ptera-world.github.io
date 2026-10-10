@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { generate } from "../../core/generate";
 import { Registry } from "../../core/registry";
 import { Session } from "../../core/session";
-import { TechniqueHost, applyStep, findPracticePosition, firstStep } from "../../core/techniques";
+import { TechniqueHost, applyStep, findPracticePosition, findStep, firstStep } from "../../core/techniques";
 import { parseCards } from "../../lib/cards/deck";
 import { actionsOf, dealFormat, klondike, type KlondikePuzzle } from "./logic";
 import { checkWinnable, klondikeTechniques } from "./techniques";
@@ -88,7 +88,8 @@ test("techniques alone win every preset; practice positions exist", async () => 
   }
   for (const t of klondikeTechniques) {
     const pos = await findPracticePosition(klondike, klondikeTechniques, t, "x", sig());
-    expect(pos?.step.actions.length).toBeGreaterThan(0);
+    const step = pos && findStep(klondike, t, pos.puzzle, pos.state);
+    expect(step?.actions.length).toBeGreaterThan(0);
   }
 }, 120000);
 

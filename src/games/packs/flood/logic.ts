@@ -257,12 +257,7 @@ export const flood: PuzzleDef<FloodPuzzle, FloodState, FloodAction, null, typeof
   describeAction: (_p, a) => `flood ${COLOUR_NAMES[a.colour] ?? "?"}`,
   isSolved: (_p, s) => isComplete(s.grid),
   isLost: (p, s) => s.moves >= p.limit && !isComplete(s.grid),
-  solve(p) {
-    const moves = solverMoves(p, p.grid);
-    let g = p.grid;
-    for (const c of moves) g = fill(p.w, p.h, g, c);
-    return { grid: g, moves: moves.length };
-  },
+  solve: (p, s) => ({ moves: solverMoves(p, s.grid).map((colour) => ({ type: "fill" as const, colour })) }),
   rate,
   rules: (p) => [
     "the flooded area is the top-left cell plus every cell joined to it (across edges) through the same color.",

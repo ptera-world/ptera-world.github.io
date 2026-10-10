@@ -19,10 +19,12 @@ function centroid(pts: readonly Pt[], list: readonly number[]): Pt | null {
 const settled = (p: UntanglePuzzle, s: UntangleState, v: number) =>
   !!p.layout && Math.hypot(s.pts[v]![0] - p.layout[v]![0], s.pts[v]![1] - p.layout[v]![1]) <= 1e-9;
 
-/** The move of one point (to one of `spots(v)`) that clears the most crossings; null if none clears any. */
-function bestMove(p: UntanglePuzzle, s: UntangleState, spots: (v: number) => Pt[], only?: number): { v: number; to: Pt; gain: number } | null {
-  if (!crossings(p, s.pts).length) return null;
-  let best: { v: number; to: Pt; gain: number } | null = null;
+type Move = { v: number; to: Pt; gain: number };
+
+/** Every move of one point (to one of `spots(v)`) that clears crossings, most cleared first, ties in point then spot order. */
+function movesByGain(p: UntanglePuzzle, s: UntangleState, spots: (v: number) => Pt[], only?: number): Move[] {
+  if (!crossings(p, s.pts).length) return [];
+  const out: Move[] = [];
   for (let v = 0; v < p.n; v++) {
     if (only !== undefined && v !== only) continue;
     if (settled(p, s, v)) continue;
@@ -30,10 +32,10 @@ function bestMove(p: UntanglePuzzle, s: UntangleState, spots: (v: number) => Pt[
     if (!now) continue;
     for (const to of spots(v)) {
       const gain = now - crossingsAt(p, s.pts, v, to);
-      if (gain > 0 && (!best || gain > best.gain)) best = { v, to, gain };
+      if (gain > 0) out.push({ v, to, gain });
     }
   }
-  return best;
+  return out.sort((a, b) => b.gain - a.gain);
 }
 
 function step(v: number, to: Pt, message: string, nudge: string): Step<UntangleAction> {
@@ -47,10 +49,20 @@ function step(v: number, to: Pt, message: string, nudge: string): Step<UntangleA
 }
 
 const plural = (n: number) => `${n} crossing${n === 1 ? "" : "s"}`;
-type Finder = (p: UntanglePuzzle, s: UntangleState, only?: number) => Step<UntangleAction> | null;
+type Visit = (step: Step<UntangleAction>) => boolean | void;
+type Finder = (p: UntanglePuzzle, s: UntangleState, visit: Visit, only?: number) => void;
 
-function technique(def: Omit<UntangleTechnique, "find" | "findAt" | "puzzles">, find: Finder): UntangleTechnique {
-  return { ...def, puzzles: [untangle], find: (p, s) => find(p, s), findAt: (p, s, t) => find(p, s, (t as UntangleTarget).point) };
+function technique(def: Omit<UntangleTechnique, "instances" | "findAt" | "puzzles">, find: Finder): UntangleTechnique {
+  return {
+    ...def,
+    puzzles: [untangle],
+    instances: (p, s, visit) => find(p, s, visit),
+    findAt(p, s, t) {
+      let hit: Step<UntangleAction> | null = null;
+      find(p, s, (step) => { hit = step; return true; }, (t as UntangleTarget).point);
+      return hit;
+    },
+  };
 }
 
 export const toNeighbours = technique({
@@ -58,9 +70,10 @@ export const toNeighbours = technique({
   name: "move to its neighbors",
   level: 1,
   description: "a point usually belongs among the points it's joined to. moving it to the middle of them often clears its crossings.",
-}, (p, s, only) => {
-  const m = bestMove(p, s, (v) => { const c = centroid(s.pts, neighbours(p, v)); return c ? [c] : []; }, only);
-  return m && step(m.v, m.to, `moving the highlighted point to the middle of the points it's joined to clears ${plural(m.gain)}`, "one point is far from the points it's joined to");
+}, (p, s, visit, only) => {
+  for (const m of movesByGain(p, s, (v) => { const c = centroid(s.pts, neighbours(p, v)); return c ? [c] : []; }, only)) {
+    if (visit(step(m.v, m.to, `moving the highlighted point to the middle of the points it's joined to clears ${plural(m.gain)}`, "one point is far from the points it's joined to")) === true) return;
+  }
 });
 
 /** Spots tried for a point: a grid over the board plus the middle of its neighbors. */
@@ -71,7 +84,7 @@ export const bestSpot = technique({
   name: "best spot",
   level: 2,
   description: "try a point all over the board and put it wherever its lines cross the fewest others.",
-}, (p, s, only) => {
+}, (p, s, visit, only) => {
   const spots = (v: number) => {
     const out: Pt[] = [];
     for (let i = 0; i < GRID; i++) for (let j = 0; j < GRID; j++) out.push([0.05 + (0.9 * i) / (GRID - 1), 0.05 + (0.9 * j) / (GRID - 1)]);
@@ -79,8 +92,9 @@ export const bestSpot = technique({
     if (c) out.push(c);
     return out;
   };
-  const m = bestMove(p, s, spots, only);
-  return m && step(m.v, m.to, `the highlighted point's lines cross the least from here: that clears ${plural(m.gain)}`, "one point has a better spot");
+  for (const m of movesByGain(p, s, spots, only)) {
+    if (visit(step(m.v, m.to, `the highlighted point's lines cross the least from here: that clears ${plural(m.gain)}`, "one point has a better spot")) === true) return;
+  }
 });
 
 export const knownLayout = technique({
@@ -88,13 +102,19 @@ export const knownLayout = technique({
   name: "known layout",
   level: 3,
   description: "when nothing local helps, move points one at a time to an arrangement known to have no crossings (the one the puzzle was made from).",
-}, (p, s, only) => {
-  if (!p.layout || !crossings(p, s.pts).length) return null;
+}, (p, s, visit, only) => {
+  if (!p.layout || !crossings(p, s.pts).length) return;
   const layout = p.layout;
-  const m = bestMove(p, s, (v) => [layout[v]!], only);
-  const v = m?.v ?? Array.from({ length: p.n }, (_, i) => i).find((i) => !settled(p, s, i) && (only === undefined || i === only));
-  if (v === undefined) return null;
-  return step(v, layout[v]!, "the highlighted point goes here in an arrangement with no crossings", "one point has a place in an untangled arrangement");
+  const toLayout = (v: number) => step(v, layout[v]!, "the highlighted point goes here in an arrangement with no crossings", "one point has a place in an untangled arrangement");
+  const moves = movesByGain(p, s, (v) => [layout[v]!], only);
+  if (moves.length) {
+    for (const m of moves) if (visit(toLayout(m.v)) === true) return;
+    return;
+  }
+  for (let v = 0; v < p.n; v++) {
+    if (settled(p, s, v) || (only !== undefined && v !== only)) continue;
+    if (visit(toLayout(v)) === true) return;
+  }
 });
 
 export const untangleTechniques: UntangleTechnique[] = [toNeighbours, bestSpot, knownLayout];

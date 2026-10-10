@@ -35,12 +35,12 @@ export const driveOut: RushTechnique = {
   puzzles: [rushhour],
   level: 1,
   description: "once nothing stands between the red car and the exit, drive it out.",
-  find(p, s) {
-    if (s.pos[0] === exitAt(p)) return null;
+  instances(p, s, visit) {
+    if (s.pos[0] === exitAt(p)) return;
     const r = reach(p, s.pos, occupancy(p, s.pos), 0);
-    if (r.max !== exitAt(p)) return null;
+    if (r.max !== exitAt(p)) return;
     const m = { car: 0, to: exitAt(p) };
-    return step(s, m, "the way to the exit is clear: drive the red car out.", "look at the red car's row", { cars: [0], slide: m, cells: lane(p, s.pos) });
+    visit(step(s, m, "the way to the exit is clear: drive the red car out.", "look at the red car's row", { cars: [0], slide: m, cells: lane(p, s.pos) }));
   },
   practice: { params: { width: 6, height: 6, difficulty: "easy" } },
 };
@@ -51,15 +51,15 @@ export const clearWay: RushTechnique = {
   puzzles: [rushhour],
   level: 2,
   description: "when a shortest way out starts by shifting a car out of the red car's row, do that.",
-  find(p, s) {
+  instances(p, s, visit) {
     const route = plan(p, s.pos);
     const m = route?.[0];
-    if (!m || m.car === 0) return null;
+    if (!m || m.car === 0) return;
     const path = new Set(lane(p, s.pos));
     const freed = sweep(p, s.pos, m).left.filter((c) => path.has(c));
-    if (!freed.length) return null;
-    return step(s, m, `${describeSlide(p, s, m)}: it's blocking the red car, and moving it there is the start of the shortest way out (${movesLeft(route.length)}).`,
-      `which car in the red car's way can move first?`, { cars: [m.car, 0], slide: m, cells: freed });
+    if (!freed.length) return;
+    visit(step(s, m, `${describeSlide(p, s, m)}: it's blocking the red car, and moving it there is the start of the shortest way out (${movesLeft(route.length)}).`,
+      `which car in the red car's way can move first?`, { cars: [m.car, 0], slide: m, cells: freed }));
   },
   practice: { params: { width: 6, height: 6, difficulty: "easy" } },
 };
@@ -70,10 +70,10 @@ export const makeRoom: RushTechnique = {
   puzzles: [rushhour],
   level: 3,
   description: "work backwards from the red car: what blocks it, what blocks that, and so on. a shortest way out begins by moving a car that makes room for another; this finds one by searching every position.",
-  find(p, s) {
+  instances(p, s, visit) {
     const route = plan(p, s.pos);
     const m = route?.[0];
-    if (!m || (m.car === 0 && m.to === exitAt(p))) return null;
+    if (!m || (m.car === 0 && m.to === exitAt(p))) return;
     const { left } = sweep(p, s.pos, m);
     let pos = s.pos.slice();
     pos[m.car] = m.to;
@@ -87,8 +87,8 @@ export const makeRoom: RushTechnique = {
     const why = because
       ? `that makes room for ${carName(because.slide.car)}, which moves ${because.index === 1 ? "next" : `${because.index} moves later`}`
       : "it's the start of the shortest way out";
-    return step(s, m, `${describeSlide(p, s, m)}: ${why} (${movesLeft(route.length)}).`, `which car is in the way of the cars blocking the red car?`,
-      { cars: [m.car, ...(because ? [because.slide.car] : [])], slide: m, cells: left });
+    visit(step(s, m, `${describeSlide(p, s, m)}: ${why} (${movesLeft(route.length)}).`, `which car is in the way of the cars blocking the red car?`,
+      { cars: [m.car, ...(because ? [because.slide.car] : [])], slide: m, cells: left }));
   },
   practice: { params: { width: 6, height: 6, difficulty: "medium" } },
 };

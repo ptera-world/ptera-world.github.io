@@ -4,6 +4,7 @@ import { generate } from "./generate";
 import { createRng } from "./rng";
 import { canonical, defineSchema, fromQuery, resolve, toQuery } from "./schema";
 import { Session } from "./session";
+import { isPartOfStep, stepsLeft } from "./techniques";
 
 test("rng is deterministic and forks are independent", () => {
   const a = createRng("x"), b = createRng("x");
@@ -143,4 +144,46 @@ test("shared history rebuilds the exact game, independent of assists", async () 
   const st = Session.fromShared(flip, puzzle, { kind: "imported" }, { state: s.exportState() });
   expect(st.state).toEqual(s.state);
   expect(st.canUndo).toBe(false);
+});
+
+test("revealing ends the game as revealed, never as solved, and plays the answer's moves", () => {
+  const session = new Session(flip, flip.formats[0]!.parse("2x2:1000"), { kind: "imported" });
+  let solvedCount = 0;
+  session.hooks.solved.tap(() => { solvedCount++; });
+  expect(session.reveal()).toBe(true);
+  expect(session.outcome).toBe("revealed");
+  expect(session.solved).toBe(false);
+  expect(session.finished).toBe(true);
+  expect(solvedCount).toBe(0);
+  expect(flip.isSolved(session.puzzle, session.state)).toBe(true);
+  expect(session.actionLog().length).toBeGreaterThan(0);
+  expect(session.reveal()).toBe(false);
+
+  session.undo();
+  expect(session.outcome).toBe("revealed");
+  const restored = Session.restore(flip, JSON.parse(JSON.stringify(session.snapshot())));
+  expect(restored.outcome).toBe("revealed");
+
+  session.restart();
+  expect(session.outcome).toBe(null);
+  session.dispatch({ type: "press", cell: 0 });
+  session.dispatch({ type: "press", cell: 1 });
+  session.dispatch({ type: "press", cell: 2 });
+  if (!session.finished) session.reveal();
+  expect(session.finished).toBe(true);
+});
+
+test("a lesson asks for every instance, and an alternative another one ruled out is not left", () => {
+  const puzzle = flip.formats[0]!.parse("5x1:00000");
+  const press = (cell: number) => ({ message: `press ${cell}`, actions: [{ type: "press" as const, cell }] });
+  const start = flip.init(puzzle);
+  const both = [press(0), press(3)];
+  expect(stepsLeft(flip, puzzle, start, start, both).length).toBe(2);
+  const one = flip.reduce(puzzle, start, { type: "press", cell: 0 });
+  expect(isPartOfStep(flip, puzzle, start, one, both)).toBe(true);
+  expect(isPartOfStep(flip, puzzle, start, flip.reduce(puzzle, start, { type: "press", cell: 1 }), both)).toBe(false);
+  expect(stepsLeft(flip, puzzle, start, one, both).map((s) => s.message)).toEqual(["press 3"]);
+  // pressing 0 and pressing 1 overlap on cell 1: once 0 is pressed, 1 can no longer give its own result
+  const rivals = [press(0), press(1)];
+  expect(stepsLeft(flip, puzzle, start, one, rivals).length).toBe(0);
 });

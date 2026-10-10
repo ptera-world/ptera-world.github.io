@@ -518,7 +518,7 @@ export const palisade: PuzzleDef<PalisadePuzzle, PalisadeState, PalisadeAction, 
   isSolved,
   solve(p) {
     const a = analyze(p);
-    return a.solution ? { marks: a.solution.map((v) => (v === WALL ? LINE : GAP)) } : null;
+    return a.solution ? { board: { marks: a.solution.map((v) => (v === WALL ? LINE : GAP)) } } : null;
   },
   hint,
   rate,

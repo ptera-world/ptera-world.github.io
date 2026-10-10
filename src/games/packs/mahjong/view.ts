@@ -217,7 +217,7 @@ export const mahjongView: View<MahjongPuzzle, MahjongState, MahjongAction, Mahjo
     }
     render();
 
-    if (session.depth === 0 && !session.solved) {
+    if (session.depth === 0 && !session.finished) {
       anim = animate(700, (t) => {
         order.forEach((i, k) => {
           const q = Math.min(1, Math.max(0, (t * 700 - (k / n) * 450) / 250));

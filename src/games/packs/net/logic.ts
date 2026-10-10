@@ -179,7 +179,7 @@ export const net: PuzzleDef<NetPuzzle, NetState, NetAction, NetInteraction, type
   isSolved: (p, s) => isTree(p, s.tiles),
   solve(p) {
     const sol = analyse(p).solution;
-    return sol ? { tiles: sol.slice(), locked: sol.map(() => 0) } : null;
+    return sol ? { board: { tiles: sol.slice(), locked: sol.map(() => 0) } } : null;
   },
   hint,
   isRetraction: (a) => a.type === "lock" && a.on === false,

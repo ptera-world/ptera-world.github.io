@@ -26,7 +26,7 @@ export interface ShadeSuite<Pz extends { w: number; h: number }> {
   random(rng: Rng): Pz;
   /** Text formats with serialize, checked to round-trip. */
   formats: readonly Format<Pz>[];
-  /** Slowest acceptable generation of any preset, in ms. */
+  /** Slowest acceptable generation of any preset, in milliseconds of CPU time (so a busy machine does not fail it). */
   presetBudgetMs: number;
 }
 
@@ -65,7 +65,8 @@ export function shadeSuite<Pz extends { w: number; h: number }>(o: ShadeSuite<Pz
       expect(a.count).toBe(brute.count as 0 | 1 | 2);
       if (a.count === 1) {
         solved++;
-        expect(o.def.isSolved(p, o.def.solve!(p)!)).toBe(true);
+        const ans = o.def.solve!(p, o.def.init(p))!;
+        expect("board" in ans && o.def.isSolved(p, ans.board)).toBe(true);
       }
     }
     expect(solved).toBeGreaterThan(3);
@@ -142,12 +143,13 @@ export function shadeSuite<Pz extends { w: number; h: number }>(o: ShadeSuite<Pz
     for (const f of o.formats) expect(f.parse(f.serialize!(p))).toEqual(p);
   });
 
-  test(`every preset generates within ${o.presetBudgetMs} ms`, async () => {
+  test(`every preset generates within ${o.presetBudgetMs} ms of cpu time`, async () => {
     for (const preset of o.def.presets ?? []) {
       for (let i = 0; i < 2; i++) {
-        const t = performance.now();
+        const t = process.cpuUsage();
         const p = await gen(preset.params as Record<string, unknown>, `preset-${i}`);
-        expect(performance.now() - t).toBeLessThan(o.presetBudgetMs);
+        const { user, system } = process.cpuUsage(t);
+        expect((user + system) / 1000).toBeLessThan(o.presetBudgetMs);
         expect(o.analyze(p).count).toBe(1);
       }
     }

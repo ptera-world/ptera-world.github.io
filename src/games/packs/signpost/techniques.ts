@@ -32,10 +32,10 @@ function effective(s: SignpostState, st: SolverStep): boolean {
   return !s.next.includes(st.to);
 }
 
-function first(p: SignpostPuzzle, s: SignpostState, kinds: readonly StepKind[], target?: SignpostTarget): SolverStep | null {
+function each(p: SignpostPuzzle, s: SignpostState, kinds: readonly StepKind[], visit: (st: SolverStep) => boolean | void, target?: SignpostTarget): void {
   const k = knowledge(p, s);
-  if (!k) return null;
-  return scanSteps(geometry(p), k, kinds, (st) => (!target || st.from === target.cell || st.to === target.cell) && effective(s, st));
+  if (!k) return;
+  scanSteps(geometry(p), k, kinds, (st) => (!target || st.from === target.cell || st.to === target.cell) && effective(s, st) && visit(st) === true);
 }
 
 /** The number a cell shows (given or from its chain), as text, or its name when it has none. */
@@ -54,10 +54,19 @@ function step(st: SolverStep, message: string, nudge: string, nudgeFocus: Signpo
   };
 }
 
-type Finder = (p: SignpostPuzzle, s: SignpostState, target?: SignpostTarget) => Step<SignpostAction> | null;
+type Make = (p: SignpostPuzzle, s: SignpostState, st: SolverStep) => Step<SignpostAction>;
 
-function technique(def: Omit<SignpostTechnique, "find" | "findAt" | "puzzles">, find: Finder): SignpostTechnique {
-  return { ...def, puzzles: [signpost], find: (p, s) => find(p, s), findAt: (p, s, t) => find(p, s, t as SignpostTarget) };
+function technique(def: Omit<SignpostTechnique, "instances" | "findAt" | "puzzles">, kinds: readonly StepKind[], make: Make): SignpostTechnique {
+  return {
+    ...def,
+    puzzles: [signpost],
+    instances: (p, s, visit) => each(p, s, kinds, (st) => visit(make(p, s, st)) === true),
+    findAt: (p, s, t) => {
+      let found: Step<SignpostAction> | null = null;
+      each(p, s, kinds, (st) => { found = make(p, s, st); return true; }, t as SignpostTarget);
+      return found;
+    },
+  };
 }
 
 const EASY = { width: 5, height: 5, difficulty: "easy" };
@@ -70,9 +79,7 @@ export const consecutive = technique({
   level: 1,
   description: "a number whose arrow points at the cell holding the next number links straight to it.",
   practice: { params: EASY },
-}, (p, s, target) => {
-  const st = first(p, s, ["consecutive"], target);
-  if (!st) return null;
+}, ["consecutive"], (p, s, st) => {
   return step(st,
     `${label(p, s, st.from)} points at ${label(p, s, st.to)}, so they link`,
     `where is the number after ${label(p, s, st.from)}?`, { links: [], because: [st.from] }, [st.from, st.to]);
@@ -84,9 +91,7 @@ export const onlyNext = technique({
   level: 2,
   description: "a cell whose arrow reaches only one cell that can still come next (the others are the start, already have something linked in, are in its own chain, or have the wrong number) links to that one.",
   practice: { params: EASY },
-}, (p, s, target) => {
-  const st = first(p, s, ["only-next"], target);
-  if (!st) return null;
+}, ["only-next"], (p, s, st) => {
   return step(st,
     `the only cell ${label(p, s, st.from)} can still point to is ${cellName(p, st.to)}${st.ruled.length ? ` (${cellList(p, st.ruled)} can't come next)` : ""}, so they link`,
     `where can ${cellName(p, st.from)} lead?`, { links: [], because: [st.from] }, [st.from]);
@@ -98,9 +103,7 @@ export const onlyPrev = technique({
   level: 3,
   description: "a cell that only one arrow can still lead into (the others already lead elsewhere, are the end, are in its own chain, or have the wrong number) is linked from that one.",
   practice: { params: EASY },
-}, (p, s, target) => {
-  const st = first(p, s, ["only-prev"], target);
-  if (!st) return null;
+}, ["only-prev"], (p, s, st) => {
   return step(st,
     `only ${cellName(p, st.from)} can still lead into ${label(p, s, st.to)}${st.ruled.length ? ` (${cellList(p, st.ruled)} can't)` : ""}, so they link`,
     `what can lead into ${cellName(p, st.to)}?`, { links: [], because: [st.to] }, [st.to]);
@@ -112,9 +115,7 @@ export const numbersFit = technique({
   level: 4,
   description: "linking a numbered chain to an unnumbered one numbers every cell in it. if one of those numbers is already on the board somewhere else, that link is impossible; once only one link is left for a cell, make it.",
   practice: { params: MEDIUM },
-}, (p, s, target) => {
-  const st = first(p, s, ["fit-next", "fit-prev"], target);
-  if (!st) return null;
+}, ["fit-next", "fit-prev"], (p, s, st) => {
   const out = st.kind === "fit-next";
   const at = out ? st.from : st.to;
   return step(st,
@@ -130,9 +131,7 @@ export const trial = technique({
   level: 5,
   description: "try each place a cell could link to (or from) in turn and follow the easier techniques. if every option but one runs into a clash, the one left is right.",
   practice: { params: HARD },
-}, (p, s, target) => {
-  const st = first(p, s, ["trial-next", "trial-prev"], target);
-  if (!st) return null;
+}, ["trial-next", "trial-prev"], (p, s, st) => {
   const out = st.kind === "trial-next";
   const at = out ? st.from : st.to;
   return step(st,

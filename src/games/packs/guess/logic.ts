@@ -171,12 +171,9 @@ const BEST_BUDGET = 2_500_000;
  * the answer, then to the earlier code. Null when nothing is left to narrow down.
  */
 export function bestGuess(p: GuessPuzzle, s: GuessState): { code: number[]; worst: number; left: number } | null {
-  const cand = candidates(p, s);
-  if (cand.length < 2) return null;
-  const all = codes(p);
-  const budgetRows = Math.max(1, Math.floor(BEST_BUDGET / cand.length));
-  const pool = all.length <= budgetRows ? all : cand.slice(0, budgetRows);
-  const candSet = new Set(cand.map((c) => c.join(",")));
+  const setup = guessPool(p, s);
+  if (!setup) return null;
+  const { cand, pool, candSet } = setup;
   let best: { code: number[]; worst: number; isCand: boolean } | null = null;
   const buckets = new Int32Array((p.pegs + 1) * (p.pegs + 1));
   for (const g of pool) {
@@ -192,6 +189,38 @@ export function bestGuess(p: GuessPuzzle, s: GuessState): { code: number[]; wors
     if (!best || worst < best.worst || (worst === best.worst && isCand && !best.isCand)) best = { code: g, worst, isCand };
   }
   return best ? { code: best.code, worst: best.worst, left: cand.length } : null;
+}
+
+/**
+ * Every guess bestGuess considers, best first: fewest codes left in the worst case, then guesses
+ * that could be the answer, then the earlier code. Empty when nothing is left to narrow down.
+ */
+export function rankedGuesses(p: GuessPuzzle, s: GuessState): { code: number[]; worst: number; left: number }[] {
+  const setup = guessPool(p, s);
+  if (!setup) return [];
+  const { cand, pool, candSet } = setup;
+  const buckets = new Int32Array((p.pegs + 1) * (p.pegs + 1));
+  const rows = pool.map((g, order) => {
+    buckets.fill(0);
+    let worst = 0;
+    for (const c of cand) {
+      const m = mark(g, c, p.colours);
+      const i = m.black * (p.pegs + 1) + m.white;
+      if (++buckets[i]! > worst) worst = buckets[i]!;
+    }
+    return { code: g, worst, isCand: candSet.has(g.join(",")), order };
+  });
+  rows.sort((x, y) => x.worst - y.worst || Number(y.isCand) - Number(x.isCand) || x.order - y.order);
+  return rows.map((r) => ({ code: r.code, worst: r.worst, left: cand.length }));
+}
+
+/** The guesses worth weighing against the codes still possible; null when fewer than two codes remain. */
+function guessPool(p: GuessPuzzle, s: GuessState): { cand: number[][]; pool: number[][]; candSet: Set<string> } | null {
+  const cand = candidates(p, s);
+  if (cand.length < 2) return null;
+  const all = codes(p);
+  const budgetRows = Math.max(1, Math.floor(BEST_BUDGET / cand.length));
+  return { cand, pool: all.length <= budgetRows ? all : cand.slice(0, budgetRows), candSet: new Set(cand.map((c) => c.join(","))) };
 }
 
 // --- formats ---
@@ -295,7 +324,7 @@ export const guess: PuzzleDef<GuessPuzzle, GuessState, GuessAction, GuessInterac
     ...(p.blanks ? ["you can leave pegs blank in a guess; blanks never count."] : []),
     "a held peg keeps its color in your next guess.",
   ],
-  solve: (p) => ({ done: [{ code: p.code.slice(), black: p.pegs, white: 0 }], row: p.code.map(() => 0), holds: p.code.map(() => false) }),
+  solve: (p, s) => (s.done.length < p.guesses ? { moves: [{ type: "row", code: p.code.slice() }, { type: "submit" }] } : null),
   describe: (p) => `${p.colours} colors, ${p.pegs} pegs`,
   rate: (p) => {
     const n = codeCount(p);

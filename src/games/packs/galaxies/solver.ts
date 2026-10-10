@@ -270,20 +270,20 @@ export function propagate(g: Geometry, own: Owners, maxLevel: Level): { ok: bool
   }
 }
 
-export function scanSteps(p: GalaxiesPuzzle, own: Owners, kinds: readonly StepKind[], accept: (s: Step) => boolean): Step | null {
+/** Every step of the given kinds in rule order, until `visit` returns true. Reads own without changing it. */
+export function scanSteps(p: GalaxiesPuzzle, own: Owners, kinds: readonly StepKind[], visit: (s: Step) => boolean): void {
   const g = geometry(p);
-  let found: Step | null = null;
+  let stop = false;
   const emit: Emit = (s) => {
-    if (!kinds.includes(s.kind) || !accept(s)) return 0;
-    found = s;
+    if (!kinds.includes(s.kind) || !visit(s)) return 0;
+    stop = true;
     return 1;
   };
   for (const [, rule, kind] of RULES) {
     if (!kinds.includes(kind)) continue;
     rule(g, own, emit);
-    if (found) return found;
+    if (stop) return;
   }
-  return null;
 }
 
 export const isComplete = (own: Owners): boolean => own.every((d) => d !== -1);

@@ -3,7 +3,7 @@ import { generate } from "../../core/generate";
 import { Registry } from "../../core/registry";
 import { Session } from "../../core/session";
 import { TechniqueHost } from "../../core/techniques";
-import { circle, cross, crossings, sgtFormat, untangle, type UntanglePuzzle } from "./logic";
+import { circle, cross, crossings, sgtFormat, untangle, type Pt, type UntanglePuzzle } from "./logic";
 import { untangleTechniques } from "./techniques";
 
 const sig = () => new AbortController().signal;
@@ -58,6 +58,14 @@ test("moves stay on the board and solve() untangles", async () => {
   let st = untangle.init(p);
   st = untangle.reduce(p, st, { type: "move", moves: [[0, 2, -1]] });
   expect(st.pts[0]).toEqual([1, 0]);
-  expect(untangle.isSolved(p, untangle.solve!(p)!)).toBe(true);
+  const ans = untangle.solve!(p, untangle.init(p))!;
+  expect("board" in ans && untangle.isSolved(p, ans.board)).toBe(true);
   expect(untangle.isSolved(p, untangle.init(p))).toBe(false);
+});
+
+test("a point dropped onto a line touches it, and one just beside it does not", () => {
+  const a: Pt = [0.25, 0.25], b: Pt = [0.75, 0.75];
+  expect(cross(a, b, [0.5, 0.5], [0.25, 0.75])).toBe(true);
+  expect(cross(a, b, [0.5, 0.5 + 1 / 65536], [0.25, 0.75])).toBe(false);
+  expect(cross(a, b, [0.375, 0.5], [0.625, 0.25])).toBe(true);
 });

@@ -29,18 +29,18 @@ export const pushHome: SokoTechnique = {
   puzzles: [sokoban],
   level: 1,
   description: "when the fewest-pushes solution starts by pushing one box in a straight line onto a goal, push it all the way.",
-  find(p, s) {
+  instances(p, s, visit) {
     const plan = solveFrom(p, s).pushes;
-    if (!plan?.length) return null;
+    if (!plan?.length) return;
     const first = plan[0]!;
     let n = 1, at = stepFrom(p, first.box, first.dir);
     while (n < plan.length && plan[n]!.box === at && plan[n]!.dir === first.dir) {
       at = stepFrom(p, at, first.dir);
       n++;
     }
-    if (!p.goals.includes(at)) return null;
-    return step(plan, n, `${pushText(p, first)}${n > 1 ? ` ${n} times` : ""}, straight onto the goal at ${cellName(p, at)} (${left(plan.length)}).`,
-      `which box can go straight onto a goal?`, at);
+    if (!p.goals.includes(at)) return;
+    visit(step(plan, n, `${pushText(p, first)}${n > 1 ? ` ${n} times` : ""}, straight onto the goal at ${cellName(p, at)} (${left(plan.length)}).`,
+      `which box can go straight onto a goal?`, at));
   },
   practice: { params: { width: 6, height: 6, boxes: 2 } },
 };
@@ -51,12 +51,12 @@ export const nextPush: SokoTechnique = {
   puzzles: [sokoban],
   level: 2,
   description: "search every way of pushing the boxes for one that gets them all home in the fewest pushes (it never pushes a box into a corner or against another box where it would stick), and make its first push.",
-  find(p, s) {
+  instances(p, s, visit) {
     const plan = solveFrom(p, s).pushes;
-    if (!plan?.length) return null;
+    if (!plan?.length) return;
     const goal = destination(p, plan);
-    return step(plan, 1, `${pushText(p, plan[0]!)}: that box is headed for the goal at ${cellName(p, goal)} (${left(plan.length)}).`,
-      `look at the box at ${cellName(p, plan[0]!.box)}`, goal);
+    visit(step(plan, 1, `${pushText(p, plan[0]!)}: that box is headed for the goal at ${cellName(p, goal)} (${left(plan.length)}).`,
+      `look at the box at ${cellName(p, plan[0]!.box)}`, goal));
   },
   practice: { params: { width: 7, height: 7, boxes: 3 } },
 };

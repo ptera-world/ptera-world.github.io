@@ -111,7 +111,7 @@ export const rushView: View<RushPuzzle, RushState, RushAction, RushInteraction> 
     let drag: { pointerId: number; car: number; start: number; origin: number; min: number; max: number; moved: boolean } | null = null;
 
     /** Where the state puts each car; the red car drives off once it reaches the exit. */
-    const target = (st: RushState, i: number) => (i === 0 && st.pos[0] === exitAt(p) && session.solved ? exitAt(p) + 1.4 : st.pos[i]!);
+    const target = (st: RushState, i: number) => (i === 0 && st.pos[0] === exitAt(p) && session.finished ? exitAt(p) + 1.4 : st.pos[i]!);
 
     const render = () => {
       const st = session.state;

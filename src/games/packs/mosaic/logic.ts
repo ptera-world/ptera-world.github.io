@@ -388,7 +388,7 @@ export const mosaic: PuzzleDef<MosaicPuzzle, MosaicState, MosaicAction, MosaicIn
   isSolved,
   solve(p) {
     const a = analyze(p);
-    return a.solution ? { marks: a.solution.map((v) => (v === SHADED ? BLACK : DOT)) } : null;
+    return a.solution ? { board: { marks: a.solution.map((v) => (v === SHADED ? BLACK : DOT)) } } : null;
   },
   hint,
   rate,

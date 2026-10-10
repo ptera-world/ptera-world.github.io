@@ -1,5 +1,5 @@
 import type { LoadedPack, ModEntry, Track } from "../../core/mods";
-import { COLOR_TOKENS, SYSTEM_THEME, checkForUpdate, firstStep, hintFrom, labelSides, listMods, loadPace, loadPluginConfig, packRecord, rateByTechniques, saveMods, selectPackVersion, setLabelSides, setPackEnabled, setTheme, setTokenOverride, setTrack, themeChoice, tokenOverrides } from "./engine";
+import { COLOR_TOKENS, SYSTEM_THEME, checkForUpdate, firstStep, labelSides, listMods, loadPace, loadPluginConfig, packRecord, rateByTechniques, saveMods, selectPackVersion, setLabelSides, setPackEnabled, setTheme, setTokenOverride, setTrack, themeChoice, tokenOverrides } from "./engine";
 import { randomSeed } from "../../core/rng";
 import { defineSchema, resolve } from "../../core/schema";
 import type { Source, TimelineEntry } from "../../core/session";
@@ -150,7 +150,7 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
           const keys = shell.hub.keysFor(id);
           bar.append(h("button", {
             "data-command": id,
-            class: [isDanger(cmd) ? "danger" : "", c.solved && id === command("shell.new") ? "primary" : ""].join(" ").trim() || undefined,
+            class: [isDanger(cmd) ? "danger" : "", c.finished && id === command("shell.new") ? "primary" : ""].join(" ").trim() || undefined,
             disabled: cmd.when ? !cmd.when(c) : false,
             "aria-pressed": cmd.checked ? String(cmd.checked()) : undefined,
             title: keys.length ? `${cmd.label} (${keys.join(", ")})` : cmd.label,
@@ -180,7 +180,7 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
       const seedInput = h("input", { type: "text", placeholder: "random", spellcheck: "false", "aria-label": "seed" });
       const start = async () => {
         const s = ctx.session;
-        if (s.canUndo && !s.solved && prefs.get("confirm", "danger") !== "never"
+        if (s.canUndo && !s.finished && prefs.get("confirm", "danger") !== "never"
           && !(await confirmDialog("start a new game? this one's progress will be lost.", "new game"))) return;
         void shell.newGame(def, params, seedInput.value.trim() || randomSeed());
       };
@@ -529,7 +529,8 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
           h("button", {
             onclick: () => {
               const cur = s.activeHint;
-              const next = cur?.technique === t.id && cur.more ? cur.more : hintFrom(t, origin.step, 1);
+              const next = cur?.technique === t.id && cur.more ? cur.more : shell.lessonHint();
+              if (!next) return;
               s.showHint(next as never);
               s.hooks.fx.call({ kind: "hint", focus: next.focus });
               shell.setStatus(next.message);
@@ -701,7 +702,7 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
       let dismissed = false;
       const render = () => {
         clear(el);
-        if ((!s.solved && !s.lost) || dismissed) return;
+        if ((!s.finished && !s.lost) || dismissed) return;
         if (s.lost) {
           add(el, h("div", { class: "w-results lost", role: "status" },
             h("strong", { class: "big" }, "game over"),
@@ -712,13 +713,12 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
           return;
         }
         const { past } = s.timeline();
-        let yours = 0, hints = 0, revealed = false;
+        let yours = 0, hints = 0;
         const used = new Map<string, { auto: number; manual: number; hint: number }>();
         for (const e of past) {
           for (const src of e.sources) {
             if (src.kind === "player") yours++;
             else if (src.kind === "hint") hints++;
-            else if (src.kind === "system" && src.reason === "reveal") revealed = true;
             else if (src.kind === "technique") {
               const u = used.get(src.name) ?? { auto: 0, manual: 0, hint: 0 };
               if (src.auto) u.auto++; else if (src.viaHint) u.hint++; else u.manual++;
@@ -727,13 +727,13 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
           }
         }
         const rating = (() => { try { return s.def.rate?.(s.puzzle)?.label; } catch { return undefined; } })();
-        const time = s.origin.kind === "practice" ? null : formatTime(s.solvedAtMs ?? 0);
-        // the strip animates in once per solve, not every time it is re-mounted (tab switches, layout changes)
-        const key = `${shell.sessionId}:${s.solvedAtMs}`;
+        const time = s.origin.kind === "practice" ? null : formatTime(s.finishedAtMs ?? 0);
+        // the strip animates in once per finish, not every time it is re-mounted (tab switches, layout changes)
+        const key = `${shell.sessionId}:${s.finishedAtMs}`;
         const fresh = !announced.has(key);
         announced.add(key);
         add(el, h("div", { class: `w-results${fresh ? " anim" : ""}`, role: "status" },
-          h("strong", { class: "big" }, revealed ? "revealed" : s.origin.kind === "practice" ? "nice!" : "solved!"),
+          h("strong", { class: "big" }, s.outcome === "revealed" ? "revealed" : s.origin.kind === "practice" ? "nice!" : "solved!"),
           time ? h("div", { class: "time" }, time) : null,
           rating ? h("div", { class: "w-dim" }, rating) : null,
           h("ul", null,
@@ -746,7 +746,7 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
             !shell.unlocked && prefs.get("lockSolved", true) ? h("button", { "data-command": command("shell.unlock"), onclick: () => { ctx.run("shell.unlock"); dismissed = true; render(); } }, "unlock board") : null,
             h("button", { onclick: () => { dismissed = true; render(); } }, "close"))));
       };
-      sessionTaps(ctx, () => { if (!s.solved && !s.lost) dismissed = false; render(); });
+      sessionTaps(ctx, () => { if (!s.finished && !s.lost) dismissed = false; render(); });
       s.hooks.solved.tap(() => { dismissed = false; render(); }, { owner: ctx.owner });
       render();
     },

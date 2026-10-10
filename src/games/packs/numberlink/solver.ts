@@ -337,19 +337,25 @@ const trial: Rule = (p, g, k, emit) => {
 
 const RULES: Record<StepKind, Rule> = { "one-way": oneWay, corridor, "dead-end": deadEnd, colors, loop, reach, trial };
 
-/** First step of the given kinds (in that order) that `accept` takes. */
-export function scanSteps(p: NumberlinkPuzzle, k: Knowledge, kinds: readonly StepKind[], accept: (st: Step) => boolean = () => true): Step | null {
+/** Every step of the given kinds (in that order), until `visit` returns true. Reads k without changing it. */
+export function eachStep(p: NumberlinkPuzzle, k: Knowledge, kinds: readonly StepKind[], visit: (st: Step) => boolean): void {
   const g = edgeGrid(p.w, p.h);
   for (const kind of kinds) {
-    let found: Step | null = null;
-    RULES[kind](p, g, k, (st) => {
-      if (!accept(st)) return false;
-      found = st;
-      return true;
-    });
-    if (found) return found;
+    let stop = false;
+    RULES[kind](p, g, k, (st) => (stop = visit(st)));
+    if (stop) return;
   }
-  return null;
+}
+
+/** First step of the given kinds (in that order) that `accept` takes. */
+export function scanSteps(p: NumberlinkPuzzle, k: Knowledge, kinds: readonly StepKind[], accept: (st: Step) => boolean = () => true): Step | null {
+  let found: Step | null = null;
+  eachStep(p, k, kinds, (st) => {
+    if (!accept(st)) return false;
+    found = st;
+    return true;
+  });
+  return found;
 }
 
 export const ALL_KINDS: readonly StepKind[] = ["one-way", "corridor", "dead-end", "colors", "loop", "reach", "trial"];

@@ -158,7 +158,7 @@ const progress = plugin({
   setup({ session, settings, owner }) {
     const cells = settings.show === "cells";
     session.hooks.derive.tap((d, { puzzle, state }) => {
-      if (session.solved) return d;
+      if (session.finished) return d;
       const K = knowledge(puzzle, state);
       const out: Progress = { lines: [], fill: [], empty: [] };
       for (let l = 0; l < puzzle.w + puzzle.h; l++) {

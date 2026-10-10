@@ -58,15 +58,19 @@ function changes(p: TracksPuzzle, s: TracksState, st: SolverStep) {
 type Changes = ReturnType<typeof changes>;
 const size = (ch: Changes) => ch.lines.length + ch.crosses.length + ch.tracks.length + ch.empties.length;
 
-function first(p: TracksPuzzle, s: TracksState, kinds: readonly StepKind[], target?: TracksTarget) {
+type Hit = { raw: SolverStep; ch: Changes };
+
+function each(p: TracksPuzzle, s: TracksState, kinds: readonly StepKind[], visit: (hit: Hit) => boolean | void, target?: TracksTarget): void {
   const k = knowledge(p, s);
-  if (!k) return null;
+  if (!k) return;
   const g = edgeGrid(p.w, p.h);
-  let ch: Changes = { lines: [], crosses: [], tracks: [], empties: [] };
   const touches = (st: SolverStep) => !target || st.because.includes(target.cell) || st.tracks.includes(target.cell) || st.empties.includes(target.cell)
     || [...st.lines, ...st.nos].some((e) => g.ea[e] === target.cell || g.eb[e] === target.cell);
-  const raw = scanSteps(p, k, kinds, (st) => touches(st) && size(ch = changes(p, s, st)) > 0);
-  return raw ? { raw, ch } : null;
+  scanSteps(p, k, kinds, (raw) => {
+    if (!touches(raw)) return false;
+    const ch = changes(p, s, raw);
+    return size(ch) > 0 && visit({ raw, ch }) === true;
+  });
 }
 
 function outcome(p: TracksPuzzle, ch: Changes): string {
@@ -90,10 +94,19 @@ function build(raw: SolverStep, ch: Changes, message: string, nudge: string, nud
   };
 }
 
-type Finder = (p: TracksPuzzle, s: TracksState, target?: TracksTarget) => Step<TracksAction> | null;
+type Make = (p: TracksPuzzle, hit: Hit) => Step<TracksAction>;
 
-function technique(def: Omit<TracksTechnique, "find" | "findAt" | "puzzles">, find: Finder): TracksTechnique {
-  return { ...def, puzzles: [tracks], find: (p, s) => find(p, s), findAt: (p, s, t) => find(p, s, t as TracksTarget) };
+function technique(def: Omit<TracksTechnique, "instances" | "findAt" | "puzzles">, kinds: readonly StepKind[], make: Make): TracksTechnique {
+  return {
+    ...def,
+    puzzles: [tracks],
+    instances: (p, s, visit) => each(p, s, kinds, (hit) => visit(make(p, hit)) === true),
+    findAt: (p, s, t) => {
+      let found: Step<TracksAction> | null = null;
+      each(p, s, kinds, (hit) => { found = make(p, hit); return true; }, t as TracksTarget);
+      return found;
+    },
+  };
 }
 
 const EASY = { width: 6, height: 6, difficulty: "easy" };
@@ -105,9 +118,7 @@ const countFocus = (i: number): TracksFocus => ({ edges: [], cells: [], because:
 export const noRoom = technique({
   id: "tracks.no-room", name: "no room for track", level: 1, practice: { params: EASY },
   description: "track goes into a cell and out again, so a cell with only one open side (the rest are the board's edge, crosses or empty cells) has no track.",
-}, (p, s, t) => {
-  const hit = first(p, s, ["no-room"], t);
-  if (!hit) return null;
+}, ["no-room"], (p, hit) => {
   const c = hit.raw.because[0]!;
   return build(hit.raw, hit.ch, `${cellName(p, c)} has at most one open side, so ${outcome(p, hit.ch)}`, `could track pass through ${cellName(p, c)}?`, cellFocus([c]));
 });
@@ -115,9 +126,7 @@ export const noRoom = technique({
 export const through = technique({
   id: "tracks.through", name: "only way through", level: 2, practice: { params: EASY },
   description: "a cell with track and only two open sides uses both of them.",
-}, (p, s, t) => {
-  const hit = first(p, s, ["through"], t);
-  if (!hit) return null;
+}, ["through"], (p, hit) => {
   const c = hit.raw.because[0]!;
   return build(hit.raw, hit.ch, `${cellName(p, c)} has track and only two open sides, so ${outcome(p, hit.ch)}`, `which way can the track leave ${cellName(p, c)}?`, cellFocus([c]));
 });
@@ -125,9 +134,7 @@ export const through = technique({
 export const countFull = technique({
   id: "tracks.count-full", name: "count reached", level: 3, practice: { params: EASY },
   description: "once a row or column has as many track cells as its number, the rest of it is empty.",
-}, (p, s, t) => {
-  const hit = first(p, s, ["count-full"], t);
-  if (!hit) return null;
+}, ["count-full"], (p, hit) => {
   const i = hit.raw.count!;
   return build(hit.raw, hit.ch, `${countName(p, i)} already has its ${target(p, i)} track cells, so ${outcome(p, hit.ch)}`, `count the track in ${countName(p, i)}`, countFocus(i));
 });
@@ -135,9 +142,7 @@ export const countFull = technique({
 export const countNeeds = technique({
   id: "tracks.count-needs", name: "every spot is needed", level: 4, practice: { params: EASY },
   description: "if a row or column has only as many cells left that could hold track as its number still needs, they all do.",
-}, (p, s, t) => {
-  const hit = first(p, s, ["count-needs"], t);
-  if (!hit) return null;
+}, ["count-needs"], (p, hit) => {
   const i = hit.raw.count!;
   return build(hit.raw, hit.ch, `${countName(p, i)} needs ${target(p, i)} track cells and has no more room than that, so ${outcome(p, hit.ch)}`, `where can the track in ${countName(p, i)} go?`, countFocus(i));
 });
@@ -145,9 +150,7 @@ export const countNeeds = technique({
 export const noLoop = technique({
   id: "tracks.no-loop", name: "no loop, no early finish", level: 5, practice: { params: EASY },
   description: "joining the two ends of one piece of track would make a loop; joining the entrance's piece to the exit's while other track or counts are still missing would end the track too early. either way that edge stays empty.",
-}, (p, s, t) => {
-  const hit = first(p, s, ["loop"], t);
-  if (!hit) return null;
+}, ["loop"], (p, hit) => {
   const [a, b] = hit.raw.because as [number, number];
   return build(hit.raw, hit.ch, `joining ${cellName(p, a)} to ${cellName(p, b)} would close a loop or finish the track too early, so ${outcome(p, hit.ch)}`, `follow the track from ${cellName(p, a)}`, cellFocus([a]));
 });
@@ -155,9 +158,7 @@ export const noLoop = technique({
 export const neighbours = technique({
   id: "tracks.neighbours", name: "dragged-in neighbor", level: 6, practice: { params: MEDIUM },
   description: "a cell whose only other open sides are blocked would, if it had track, have to carry it into its neighbor along the row or column. if that line has only one track cell left, the cell can't have track; if it has only one empty cell left, the neighbor must have track.",
-}, (p, s, t) => {
-  const hit = first(p, s, ["neighbours"], t);
-  if (!hit) return null;
+}, ["neighbours"], (p, hit) => {
   const i = hit.raw.count!;
   const [x] = [...hit.raw.empties, ...hit.raw.tracks];
   const n = hit.raw.because[0]!;
@@ -171,9 +172,7 @@ export const neighbours = technique({
 export const trial = technique({
   id: "tracks.trial", name: "try it", level: 7, practice: { params: HARD },
   description: "pretend a cell has track (or doesn't), or an edge carries track (or doesn't), and follow the easier techniques. if that breaks a rule, it's the other way.",
-}, (p, s, t) => {
-  const hit = first(p, s, ["trial"], t);
-  if (!hit) return null;
+}, ["trial"], (p, hit) => {
   return build(hit.raw, hit.ch, `trying the other way breaks a rule, so ${outcome(p, hit.ch)}`, `try ${cellList(p, hit.raw.because)} both ways`, cellFocus(hit.raw.because));
 });
 

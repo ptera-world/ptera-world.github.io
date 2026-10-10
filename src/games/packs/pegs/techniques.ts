@@ -10,19 +10,19 @@ export const oneLeft: PegsTechnique = {
   puzzles: [pegs],
   level: 1,
   description: "most jumps that look fine leave pegs stranded where nothing can reach them. this searches ahead for a whole sequence of jumps that ends with one peg, and suggests its first jump.",
-  find(p, s) {
-    if (pegCount(s.grid) <= 1) return null;
+  instances(p, s, visit) {
+    if (pegCount(s.grid) <= 1) return;
     const path = solveFrom(p, s.grid).path;
     const j = path?.[0];
-    if (!j) return null;
+    if (!j) return;
     const after = path!.length - 1;
-    return {
+    visit({
       message: `jump ${cellAt(p, j.from)} over ${cellAt(p, j.over)} into ${cellAt(p, j.to)}: one peg can still be left after that${after ? ` (${after} more ${after === 1 ? "jump" : "jumps"})` : ""}.`,
       nudge: `look at the peg at ${cellAt(p, j.from)}`,
       focus: { from: j.from, over: j.over, to: j.to } satisfies PegsFocus,
       nudgeFocus: { from: j.from } satisfies PegsFocus,
       actions: [{ type: "jump", from: j.from, to: j.to }],
-    };
+    });
   },
   practice: { params: { board: "random", width: 5, height: 5 } },
 };

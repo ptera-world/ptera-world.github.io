@@ -3,7 +3,7 @@ import { generate } from "../../core/generate";
 import { Registry } from "../../core/registry";
 import { createRng } from "../../core/rng";
 import { Session } from "../../core/session";
-import { TechniqueHost, applyStep, findPracticePosition, firstStep, rateByTechniques } from "../../core/techniques";
+import { TechniqueHost, applyStep, findPracticePosition, findStep, firstStep, rateByTechniques } from "../../core/techniques";
 import { ALL, EMPTY, MIRROR_L, MIRROR_R, bit, geometry, type UndeadPuzzle } from "./grid";
 import { cellName, sgtFormat, undead, type UndeadAction, type UndeadFocus } from "./logic";
 import { checkMarks } from "./plugins";
@@ -132,7 +132,7 @@ test("every cell a hint names is highlighted", async () => {
     let st = undead.init(p);
     for (let i = 0; i < 400; i++) {
       for (const t of undeadTechniques) {
-        const step = t.find(p, st);
+        const step = findStep(undead, t, p, st);
         if (!step) continue;
         const all = (f: UndeadFocus) => new Set([...f.cells, ...f.because].map((c) => cellName(p, c)));
         for (const n of names(step.message)) expect(all(step.focus as UndeadFocus).has(n)).toBe(true);
@@ -177,6 +177,7 @@ test("game ids round-trip and parse like the original", async () => {
 
 test("solve() reaches a solved state", async () => {
   const p = await gen({ width: 4, height: 4 }, "solve");
-  expect(undead.isSolved(p, undead.solve!(p)!)).toBe(true);
+  const ans = undead.solve!(p, undead.init(p))!;
+  expect("board" in ans && undead.isSolved(p, ans.board)).toBe(true);
   expect(undead.isSolved(p, undead.init(p))).toBe(false);
 });

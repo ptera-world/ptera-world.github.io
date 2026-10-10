@@ -153,12 +153,9 @@ export const rushhour: PuzzleDef<RushPuzzle, RushState, RushAction, RushInteract
   initInteraction: () => ({ selected: 0 }),
   reduce,
   isSolved: (p, s) => isGoal(p, s.pos),
-  solve(p) {
-    const route = plan(p, startPos(p));
-    if (!route) return null;
-    let s = rushhour.init(p);
-    for (const m of route) s = reduce(p, s, { type: "slide", ...m });
-    return s;
+  solve(p, s) {
+    const route = plan(p, s.pos);
+    return route ? { moves: route.map((m) => ({ type: "slide" as const, ...m })) } : null;
   },
   rate(p) {
     const d = distance(p, startPos(p));

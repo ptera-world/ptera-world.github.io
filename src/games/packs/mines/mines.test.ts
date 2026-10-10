@@ -179,9 +179,9 @@ test("practice: carrying out part of a step counts, anything else doesn't", () =
   const hit = firstStep(mines, minesTechniques, p, s)!;
   expect(hit.technique.id).toBe("mines.forced");
   const flag = mines.reduce(p, s, { type: "flag", cells: [0], on: true });
-  expect(isPartOfStep(mines, p, s, flag, hit.step)).toBe(true);
+  expect(isPartOfStep(mines, p, s, flag, [hit.step])).toBe(true);
   const other = mines.reduce(p, s, { type: "flag", cells: [2], on: true });
-  expect(isPartOfStep(mines, p, s, other, hit.step)).toBe(false);
+  expect(isPartOfStep(mines, p, s, other, [hit.step])).toBe(false);
 });
 
 test("reducer: flag, chord, death and undo", () => {

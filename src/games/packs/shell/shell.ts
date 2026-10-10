@@ -5,7 +5,7 @@ import type { Registry } from "../../core/registry";
 import { randomSeed } from "../../core/rng";
 import { canonical, fromQuery, resolve, toQuery, type Schema, type Values } from "../../core/schema";
 import type { Origin, Session, SharedHistory, Snapshot } from "../../core/session";
-import { PluginHostCtor, SessionCtor, TechniqueHostCtor, applyStep, colorOf, findStepAt, rememberPosition, cycleLabels, findPracticePosition, generate, hintFrom, isPartOfStep, isStepDone, loadPluginConfig, onBoardPrefsChange, onThemeChange } from "./engine";
+import { PluginHostCtor, SessionCtor, TechniqueHostCtor, applyStep, colorOf, findStepAt, rememberPosition, cycleLabels, findPracticePosition, generate, hintFrom, isPartOfStep, stepsLeft, stepsOf, loadPluginConfig, onBoardPrefsChange, onThemeChange } from "./engine";
 import { packJson, unpackJson, type Patch } from "../../core/patch";
 
 /** What a share link carries beyond the puzzle itself. */
@@ -28,7 +28,7 @@ import { installTooltips } from "./tooltips";
 import { sessionList } from "./session-list";
 import { tagStyle } from "./tags";
 import { openOverlays, popup, type SurfaceItem } from "./surfaces";
-import { SAVE_PREFIX, INDEX_KEY, findSession, listSessions, loadSession, newSessionId, removeSession, saveSession } from "./sessions";
+import { SAVE_PREFIX, INDEX_KEY, finished, findSession, listSessions, loadSession, newSessionId, removeSession, saveSession } from "./sessions";
 
 
 /** Board zoom also takes the browser's own zoom gestures (ctrl ±, ctrl+0, ctrl+scroll). Off by default. */
@@ -66,7 +66,6 @@ interface Carried {
   sessionId: string | null;
   tab: string;
   unlocked: boolean;
-  practiceStart: unknown;
   zoom: number;
   scroll: [number, number];
 }
@@ -96,9 +95,12 @@ export class Shell {
   };
 
   session: Session<any, any, any, any> | null = null;
-  /** Saved-game id of the current session. */
-  sessionId = "";
-  /** Player unlocked the current solved board for free play (not saved; a reopened solved board is locked again). */
+  private openId = "";
+  /** Saved-game id of the open session; "" whenever no session is open. */
+  get sessionId(): string {
+    return this.session ? this.openId : "";
+  }
+  /** Player unlocked the current finished board for free play (not saved; a reopened finished board is locked again). */
   unlocked = false;
   private wasLost = false;
   /** Adopting another tab's save: don't write it back. */
@@ -116,8 +118,8 @@ export class Shell {
   private statusText = "";
   /** Skip the next status reset (a message about the change that is being undone automatically). */
   private keepStatus = false;
-  /** Practice: the state the step was found in. */
-  private practiceStart: unknown = null;
+  /** Practice: every instance of the practiced technique in the start position. */
+  private lesson: Step[] = [];
   private els: ReturnType<Shell["buildDom"]>;
   /** Aborts on stop: every listener the shell puts outside its own elements is bound to it. */
   private readonly life = new AbortController();
@@ -195,7 +197,6 @@ export class Shell {
       this.unlocked = true;
       this.syncLock();
     }
-    if (this.session?.origin.kind === "practice") this.practiceStart = c.practiceStart;
     if (c.zoom !== 1) this.zoomBy(c.zoom);
     this.els.scroller.scrollLeft = c.scroll[0];
     this.els.scroller.scrollTop = c.scroll[1];
@@ -206,10 +207,9 @@ export class Shell {
     const sc = this.els.scroller;
     const carried: Carried = {
       kind: "shell",
-      sessionId: this.session ? this.sessionId : null,
+      sessionId: this.sessionId || null,
       tab: this.activeTab,
       unlocked: this.unlocked,
-      practiceStart: this.practiceStart,
       zoom: this.zoom,
       scroll: [sc.scrollLeft, sc.scrollTop],
     };
@@ -260,7 +260,7 @@ export class Shell {
     const s = this.session;
     const own: ShellContext = {
       hasSession: !!s,
-      solved: s?.solved ?? false,
+      finished: s?.finished ?? false,
       locked: s?.locked ?? false,
       lost: s?.lost ?? false,
       canUndo: s?.canUndo ?? false,
@@ -374,7 +374,7 @@ export class Shell {
   /** A board where `t` is the next easiest deduction (deterministic in seed). */
   async startPractice(def: AnyPuzzleDef, t: Technique, seed: string, push = true): Promise<void> {
     const origin = { kind: "practice" as const, technique: t.id, seed };
-    if (this.resume(def, originKey(def, { ...origin, step: { message: "", actions: [] } }), true)) return;
+    if (this.resume(def, originKey(def, { ...origin, start: null }), true)) return;
     this.generating?.abort();
     const ac = new AbortController();
     this.generating = ac;
@@ -386,7 +386,7 @@ export class Shell {
         this.showError(`couldn't find a ${t.name} to practice in time. try again for a different board.`);
         return;
       }
-      this.setSession(new SessionCtor(def, pos.puzzle, { ...origin, step: pos.step }, { state: pos.state }), push);
+      this.setSession(new SessionCtor(def, pos.puzzle, { ...origin, start: pos.state }, { state: pos.state }), push);
       this.setStatus(`find the ${t.name}`);
     } catch (e) {
       if (ac.signal.aborted) return;
@@ -444,9 +444,11 @@ export class Shell {
     this.teardownSession();
     this.zoom = 1;
     this.session = session;
-    this.sessionId = id;
+    this.openId = id;
     this.techniques = new TechniqueHostCtor(this.registry, session);
-    this.practiceStart = session.origin.kind === "practice" ? session.state : null;
+    const o = session.origin;
+    const practiced = o.kind === "practice" ? this.registry.techniquesFor(session.def).find((t) => t.id === o.technique) : undefined;
+    this.lesson = o.kind === "practice" && practiced ? stepsOf(session.def, practiced, session.puzzle, o.start) : [];
     this.host = new PluginHostCtor(this.registry, session);
     this.hub.setScope(session.def.id);
     const url = this.urlFor(session);
@@ -472,7 +474,7 @@ export class Shell {
         this.wasLost = lost;
         this.root.toggleAttribute("data-lost", lost);
         if (lost) session.pause();
-        else if (!session.paused && !document.hidden && !session.solved) session.resume();
+        else if (!session.paused && !document.hidden && !session.finished) session.resume();
         this.scheduleSave();
         this.paintHintColor();
         this.syncSolvedStatus();
@@ -484,11 +486,11 @@ export class Shell {
         this.saveNow();
       }, { owner: "shell" }),
       session.hooks.refresh.tap(() => { this.hub.syncContext(); this.paintHintColor(); }, { owner: "shell" }),
-      // a solved board is a finished thing: player moves are refused until it is unlocked
+      // a finished board (solved or revealed): player moves are refused until it is unlocked
       session.hooks.solved.tap(() => this.syncLock(), { owner: "shell" }),
       session.hooks.action.tap((a, { source }) => {
         if (!a || !session.locked || source.kind !== "player") return a;
-        this.setStatus(session.lost ? "game over. undo to step back, or start a new game" : "this board is solved. unlock it to keep playing with it");
+        this.setStatus(session.lost ? "game over. undo to step back, or start a new game" : session.solved ? "this board is solved. unlock it to keep playing with it" : "the answer was revealed. unlock the board to keep playing with it");
         session.hooks.fx.call({ kind: "locked" });
         return null;
       }, { owner: "shell", priority: -100 }),
@@ -697,10 +699,10 @@ export class Shell {
     }
   }
 
-  /** Keep the session's lock in step with solved state, the unlock choice and the setting. */
+  /** Keep the session lock in step with the outcome, the unlock choice and the setting. */
   syncLock(): void {
     const s = this.session;
-    s?.setLocked((s.solved && !this.unlocked && prefs.get("lockSolved", true)) || s.lost);
+    s?.setLocked((s.finished && !this.unlocked && prefs.get("lockSolved", true)) || s.lost);
   }
 
   /** Zen: every slot but the board hidden, without touching the saved layout. */
@@ -885,7 +887,7 @@ export class Shell {
     });
     if (!s) return base;
     const def = s.def;
-    const progress = () => s.canUndo && !s.solved;
+    const progress = () => s.canUndo && !s.finished;
     const confirmNew = () => (progress() ? "start a new game? this one's progress will be lost." : null);
     return [
       ...base,
@@ -897,9 +899,12 @@ export class Shell {
         "shell.hint": () => this.showHint(),
         "shell.apply-hint": () => this.applyHint(),
         "shell.reveal": () => {
-          const sol = def.solve?.(s.puzzle);
-          if (sol) s.replaceState(sol, { kind: "system", reason: "reveal" });
-          else this.setStatus("no solution available");
+          if (!s.reveal()) {
+            this.setStatus("no solution available");
+            return;
+          }
+          this.syncSolvedStatus();
+          this.saveNow();
         },
         "shell.pause": () => this.togglePause(),
         "shell.new": () => this.newGameSame(),
@@ -908,13 +913,13 @@ export class Shell {
         "shell.undo": { when: (c) => !!c.canUndo && (!c.locked || !!c.lost) },
         "shell.redo": { when: (c) => !!c.canRedo && !c.locked },
         "shell.restart": {
-          danger: true, when: (c) => !!c.canUndo || !!c.solved,
-          confirm: () => (s.solved ? "this board is solved. restarting clears it. restart anyway?" : "restart this board from the beginning?"),
+          danger: true, when: (c) => !!c.canUndo || !!c.finished,
+          confirm: () => (s.finished ? "this game is over. restarting clears it. restart anyway?" : "restart this board from the beginning?"),
         },
-        "shell.hint": { when: (c) => !c.solved },
-        "shell.apply-hint": { when: (c) => !c.solved },
-        "shell.reveal": { danger: true, when: (c) => !c.solved && !!def.solve, confirm: () => "show the whole solution?" },
-        "shell.pause": { when: (c) => !c.solved, checked: () => s.paused },
+        "shell.hint": { when: (c) => !c.finished },
+        "shell.apply-hint": { when: (c) => !c.finished },
+        "shell.reveal": { danger: true, when: (c) => !c.finished && !!def.solve, confirm: () => "show the whole solution?" },
+        "shell.pause": { when: (c) => !c.finished, checked: () => s.paused },
         "shell.new": { danger: progress, confirm: confirmNew },
       }),
       ...(def.presets ?? []).map((p, i): CommandDef => ({
@@ -1043,7 +1048,7 @@ export class Shell {
 
   togglePause(): void {
     const s = this.session;
-    if (!s || s.solved) return;
+    if (!s || s.finished) return;
     s.setPaused(!s.paused);
     this.root.toggleAttribute("data-paused", s.paused);
     this.hub.refresh();
@@ -1064,7 +1069,7 @@ export class Shell {
       this.applyHint();
       return;
     }
-    const hint = s.showHint();
+    const hint = s.origin.kind === "practice" ? s.showHint(this.lessonHint()) : s.showHint();
     if (!hint) {
       this.setStatus("no hint available");
       return;
@@ -1077,8 +1082,8 @@ export class Shell {
 
   applyHint(): void {
     const s = this.session;
-    if (!s || s.solved) return;
-    const hint = s.activeHint ?? s.hint();
+    if (!s || s.finished) return;
+    const hint = s.activeHint ?? (s.origin.kind === "practice" ? this.lessonHint() : s.hint());
     if (!hint) {
       this.setStatus("no hint available");
       return;
@@ -1102,22 +1107,38 @@ export class Shell {
 
   // --- practice ---
 
+  /** Instances of the lesson still to do on `state`. */
+  private lessonLeft(state: unknown): Step[] {
+    const s = this.session;
+    return s?.origin.kind === "practice" ? stepsLeft(s.def, s.puzzle, s.origin.start, state, this.lesson) : [];
+  }
+
+  /** On a practice board: a nudge toward an instance of the practiced technique still to do. */
+  lessonHint(): Hint<any> | null {
+    const s = this.session;
+    if (s?.origin.kind !== "practice") return null;
+    const id = s.origin.technique;
+    const t = this.techniques?.list.find((x) => x.id === id);
+    const next = this.lessonLeft(s.state)[0];
+    return t && next ? hintFrom(t, next, 1) as Hint<any> : null;
+  }
+
+  /** A lesson asks for every instance: a player move must be part of one still left, and it ends when none are. */
   private checkPractice(ctx: { cause: string; source?: { kind: string }; prev: unknown; state: unknown }): void {
     const s = this.session;
-    if (!s || s.origin.kind !== "practice" || ctx.cause !== "action" || ctx.source?.kind !== "player") return;
-    const step = s.origin.step;
-    // the step is judged from the position the practice started at
-    const from = this.practiceStart ?? ctx.prev;
-    if (isPartOfStep(s.def, s.puzzle, ctx.prev, ctx.state, step) && isPartOfStep(s.def, s.puzzle, from, ctx.state, step)) {
-      const done = isStepDone(s.def, s.puzzle, from, ctx.state, step);
-      s.hooks.fx.call({ kind: "practice", correct: true, done });
-      this.setStatus(done ? "that's it!" : "yes, keep going");
-    } else {
+    if (!s || s.origin.kind !== "practice" || ctx.cause !== "action") return;
+    const byPlayer = ctx.source?.kind === "player";
+    if (byPlayer && !isPartOfStep(s.def, s.puzzle, ctx.prev, ctx.state, this.lessonLeft(ctx.prev))) {
       s.hooks.fx.call({ kind: "practice", correct: false, done: false });
       this.keepStatus = true;
       queueMicrotask(() => s.undo());
       this.setStatus("not that one. look again");
+      return;
     }
+    const left = this.lessonLeft(ctx.state).length;
+    if (!byPlayer && left > 0) return;
+    s.hooks.fx.call({ kind: "practice", correct: true, done: left === 0 });
+    this.setStatus(left === 0 ? "that's all of them!" : `yes. ${left} more to find`);
   }
 
   // --- persistence ---
@@ -1139,7 +1160,8 @@ export class Shell {
       detail: [s.origin.kind === "practice" ? "practice" : "", s.def.describe?.(s.puzzle) ?? ""].filter(Boolean).join(" · "),
       updatedAt: Date.now(),
       solved: s.solved,
-      elapsedMs: s.solvedAtMs ?? s.elapsedMs(),
+      revealed: s.outcome === "revealed",
+      elapsedMs: s.finishedAtMs ?? s.elapsedMs(),
       practice: s.origin.kind === "practice",
     }, s.snapshot());
     this.hooks.sessions.call();
@@ -1152,13 +1174,8 @@ export class Shell {
 
   /** Delete saved games; if the open one is among them, go back to the game list. */
   deleteSessions(ids: readonly string[]): void {
+    if (ids.includes(this.sessionId)) this.goIndex();
     for (const id of ids) removeSession(id);
-    if (ids.includes(this.sessionId) && this.session) {
-      this.session.pause();
-      this.session = null;
-      this.sessionId = "";
-      this.goIndex();
-    }
     this.hooks.sessions.call();
   }
 
@@ -1261,9 +1278,9 @@ export class Shell {
         def.tags?.length ? h("span", { class: "tags" }, def.tags.map((tag) => h("span", { class: "tag", style: tagStyle(tag) }, tag))) : null,
         n ? h("a", { href: `?p=${p}&tab=techniques`, class: "learn", onclick: go(`p=${p}&tab=techniques`) }, `learn · ${n} techniques`) : null);
     }).map((el, i) => ({ el, def: all[i]! }));
-    const going = listSessions().some((m) => !m.solved && !m.practice);
+    const going = listSessions().some((m) => !finished(m) && !m.practice);
     const resume = going ? h("section", { class: "index-continue" }, h("h2", null, "continue"),
-      sessionList(this, { filter: (m) => !m.solved && !m.practice, limit: 5, tools: false })) : null;
+      sessionList(this, { filter: (m) => !finished(m) && !m.practice, limit: 5, tools: false })) : null;
     this.els.index.append(h("div", { class: "index-inner" }, resume, search, filters, list));
     render();
     this.hub.refresh();
@@ -1294,10 +1311,10 @@ export class Shell {
     const s = this.session;
     if (!s) return;
     const hide = prefs.get("hideTimer", false);
-    const time = formatTime(s.solved ? s.solvedAtMs ?? 0 : s.elapsedMs());
-    this.els.timer.textContent = hide && !s.solved ? "" : time;
-    this.els.pauseMark.textContent = s.solved ? "solved" : "paused";
-    this.els.pauseMark.classList.toggle("on", s.solved || !s.running);
+    const time = formatTime(s.finishedAtMs ?? s.elapsedMs());
+    this.els.timer.textContent = hide && !s.finished ? "" : time;
+    this.els.pauseMark.textContent = s.outcome ?? "paused";
+    this.els.pauseMark.classList.toggle("on", s.finished || !s.running);
   }
 
   get status(): string {
@@ -1325,7 +1342,11 @@ export class Shell {
     if (s.solved) {
       this.root.dataset.solved = "";
       this.root.removeAttribute("data-paused");
-      this.setStatus(s.origin.kind === "practice" ? "solved" : `solved in ${formatTime(s.solvedAtMs!)}`);
+      this.setStatus(s.origin.kind === "practice" ? "solved" : `solved in ${formatTime(s.finishedAtMs!)}`);
+    } else if (s.finished) {
+      delete this.root.dataset.solved;
+      this.root.removeAttribute("data-paused");
+      this.setStatus("answer revealed");
     } else {
       delete this.root.dataset.solved;
       this.setStatus("");

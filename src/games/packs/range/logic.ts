@@ -448,7 +448,7 @@ export const range: PuzzleDef<RangePuzzle, RangeState, RangeAction, RangeInterac
   isSolved,
   solve(p) {
     const a = analyze(p);
-    return a.solution ? { marks: a.solution.map((v, c) => (p.nums[c]! > 0 ? NONE : v === SHADED ? BLACK : DOT)) } : null;
+    return a.solution ? { board: { marks: a.solution.map((v, c) => (p.nums[c]! > 0 ? NONE : v === SHADED ? BLACK : DOT)) } } : null;
   },
   hint,
   rate,

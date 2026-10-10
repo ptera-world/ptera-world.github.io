@@ -22,25 +22,26 @@ export const clearColour: FloodTechnique = {
   puzzles: [flood],
   level: 1,
   description: "if every cell of some color left on the board touches your area (or joins it through others of that color), flooding with it takes that color off the board for good: one fewer color to come back for.",
-  find(p, s) {
-    if (!playable(p, s)) return null;
-    let best: { colour: number; got: number[] } | null = null;
+  instances(p, s, visit) {
+    if (!playable(p, s)) return;
+    const found: { colour: number; got: number[] }[] = [];
     for (let c = 0; c < p.colours; c++) {
       if (c === s.grid[0] || !s.grid.includes(c)) continue;
       const next = fill(p.w, p.h, s.grid, c);
       const area = region(p.w, p.h, next);
       if (next.some((v, i) => v === c && !area[i])) continue;
-      const got = gained(p, s.grid, c);
-      if (!best || got.length > best.got.length) best = { colour: c, got };
+      found.push({ colour: c, got: gained(p, s.grid, c) });
     }
-    if (!best) return null;
-    const name = COLOUR_NAMES[best.colour]!;
-    return {
-      message: `flood ${name}: every ${name} cell left joins your area (${plural(best.got.length, "cell", "cells")}), so ${name} is gone from the board for good.`,
-      nudge: `one color can be wiped out completely right now`,
-      focus: { gained: best.got } satisfies FloodFocus,
-      actions: [{ type: "fill", colour: best.colour }],
-    };
+    found.sort((a, b) => b.got.length - a.got.length);
+    for (const best of found) {
+      const name = COLOUR_NAMES[best.colour]!;
+      if (visit({
+        message: `flood ${name}: every ${name} cell left joins your area (${plural(best.got.length, "cell", "cells")}), so ${name} is gone from the board for good.`,
+        nudge: `one color can be wiped out completely right now`,
+        focus: { gained: best.got } satisfies FloodFocus,
+        actions: [{ type: "fill", colour: best.colour }],
+      })) return;
+    }
   },
 };
 
@@ -50,22 +51,22 @@ export const lookahead: FloodTechnique = {
   puzzles: [flood],
   level: 2,
   description: "think of each cell's distance as how many fills it takes to reach it. try every sequence of three fills and pick the start that leaves the farthest cell nearest (then the fewest cells that far, then the biggest area). this is the method the move limit is set from.",
-  find(p, s) {
-    if (!playable(p, s)) return null;
+  instances(p, s, visit) {
+    if (!playable(p, s)) return;
     const c = bestFill(p, s.grid);
-    if (c < 0) return null;
+    if (c < 0) return;
     const name = COLOUR_NAMES[c]!;
     const got = gained(p, s.grid, c);
     const finishes = isComplete(fill(p.w, p.h, s.grid, c));
     const left = solverMoves(p, s.grid).length;
-    return {
+    visit({
       message: finishes
         ? `flood ${name}: that finishes the board.`
         : `flood ${name} (${plural(got.length, "cell joins", "cells join")}): of every three-fill sequence, starting with ${name} brings the farthest cells closest. the method finishes in ${plural(left, "fill", "fills")} from here.`,
       nudge: "look for the color that opens up the most of the board, a few moves ahead",
       focus: { gained: got } satisfies FloodFocus,
       actions: [{ type: "fill", colour: c }],
-    };
+    });
   },
   practice: { params: { width: 8, height: 8, colours: 5, leniency: 0 } },
 };

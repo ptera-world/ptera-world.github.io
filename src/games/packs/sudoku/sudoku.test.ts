@@ -4,7 +4,7 @@ import { Registry } from "../../core/registry";
 import { createRng } from "../../core/rng";
 import { resolve } from "../../core/schema";
 import { Session } from "../../core/session";
-import { TechniqueHost, applyStep, findPracticePosition, firstStep, isPartOfStep } from "../../core/techniques";
+import { TechniqueHost, applyStep, findPracticePosition, findStep, firstStep, isPartOfStep } from "../../core/techniques";
 import { keen, sudoku, towers, unequal } from "./defs";
 import { bit, digits } from "./engine/bits";
 import { grade, gridFrom, logicalSolve } from "./engine/human";
@@ -253,15 +253,16 @@ test("practice boards for eliminations show candidates, and striking one is part
   const target = all.find((t) => t.id === "sudoku.pointing")!;
   const pos = await findPracticePosition(sudoku, all, target, "p", sig());
   expect(pos).not.toBeNull();
-  const session = new Session(sudoku, pos!.puzzle as LatinPuzzle, { kind: "practice", technique: target.id, seed: pos!.seed, step: pos!.step }, { state: pos!.state as GridState });
+  const step = findStep(sudoku, target, pos!.puzzle, pos!.state)!;
+  const session = new Session(sudoku, pos!.puzzle as LatinPuzzle, { kind: "practice", technique: target.id, seed: pos!.seed, start: pos!.state as GridState }, { state: pos!.state as GridState });
   const plugin = latinPlugins.find((x) => x.id === "sudoku.practice-candidates")!;
   plugin.setup!({ session, settings: {}, owner: plugin.id });
   expect(session.derived()[CANDIDATES]).toBeDefined();
-  const strike = pos!.step.actions.find((a) => (a as GridAction).type === "strike") as Extract<GridAction, { type: "strike" }>;
+  const strike = step.actions.find((a) => (a as GridAction).type === "strike") as Extract<GridAction, { type: "strike" }>;
   const [c, m] = strike.marks[0]!;
   const prev = session.state;
   session.dispatch({ type: "mark", layer: "center", cells: [c], digit: digits(m)[0]!, on: false });
-  expect(isPartOfStep(sudoku, session.puzzle, prev, session.state, pos!.step)).toBe(true);
+  expect(isPartOfStep(sudoku, session.puzzle, prev, session.state, [step])).toBe(true);
 }, 60_000);
 
 test("names, aliases and rules", async () => {

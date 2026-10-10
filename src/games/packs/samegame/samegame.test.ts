@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { generate } from "../../core/generate";
 import { Registry } from "../../core/registry";
 import { Session } from "../../core/session";
-import { TechniqueHost, applyStep, findPracticePosition, firstStep } from "../../core/techniques";
+import { TechniqueHost, applyStep, findStep, findPracticePosition, firstStep } from "../../core/techniques";
 import { collapse, gridFormat, samegame, sgtFormat, type SamegamePuzzle } from "./logic";
 import { findClear } from "./solver";
 import { checkClearable, samegameTechniques } from "./techniques";
@@ -82,7 +82,7 @@ test("scoring, being stuck, practice", async () => {
   const stuck = gridFormat.parse("12\n21");
   expect(samegame.isLost!(stuck, samegame.init(stuck))).toBe(true);
   const pos = await findPracticePosition(samegame, samegameTechniques, samegameTechniques[0]!, "x", sig());
-  expect(pos?.step.actions.length).toBe(1);
+  expect(pos && findStep(samegame, samegameTechniques[0]!, pos.puzzle, pos.state)?.actions.length).toBe(1);
 });
 
 test("formats round-trip; sgt ids parse", async () => {

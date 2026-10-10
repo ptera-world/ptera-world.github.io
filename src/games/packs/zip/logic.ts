@@ -230,7 +230,7 @@ export const zip: PuzzleDef<ZipPuzzle, ZipState, ZipAction, null, typeof params>
   isSolved,
   solve(p) {
     const a = analyze(p);
-    return a.solution ? { path: a.solution.slice() } : null;
+    return a.solution ? { board: { path: a.solution.slice() } } : null;
   },
   hint,
   rate,

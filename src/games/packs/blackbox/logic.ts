@@ -223,7 +223,7 @@ export const blackbox: PuzzleDef<BlackboxPuzzle, BlackboxState, BlackboxAction, 
   ],
   solve: (p) => {
     const s = blackbox.init(p);
-    return { ...s, guesses: s.guesses.map((_, c) => p.balls.includes(c)), solved: true };
+    return { board: { ...s, guesses: s.guesses.map((_, c) => p.balls.includes(c)), solved: true } };
   },
   describe: (p) => `${p.w}×${p.h}, ${p.minBalls === p.maxBalls ? p.minBalls : `${p.minBalls}-${p.maxBalls}`} balls`,
 };

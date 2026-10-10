@@ -572,7 +572,7 @@ export const singles: PuzzleDef<SinglesPuzzle, SinglesState, SinglesAction, Sing
   isSolved,
   solve(p) {
     const a = analyze(p);
-    return a.solution ? { marks: a.solution.map((v) => (v === SHADED ? BLACK : CIRCLE)) } : null;
+    return a.solution ? { board: { marks: a.solution.map((v) => (v === SHADED ? BLACK : CIRCLE)) } } : null;
   },
   hint,
   rate,

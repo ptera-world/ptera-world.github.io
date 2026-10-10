@@ -3,7 +3,7 @@ import { generate } from "../../core/generate";
 import { Registry } from "../../core/registry";
 import { createRng } from "../../core/rng";
 import { Session } from "../../core/session";
-import { TechniqueHost } from "../../core/techniques";
+import { TechniqueHost, findStep } from "../../core/techniques";
 import { allCodes, bestGuess, candidates, guess, mark, sgtFormat, type GuessPuzzle, type GuessState } from "./logic";
 import { checkRow } from "./plugins";
 import { guessTechniques, knownPeg, lastCode, narrowDown } from "./techniques";
@@ -98,15 +98,15 @@ test("techniques reason only from the marks", async () => {
     let s = guess.init(p);
     for (let k = 0; k < 4 && !guess.isSolved(p, s); k++) {
       const cand = candidates(p, s);
-      const step = knownPeg.find(p, s);
+      const step = findStep(guess, knownPeg, p, s);
       if (step) {
         seenKnown++;
-        for (const a of step.actions as { index: number; colour: number }[]) expect(cand.every((c) => c[a.index] === a.colour)).toBe(true);
-        for (const a of step.actions as { index: number }[]) expect(knownPeg.findAt!(p, s, { slot: a.index })).not.toBeNull();
+        for (const a of step.actions as unknown as { index: number; colour: number }[]) expect(cand.every((c) => c[a.index] === a.colour)).toBe(true);
+        for (const a of step.actions as unknown as { index: number }[]) expect(knownPeg.findAt!(p, s, { slot: a.index })).not.toBeNull();
       }
-      const last = lastCode.find(p, s);
+      const last = findStep(guess, lastCode, p, s);
       expect(last !== null).toBe(cand.length === 1 && s.done.length > 0);
-      if (last) expect(last.actions[0]).toEqual({ type: "row", code: p.code });
+      if (last) expect(last.actions[0] as unknown).toEqual({ type: "row", code: p.code });
       s = guess.reduce(p, s, { type: "row", code: Array.from({ length: 3 }, () => rng.range(1, 4)) });
       s = guess.reduce(p, s, { type: "submit" });
     }
@@ -115,7 +115,7 @@ test("techniques reason only from the marks", async () => {
   const p: GuessPuzzle = { colours: 3, pegs: 2, guesses: 10, blanks: false, duplicates: true, code: [2, 3] };
   const best = bestGuess(p, guess.init(p))!;
   expect(best.left).toBe(9);
-  expect(narrowDown.find(p, guess.init(p))?.actions?.[1]).toEqual({ type: "submit" });
+  expect(findStep(guess, narrowDown, p, guess.init(p))?.actions?.[1]).toEqual({ type: "submit" });
 });
 
 test("game ids round-trip and use the original's hidden form", async () => {

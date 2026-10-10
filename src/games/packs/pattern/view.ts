@@ -418,7 +418,7 @@ export function patternView(look: Look, board: Board, menuHoldMs: number): View<
         const prog = d[PROGRESS_KEY] as Progress | undefined;
         const range = d[BLOCK_RANGE_KEY] as BlockRange | undefined;
         const focus = (session.activeHint?.focus as PatternFocus | undefined) ?? {};
-        const solved = session.solved;
+        const solved = session.finished;
         svg.classList.toggle("solved", solved);
         const preview = drag ? new Set(dragCells(drag)) : null;
         const pFill = new Set(prog?.fill ?? []), pEmpty = new Set(prog?.empty ?? []);

@@ -10,6 +10,12 @@ import { rushTechniques } from "./techniques";
 const sig = () => new AbortController().signal;
 const gen = (params: Record<string, unknown>, seed: string) => generate(rushhour, params, seed, sig()) as Promise<RushPuzzle>;
 
+const solved = (p: RushPuzzle) => {
+  let s = rushhour.init(p);
+  for (const m of (rushhour.solve!(p, s) as { moves: RushAction[] }).moves) s = rushhour.reduce(p, s, m);
+  return s;
+};
+
 test("generation is deterministic per (params, seed)", async () => {
   const a = await gen({ difficulty: "medium" }, "abc");
   expect(await gen({ difficulty: "medium" }, "abc")).toEqual(a);
@@ -23,8 +29,8 @@ test("generated lots need the difficulty's number of moves", async () => {
       const d = distance(p, startPos(p))!;
       expect(d).toBeGreaterThanOrEqual(BANDS[i]![0]);
       expect(d).toBeLessThanOrEqual(BANDS[i]![1]);
-      expect(rushhour.isSolved(p, rushhour.solve!(p)!)).toBe(true);
-      expect(rushhour.solve!(p)!.moves).toBe(d);
+      expect(rushhour.isSolved(p, solved(p))).toBe(true);
+      expect(solved(p).moves).toBe(d);
     }
   }
 }, 60000);

@@ -3,7 +3,7 @@ import { generate } from "../../core/generate";
 import { createRng } from "../../core/rng";
 import { Registry } from "../../core/registry";
 import { Session } from "../../core/session";
-import { TechniqueHost, applyStep, findPracticePosition, firstStep, rateByTechniques } from "../../core/techniques";
+import { TechniqueHost, applyStep, findPracticePosition, firstStep, findStep, rateByTechniques } from "../../core/techniques";
 import { countSolutions, solveLevel } from "../../lib/grid-kit/csp";
 import { cellName, type Focus } from "../../lib/grid-kit/names";
 import { BLACK, DOT, NONE, SHADED, type ShadeAction } from "../../lib/shade-kit/state";
@@ -39,10 +39,11 @@ for (const difficulty of LEVELS) {
 
 test("every preset generates within a few seconds", async () => {
   for (const preset of nurikabe.presets!) {
-    const t = performance.now();
+    const t = process.cpuUsage();
     const p = await gen(preset.params, `preset-${preset.label}`);
     expect(analyze(p).count).toBe(1);
-    expect(performance.now() - t).toBeLessThan(5000);
+    const { user, system } = process.cpuUsage(t);
+    expect((user + system) / 1000).toBeLessThan(5000);
   }
 }, 60000);
 
@@ -58,7 +59,8 @@ test("logic never contradicts brute force on random boards", () => {
     expect(a.count).toBe(brute.count as 0 | 1 | 2);
     if (a.count === 1) {
       solved++;
-      expect(isSolved(p, nurikabe.solve!(p)!)).toBe(true);
+      const ans = nurikabe.solve!(p, nurikabe.init(p))!;
+      expect("board" in ans && isSolved(p, ans.board)).toBe(true);
     }
   }
   expect(solved).toBeGreaterThan(5);
@@ -133,7 +135,7 @@ test("every cell a hint names is highlighted", async () => {
     let st = nurikabe.init(p);
     for (let i = 0; i < 400; i++) {
       for (const t of nurikabeTechniques) {
-        const step = t.find(p, st);
+        const step = findStep(nurikabe, t, p, st);
         if (!step) continue;
         const all = (x: Focus) => new Set([...x.cells, ...x.because, ...(x.related ?? [])].map((c) => cellName(p, c)));
         for (const n of names(step.message)) expect(all(step.focus as Focus).has(n)).toBe(true);
@@ -198,6 +200,7 @@ test("puzz.link URLs and the text format round-trip", async () => {
 
 test("solve() reaches a solved state", async () => {
   const p = await gen({ width: 8, height: 8 }, "solve");
-  expect(isSolved(p, nurikabe.solve!(p)!)).toBe(true);
+  const ans = nurikabe.solve!(p, nurikabe.init(p))!;
+  expect("board" in ans && isSolved(p, ans.board)).toBe(true);
   expect(isSolved(p, nurikabe.init(p))).toBe(false);
 });

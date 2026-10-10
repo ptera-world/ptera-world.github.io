@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { generate } from "../../core/generate";
 import { createRng } from "../../core/rng";
-import { applyStep, findPracticePosition, firstStep } from "../../core/techniques";
+import { applyStep, findStep, findPracticePosition, firstStep } from "../../core/techniques";
 import { SOLIDS, area, faceOf, squares } from "./geometry";
 import { arena, classOf, cube, sgtFormat, type CubePuzzle } from "./logic";
 import { pose } from "./pose";
@@ -87,7 +87,7 @@ test("techniques alone make every face blue on every preset", async () => {
 test("practice positions exist", async () => {
   for (const t of cubeTechniques) {
     const pos = await findPracticePosition(cube, cubeTechniques, t, "x", sig());
-    expect(pos?.step.actions.length).toBe(1);
+    expect(pos && findStep(cube, t, pos.puzzle, pos.state)?.actions.length).toBe(1);
   }
 });
 

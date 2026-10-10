@@ -97,6 +97,9 @@ export const techniques: Technique<NetPuzzle, NetState, NetAction>[] = RULES.map
   puzzles: [net],
   level: i + 1,
   description: INFO[rule].description,
-  find: (p, s) => stepFor(p, s, rule),
+  instances(p, s, visit) {
+    const step = stepFor(p, s, rule);
+    if (step) visit(step);
+  },
   practice: { params: INFO[rule].practice },
 }));

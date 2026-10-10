@@ -66,18 +66,31 @@ function changes(p: MapPuzzle, s: MapState, st: SolverStep): { regions: number[]
   };
 }
 
-function first(p: MapPuzzle, s: MapState, kinds: readonly StepKind[], target?: MapTarget) {
+type Hit = { raw: SolverStep; regions: number[]; actions: MapAction[] };
+
+function each(p: MapPuzzle, s: MapState, kinds: readonly StepKind[], visit: (hit: Hit) => boolean | void, target?: MapTarget): void {
   const k = knowledge(p, s);
-  if (!k) return null;
-  let ch: ReturnType<typeof changes> = { regions: [], actions: [] };
-  const raw = scanSteps(geometry(p), k, kinds, (st) => (!target || st.regions.includes(target.region) || st.because.includes(target.region)) && (ch = changes(p, s, st)).regions.length > 0);
-  return raw ? { raw, ...ch } : null;
+  if (!k) return;
+  scanSteps(geometry(p), k, kinds, (raw) => {
+    if (target && !raw.regions.includes(target.region) && !raw.because.includes(target.region)) return false;
+    const ch = changes(p, s, raw);
+    return ch.regions.length > 0 && visit({ raw, ...ch }) === true;
+  });
 }
 
-type Finder = (p: MapPuzzle, s: MapState, target?: MapTarget) => Step<MapAction> | null;
+type Make = (p: MapPuzzle, s: MapState, hit: Hit) => Step<MapAction>;
 
-function technique(def: Omit<MapTechnique, "find" | "findAt" | "puzzles">, find: Finder): MapTechnique {
-  return { ...def, puzzles: [map], find: (p, s) => find(p, s), findAt: (p, s, t) => find(p, s, t as MapTarget) };
+function technique(def: Omit<MapTechnique, "instances" | "findAt" | "puzzles">, kinds: readonly StepKind[], make: Make): MapTechnique {
+  return {
+    ...def,
+    puzzles: [map],
+    instances: (p, s, visit) => each(p, s, kinds, (hit) => visit(make(p, s, hit)) === true),
+    findAt: (p, s, t) => {
+      let found: Step<MapAction> | null = null;
+      each(p, s, kinds, (hit) => { found = make(p, s, hit); return true; }, t as MapTarget);
+      return found;
+    },
+  };
 }
 
 /** "the region at C5 is red, the region at D2 can't be blue". */
@@ -100,9 +113,7 @@ export const onlyColour = technique({
   level: 1,
   description: "a region whose neighbors (and your pencil marks) leave it just one color has that color.",
   practice: { params: EASY },
-}, (p, s, target) => {
-  const hit = first(p, s, ["only-colour"], target);
-  if (!hit) return null;
+}, ["only-colour"], (p, s, hit) => {
   const r = hit.raw.regions[0]!;
   return {
     message: `${outcome(p, s, hit.raw, hit.regions)}: it's the only color left once its neighbors are counted`,
@@ -119,9 +130,7 @@ export const pair = technique({
   level: 2,
   description: "two neighboring regions that can only be the same two colors must use both of them, one each. any region touching both of them can't be either color.",
   practice: { params: MEDIUM },
-}, (p, s, target) => {
-  const hit = first(p, s, ["pair"], target);
-  if (!hit) return null;
+}, ["pair"], (p, s, hit) => {
   const [a, b] = hit.raw.because as [number, number];
   return {
     message: `${regionList(p, [a, b])} touch and can only be ${colourList(hit.raw.remove, "and")}, so they use both. anything touching both can't be either: ${outcome(p, s, hit.raw, hit.regions)}`,
@@ -138,9 +147,7 @@ export const trial = technique({
   level: 3,
   description: "pretend a region has a color and follow the easier techniques from there. if some region ends up with no color left, the first region can't have that color.",
   practice: { params: HARD },
-}, (p, s, target) => {
-  const hit = first(p, s, ["trial"], target);
-  if (!hit) return null;
+}, ["trial"], (p, s, hit) => {
   const r = hit.raw.regions[0]!;
   return {
     message: `if ${regionName(p, r)} were ${COLOUR_NAMES[hit.raw.colour!]}, the easier techniques would leave some region with no color, so ${outcome(p, s, hit.raw, hit.regions)}`,

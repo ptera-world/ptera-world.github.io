@@ -34,7 +34,8 @@ for (const difficulty of ["easy", "medium", "hard"] as const) {
       const brute = countSolutions(p, freshKnowledge(p), 2);
       expect(brute.count).toBe(1);
       expect(lines(r.k)).toEqual(lines(brute.first!));
-      expect(numberlink.isSolved(p, numberlink.solve!(p)!)).toBe(true);
+      const ans = numberlink.solve!(p, numberlink.init(p))!;
+      expect("board" in ans && numberlink.isSolved(p, ans.board)).toBe(true);
     }
     expect(exact).toBeGreaterThanOrEqual(4);
   }, 60000);

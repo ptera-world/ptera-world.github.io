@@ -98,11 +98,11 @@ export const onlyMove: Technique2048 = {
   puzzles: [game2048],
   level: 1,
   description: "when sliding just one way moves anything, that's the move.",
-  find(p, s) {
+  instances(p, s, visit) {
     const ways = [0, 1, 2, 3].filter((d) => canSlide(p.size, s.grid, d));
-    if (ways.length !== 1) return null;
+    if (ways.length !== 1) return;
     const d = ways[0]!;
-    return step(p, s, d, `only sliding ${DIR_NAMES[d]} moves any tile.`, "which slide moves anything at all?");
+    visit(step(p, s, d, `only sliding ${DIR_NAMES[d]} moves any tile.`, "which slide moves anything at all?"));
   },
   practice: false,
 };
@@ -113,13 +113,12 @@ export const reachGoal: Technique2048 = {
   puzzles: [game2048],
   level: 2,
   description: "when a slide merges two tiles into the goal tile, make it.",
-  find(p, s) {
-    if (best(s.grid) >= p.target) return null;
+  instances(p, s, visit) {
+    if (best(s.grid) >= p.target) return;
     for (let d = 0; d < 4; d++) {
       const r = slide(p.size, s.grid, d);
-      if (r.changed && best(r.grid) >= p.target) return step(p, s, d, `slide ${DIR_NAMES[d]}: it makes the ${tileValue(p.target)}.`, `can two tiles make ${tileValue(p.target)}?`);
+      if (r.changed && best(r.grid) >= p.target && visit(step(p, s, d, `slide ${DIR_NAMES[d]}: it makes the ${tileValue(p.target)}.`, `can two tiles make ${tileValue(p.target)}?`))) return;
     }
-    return null;
   },
   practice: false,
 };
@@ -130,11 +129,11 @@ export const lookAhead: Technique2048 = {
   puzzles: [game2048],
   level: 3,
   description: "try each slide, then every place the next tile could appear and your best reply to it, and average. a good board keeps its biggest tile in a corner, its rows and columns in order, and plenty of empty cells.",
-  find(p, s) {
+  instances(p, s, visit) {
     const v = values(p, s);
     const order = [0, 1, 2, 3].filter((d) => v[d] !== null).sort((a, b) => v[b]! - v[a]! || a - b);
     const d = order[0];
-    if (d === undefined) return null;
+    if (d === undefined) return;
     const n = p.size;
     const after = slide(n, s.grid, d).grid;
     const top = best(s.grid);
@@ -147,7 +146,7 @@ export const lookAhead: Technique2048 = {
     reasons.push(`leaves ${empty} ${empty === 1 ? "cell" : "cells"} empty before the new tile`);
     const pulled = order.slice(1).filter((o) => inCorner(s.grid) && !inCorner(slide(n, s.grid, o).grid));
     const contrast = pulled.length ? ` sliding ${pulled.map((o) => DIR_NAMES[o]).join(" or ")} would pull the ${tileValue(top)} out of its corner.` : "";
-    return step(p, s, d, `slide ${DIR_NAMES[d]}: it ${reasons.join(", ")}, and looking ahead it does best on average.${contrast}`, "which slide keeps the board tidy?");
+    visit(step(p, s, d, `slide ${DIR_NAMES[d]}: it ${reasons.join(", ")}, and looking ahead it does best on average.${contrast}`, "which slide keeps the board tidy?"));
   },
   practice: false,
 };

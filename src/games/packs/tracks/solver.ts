@@ -389,20 +389,20 @@ export function propagate(p: TracksPuzzle, g: EdgeGrid, k: Knowledge, maxLevel: 
   }
 }
 
-export function scanSteps(p: TracksPuzzle, k: Knowledge, kinds: readonly StepKind[], accept: (s: Step) => boolean): Step | null {
+/** Every step of the given kinds in rule order, until `visit` returns true. Reads k without changing it. */
+export function scanSteps(p: TracksPuzzle, k: Knowledge, kinds: readonly StepKind[], visit: (s: Step) => boolean): void {
   const g = edgeGrid(p.w, p.h);
-  let found: Step | null = null;
+  let stop = false;
   const emit: Emit = (s) => {
-    if (!kinds.includes(s.kind) || !accept(s)) return 0;
-    found = s;
+    if (!kinds.includes(s.kind) || !visit(s)) return 0;
+    stop = true;
     return 1;
   };
   for (const [, rule, ks] of RULES) {
     if (!ks.some((x) => kinds.includes(x))) continue;
     rule(p, g, k, emit);
-    if (found) return found;
+    if (stop) return;
   }
-  return null;
 }
 
 export function logicSolve(p: TracksPuzzle, maxLevel: Level = 2): { level: Level | null; k: Knowledge; ok: boolean } {

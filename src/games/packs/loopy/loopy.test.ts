@@ -5,7 +5,7 @@ import { PluginHost } from "../../core/plugins";
 import { Registry } from "../../core/registry";
 import { Session } from "../../core/session";
 import { namespace } from "../../core/storage";
-import { TechniqueHost, applyStep, findPracticePosition, firstStep, rateByTechniques } from "../../core/techniques";
+import { TechniqueHost, applyStep, findPracticePosition, findStep, firstStep, rateByTechniques } from "../../core/techniques";
 import pack, { register } from ".";
 import { assists } from "./assists";
 import { CROSS, LINE, UNKNOWN, check } from "./board";
@@ -170,7 +170,7 @@ for (const difficulty of ["easy", "normal", "tricky", "hard"]) {
 test("hints point out a wrong mark first, then solve the board", async () => {
   const p = await gen({ width: 6, height: 6, difficulty: "tricky" }, "hint");
   const { s } = played(p);
-  const wrong = loopy.solve!(p)!.edges.indexOf(CROSS);
+  const wrong = (loopy.solve!(p, loopy.init(p)) as { board: LoopyState }).board.edges.indexOf(CROSS);
   s.dispatch({ type: "set", edges: [wrong], value: LINE });
   const fix = s.hint()!;
   expect(fix.actions?.[0]).toEqual({ type: "set", edges: [wrong], value: UNKNOWN });
@@ -223,8 +223,8 @@ test("local techniques keep working next to a mistake elsewhere", () => {
   s = loopy.reduce(p, s, { type: "set", edges: g.ve[v]!.slice(0, 3), value: LINE });
   s = loopy.reduce(p, s, { type: "set", edges: [g.fe[0]![0]!], value: LINE });
   const t = techniques.find((x) => x.id === "loopy.clue-full")!;
-  expect(t.find(p, s)?.actions[0]?.edges.length).toBe(3);
-  expect(techniques.find((x) => x.id === "loopy.window-face")!.find(p, s)).toBeNull();
+  expect((findStep(loopy, t, p, s)?.actions[0] as LoopyAction | undefined)?.edges.length).toBe(3);
+  expect(findStep(loopy, techniques.find((x) => x.id === "loopy.window-face")!, p, s)).toBeNull();
 });
 
 test("mistake checks only exist when the puzzle has one solution", async () => {
@@ -306,10 +306,10 @@ test("hints name cells like the board labels on square grids, and say \"this\" e
   expect(edgeRef(g, top)).toBe("the top edge of A1");
   expect(dotRef(g, g.fv[3]![0]!)).toBe("the top-left corner of B2");
   const s = loopy.reduce(p, loopy.init(p), { type: "set", edges: [top], value: LINE });
-  const step = techniques.find((t) => t.id === "loopy.clue-full")!.find(p, s)!;
+  const step = findStep(loopy, techniques.find((t) => t.id === "loopy.clue-full")!, p, s)!;
   expect(step.message).toContain("the 1 in A1");
   expect(step.nudge).toBe("look at the 1 in A1");
   const hex = nativeFormat.parse(nativeFormat.serialize!({ tiling: "honeycomb", w: 3, h: 3, clues: Array.from({ length: getGrid("honeycomb", 3, 3).nf }, (_, i) => (i === 0 ? 0 : -1)) }));
-  const hs = techniques.find((t) => t.id === "loopy.clue-full")!.find(hex, loopy.init(hex))!;
+  const hs = findStep(loopy, techniques.find((t) => t.id === "loopy.clue-full")!, hex, loopy.init(hex))!;
   expect(hs.message).toContain("this 0");
 });

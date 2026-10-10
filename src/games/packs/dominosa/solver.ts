@@ -257,19 +257,18 @@ export function propagate(g: Geometry, k: Knowledge, maxLevel: Level): { ok: boo
   }
 }
 
-/** First step of one of `kinds` (in rule order) that `accept` takes. Reads k without changing it. */
-export function scanSteps(g: Geometry, k: Knowledge, kinds: readonly StepKind[], accept: (s: Step) => boolean): Step | null {
-  let found: Step | null = null;
+/** Every step of one of `kinds` (in rule order), until `visit` returns true. Reads k without changing it. */
+export function scanSteps(g: Geometry, k: Knowledge, kinds: readonly StepKind[], visit: (s: Step) => boolean): void {
+  let stop = false;
   const emit: Emit = (s) => {
-    if (!kinds.includes(s.kind) || !accept(s)) return 0;
-    found = s;
+    if (!kinds.includes(s.kind) || !visit(s)) return 0;
+    stop = true;
     return 1;
   };
   for (const rule of new Set(kinds.map((kd) => RULE_OF[kd]))) {
     rule(g, k, emit);
-    if (found) return found;
+    if (stop) return;
   }
-  return null;
 }
 
 export function isComplete(g: Geometry, k: Knowledge): boolean {

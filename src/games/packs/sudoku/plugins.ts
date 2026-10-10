@@ -6,6 +6,7 @@ import { conflicts, modelOf, type Model } from "./engine/model";
 import { latinDefs } from "./defs";
 import { CANDIDATES, CONFLICTS, MISTAKES, PEERS, SAME, type SameDigit } from "./keys";
 import { mistakeHint, solutionOf, type GridAction, type GridInteraction, type GridState, type LatinPuzzle } from "./puzzle";
+import { latinTechniques } from "./techniques";
 
 const plugin = definePlugins<LatinPuzzle, GridState, GridAction, GridInteraction>();
 type Api = PluginApi<LatinPuzzle, GridState, GridAction, GridInteraction>;
@@ -51,8 +52,10 @@ const practiceCandidates = plugin({
   enabledByDefault: true,
   setup(api) {
     const o = api.session.origin;
-    if (o.kind !== "practice" || !o.step.actions.some((a) => (a as GridAction).type === "strike")) return;
-    showCandidates(api);
+    if (o.kind !== "practice") return;
+    let strikes = false;
+    latinTechniques().find((t) => t.id === o.technique)?.instances(api.session.puzzle, o.start as GridState, (st) => (strikes = st.actions.some((a) => a.type === "strike")));
+    if (strikes) showCandidates(api);
   },
 });
 

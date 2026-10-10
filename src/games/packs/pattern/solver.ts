@@ -298,11 +298,11 @@ function propagateWhy(L: Lines, cells: Uint8Array, start: readonly number[]): nu
 }
 
 /**
- * First cell (scanning `count` cells from `from`, wrapping) where assuming one value and
- * line-solving leads to a contradiction, so the other value is forced. `cells` must already be
- * line-solved.
+ * Calls `visit` with every cell (scanning `count` cells from `from`, wrapping) and value where
+ * assuming it and line-solving leads to a contradiction, so the other value is forced, until `visit`
+ * returns true. `cells` must already be line-solved.
  */
-export function findProbe(L: Lines, cells: Uint8Array, from = 0, count = cells.length): ProbeDeduction | null {
+export function probes(L: Lines, cells: Uint8Array, visit: (probe: ProbeDeduction) => boolean | void, from = 0, count = cells.length): void {
   const n = cells.length;
   for (let k = 0; k < Math.min(n, count); k++) {
     const i = (from + k) % n;
@@ -311,10 +311,16 @@ export function findProbe(L: Lines, cells: Uint8Array, from = 0, count = cells.l
       const copy = cells.slice();
       copy[i] = v;
       const failed = propagateWhy(L, copy, L.linesOf(i));
-      if (failed >= 0) return { cell: i, tried: v, failedLine: failed, after: copy };
+      if (failed >= 0 && visit({ cell: i, tried: v, failedLine: failed, after: copy })) return;
     }
   }
-  return null;
+}
+
+/** The first probe `probes` visits. */
+export function findProbe(L: Lines, cells: Uint8Array, from = 0, count = cells.length): ProbeDeduction | null {
+  let hit: ProbeDeduction | null = null;
+  probes(L, cells, (probe) => { hit = probe; return true; }, from, count);
+  return hit;
 }
 
 export type Level = "line" | "probe";

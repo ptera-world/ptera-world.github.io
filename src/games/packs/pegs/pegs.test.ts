@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { generate } from "../../core/generate";
 import { Registry } from "../../core/registry";
 import { Session } from "../../core/session";
-import { TechniqueHost, applyStep, findPracticePosition, firstStep } from "../../core/techniques";
+import { TechniqueHost, applyStep, findStep, findPracticePosition, firstStep } from "../../core/techniques";
 import { CROSS_SOLUTIONS, OCTAGON_SOLUTIONS } from "./known";
 import { crossGrid, gridFormat, pegCount, pegs, sgtFormat, type PegsPuzzle } from "./logic";
 import { findSolution } from "./solver";
@@ -84,7 +84,7 @@ test("techniques alone finish the stored-solution boards, and practice works", a
     expect(pegCount(s.grid)).toBe(1);
   }
   const pos = await findPracticePosition(pegs, pegsTechniques, pegsTechniques[0]!, "x", sig());
-  expect(pos?.step.actions.length).toBe(1);
+  expect(pos && findStep(pegs, pegsTechniques[0]!, pos.puzzle, pos.state)?.actions.length).toBe(1);
 });
 
 test("jumps and losing", () => {

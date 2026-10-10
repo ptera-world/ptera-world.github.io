@@ -3,13 +3,19 @@ import { generate } from "../../core/generate";
 import { Registry } from "../../core/registry";
 import { Session } from "../../core/session";
 import { TechniqueHost, applyStep, findPracticePosition, firstStep } from "../../core/techniques";
-import { rleFormat, sokoban, xsbFormat } from "./logic";
+import { rleFormat, sokoban, xsbFormat, type SokoAction } from "./logic";
 import { checkStuck } from "./plugins";
 import { boxRoute, solvePushes, stuckBoxes, type SokoPuzzle } from "./solver";
 import { sokoTechniques } from "./techniques";
 
 const sig = () => new AbortController().signal;
 const gen = (params: Record<string, unknown>, seed: string) => generate(sokoban, params, seed, sig()) as Promise<SokoPuzzle>;
+
+const solved = (p: SokoPuzzle) => {
+  let s = sokoban.init(p);
+  for (const m of (sokoban.solve!(p, s) as { moves: SokoAction[] }).moves) s = sokoban.reduce(p, s, m);
+  return s;
+};
 const CLAIRE = ["#######", "#.@ # #", "#$* $ #", "#   $ #", "# ..  #", "#  *  #", "#######"].join("\n");
 
 test("generation is deterministic per (params, seed)", async () => {
@@ -25,7 +31,7 @@ test("generated levels are solvable, and the solver's pushes really solve them",
       const r = solvePushes(p, { boxes: p.boxes, player: p.player });
       expect(r.pushes).not.toBeNull();
       expect(r.pushes!.length).toBeGreaterThanOrEqual(p.boxes.length * 3);
-      const s = sokoban.solve!(p)!;
+      const s = solved(p);
       expect(sokoban.isSolved(p, s)).toBe(true);
       expect(s.pushes).toBe(r.pushes!.length);
       expect(sokoban.isSolved(p, sokoban.init(p))).toBe(false);
@@ -54,7 +60,7 @@ test("the simplest level takes one push, and Claire is solved", () => {
   const claire = xsbFormat.parse(CLAIRE);
   const r = solvePushes(claire, { boxes: claire.boxes, player: claire.player });
   expect(r.pushes).not.toBeNull();
-  expect(sokoban.isSolved(claire, sokoban.solve!(claire)!)).toBe(true);
+  expect(sokoban.isSolved(claire, solved(claire))).toBe(true);
 });
 
 test("steps, walks and pushes", () => {

@@ -437,7 +437,7 @@ export function netView({ look = (_id, fallback) => fallback, labelSides = () =>
       render();
 
       const rects = (list: Iterable<number>) => [...new Set(list)].filter((i) => i >= 0 && i < n).map((i) => cells[i]!.bg.getBoundingClientRect());
-      const playing = () => !session.solved;
+      const playing = () => !session.finished;
       const tapMenu = (mode: TapMode): Partial<CommandDef> => ({ checked: () => tapMode() === mode });
 
       const commands: CommandDef[] = [

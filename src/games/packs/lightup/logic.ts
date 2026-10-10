@@ -274,7 +274,7 @@ export const lightup: PuzzleDef<LightupPuzzle, LightupState, LightupAction, Ligh
   isSolved,
   solve(p) {
     const a = analyze(p);
-    return a.solution ? { marks: a.solution.map((v) => (v === 1 ? BULB : NONE)) } : null;
+    return a.solution ? { board: { marks: a.solution.map((v) => (v === 1 ? BULB : NONE)) } } : null;
   },
   hint,
   rate,

@@ -86,7 +86,8 @@ export const command = <K extends CommandId>(id: K): K => id;
 /** The keys the shell puts in every command's `when` context. */
 export interface ShellContext {
   hasSession: boolean;
-  solved: boolean;
+  /** The game has ended, solved or revealed. */
+  finished: boolean;
   locked: boolean;
   lost: boolean;
   canUndo: boolean;

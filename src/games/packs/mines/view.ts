@@ -201,7 +201,7 @@ export function minesView(look: Look, labelSides: () => ReadonlySet<Side>): View
         const st = session.state;
         const d = session.derived();
         const dead = st.dead >= 0;
-        const solved = session.solved;
+        const solved = session.finished;
         const ded = d[DEDUCED_KEY] as { safe: number[]; mines: number[] } | undefined;
         const safeHint = new Set(ded?.safe ?? []);
         const mineHint = new Set(ded?.mines ?? []);

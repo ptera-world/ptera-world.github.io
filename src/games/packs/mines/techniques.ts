@@ -23,6 +23,14 @@ function effective(s: MinesState, d: Deduction): Deduction | null {
   return safe.length || mines.length ? { ...d, safe, mines } : null;
 }
 
+/** Visits each deduction's step in order, skipping any that build no step. */
+function visitEach(ds: readonly Deduction[], build: (d: Deduction) => Step<MinesAction> | null, visit: (step: Step<MinesAction>) => boolean | void): void {
+  for (const d of ds) {
+    const step = build(d);
+    if (step && visit(step)) return;
+  }
+}
+
 function actionsOf(d: Deduction): MinesAction[] {
   const out: MinesAction[] = [];
   if (d.safe.length) out.push({ type: "open", cells: d.safe });
@@ -84,7 +92,7 @@ export const forcedFlags: MinesTechnique = {
   puzzles: [mines],
   level: 1,
   description: "a number that has exactly as many hidden neighbors as mines it still needs: every one of those hidden neighbors is a mine. flag them.",
-  find: (p, s) => forcedStep(p, singles(p, s, "mines")[0]),
+  instances: (p, s, visit) => visitEach(singles(p, s, "mines"), (d) => forcedStep(p, d), visit),
   findAt: (p, s, t) => forcedStep(p, singles(p, s, "mines").find((d) => touches(d, t))),
 };
 
@@ -109,7 +117,7 @@ export const satisfied: MinesTechnique = {
   puzzles: [mines],
   level: 2,
   description: "a number already touching as many flags as it shows has all its mines, so its other hidden neighbors are safe. opening them all at once is what clicking an open number (chording) does.",
-  find: (p, s) => satisfiedStep(p, singles(p, s, "safe")[0]),
+  instances: (p, s, visit) => visitEach(singles(p, s, "safe"), (d) => satisfiedStep(p, d), visit),
   findAt: (p, s, t) => satisfiedStep(p, singles(p, s, "safe").find((d) => touches(d, t))),
 };
 
@@ -134,18 +142,18 @@ export const mineCountTechnique: MinesTechnique = {
   puzzles: [mines],
   level: 3,
   description: "the total number of mines is known. once they're all flagged, every other hidden cell is safe; if the hidden cells left are exactly as many as the mines left, they're all mines.",
-  find(p, s) {
+  instances(p, s, visit) {
     const d = countDeduction(p, s);
-    if (!d) return null;
+    if (!d) return;
     const left = d.remaining ?? 0;
-    return {
+    visit({
       message: left === 0
         ? `all ${mineCount(p)} mines are flagged, so ${outcome(d)}`
         : `${left} ${plural(left, "mine is", "mines are")} left and exactly ${left} hidden ${plural(left, "cell", "cells")}, so ${outcome(d)}`,
       nudge: "count the mines left against the hidden cells left",
       focus: focusOf(d),
       actions: actionsOf(d),
-    };
+    });
   },
   practice: { params: { width: 6, height: 6, mines: 8, difficulty: "easy" } },
 };
@@ -156,7 +164,7 @@ export const overlap: MinesTechnique = {
   puzzles: [mines],
   level: 4,
   description: "two nearby numbers that share some hidden neighbors. the shared cells can hold only so many of either number's mines, which settles the cells only one of them touches (the classic 1-1 and 1-2 patterns).",
-  find: (p, s) => overlapStep(p, pairDeductions(p, s)[0]),
+  instances: (p, s, visit) => visitEach(pairDeductions(p, s), (d) => overlapStep(p, d), visit),
   findAt: (p, s, t) => overlapStep(p, pairDeductions(p, s).find((d) => touches(d, t))),
   practice: { params: { difficulty: "normal" } },
 };
@@ -180,17 +188,17 @@ export const region: MinesTechnique = {
   puzzles: [mines],
   level: 5,
   description: "list every way the mines could sit along a stretch of hidden cells next to opened numbers, together with how many mines are left in total. a cell that is the same in every possible way is decided.",
-  find(p, s) {
+  instances(p, s, visit) {
     const d = regionDeduction(p, s);
-    if (!d) return null;
+    if (!d) return;
     const first = d.sources[0];
-    return {
+    visit({
       message: `trying every way the ${d.remaining} remaining mines can fit: ${outcome(d)}`,
       nudge: first === undefined ? "think about where the remaining mines can go" : `try every way the mines can fit near ${cellName(p, first)}`,
       focus: focusOf(d),
       nudgeFocus: { cells: [], sources: d.sources } satisfies MinesFocus,
       actions: actionsOf(d),
-    };
+    });
   },
   practice: { params: { width: 12, height: 12, mines: 30, difficulty: "hard" } },
 };

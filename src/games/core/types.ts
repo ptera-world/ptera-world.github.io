@@ -92,8 +92,12 @@ export interface Technique<Pz = any, S = any, A extends Action = any> {
   description: string;
   /** Color used for this technique's highlights, flashes and labels. Default: picked per technique. */
   color?: string;
-  /** First instance in the state, or null. Must be pure and deterministic. */
-  find(puzzle: Pz, state: S): Step<A> | null;
+  /**
+   * Calls `visit` with every instance in the state, preferred first (hints and auto-apply take the
+   * first valid one), and stops as soon as `visit` returns true. Each instance must follow from
+   * `state` alone, not from instances visited before it. Must be pure and deterministic.
+   */
+  instances(puzzle: Pz, state: S, visit: (step: Step<A>) => boolean | void): void;
   /**
    * An instance at the given target (see ViewHandle.target), or null. Lets a technique be used as
    * a skill aimed at one line, cell or region instead of anywhere on the board.
@@ -183,6 +187,9 @@ export interface WidgetDef<Pz = any, S = any, A extends Action = any, I = any, P
   mount(el: HTMLElement, ctx: WidgetContext<Pz, S, A, I, P>): Teardown;
 }
 
+/** See PuzzleDef.solve. */
+export type Answer<S, A> = { board: S } | { moves: A[] };
+
 export interface Rating {
   label: string;
   /** Higher = harder. Comparable only within one puzzle type. */
@@ -219,8 +226,12 @@ export interface PuzzleDef<Pz = unknown, S = unknown, A extends Action = Action,
    */
   isLost?(puzzle: Pz, state: S): boolean | { focus?: unknown };
   initInteraction?(puzzle: Pz): I;
-  /** Full solution state, or null if none/unknown. */
-  solve?(puzzle: Pz): S | null;
+  /**
+   * The answer from `state`, or null if none is found. Puzzles whose finished board is what is
+   * hidden (digits, mine layout) give that board; puzzles whose goal the player already knows
+   * (sliding, pressing, pushing) give the moves from `state` that reach it, played through `reduce`.
+   */
+  solve?(puzzle: Pz, state: S): Answer<S, A> | null;
   /** Fallback hint when no technique applies (e.g. to point out a mistake). */
   hint?(puzzle: Pz, state: S): Hint<A> | null;
   /**

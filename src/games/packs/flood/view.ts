@@ -151,7 +151,7 @@ export const movesWidget: WidgetDef<FloodPuzzle, FloodState, FloodAction, null> 
     const render = () => {
       const { moves } = session.state, limit = session.puzzle.limit;
       box.textContent = `${moves} / ${limit} moves`;
-      box.classList.toggle("over", moves >= limit && !session.solved);
+      box.classList.toggle("over", moves >= limit && !session.finished);
     };
     session.hooks.change.tap(render, { owner });
     render();

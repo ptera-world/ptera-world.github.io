@@ -3,7 +3,7 @@ import { generate } from "../../core/generate";
 import { Registry } from "../../core/registry";
 import { createRng } from "../../core/rng";
 import { Session } from "../../core/session";
-import { TechniqueHost, applyStep, findPracticePosition, firstStep, rateByTechniques } from "../../core/techniques";
+import { TechniqueHost, applyStep, findPracticePosition, findStep, firstStep, rateByTechniques } from "../../core/techniques";
 import { geometry, type DominosaPuzzle } from "./grid";
 import { DOMINO, LINE, NONE, cellName, dominosa, gridFormat, sgtFormat, type DominosaAction, type DominosaFocus } from "./logic";
 import { checkMarks } from "./plugins";
@@ -131,7 +131,7 @@ test("every cell a hint names is highlighted", async () => {
     let st = dominosa.init(p);
     for (let i = 0; i < 400; i++) {
       for (const t of dominosaTechniques) {
-        const step = t.find(p, st);
+        const step = findStep(dominosa, t, p, st);
         if (!step) continue;
         const all = (f: DominosaFocus) => new Set([...f.because, ...f.placements.flatMap((q) => [g.pa[q]!, g.pb[q]!])].map((c) => cellName(p, c)));
         for (const n of names(step.message)) expect(all(step.focus as DominosaFocus).has(n)).toBe(true);
@@ -209,6 +209,7 @@ test("formats round-trip; game ids parse like the original", async () => {
 
 test("solve() reaches a solved state", async () => {
   const p = await gen({ max: 4 }, "solve");
-  expect(dominosa.isSolved(p, dominosa.solve!(p)!)).toBe(true);
+  const ans = dominosa.solve!(p, dominosa.init(p))!;
+  expect("board" in ans && dominosa.isSolved(p, ans.board)).toBe(true);
   expect(dominosa.isSolved(p, dominosa.init(p))).toBe(false);
 });

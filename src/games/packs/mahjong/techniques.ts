@@ -1,7 +1,7 @@
 import type { Plugin, Step, Technique } from "../../core/types";
 import { planner } from "../../lib/plan";
 import { mahjong, type MahjongAction, type MahjongFocus, type MahjongInteraction, type MahjongPuzzle, type MahjongState } from "./logic";
-import { boardOf, freeTiles, isFree, remaining, safePair, solve, stuckPair } from "./solver";
+import { boardOf, freeTiles, isFree, eachSafePair, remaining, solve, stuckPair } from "./solver";
 import { groupName, matchKey } from "./tiles";
 
 type MahjongTechnique = Technique<MahjongPuzzle, MahjongState, MahjongAction>;
@@ -57,18 +57,17 @@ export const safe: MahjongTechnique = {
   level: 1,
   color: "#3fa34d",
   description: "when every tile left of a kind is free (both of the last two, or all four), pairing them any way can't go wrong: nothing else will ever need them.",
-  find(p, s) {
-    const pair = safePair(boardOf(p.spots), p.tiles, s.gone);
-    if (!pair) return null;
-    const [a, b] = pair;
-    const all = groupOf(p, s, a);
-    return {
-      message: `every ${groupName(p.tiles[a]!)} left (${all.length === 2 ? "both" : `all ${all.length}`}) is free, so pairing them can't go wrong.`,
-      nudge: `look at the ${groupName(p.tiles[a]!)}`,
-      focus: { tiles: [a, b] } satisfies MahjongFocus,
-      nudgeFocus: { look: all } satisfies MahjongFocus,
-      actions: [{ type: "match", a, b }],
-    };
+  instances(p, s, visit) {
+    eachSafePair(boardOf(p.spots), p.tiles, s.gone, ([a, b]) => {
+      const all = groupOf(p, s, a);
+      return visit({
+        message: `every ${groupName(p.tiles[a]!)} left (${all.length === 2 ? "both" : `all ${all.length}`}) is free, so pairing them can't go wrong.`,
+        nudge: `look at the ${groupName(p.tiles[a]!)}`,
+        focus: { tiles: [a, b] } satisfies MahjongFocus,
+        nudgeFocus: { look: all } satisfies MahjongFocus,
+        actions: [{ type: "match", a, b }],
+      });
+    });
   },
 };
 
@@ -84,12 +83,12 @@ export const openUp: MahjongTechnique = {
   level: 2,
   color: "#3b6fd6",
   description: "when several pairs could go, the order matters: take the one that frees the tiles the rest of the game needs. the hint follows a search for a whole clearing order.",
-  find(p, s) {
+  instances(p, s, visit) {
     const path = plan(p, s).path;
-    if (!path?.length) return null;
+    if (!path?.length) return;
     const [a] = path[0]!;
-    if (freeCount(p, s, a) !== 2) return null;
-    return solverStep(p, s, path, "they are the only free pair of their kind, and a whole clearing order takes them now");
+    if (freeCount(p, s, a) !== 2) return;
+    visit(solverStep(p, s, path, "they are the only free pair of their kind, and a whole clearing order takes them now"));
   },
 };
 
@@ -100,13 +99,13 @@ export const pickTwo: MahjongTechnique = {
   level: 3,
   color: "#8b4fc7",
   description: "with three free tiles of a kind (the fourth still buried), which two to take is a real choice: the one left behind has to wait for the buried one. the hint takes the two a search for a whole clearing order does.",
-  find(p, s) {
+  instances(p, s, visit) {
     const path = plan(p, s).path;
-    if (!path?.length) return null;
+    if (!path?.length) return;
     const [a] = path[0]!;
     const free = freeCount(p, s, a);
-    if (free < 3) return null;
-    return solverStep(p, s, path, `${free} are free but ${groupOf(p, s, a).length === free ? "they" : "one more is buried, so"} which two go first matters, and these keep the board clearable`);
+    if (free < 3) return;
+    visit(solverStep(p, s, path, `${free} are free but ${groupOf(p, s, a).length === free ? "they" : "one more is buried, so"} which two go first matters, and these keep the board clearable`));
   },
 };
 
@@ -122,7 +121,7 @@ export const checkClearable: Plugin<MahjongPuzzle, MahjongState, MahjongAction, 
   enabledByDefault: true,
   setup({ session, owner }) {
     session.hooks.hint.tap(({ puzzle, state }) => {
-      if (session.solved) return undefined;
+      if (session.finished) return undefined;
       const stuck = stuckPair(boardOf(puzzle.spots), puzzle.tiles, state.gone);
       if (stuck) {
         return {
@@ -141,8 +140,8 @@ export function fallbackHint(p: MahjongPuzzle, s: MahjongState) {
   return { message: "the search for a clearing order ran out of time from here, so there's no suggestion. undoing a match or two may help." };
 }
 
-/** The cleared board, when a clearing order from the start is known. */
-export function solvedState(p: MahjongPuzzle): MahjongState | null {
-  const path = plan(p, mahjong.init(p)).path;
-  return path ? { gone: p.tiles.map(() => 1), moves: path.length } : null;
+/** One match per pair of a clearing order from `s`, or null if none is known. */
+export function solveFrom(p: MahjongPuzzle, s: MahjongState): { moves: MahjongAction[] } | null {
+  const path = plan(p, s).path;
+  return path ? { moves: path.map(([a, b]): MahjongAction => ({ type: "match", a, b })) } : null;
 }

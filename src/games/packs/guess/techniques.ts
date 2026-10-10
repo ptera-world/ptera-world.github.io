@@ -1,6 +1,6 @@
 import type { Step, Technique } from "../../core/types";
 import {
-  guess, COLOUR_NAMES, REASON_LIMIT, bestGuess, candidates, codeCount, isOver,
+  guess, COLOUR_NAMES, REASON_LIMIT, bestGuess, candidates, codeCount, isOver, rankedGuesses,
   type GuessAction, type GuessFocus, type GuessPuzzle, type GuessState,
 } from "./logic";
 
@@ -18,7 +18,10 @@ export const knownPeg: GuessTechnique = {
   puzzles: [guess],
   level: 1,
   description: "go through every code that fits all the marks so far. if they all have the same color in some position, that peg is settled.",
-  find: (p, s) => knownPegStep(p, s),
+  instances(p, s, visit) {
+    const step = knownPegStep(p, s);
+    if (step) visit(step);
+  },
   findAt: (p, s, target) => knownPegStep(p, s, (target as { slot: number }).slot),
 };
 
@@ -45,20 +48,30 @@ export const lastCode: GuessTechnique = {
   puzzles: [guess],
   level: 2,
   description: "when exactly one code fits all the marks so far, it must be the answer: guess it.",
-  find(p, s) {
-    if (!reasoning(p, s) || !s.done.length) return null;
+  instances(p, s, visit) {
+    if (!reasoning(p, s) || !s.done.length) return;
     const cand = candidates(p, s);
-    if (cand.length !== 1) return null;
+    if (cand.length !== 1) return;
     const code = cand[0]!;
-    return {
+    visit({
       message: `only one code fits all the marks so far: ${describeCode(code)}`,
       nudge: "how many codes still fit every mark?",
       focus: { slots: code.map((_, i) => i), rows: allRows(s) } satisfies GuessFocus,
       nudgeFocus: { slots: [], rows: allRows(s) } satisfies GuessFocus,
       actions: [{ type: "row", code }, { type: "submit" }],
-    };
+    });
   },
 };
+
+function guessStep(s: GuessState, best: { code: number[]; worst: number; left: number }): Step<GuessAction> {
+  return {
+    message: `${best.left} codes still fit. guessing ${describeCode(best.code)} leaves at most ${best.worst} of them, whatever the marks`,
+    nudge: "which guess would split the codes that still fit most evenly?",
+    focus: { slots: best.code.map((_, i) => i), rows: [] } satisfies GuessFocus,
+    nudgeFocus: { slots: [], rows: allRows(s) } satisfies GuessFocus,
+    actions: [{ type: "row", code: best.code }, { type: "submit" }],
+  };
+}
 
 export const narrowDown: GuessTechnique = {
   id: "guess.narrow-down",
@@ -66,17 +79,12 @@ export const narrowDown: GuessTechnique = {
   puzzles: [guess],
   level: 3,
   description: "pick the guess that, whatever marks it gets, leaves the fewest codes still possible. it may even be a code that can't be the answer, if it splits the rest more evenly.",
-  find(p, s) {
-    if (!reasoning(p, s)) return null;
+  instances(p, s, visit) {
+    if (!reasoning(p, s)) return;
     const best = bestGuess(p, s);
-    if (!best) return null;
-    return {
-      message: `${best.left} codes still fit. guessing ${describeCode(best.code)} leaves at most ${best.worst} of them, whatever the marks`,
-      nudge: "which guess would split the codes that still fit most evenly?",
-      focus: { slots: best.code.map((_, i) => i), rows: [] } satisfies GuessFocus,
-      nudgeFocus: { slots: [], rows: allRows(s) } satisfies GuessFocus,
-      actions: [{ type: "row", code: best.code }, { type: "submit" }],
-    };
+    if (!best) return;
+    if (visit(guessStep(s, best)) === true) return;
+    for (const g of rankedGuesses(p, s).slice(1)) if (visit(guessStep(s, g)) === true) return;
   },
 };
 

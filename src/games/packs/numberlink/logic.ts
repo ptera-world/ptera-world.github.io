@@ -352,7 +352,7 @@ export const numberlink: PuzzleDef<NumberlinkPuzzle, NumberlinkState, Numberlink
   isSolved,
   solve(p) {
     const a = analyze(p);
-    return a.solution ? { edges: a.solution.map((v) => (v ? LINE : NONE)) } : null;
+    return a.solution ? { board: { edges: a.solution.map((v) => (v ? LINE : NONE)) } } : null;
   },
   hint,
   rate,

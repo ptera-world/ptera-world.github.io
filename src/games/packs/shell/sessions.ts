@@ -16,6 +16,8 @@ export interface SessionMeta {
   detail: string;
   updatedAt: number;
   solved: boolean;
+  /** Ended by revealing the answer; never also `solved`. */
+  revealed?: boolean;
   elapsedMs: number;
   practice: boolean;
 }
@@ -26,6 +28,9 @@ const KEEP = 40;
 
 export const SAVE_PREFIX = "games:game:";
 export const INDEX_KEY = "games:games-index:list";
+
+/** The game has ended, solved or revealed. */
+export const finished = (m: SessionMeta): boolean => m.solved || !!m.revealed;
 
 export function listSessions(): SessionMeta[] {
   return meta.get<SessionMeta[]>("list", []).sort((a, b) => b.updatedAt - a.updatedAt);
@@ -41,7 +46,7 @@ export function saveSession(m: SessionMeta, snap: Snapshot): void {
   list.unshift(m);
   // drop the oldest finished games first, then the oldest of anything, beyond KEEP
   while (list.length > KEEP) {
-    const i = list.map((x) => x.solved).lastIndexOf(true);
+    const i = list.map(finished).lastIndexOf(true);
     const [gone] = list.splice(i >= 0 ? i : list.length - 1, 1);
     if (gone) games.remove(gone.id);
   }
@@ -53,9 +58,9 @@ export function removeSession(id: string): void {
   meta.set("list", listSessions().filter((x) => x.id !== id));
 }
 
-/** Most recent game for a puzzle matching `key` (or any non-practice game when key is null). */
+/** Most recent game for a puzzle matching `key` (or the latest unfinished one when key is null). */
 export function findSession(puzzleId: string, key: string | null, practice = false): SessionMeta | undefined {
-  return listSessions().find((m) => m.puzzleId === puzzleId && m.practice === practice && (key === null ? !m.solved : m.key === key));
+  return listSessions().find((m) => m.puzzleId === puzzleId && m.practice === practice && (key === null ? !finished(m) : m.key === key));
 }
 
 export function newSessionId(): string {

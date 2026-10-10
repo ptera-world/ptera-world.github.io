@@ -11,7 +11,7 @@ import { plugins } from "./plugins";
 import { techniques } from "./techniques";
 import { register } from "./index";
 import { Registry } from "../../core/registry";
-import { TechniqueHost, firstStep } from "../../core/techniques";
+import { TechniqueHost, findStep, firstStep } from "../../core/techniques";
 import { initialDomain, logicSolve, propagate, search } from "./solver";
 
 const sig = () => new AbortController().signal;
@@ -89,7 +89,7 @@ describe("solver", () => {
     expect(bridges.rate!(twoWays)!.label).toBe("multiple solutions");
     const none = gridFormat.parse("1.3");
     expect(search(none).count).toBe(0);
-    expect(bridges.solve!(none)).toBeNull();
+    expect(bridges.solve!(none, bridges.init(none))).toBeNull();
   });
 
   test("no-loops rule changes the answer", () => {
@@ -110,7 +110,7 @@ describe("techniques", () => {
     const cases = [[{ difficulty: "easy" }, "h1"], [{ difficulty: "medium", width: 9, height: 9 }, "h2"], [{ difficulty: "hard", width: 10, height: 10 }, "h3"], [{ difficulty: "medium", loops: false }, "h4"], [{ difficulty: "hard", maxb: 3, width: 9, height: 9 }, "h5"]] as const;
     for (const [p, seed] of cases) {
       const puzzle = await gen(p, seed);
-      const sol = bridges.solve!(puzzle)!;
+      const sol = (bridges.solve!(puzzle, bridges.init(puzzle)) as { board: BridgesState }).board;
       let s: BridgesState = emptyState(puzzle);
       let hardest = 0;
       for (let i = 0; i < 2000 && !bridges.isSolved(puzzle, s); i++) {
@@ -167,7 +167,7 @@ describe("techniques", () => {
     if (!bridges.isSolved(puzzle, s) && graph(puzzle).edges.some((ed) => s.b[ed.id]! > 0)) {
       const sums = s.b.reduce((n, v, id) => (g.edges[id]!.a === e.a || g.edges[id]!.b === e.a ? n + v : n), 0);
       if (sums > puzzle.islands[e.a]!.n) {
-        for (const t of techniques) expect(t.find(puzzle, s)).toBeNull();
+        for (const t of techniques) expect(findStep(bridges, t, puzzle, s)).toBeNull();
         expect(bridges.hint!(puzzle, s)!.message).toContain("too many");
       }
     }
@@ -177,7 +177,7 @@ describe("techniques", () => {
 describe("mistakes", () => {
   test("points out a wrong bridge ahead of any technique, and fixes it", async () => {
     const puzzle = await gen({ difficulty: "easy" }, "oops");
-    const sol = bridges.solve!(puzzle)!;
+    const sol = (bridges.solve!(puzzle, bridges.init(puzzle)) as { board: BridgesState }).board;
     const wrong = sol.b.findIndex((v) => v < puzzle.maxb);
     let s = emptyState(puzzle);
     s = reduce(puzzle, s, { type: "set", edge: wrong, n: sol.b[wrong]! + 1 });
@@ -280,7 +280,7 @@ describe("session", () => {
 
   test("techniques applied after a move to a fixpoint land in the same undo step", async () => {
     const puzzle = await gen({ difficulty: "hard", width: 9, height: 9 }, "auto");
-    const sol = bridges.solve!(puzzle)!;
+    const sol = (bridges.solve!(puzzle, bridges.init(puzzle)) as { board: BridgesState }).board;
     const session = new Session(bridges, puzzle, { kind: "imported" });
     const ordered = [...techniques].sort((a, b) => a.level - b.level);
     session.hooks.apply.tap((next, { puzzle: pz }) => {

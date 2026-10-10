@@ -3,7 +3,7 @@ import { generate } from "../../core/generate";
 import { Registry } from "../../core/registry";
 import { createRng } from "../../core/rng";
 import { Session } from "../../core/session";
-import { TechniqueHost, applyStep, findPracticePosition, firstStep, rateByTechniques } from "../../core/techniques";
+import { TechniqueHost, applyStep, findPracticePosition, findStep, firstStep, rateByTechniques } from "../../core/techniques";
 import { edgeGrid } from "../../lib/edges";
 import { CROSS, EMPTY, LINE, NONE, TRACK, cellName, sgtFormat, tracks, type TracksAction, type TracksFocus } from "./logic";
 import { checkMarks } from "./plugins";
@@ -125,7 +125,7 @@ test("every cell a hint names is highlighted", async () => {
     let st = tracks.init(p);
     for (let i = 0; i < 600; i++) {
       for (const t of tracksTechniques) {
-        const step = t.find(p, st);
+        const step = findStep(tracks, t, p, st);
         if (!step) continue;
         const all = (f: TracksFocus) => new Set([...f.because, ...f.cells, ...f.edges.flatMap((e) => [g.ea[e]!, g.eb[e]!])].map((c) => cellName(p, c)));
         for (const n of names(step.message)) expect(all(step.focus as TracksFocus).has(n)).toBe(true);
@@ -173,6 +173,7 @@ test("game ids round-trip and parse like the original", async () => {
 
 test("solve() reaches a solved state", async () => {
   const p = await gen({ width: 6, height: 6 }, "solve");
-  expect(tracks.isSolved(p, tracks.solve!(p)!)).toBe(true);
+  const ans = tracks.solve!(p, tracks.init(p))!;
+  expect("board" in ans && tracks.isSolved(p, ans.board)).toBe(true);
   expect(tracks.isSolved(p, tracks.init(p))).toBe(false);
 });

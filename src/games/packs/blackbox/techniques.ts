@@ -63,7 +63,10 @@ export const certainBall: BlackboxTechnique = {
   puzzles: [blackbox],
   level: 1,
   description: "go through every way the balls could be placed that gives exactly the laser results so far. a cell that holds a ball in all of them certainly has one.",
-  find: (p, s) => certainBallAt(p, s),
+  instances(p, s, visit) {
+    const step = certainBallAt(p, s);
+    if (step) visit(step);
+  },
   findAt: (p, s, t) => certainBallAt(p, s, (t as CellTarget).cell),
 };
 
@@ -87,7 +90,10 @@ export const certainEmpty: BlackboxTechnique = {
   puzzles: [blackbox],
   level: 2,
   description: "a cell that is empty in every way the balls could be placed to give the laser results so far can't hold a ball. it gets locked so you don't put one there.",
-  find: (p, s) => certainEmptyAt(p, s),
+  instances(p, s, visit) {
+    const step = certainEmptyAt(p, s);
+    if (step) visit(step);
+  },
   findAt: (p, s, t) => certainEmptyAt(p, s, (t as CellTarget).cell),
 };
 
@@ -114,13 +120,13 @@ export const allAgree: BlackboxTechnique = {
   puzzles: [blackbox],
   level: 3,
   description: "if every placement that fits the lasers so far would give the same result for every laser, more shots can't tell them apart, and any of them counts as right: place one and check it.",
-  find(p, s) {
-    if (s.solved) return null;
+  instances(p, s, visit) {
+    if (s.solved) return;
     const k = knowledge(p, s);
-    if (!k.complete || !k.list.length || total(k) > COMPARE_LIMIT) return null;
+    if (!k.complete || !k.list.length || total(k) > COMPARE_LIMIT) return;
     const all = expand(k.list, COMPARE_LIMIT);
     const sig = signature(p.w, p.h, all[0]!);
-    if (!all.every((l) => signature(p.w, p.h, l) === sig)) return null;
+    if (!all.every((l) => signature(p.w, p.h, l) === sig)) return;
     const mine = s.guesses.flatMap((g, c) => (g ? [c] : []));
     const layout = all[0]!;
     const same = signature(p.w, p.h, mine) === sig && mine.length >= p.minBalls && mine.length <= p.maxBalls;
@@ -130,7 +136,7 @@ export const allAgree: BlackboxTechnique = {
       { type: "ball", cells: layout, value: true },
     ];
     actions.push({ type: "check" });
-    return {
+    visit({
       message: same
         ? "your balls give the same result as every placement that still fits, for every laser: check them"
         : `every placement that still fits gives the same result for every laser, so balls at ${cellList(p, layout)} are as good as any: place them and check`,
@@ -138,7 +144,7 @@ export const allAgree: BlackboxTechnique = {
       focus: { cells: same ? mine : layout, entries: [] } satisfies BlackboxFocus,
       nudgeFocus: { cells: [], entries: fired(s) } satisfies BlackboxFocus,
       actions: actions.filter((a) => a.type === "check" || ("cells" in a && a.cells.length > 0)),
-    };
+    });
   },
 };
 
@@ -151,13 +157,13 @@ export const bestShot: BlackboxTechnique = {
   puzzles: [blackbox],
   level: 4,
   description: "of the lasers not fired yet, fire the one whose result is least predictable: whatever comes out, it rules out the most placements that fit so far.",
-  find(p, s) {
-    if (s.solved) return null;
+  instances(p, s, visit) {
+    if (s.solved) return;
     const k = knowledge(p, s);
     const sample = expand(k.list, SAMPLE_LIMIT);
-    if (!sample.length) return null;
+    if (!sample.length) return;
     const sets = sample.map((l) => new Set(l));
-    let best = -1, bestWorst = Infinity;
+    const shots: { entry: number; worst: number }[] = [];
     for (let e = 0; e < 2 * (p.w + p.h); e++) {
       if (s.shots[e] !== -1) continue;
       const groups = new Map<number, number>();
@@ -167,21 +173,24 @@ export const bestShot: BlackboxTechnique = {
         const c = (groups.get(r) ?? 0) + 1;
         groups.set(r, c);
         if (c > worst) worst = c;
-        if (worst >= bestWorst) break;
+        if (worst >= sample.length) break;
       }
-      if (worst < bestWorst) { best = e; bestWorst = worst; }
+      if (worst < sample.length) shots.push({ entry: e, worst });
     }
-    if (best < 0 || bestWorst === sample.length) return null;
+    shots.sort((a, b) => a.worst - b.worst);
     const exact = k.complete && sample.length === total(k);
-    return {
-      message: exact
-        ? `${sample.length} placements still fit the lasers. firing ${entryName(p, best)} leaves at most ${bestWorst} of them, whatever comes out`
-        : `there are too many placements that fit to count them all, but of the ${sample.length} found, firing ${entryName(p, best)} leaves at most ${bestWorst}`,
-      nudge: "which laser's result can you predict least?",
-      focus: { cells: [], entries: [best] } satisfies BlackboxFocus,
-      nudgeFocus: { cells: [], entries: fired(s) } satisfies BlackboxFocus,
-      actions: [{ type: "fire", entry: best }],
-    };
+    for (const { entry, worst } of shots) {
+      const hit = visit({
+        message: exact
+          ? `${sample.length} placements still fit the lasers. firing ${entryName(p, entry)} leaves at most ${worst} of them, whatever comes out`
+          : `there are too many placements that fit to count them all, but of the ${sample.length} found, firing ${entryName(p, entry)} leaves at most ${worst}`,
+        nudge: "which laser's result can you predict least?",
+        focus: { cells: [], entries: [entry] } satisfies BlackboxFocus,
+        nudgeFocus: { cells: [], entries: fired(s) } satisfies BlackboxFocus,
+        actions: [{ type: "fire", entry }],
+      });
+      if (hit === true) return;
+    }
   },
 };
 

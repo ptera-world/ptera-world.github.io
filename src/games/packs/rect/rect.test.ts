@@ -3,7 +3,7 @@ import { generate } from "../../core/generate";
 import { createRng } from "../../core/rng";
 import { Registry } from "../../core/registry";
 import { Session } from "../../core/session";
-import { TechniqueHost, applyStep, findPracticePosition, firstStep, rateByTechniques } from "../../core/techniques";
+import { TechniqueHost, applyStep, findPracticePosition, findStep, firstStep, rateByTechniques } from "../../core/techniques";
 import { cellName, type Focus } from "../../lib/grid-kit/names";
 import { analyze, isSolved, puzzleLayout, rect, sgtFormat, split, type Level, type RectAction, type RectPuzzle } from "./logic";
 import { checkMarks } from "./plugins";
@@ -64,7 +64,8 @@ test("logic never contradicts brute force on random boards", () => {
     expect(a.count).toBe(brute.count as 0 | 1 | 2);
     if (a.count === 1) {
       solved++;
-      expect(isSolved(p, rect.solve!(p)!)).toBe(true);
+      const ans = rect.solve!(p, rect.init(p))!;
+  expect("board" in ans && isSolved(p, ans.board)).toBe(true);
     }
   }
   expect(solved).toBeGreaterThan(20);
@@ -137,7 +138,7 @@ test("every cell a hint names is highlighted", async () => {
     let st = rect.init(p);
     for (let i = 0; i < 300; i++) {
       for (const t of rectTechniques) {
-        const step = t.find(p, st);
+        const step = findStep(rect, t, p, st);
         if (!step) continue;
         const all = (x: Focus) => new Set([...x.cells, ...x.because, ...(x.related ?? [])].map((c) => cellName(p, c)));
         for (const n of names(step.message)) expect(all(step.focus as Focus).has(n)).toBe(true);
@@ -181,6 +182,7 @@ test("tatham ids parse and round-trip", async () => {
 
 test("solve() reaches a solved state", async () => {
   const p = await gen({ width: 10, height: 8 }, "solve");
-  expect(isSolved(p, rect.solve!(p)!)).toBe(true);
+  const ans = rect.solve!(p, rect.init(p))!;
+  expect("board" in ans && isSolved(p, ans.board)).toBe(true);
   expect(isSolved(p, rect.init(p))).toBe(false);
 });

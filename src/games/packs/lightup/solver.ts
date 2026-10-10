@@ -290,21 +290,20 @@ const RULE_OF: Record<StepKind, Rule> = {
 };
 
 /**
- * First step of one of `kinds` in rule scan order that `accept` takes, or null (also when k is
- * contradictory). Reads k without changing it.
+ * Calls `visit` with every step of one of `kinds`, in rule scan order, until it returns true.
+ * Visits nothing when k is contradictory. Reads k without changing it.
  */
-export function scanSteps(g: Geometry, k: Knowledge, kinds: readonly StepKind[], accept: (s: Step) => boolean): Step | null {
-  let found: Step | null = null;
+export function scanSteps(g: Geometry, k: Knowledge, kinds: readonly StepKind[], visit: (s: Step) => boolean | void): void {
+  let stopped = false;
   const emit: Emit = (s) => {
-    if (!kinds.includes(s.kind) || !accept(s)) return 0;
-    found = s;
+    if (!kinds.includes(s.kind) || visit(s) !== true) return 0;
+    stopped = true;
     return 1;
   };
   for (const rule of new Set(kinds.map((kd) => RULE_OF[kd]))) {
     rule(g, k, emit);
-    if (found) return found;
+    if (stopped) return;
   }
-  return null;
 }
 
 export function isComplete(g: Geometry, k: Knowledge): boolean {

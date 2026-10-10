@@ -628,7 +628,7 @@ export const tents: PuzzleDef<TentsPuzzle, TentsState, TentsAction, TentsInterac
   isSolved,
   solve(p) {
     const a = analyze(p);
-    return a.solution ? { marks: a.solution.map((v, c) => (p.cells[c] === TREE ? NONE : v === YES ? TENT : GRASS)) } : null;
+    return a.solution ? { board: { marks: a.solution.map((v, c) => (p.cells[c] === TREE ? NONE : v === YES ? TENT : GRASS)) } } : null;
   },
   hint,
   rate,

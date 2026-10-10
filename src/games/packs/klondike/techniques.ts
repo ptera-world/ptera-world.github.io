@@ -3,7 +3,7 @@ import { cardName, safeHomeReason } from "../../lib/cards/deck";
 import { planner } from "../../lib/plan";
 import type { CardFocus } from "../../lib/cards/table";
 import { actionsOf, dealPos, describeMove, fromPos, klondike, pileName, rulesOf, toPos, whereTo, type KlondikeAction, type KlondikeInteraction, type KlondikePuzzle, type KlondikeState } from "./logic";
-import { applyMove, clonePos, COLS, isSafeHome, safeHomeMove, solve, STOCK, WASTE, type Move, type Pos } from "./solver";
+import { applyMove, clonePos, COLS, eachSafeHomeMove, isSafeHome, solve, STOCK, WASTE, type Move, type Pos } from "./solver";
 
 type KlondikeTechnique = Technique<KlondikePuzzle, KlondikeState, KlondikeAction>;
 
@@ -88,14 +88,14 @@ function stepFor(p: KlondikePuzzle, s: KlondikeState, path: readonly Move[]): St
   };
 }
 
-function solverTechnique(kind: Kind, t: Omit<KlondikeTechnique, "find" | "puzzles">): KlondikeTechnique {
+function solverTechnique(kind: Kind, t: Omit<KlondikeTechnique, "instances" | "puzzles">): KlondikeTechnique {
   return {
     ...t,
     puzzles: [klondike],
-    find(p, s) {
+    instances(p, s, visit) {
       const path = plan(p, s).path;
-      if (!path?.length || kindOf(s, path[0]!) !== kind) return null;
-      return stepFor(p, s, path);
+      if (!path?.length || kindOf(s, path[0]!) !== kind) return;
+      visit(stepFor(p, s, path));
     },
   };
 }
@@ -107,17 +107,17 @@ export const safeHome: KlondikeTechnique = {
   level: 1,
   color: "#3fa34d",
   description: "a card can go home for good once nothing could ever need to sit on it: aces and twos always, and any other card once both foundations of the other color have reached one rank below it.",
-  find(p, s) {
-    const m = safeHomeMove(toPos(s));
-    if (!m) return null;
-    const card = leadOf(s, m);
-    return {
-      message: `${cardName(card)} home: ${reason(p, s, [m])}.`,
-      nudge: `a card in ${pileName(m.from)} can go home`,
-      focus: { cards: [card], to: m.to } satisfies CardFocus,
-      nudgeFocus: { piles: [m.from] } satisfies CardFocus,
-      actions: actionsOf(m),
-    };
+  instances(p, s, visit) {
+    eachSafeHomeMove(toPos(s), (m) => {
+      const card = leadOf(s, m);
+      return visit({
+        message: `${cardName(card)} home: ${reason(p, s, [m])}.`,
+        nudge: `a card in ${pileName(m.from)} can go home`,
+        focus: { cards: [card], to: m.to } satisfies CardFocus,
+        nudgeFocus: { piles: [m.from] } satisfies CardFocus,
+        actions: actionsOf(m),
+      });
+    });
   },
 };
 
@@ -155,7 +155,7 @@ export const checkWinnable: Plugin<KlondikePuzzle, KlondikeState, KlondikeAction
   enabledByDefault: true,
   setup({ session, owner }) {
     session.hooks.hint.tap(({ puzzle, state }) => {
-      if (session.solved) return undefined;
+      if (session.finished) return undefined;
       return plan(puzzle, state).impossible ? { message: "no sequence of moves wins from here any more. undo to get back to a winnable position." } : undefined;
     }, { owner, priority: 90 });
   },
@@ -167,11 +167,8 @@ export function fallbackHint(p: KlondikePuzzle, s: KlondikeState) {
   return { message: "the search for a win ran out of time from here, so there's no suggestion. undoing a move or two may help." };
 }
 
-/** The won position at the end of a winning line from the start, or null if none is known. */
-export function solvedState(p: KlondikePuzzle): KlondikeState | null {
-  const path = plan(p, klondike.init(p)).path;
-  if (!path) return null;
-  let s = klondike.init(p);
-  for (const m of path) for (const a of actionsOf(m)) s = klondike.reduce(p, s, a);
-  return s;
+/** The actions of a winning line from `s`, or null if none is known. */
+export function solveFrom(p: KlondikePuzzle, s: KlondikeState): { moves: KlondikeAction[] } | null {
+  const path = plan(p, s).path;
+  return path ? { moves: path.flatMap((m) => actionsOf(m)) } : null;
 }

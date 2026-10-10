@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { generate } from "../../core/generate";
-import { applyStep, firstStep } from "../../core/techniques";
+import { applyStep, findStep, firstStep } from "../../core/techniques";
 import { canSlide, game2048, gridFormat, slide, spawn, type Puzzle2048 } from "./logic";
 import { lookAhead, onlyMove, reachGoal, techniques2048 } from "./techniques";
 
@@ -46,11 +46,11 @@ test("look-ahead reaches the goal on a small goal, and the game ends when nothin
 
 test("techniques: only move, making the goal tile", () => {
   const one = gridFormat.parse("2 .\n4 .\ngoal 64");
-  expect(onlyMove.find(one, game2048.init(one))?.actions).toEqual([{ type: "slide", dir: 1 }]);
+  expect(findStep(game2048, onlyMove, one, game2048.init(one))?.actions as unknown).toEqual([{ type: "slide", dir: 1 }]);
   const goal = gridFormat.parse("32 32 .\n. . .\n. . .\ngoal 64");
-  const st = reachGoal.find(goal, game2048.init(goal))!;
-  expect([1, 3]).toContain((st.actions[0] as { dir: number }).dir);
-  expect(lookAhead.find(goal, game2048.init(goal))).not.toBeNull();
+  const st = findStep(game2048, reachGoal, goal, game2048.init(goal))!;
+  expect([1, 3]).toContain((st.actions[0] as unknown as { dir: number }).dir);
+  expect(findStep(game2048, lookAhead, goal, game2048.init(goal))).not.toBeNull();
 });
 
 test("the grid format round-trips with its goal and seed", async () => {

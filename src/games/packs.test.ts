@@ -60,3 +60,16 @@ test("settle: owner filter only runs that assist", () => {
   expect(session.settle(true, "techniques")).toBe(true);
   expect(session.canUndo).toBe(true);
 });
+
+/** Revealing shows a real answer: the board it leaves is solved, and the game ends revealed, never solved. */
+for (const def of registry.listPuzzles()) {
+  if (!def.solve) continue;
+  test(`reveal: ${def.id} ends revealed on a solved board`, async () => {
+    const puzzle = await generate(def, def.presets?.[0]?.params ?? {}, "reveal", new AbortController().signal);
+    const session = new Session(def, puzzle, { kind: "generated", seed: "reveal", params: {}, generatorVersion: def.generatorVersion });
+    expect(session.reveal()).toBe(true);
+    expect(session.outcome).toBe("revealed");
+    expect(session.solved).toBe(false);
+    expect(def.isSolved(puzzle, session.state)).toBe(true);
+  }, 60000);
+}

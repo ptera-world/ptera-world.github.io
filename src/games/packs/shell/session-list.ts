@@ -83,7 +83,7 @@ export function sessionList(host: SessionListHost, opts: { filter?: (m: SessionM
         h("button", { class: "open", onclick: () => { if (m.id !== host.sessionId) host.openSession(m.id); } },
           h("span", { class: "t" }, m.title),
           h("span", { class: "d" }, [m.detail, when(m.updatedAt)].filter(Boolean).join(" · "))),
-        h("span", { class: `time${m.solved ? " done" : ""}` }, m.solved ? `solved ${formatTime(m.elapsedMs)}` : formatTime(m.elapsedMs)),
+        h("span", { class: `time${m.solved ? " done" : ""}` }, m.solved ? `solved ${formatTime(m.elapsedMs)}` : m.revealed ? "revealed" : formatTime(m.elapsedMs)),
         trash));
     }
   };

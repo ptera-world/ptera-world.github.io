@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { generate } from "../../core/generate";
 import { createRng } from "../../core/rng";
-import { applyStep, findPracticePosition, firstStep, rateByTechniques } from "../../core/techniques";
+import { applyStep, findStep, findPracticePosition, firstStep, rateByTechniques } from "../../core/techniques";
 import { applyMove, fifteen, gridFormat, isSolvable, sgtFormat, type FifteenPuzzle } from "./logic";
 import { fullPlan } from "./solver";
 import { fifteenTechniques } from "./techniques";
@@ -71,7 +71,7 @@ test("techniques alone solve, never undoing a finished tile, and rate the board"
 test("practice positions exist for every technique", async () => {
   for (const t of fifteenTechniques) {
     const pos = await findPracticePosition(fifteen, fifteenTechniques, t, "x", sig());
-    expect(pos?.step.actions.length).toBeGreaterThan(0);
+    expect(pos && findStep(fifteen, t, pos.puzzle, pos.state)?.actions.length).toBeGreaterThan(0);
   }
 });
 

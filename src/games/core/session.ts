@@ -17,7 +17,8 @@ function slim(src: Source): Source {
 export type Origin =
   | { kind: "generated"; seed: string; params: Record<string, unknown>; generatorVersion: number }
   | { kind: "imported"; format?: string; source?: string }
-  | { kind: "practice"; technique: string; seed: string; step: Step };
+  /** A lesson: every instance of `technique` in `start`, the position the board began at. */
+  | { kind: "practice"; technique: string; seed: string; start: unknown };
 
 export type ChangeCause = "action" | "undo" | "redo" | "restore";
 
@@ -127,7 +128,10 @@ export interface Snapshot {
   interaction?: unknown;
   origin: Origin;
   elapsedMs: number;
+  /** When the game ended (solved or revealed), or null while it is still going. */
   solvedAtMs: number | null;
+  /** The game ended by revealing the answer, not by being solved. Absent: inferred from a reveal in `past`. */
+  revealed?: boolean;
   /** Player-paused (as opposed to paused because the page is hidden). */
   paused?: boolean;
   past: { state: unknown; actions: unknown[]; sources?: Source[] }[];
@@ -157,6 +161,7 @@ export class Session<Pz = unknown, S = unknown, A extends Action = Action, I = u
     derive: new Waterfall<Derived, DeriveCtx<Pz, S, I>>("derive"),
     change: new Event<ChangeCtx<S, A>>("change"),
     interaction: new Event<{ prev: I; interaction: I }>("interaction"),
+    /** The player solved the board (never fires for a reveal; see Session.outcome). */
     solved: new Event<{ elapsedMs: number }>("solved"),
     hint: new Bail<DeriveCtx<Pz, S, I>, Hint<A> | null>("hint"),
     /** Things worth reacting to (effects, sound, logs). Packs may emit their own kinds. */
@@ -181,18 +186,20 @@ export class Session<Pz = unknown, S = unknown, A extends Action = Action, I = u
   private deriveVersion = 0;
   private elapsedBase = 0;
   private runningSince: number | null = null;
-  private _solvedAtMs: number | null = null;
+  private _finishedAtMs: number | null = null;
+  private _revealed = false;
 
   constructor(
     readonly def: PuzzleDef<Pz, S, A, I, any>,
     readonly puzzle: Pz,
     readonly origin: Origin,
-    initial?: { state?: S; interaction?: I; elapsedMs?: number; solvedAtMs?: number | null },
+    initial?: { state?: S; interaction?: I; elapsedMs?: number; finishedAtMs?: number | null; revealed?: boolean },
   ) {
     this._state = initial?.state ?? def.init(puzzle);
     this._interaction = initial?.interaction ?? (def.initInteraction?.(puzzle) as I);
     this.elapsedBase = initial?.elapsedMs ?? 0;
-    this._solvedAtMs = initial?.solvedAtMs ?? null;
+    this._finishedAtMs = initial?.finishedAtMs ?? null;
+    this._revealed = this._finishedAtMs !== null && !!initial?.revealed;
   }
 
   get state(): S {
@@ -215,7 +222,7 @@ export class Session<Pz = unknown, S = unknown, A extends Action = Action, I = u
   }
 
   private lostResult(): boolean | { focus?: unknown } {
-    if (this.solved) return false;
+    if (this.finished) return false;
     try {
       return this.def.isLost?.(this.puzzle, this._state) ?? false;
     } catch {
@@ -223,12 +230,26 @@ export class Session<Pz = unknown, S = unknown, A extends Action = Action, I = u
     }
   }
 
-  get solved(): boolean {
-    return this._solvedAtMs !== null;
+  /**
+   * How the game ended: "solved" by play (hints and assists included), "revealed" by showing the
+   * answer, or null while it is going. Undo keeps it; only restart clears it.
+   */
+  get outcome(): "solved" | "revealed" | null {
+    return this._finishedAtMs === null ? null : this._revealed ? "revealed" : "solved";
   }
 
-  get solvedAtMs(): number | null {
-    return this._solvedAtMs;
+  /** Ended by play. A revealed game is finished but never solved. */
+  get solved(): boolean {
+    return this.outcome === "solved";
+  }
+
+  /** Ended either way: the timer is stopped and the board is done. */
+  get finished(): boolean {
+    return this._finishedAtMs !== null;
+  }
+
+  get finishedAtMs(): number | null {
+    return this._finishedAtMs;
   }
 
   /** Returns true if the state changed. */
@@ -367,15 +388,45 @@ export class Session<Pz = unknown, S = unknown, A extends Action = Action, I = u
     if (checkSolved) this.checkSolved();
   }
 
-  /** Fire `solved` if the current state is solved and it hasn't fired yet. Safe to call any time. */
+  /** Fire `solved` if the current state is solved and the game hasn't ended yet. Safe to call any time. */
   checkSolved(): void {
-    if (this.batchDepth > 0 || this._solvedAtMs !== null) return;
+    if (this.batchDepth > 0 || this.finished) return;
     if (!this.def.isSolved(this.puzzle, this._state)) return;
-    this._solvedAtMs = this.elapsedMs();
+    const at = this.finish(false);
+    this.hooks.solved.call({ elapsedMs: at });
+    this.hooks.fx.call({ kind: "solved", elapsedMs: at });
+  }
+
+  private finish(revealed: boolean): number {
+    const at = this.elapsedMs();
+    this._finishedAtMs = at;
+    this._revealed = revealed;
     this.runningSince = null;
-    this.elapsedBase = this._solvedAtMs;
-    this.hooks.solved.call({ elapsedMs: this._solvedAtMs });
-    this.hooks.fx.call({ kind: "solved", elapsedMs: this._solvedAtMs });
+    this.elapsedBase = at;
+    return at;
+  }
+
+  /**
+   * Show the answer (PuzzleDef.solve) as one undo step and end the game as revealed, which never
+   * counts as solved. Moves start from the current board, or from the initial board when there
+   * is no answer from the current one. False if the game has ended or no answer is found.
+   */
+  reveal(): boolean {
+    if (this.finished || this.batchDepth > 0 || !this.def.solve) return false;
+    const prev = this._state;
+    let from = prev;
+    let answer = this.def.solve(this.puzzle, from);
+    if (!answer) {
+      from = this.initial();
+      answer = this.def.solve(this.puzzle, from);
+    }
+    if (!answer) return false;
+    const moves = "moves" in answer ? answer.moves : [];
+    const next = "board" in answer ? answer.board : moves.reduce((s, a) => this.def.reduce(this.puzzle, s, a), from);
+    this.finish(true);
+    if (Object.is(next, prev)) this.hooks.refresh.call();
+    else this.commit(prev, next, moves, { kind: "system", reason: "reveal" });
+    return true;
   }
 
   /** Number of undo steps available; changes exactly when history is pushed or popped. */
@@ -411,17 +462,23 @@ export class Session<Pz = unknown, S = unknown, A extends Action = Action, I = u
     return true;
   }
 
+  /** The board this game began at: a practice board's start, else the puzzle's initial state. */
+  private initial(): S {
+    return this.origin.kind === "practice" ? (this.origin.start as S) : this.def.init(this.puzzle);
+  }
+
   /**
-   * Back to the initial state as one undoable step. Also clears the solved mark and zeroes the
+   * Back to the initial state as one undoable step. Also clears the outcome and zeroes the
    * timer so a replay is timed from scratch; undoing a restart restores the board only.
    */
   restart(): void {
     this.endAllBatches();
-    const wasTiming = this.runningSince !== null || this._solvedAtMs !== null;
-    this._solvedAtMs = null;
+    const wasTiming = this.runningSince !== null || this.finished;
+    this._finishedAtMs = null;
+    this._revealed = false;
     this.elapsedBase = 0;
     this.runningSince = wasTiming ? performance.now() : null;
-    const fresh = this.settled(this.def.init(this.puzzle));
+    const fresh = this.settled(this.initial());
     const notes = this.pendingNotes;
     this.pendingNotes = [];
     const prev = this._state;
@@ -461,7 +518,7 @@ export class Session<Pz = unknown, S = unknown, A extends Action = Action, I = u
     return true;
   }
 
-  /** Replace progress wholesale (e.g. reveal solution) as one undoable step. */
+  /** Replace progress wholesale as one undoable step. */
   replaceState(next: S, source: Source = { kind: "system", reason: "replace" }): void {
     const prev = this._state;
     if (Object.is(next, prev)) return;
@@ -587,7 +644,7 @@ export class Session<Pz = unknown, S = unknown, A extends Action = Action, I = u
   }
 
   setPaused(paused: boolean): void {
-    if (this._solvedAtMs !== null) paused = false;
+    if (this.finished) paused = false;
     this._paused = paused;
     if (paused) this.pause();
     else this.resume();
@@ -599,7 +656,7 @@ export class Session<Pz = unknown, S = unknown, A extends Action = Action, I = u
   }
 
   resume(): void {
-    if (this.runningSince === null && this._solvedAtMs === null) this.runningSince = performance.now();
+    if (this.runningSince === null && !this.finished) this.runningSince = performance.now();
   }
 
   pause(): void {
@@ -620,19 +677,26 @@ export class Session<Pz = unknown, S = unknown, A extends Action = Action, I = u
       interaction: this._interaction,
       origin: this.origin,
       elapsedMs: this.elapsedMs(),
-      solvedAtMs: this._solvedAtMs,
+      solvedAtMs: this._finishedAtMs,
+      revealed: this._revealed,
       paused: this._paused,
       past: trim(this.past),
       future: trim(this.future),
     };
   }
 
+  /** Snapshots whose practice origin has no `start` began at their oldest history state. */
   static restore(def: AnyPuzzleDef, snap: Snapshot): Session<any, any, any, any> {
-    const s = new Session(def, snap.puzzle, snap.origin, {
+    const o = snap.origin as Origin | { kind: "practice"; technique: string; seed: string };
+    const origin: Origin = o.kind === "practice" && !("start" in o)
+      ? { kind: "practice", technique: o.technique, seed: o.seed, start: snap.past[0]?.state ?? snap.state }
+      : o;
+    const s = new Session(def, snap.puzzle, origin, {
       state: snap.state,
       interaction: snap.interaction ?? def.initInteraction?.(snap.puzzle),
       elapsedMs: snap.elapsedMs,
-      solvedAtMs: snap.solvedAtMs,
+      finishedAtMs: snap.solvedAtMs,
+      revealed: snap.revealed ?? snap.past.some((e) => e.sources?.some((src) => src.kind === "system" && src.reason === "reveal")),
     });
     s._paused = !!snap.paused && snap.solvedAtMs === null;
     s.past = snap.past as HistoryEntry<unknown, Action>[];

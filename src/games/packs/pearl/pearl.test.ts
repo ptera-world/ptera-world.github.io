@@ -3,7 +3,7 @@ import { generate } from "../../core/generate";
 import { Registry } from "../../core/registry";
 import { createRng } from "../../core/rng";
 import { Session } from "../../core/session";
-import { TechniqueHost, applyStep, findPracticePosition, firstStep, rateByTechniques } from "../../core/techniques";
+import { TechniqueHost, applyStep, findPracticePosition, findStep, firstStep, rateByTechniques } from "../../core/techniques";
 import { LINE, edgeGrid } from "../../lib/edges";
 import { CROSS, NONE, cellName, gridFormat, pearl, sgtFormat, type PearlAction, type PearlFocus } from "./logic";
 import { checkMarks } from "./plugins";
@@ -131,7 +131,7 @@ test("every cell a hint names is highlighted", async () => {
     let st = pearl.init(p);
     for (let i = 0; i < 400; i++) {
       for (const t of pearlTechniques) {
-        const step = t.find(p, st);
+        const step = findStep(pearl, t, p, st);
         if (!step) continue;
         const all = (f: PearlFocus) => new Set([...f.because, ...f.edges.flatMap((e) => [g.ea[e]!, g.eb[e]!])].map((c) => cellName(p, c)));
         for (const n of names(step.message)) expect(all(step.focus as PearlFocus).has(n)).toBe(true);
@@ -176,6 +176,7 @@ test("formats round-trip; game ids parse like the original", async () => {
 
 test("solve() reaches a solved state", async () => {
   const p = await gen({ width: 6, height: 6 }, "solve");
-  expect(pearl.isSolved(p, pearl.solve!(p)!)).toBe(true);
+  const ans = pearl.solve!(p, pearl.init(p))!;
+  expect("board" in ans && pearl.isSolved(p, ans.board)).toBe(true);
   expect(pearl.isSolved(p, pearl.init(p))).toBe(false);
 });

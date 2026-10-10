@@ -3,7 +3,7 @@ import { cardName, safeHomeReason } from "../../lib/cards/deck";
 import { planner } from "../../lib/plan";
 import type { CardFocus } from "../../lib/cards/table";
 import { describeMove, freecell, whereTo, fromPos, pileName, toPos, type FreecellAction, type FreecellInteraction, type FreecellPuzzle, type FreecellState } from "./logic";
-import { applyMove, clonePos, isSafeHome, safeHomeMove, solve, type Move } from "./solver";
+import { applyMove, clonePos, eachSafeHomeMove, isSafeHome, solve, type Move } from "./solver";
 
 type FreecellTechnique = Technique<FreecellPuzzle, FreecellState, FreecellAction>;
 
@@ -79,14 +79,14 @@ function stepFor(p: FreecellPuzzle, s: FreecellState, path: readonly Move[]): St
   };
 }
 
-function solverTechnique(kind: Kind, t: Omit<FreecellTechnique, "find" | "puzzles">): FreecellTechnique {
+function solverTechnique(kind: Kind, t: Omit<FreecellTechnique, "instances" | "puzzles">): FreecellTechnique {
   return {
     ...t,
     puzzles: [freecell],
-    find(p, s) {
+    instances(p, s, visit) {
       const path = plan(p, s).path;
-      if (!path?.length || kindOf(p, s, path[0]!) !== kind) return null;
-      return stepFor(p, s, path);
+      if (!path?.length || kindOf(p, s, path[0]!) !== kind) return;
+      visit(stepFor(p, s, path));
     },
   };
 }
@@ -98,18 +98,17 @@ export const safeHome: FreecellTechnique = {
   level: 1,
   color: "#3fa34d",
   description: "a card can go home for good once nothing could ever need to sit on it: aces and twos always, and any other card once both foundations of the other color have reached one rank below it.",
-  find(p, s) {
-    const pos = toPos(s, p.cells.length);
-    const m = safeHomeMove(pos);
-    if (!m) return null;
-    const card = lead(s, m);
-    return {
-      message: `${cardName(card)} home: ${reason(p, s, [m])}.`,
-      nudge: `a card in ${pileName(p, m.from)} can go home`,
-      focus: { cards: [card], to: m.to } satisfies CardFocus,
-      nudgeFocus: { piles: [m.from] } satisfies CardFocus,
-      actions: [{ type: "move", ...m }],
-    };
+  instances(p, s, visit) {
+    eachSafeHomeMove(toPos(s, p.cells.length), (m) => {
+      const card = lead(s, m);
+      return visit({
+        message: `${cardName(card)} home: ${reason(p, s, [m])}.`,
+        nudge: `a card in ${pileName(p, m.from)} can go home`,
+        focus: { cards: [card], to: m.to } satisfies CardFocus,
+        nudgeFocus: { piles: [m.from] } satisfies CardFocus,
+        actions: [{ type: "move", ...m }],
+      });
+    });
   },
 };
 
@@ -143,7 +142,7 @@ export const checkWinnable: Plugin<FreecellPuzzle, FreecellState, FreecellAction
   enabledByDefault: true,
   setup({ session, owner }) {
     session.hooks.hint.tap(({ puzzle, state }) => {
-      if (session.solved) return undefined;
+      if (session.finished) return undefined;
       return plan(puzzle, state).impossible ? { message: "no sequence of moves wins from here any more. undo to get back to a winnable position." } : undefined;
     }, { owner, priority: 90 });
   },
@@ -155,11 +154,8 @@ export function fallbackHint(p: FreecellPuzzle, s: FreecellState) {
   return { message: "the search for a win ran out of time from here, so there's no suggestion. undoing a move or two may help." };
 }
 
-/** The won position at the end of a winning line from the start, or null if none is known. */
-export function solvedState(p: FreecellPuzzle): FreecellState | null {
-  const path = plan(p, freecell.init(p)).path;
-  if (!path) return null;
-  let s = freecell.init(p);
-  for (const m of path) s = freecell.reduce(p, s, { type: "move", ...m });
-  return s;
+/** The moves of a winning line from `s`, or null if none is known. */
+export function solveFrom(p: FreecellPuzzle, s: FreecellState): { moves: FreecellAction[] } | null {
+  const path = plan(p, s).path;
+  return path ? { moves: path.map((m): FreecellAction => ({ type: "move", ...m })) } : null;
 }

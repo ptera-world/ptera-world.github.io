@@ -268,9 +268,9 @@ function technique(spec: Spec): Technique<BridgesPuzzle, BridgesState, BridgesAc
     level: LEVEL[spec.kind],
     description: spec.description,
     practice: spec.practice ? { params: spec.practice } : undefined,
-    find(p, s) {
+    instances(p, s, visit) {
       const f = findKind(p, s, spec.kind);
-      if (!f) return null;
+      if (!f) return;
       const g = graph(p);
       const why = because(g, f);
       const st = f.step;
@@ -279,13 +279,13 @@ function technique(spec: Spec): Technique<BridgesPuzzle, BridgesState, BridgesAc
         : { islands: st.islands, edges: st.edges };
       const nudge = spec.nudge(p, g, st);
       const nudgeFocus: Focus = { islands: nudge.islands, edges: [] };
-      return {
+      visit({
         message: why ? `${why.message}. ${st.message}` : st.message,
         nudge: nudge.text,
         focus,
         nudgeFocus,
         actions: f.actions,
-      };
+      });
     },
   };
 }

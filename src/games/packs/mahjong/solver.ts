@@ -76,12 +76,18 @@ export function remaining(tiles: readonly number[], gone: Gone): Map<number, num
   return m;
 }
 
+/** Calls `visit` with the first two tiles of every group whose remaining tiles are all free, until it returns true. */
+export function eachSafePair(b: Board, tiles: readonly number[], gone: Gone, visit: (pair: [number, number]) => boolean | void): void {
+  for (const [, idx] of [...remaining(tiles, gone)].sort((a, c) => a[0] - c[0])) {
+    if (idx.length % 2 === 0 && idx.every((i) => isFree(b, gone, i)) && visit([idx[0]!, idx[1]!]) === true) return;
+  }
+}
+
 /** A group whose every remaining tile is free: pairing them any way can't go wrong. */
 export function safePair(b: Board, tiles: readonly number[], gone: Gone): [number, number] | null {
-  for (const [, idx] of [...remaining(tiles, gone)].sort((a, c) => a[0] - c[0])) {
-    if (idx.length % 2 === 0 && idx.every((i) => isFree(b, gone, i))) return [idx[0]!, idx[1]!];
-  }
-  return null;
+  let found: [number, number] | null = null;
+  eachSafePair(b, tiles, gone, (pair) => { found = pair; return true; });
+  return found;
 }
 
 /** Two tiles of a group with nothing else left of it, one stacked above the other: they can never both be free. */

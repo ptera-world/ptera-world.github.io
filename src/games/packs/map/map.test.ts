@@ -3,7 +3,7 @@ import { generate } from "../../core/generate";
 import { Registry } from "../../core/registry";
 import { createRng } from "../../core/rng";
 import { Session } from "../../core/session";
-import { TechniqueHost, applyStep, findPracticePosition, firstStep, rateByTechniques } from "../../core/techniques";
+import { TechniqueHost, applyStep, findPracticePosition, findStep, firstStep, rateByTechniques } from "../../core/techniques";
 import { geometry, randomColouring, randomMap, renumber, type MapPuzzle } from "./grid";
 import { map, sgtFormat, type MapAction, type MapFocus } from "./logic";
 import { checkMarks } from "./plugins";
@@ -124,7 +124,7 @@ test("every region a hint names is highlighted", async () => {
     let st = map.init(p);
     for (let i = 0; i < 400; i++) {
       for (const t of mapTechniques) {
-        const step = t.find(p, st);
+        const step = findStep(map, t, p, st);
         if (!step) continue;
         const all = (f: MapFocus) => new Set([...f.regions, ...f.because].map(name));
         for (const n of step.message.match(/\b[A-Z]+\d+\b/g) ?? []) expect(all(step.focus as MapFocus).has(n)).toBe(true);
@@ -172,6 +172,7 @@ test("game ids round-trip and parse like the original", async () => {
 
 test("solve() reaches a solved state", async () => {
   const p = await gen(MID, "solve");
-  expect(map.isSolved(p, map.solve!(p)!)).toBe(true);
+  const ans = map.solve!(p, map.init(p))!;
+  expect("board" in ans && map.isSolved(p, ans.board)).toBe(true);
   expect(map.isSolved(p, map.init(p))).toBe(false);
 });

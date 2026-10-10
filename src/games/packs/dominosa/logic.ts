@@ -269,7 +269,7 @@ export const dominosa: PuzzleDef<DominosaPuzzle, DominosaState, DominosaAction, 
   isSolved,
   solve(p) {
     const a = analyze(p);
-    return a.solution ? { marks: a.solution.map((v) => (v === 1 ? DOMINO : NONE)) } : null;
+    return a.solution ? { board: { marks: a.solution.map((v) => (v === 1 ? DOMINO : NONE)) } } : null;
   },
   hint,
   rate,

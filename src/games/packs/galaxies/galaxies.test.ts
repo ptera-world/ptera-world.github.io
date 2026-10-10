@@ -3,7 +3,7 @@ import { generate } from "../../core/generate";
 import { Registry } from "../../core/registry";
 import { createRng } from "../../core/rng";
 import { Session } from "../../core/session";
-import { TechniqueHost, applyStep, findPracticePosition, firstStep, rateByTechniques } from "../../core/techniques";
+import { TechniqueHost, applyStep, findPracticePosition, findStep, firstStep, rateByTechniques } from "../../core/techniques";
 import { cellName, galaxies, sgtFormat, type GalaxiesAction, type GalaxiesFocus } from "./logic";
 import { checkMarks } from "./plugins";
 import { analyze, countSolutions, freshOwners, geometry, logicSolve, randomPartition, type GalaxiesPuzzle, type Level } from "./solver";
@@ -118,7 +118,7 @@ test("every cell a hint names is highlighted", async () => {
     let st = galaxies.init(p);
     for (let i = 0; i < 600; i++) {
       for (const t of galaxiesTechniques) {
-        const step = t.find(p, st);
+        const step = findStep(galaxies, t, p, st);
         if (!step) continue;
         const all = (f: GalaxiesFocus) => new Set([...f.tiles, ...f.because, ...f.dots.flatMap((d) => g.core[d]!)].map((c) => cellName(p, c)));
         for (const n of names(step.message)) expect(all(step.focus as GalaxiesFocus).has(n)).toBe(true);
@@ -164,6 +164,7 @@ test("game ids round-trip and parse like the original", async () => {
 
 test("solve() reaches a solved state", async () => {
   const p = await gen({ width: 6, height: 6 }, "solve");
-  expect(galaxies.isSolved(p, galaxies.solve!(p)!)).toBe(true);
+  const ans = galaxies.solve!(p, galaxies.init(p))!;
+  expect("board" in ans && galaxies.isSolved(p, ans.board)).toBe(true);
   expect(galaxies.isSolved(p, galaxies.init(p))).toBe(false);
 });

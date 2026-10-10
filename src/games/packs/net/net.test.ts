@@ -4,7 +4,8 @@ import { createRng } from "../../core/rng";
 import { PluginHost } from "../../core/plugins";
 import { Registry } from "../../core/registry";
 import { Session } from "../../core/session";
-import { TechniqueHost, applyStep, findPracticePosition, firstStep } from "../../core/techniques";
+import type { Step } from "../../core/types";
+import { TechniqueHost, applyStep, findPracticePosition, findStep, firstStep } from "../../core/techniques";
 import { register } from "./index";
 import { techniques } from "./techniques";
 import { loopSides, lockConflicts } from "./assists";
@@ -12,6 +13,8 @@ import { compactFormat, gridFormat, sgtFormat } from "./formats";
 import { D, DIRS, L, R, U, coord, isTree, neighbour, opp, rotate, type NetPuzzle } from "./grid";
 import { net, type NetAction, type NetHintFocus, type NetState } from "./logic";
 import { searchSolutions, solveLogic, type Tier } from "./solver";
+
+const solved = (p: NetPuzzle) => (net.solve!(p, net.init(p)) as { board: NetState }).board;
 
 const gen = (params: Record<string, unknown>, seed: string) =>
   coreGenerate(net, params, seed, new AbortController().signal) as Promise<NetPuzzle>;
@@ -159,7 +162,7 @@ test("techniques alone solve generated puzzles, each step matching the solution"
   ]) {
     for (const seed of ["a", "b"]) {
       const p = await gen(params, seed);
-      const sol = net.solve!(p)!.tiles;
+      const sol = solved(p).tiles;
       let s = net.init(p);
       let hardest = 0;
       for (let k = 0; k < 500 && !net.isSolved(p, s); k++) {
@@ -184,7 +187,7 @@ test("a technique only reports tiles the easier ones can't pin down", async () =
   for (let k = 0; k < 500 && !net.isSolved(p, s); k++) {
     for (const t of techniques) {
       if (t.level === 1) continue;
-      const step = t.find(p, s);
+      const step = findStep(net, t, p, s) as Step<NetAction> | null;
       if (!step) continue;
       seen.add(t.id);
       const easier = techniques.filter((e) => e.level < t.level);
@@ -205,7 +208,7 @@ test("hints: wrong locks come first, then techniques carry the puzzle through", 
   for (const params of [{ width: 6, height: 6, difficulty: "normal" }, { width: 6, height: 5, wrap: true, difficulty: "hard" }]) {
     const p = await gen(params, "hints");
     const { session } = hosted(p);
-    const sol = net.solve!(p)!.tiles;
+    const sol = solved(p).tiles;
     const bad = session.state.tiles.findIndex((m, i) => m !== sol[i]);
     session.dispatch({ type: "lock", cells: [bad], on: true });
     const first = session.hint();
@@ -230,7 +233,7 @@ test("technique hints nudge first, then explain with a ghost of the answer", asy
   const full = h.more!;
   const f = full.focus as NetHintFocus;
   expect(f.cell).toBeGreaterThanOrEqual(0);
-  expect(f.mask).toBe(net.solve!(p)!.tiles[f.cell]);
+  expect(f.mask).toBe(solved(p).tiles[f.cell]);
   expect(full.message).toMatch(/lock it/);
 });
 
@@ -300,7 +303,7 @@ test("every technique has a practice position", async () => {
   for (const t of techniques) {
     const pos = await findPracticePosition(net, techniques, t, "practice", new AbortController().signal);
     expect(pos).not.toBeNull();
-    expect(pos!.step.actions.length).toBe(1);
+    expect(findStep(net, t, pos!.puzzle, pos!.state)!.actions.length).toBe(1);
   }
 }, 60_000);
 

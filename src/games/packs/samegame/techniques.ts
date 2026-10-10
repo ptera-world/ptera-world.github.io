@@ -10,21 +10,21 @@ export const keepClearable: SamegameTechnique = {
   puzzles: [samegame],
   level: 1,
   description: "some removals leave a board that can still be cleared and some don't (a color left with one lone tile is stuck for good). this searches ahead for a whole clearing order and suggests its first removal.",
-  find(p, s) {
-    if (isEmpty(s.grid)) return null;
+  instances(p, s, visit) {
+    if (isEmpty(s.grid)) return;
     const path = clearFrom(p, s.grid).path;
-    if (!path?.length) return null;
+    if (!path?.length) return;
     const cell = path[0]!;
     const cells = group(p.w, p.h, s.grid, cell);
     const name = COLOUR_NAMES[s.grid[cell]!]!;
     const after = path.length - 1;
-    return {
+    visit({
       message: `remove the ${cells.length} ${name} tiles at ${cellAt(p, cell)}: the board can still be cleared after that${after ? ` (in ${after} more ${after === 1 ? "removal" : "removals"})` : ", and that clears it"}.`,
       nudge: `try the ${name} tiles in column ${cellAt(p, cell).replace(/\d+$/, "")}`,
       focus: { cells } satisfies SamegameFocus,
       nudgeFocus: { cells: Array.from({ length: p.h }, (_, y) => y * p.w + (cell % p.w)) } satisfies SamegameFocus,
       actions: [{ type: "remove", cell }],
-    };
+    });
   },
   practice: { params: { width: 6, height: 5, colours: 3 } },
 };

@@ -308,7 +308,7 @@ export function makeLoopyView(look: Look = plainLook, labels: Labels = noLabels,
         const hintF = new Set(focus.faces ?? []), hintV = new Set(focus.vertices ?? []);
         const sides = d[KEYS.sides] as number[] | undefined;
         const segs = d[KEYS.segments] as number[] | undefined;
-        svg.classList.toggle("solved", session.solved);
+        svg.classList.toggle("solved", session.finished);
         faceEls.forEach((el, f) => {
           el.classList.toggle("inside", sides?.[f] === 1);
           el.classList.toggle("outside", sides?.[f] === 2);

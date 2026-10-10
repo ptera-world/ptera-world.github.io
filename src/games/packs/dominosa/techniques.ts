@@ -45,12 +45,16 @@ function touches(p: DominosaPuzzle, st: SolverStep, target: DominosaTarget): boo
   return st.because.includes(target.cell) || st.placements.some((q) => g.pa[q] === target.cell || g.pb[q] === target.cell);
 }
 
-function first(p: DominosaPuzzle, s: DominosaState, kinds: readonly StepKind[], target?: DominosaTarget): { raw: SolverStep; placements: number[] } | null {
+type Hit = { raw: SolverStep; placements: number[] };
+
+function each(p: DominosaPuzzle, s: DominosaState, kinds: readonly StepKind[], visit: (hit: Hit) => boolean | void, target?: DominosaTarget): void {
   const k = knowledge(p, s);
-  if (!k) return null;
-  let placements: number[] = [];
-  const raw = scanSteps(geometry(p), k, kinds, (st) => (!target || touches(p, st, target)) && (placements = effective(p, s, st)).length > 0);
-  return raw ? { raw, placements } : null;
+  if (!k) return;
+  scanSteps(geometry(p), k, kinds, (raw) => {
+    if (target && !touches(p, raw, target)) return false;
+    const placements = effective(p, s, raw);
+    return placements.length > 0 && visit({ raw, placements }) === true;
+  });
 }
 
 function outcome(p: DominosaPuzzle, qs: readonly number[], value: number): string {
@@ -78,14 +82,18 @@ const EASY = { max: 5, difficulty: "easy" };
 const MEDIUM = { max: 5, difficulty: "medium" };
 const HARD = { max: 5, difficulty: "hard" };
 
-type Finder = (p: DominosaPuzzle, s: DominosaState, target?: DominosaTarget) => Step<DominosaAction> | null;
+type Make = (p: DominosaPuzzle, hit: Hit) => Step<DominosaAction>;
 
-function technique(def: Omit<DominosaTechnique, "find" | "findAt" | "puzzles">, find: Finder): DominosaTechnique {
+function technique(def: Omit<DominosaTechnique, "instances" | "findAt" | "puzzles">, kinds: readonly StepKind[], make: Make): DominosaTechnique {
   return {
     ...def,
     puzzles: [dominosa],
-    find: (p, s) => find(p, s),
-    findAt: (p, s, target) => find(p, s, target as DominosaTarget),
+    instances: (p, s, visit) => each(p, s, kinds, (hit) => visit(make(p, hit)) === true),
+    findAt: (p, s, target) => {
+      let found: Step<DominosaAction> | null = null;
+      each(p, s, kinds, (hit) => { found = make(p, hit); return true; }, target as DominosaTarget);
+      return found;
+    },
   };
 }
 
@@ -95,9 +103,7 @@ export const onlyPlace = technique({
   level: 1,
   description: "a domino that has just one pair of neighboring cells left showing its two numbers goes there.",
   practice: { params: EASY },
-}, (p, s, target) => {
-  const hit = first(p, s, ["domino-one"], target);
-  if (!hit) return null;
+}, ["domino-one"], (p, hit) => {
   const d = hit.raw.domino!;
   const q = hit.placements[0]!;
   return step(hit.raw, hit.placements,
@@ -111,9 +117,7 @@ export const onlyNeighbour = technique({
   level: 2,
   description: "a cell that can only pair with one of its neighbors (the others are taken, lined off, or would repeat a domino) is a domino with that neighbor.",
   practice: { params: EASY },
-}, (p, s, target) => {
-  const hit = first(p, s, ["cell-one"], target);
-  if (!hit) return null;
+}, ["cell-one"], (p, hit) => {
   const x = hit.raw.because[0]!;
   const q = hit.placements[0]!;
   const g = geometry(p);
@@ -129,9 +133,7 @@ export const oneDomino = technique({
   level: 3,
   description: "if every way to cover a cell makes the same domino, that domino is used up there, so it can't go anywhere else.",
   practice: { params: MEDIUM },
-}, (p, s, target) => {
-  const hit = first(p, s, ["cell-domino"], target);
-  if (!hit) return null;
+}, ["cell-domino"], (p, hit) => {
   const x = hit.raw.because[0]!;
   const d = hit.raw.domino!;
   return step(hit.raw, hit.placements,
@@ -145,9 +147,7 @@ export const sharedCell = technique({
   level: 4,
   description: "if every place a domino can still go overlaps some other pair of cells, that pair can't be a domino: placing it would leave nowhere for the first one.",
   practice: { params: MEDIUM },
-}, (p, s, target) => {
-  const hit = first(p, s, ["overlap"], target);
-  if (!hit) return null;
+}, ["overlap"], (p, hit) => {
   const d = hit.raw.domino!;
   return step(hit.raw, hit.placements,
     `every place the ${dominoName(d)} domino can still go overlaps ${placementList(p, hit.placements)}, so ${outcome(p, hit.placements, NO)}`,
@@ -160,9 +160,7 @@ export const oddArea = technique({
   level: 5,
   description: "dominoes cover cells two at a time, so a domino that would wall off an odd number of uncovered cells can't go there.",
   practice: { params: MEDIUM },
-}, (p, s, target) => {
-  const hit = first(p, s, ["parity"], target);
-  if (!hit) return null;
+}, ["parity"], (p, hit) => {
   const q = hit.placements[0]!;
   const n = hit.raw.because.length;
   return step(hit.raw, hit.placements,
@@ -176,9 +174,7 @@ export const trial = technique({
   level: 6,
   description: "pretend a domino goes somewhere and follow the first two techniques from there. if that leaves a domino or a cell with nowhere to go, it can't go there.",
   practice: { params: HARD },
-}, (p, s, target) => {
-  const hit = first(p, s, ["probe"], target);
-  if (!hit) return null;
+}, ["probe"], (p, hit) => {
   const q = hit.placements[0]!;
   return step(hit.raw, hit.placements,
     `if ${placementName(p, q)} were a domino, following only place for a domino and only one partner from there would leave something with nowhere to go, so ${outcome(p, hit.placements, NO)}`,

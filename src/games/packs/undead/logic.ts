@@ -282,7 +282,7 @@ export const undead: PuzzleDef<UndeadPuzzle, UndeadState, UndeadAction, UndeadIn
   isSolved,
   solve(p) {
     const a = analyze(p);
-    return a.solution ? { monsters: a.solution.slice(), marks: p.cells.map(() => 0) } : null;
+    return a.solution ? { board: { monsters: a.solution.slice(), marks: p.cells.map(() => 0) } } : null;
   },
   hint,
   rate,

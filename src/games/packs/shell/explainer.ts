@@ -3,7 +3,7 @@ import { clear, h, style } from "../../core/dom";
 import { namespace, prefs } from "../../core/storage";
 import type { Session } from "../../core/session";
 import type { AnyPuzzleDef, Step, Technique, View, ViewHandle } from "../../core/types";
-import { SessionCtor, applyStep, colorOf, findPracticePosition, hintFrom } from "./engine";
+import { SessionCtor, applyStep, colorOf, findPracticePosition, findStep, hintFrom } from "./engine";
 
 const CSS = `
 .ex { display: flex; flex-direction: column; gap: 8px; }
@@ -89,11 +89,13 @@ export function explainer(def: AnyPuzzleDef, t: Technique, all: readonly Techniq
         if (!ac.signal.aborted) { clear(stage); stage.append(h("span", { class: "ex-loading" }, `couldn't find a ${t.name} to show right now`)); }
         return;
       }
-      pos = { puzzle: found.puzzle, state: found.state, step: found.step };
+      const step = findStep(def, t, found.puzzle, found.state);
+      if (!step) return;
+      pos = { puzzle: found.puzzle, state: found.state, step };
       positions.set(t.id, pos);
     }
     const p = pos;
-    session = new SessionCtor(def, p.puzzle, { kind: "practice", technique: t.id, seed: "explainer", step: p.step }, { state: p.state });
+    session = new SessionCtor(def, p.puzzle, { kind: "practice", technique: t.id, seed: "explainer", start: p.state }, { state: p.state });
     clear(stage);
     const mount = h("div", { class: "view" });
     stage.append(mount);

@@ -403,12 +403,11 @@ export function sidesOf(g: Grid, edges: ArrayLike<number>): Sides {
   return s;
 }
 
-/** Unknown edges whose two sides are already related. With `first`, returns the first without applying it. */
-export function parityDirect(b: Board, first: boolean): Deduction | boolean | null {
+/** Calls `visit` with every unknown edge whose two sides are already related, until it returns true. */
+export function eachParityDirect(b: Board, visit: (d: Deduction) => boolean | void): void {
   const g = b.g, out = g.nf;
   const sides = sidesOf(g, b.e);
   const node = (f: number) => (f < 0 ? out : f);
-  let progress = false;
   for (let e = 0; e < g.ne; e++) {
     if (b.e[e] !== UNKNOWN) continue;
     const fa = g.ef[2 * e]!, fb = g.ef[2 * e + 1]!;
@@ -424,18 +423,30 @@ export function parityDirect(b: Board, first: boolean): Deduction | boolean | nu
         faces: [fa, fb].filter((f) => f >= 0),
       }),
     };
-    if (first) return d;
-    b.set(e, value);
-    progress = true;
+    if (visit(d)) return;
   }
-  return first ? null : progress;
+}
+
+/** Unknown edges whose two sides are already related. With `first`, returns the first without applying it. */
+export function parityDirect(b: Board, first: boolean): Deduction | boolean | null {
+  let hit: Deduction | null = null;
+  let progress = false;
+  eachParityDirect(b, (d) => {
+    if (first) {
+      hit = d;
+      return true;
+    }
+    b.set(d.edges[0]!, d.value);
+    progress = true;
+  });
+  return first ? hit : progress;
 }
 
 /**
- * Per clue and per dot: enumerate the unknown side of each group of related cells. Applies (or
- * with `first`, returns) the first deduction found.
+ * Per clue and per dot: enumerate the unknown side of each group of related cells. Calls `visit`
+ * with every deduction found, until it returns true.
  */
-export function parityGroup(b: Board, first: boolean): Deduction | boolean | null {
+export function eachParityGroup(b: Board, visit: (d: Deduction) => boolean | void): void {
   const g = b.g, out = g.nf;
   const sides = sidesOf(g, b.e);
   const node = (f: number) => (f < 0 ? out : f);
@@ -453,10 +464,11 @@ export function parityGroup(b: Board, first: boolean): Deduction | boolean | nul
     });
     return { roots, terms };
   };
-  const consider = (es: number[], base: number, isFace: boolean, label: () => { message: string; faces?: number[]; vertices?: number[] }): Deduction | null => {
-    if (es.length < 2) return null;
+  /** True when `visit` asked to stop. */
+  const consider = (es: number[], base: number, isFace: boolean, label: () => { message: string; faces?: number[]; vertices?: number[] }): boolean => {
+    if (es.length < 2) return false;
     const { roots, terms } = groups(es);
-    if (roots.length > 10 || roots.length >= es.length) return null;
+    if (roots.length > 10 || roots.length >= es.length) return false;
     const seen = new Uint8Array(es.length);
     let any = false;
     for (let m = 0; m < 1 << roots.length; m++) {
@@ -473,13 +485,13 @@ export function parityGroup(b: Board, first: boolean): Deduction | boolean | nul
     }
     if (!any) {
       b.fail({ why: () => "no way to shade the cells inside and outside works here", ...label() });
-      return null;
+      return false;
     }
     for (const value of [LINE, CROSS] as const) {
       const bit = value === LINE ? 1 : 2;
       const edges = es.filter((_, i) => seen[i] === bit);
       if (edges.length) {
-        return {
+        const d: Deduction = {
           technique: "inside-outside-group", tier: 2, edges, value,
           explain: () => {
             const l = label();
@@ -487,38 +499,49 @@ export function parityGroup(b: Board, first: boolean): Deduction | boolean | nul
             return { ...l, message: `${l.message} ${which} ${value === LINE ? (edges.length > 1 ? "are lines" : "is a line") : (edges.length > 1 ? "are crossed" : "is crossed")}` };
           },
         };
+        if (visit(d)) return true;
       }
     }
-    return null;
+    return false;
   };
   for (let f = 0; f < g.nf; f++) {
     const c = b.clues[f]!;
     if (c < 0 || !b.fUnk[f]) continue;
     const es = g.fe[f]!.filter((e) => b.e[e] === UNKNOWN);
-    const d = consider(es, b.fLine[f]! - c, true, () => ({
+    const stop = consider(es, b.fLine[f]! - c, true, () => ({
       message: `shade the cells around ${clueRef(g, c, f)} as inside or outside the loop: the neighbors already tied together mean`,
       faces: [f],
     }));
-    if (b.conflict) return first ? null : false;
-    if (!d) continue;
-    if (first) return d;
-    for (const e of d.edges) b.set(e, d.value);
-    return true;
+    if (b.conflict || stop) return;
   }
   for (let v = 0; v < g.nv; v++) {
     if (!b.vUnk[v]) continue;
     const es = g.ve[v]!.filter((e) => b.e[e] === UNKNOWN);
-    const d = consider(es, b.vLine[v]!, false, () => ({
+    const stop = consider(es, b.vLine[v]!, false, () => ({
       message: `shade the cells around ${dotRef(g, v)} as inside or outside the loop: the cells already tied together mean`,
       vertices: [v],
     }));
-    if (b.conflict) return first ? null : false;
-    if (!d) continue;
-    if (first) return d;
-    for (const e of d.edges) b.set(e, d.value);
-    return true;
+    if (b.conflict || stop) return;
   }
-  return first ? null : false;
+}
+
+/**
+ * Per clue and per dot: enumerate the unknown side of each group of related cells. Applies (or
+ * with `first`, returns) the first deduction found.
+ */
+export function parityGroup(b: Board, first: boolean): Deduction | boolean | null {
+  let hit: Deduction | null = null;
+  let progress = false;
+  eachParityGroup(b, (d) => {
+    if (first) {
+      hit = d;
+      return true;
+    }
+    for (const e of d.edges) b.set(e, d.value);
+    progress = true;
+    return true;
+  });
+  return first ? hit : progress;
 }
 
 const parity: Pass = {
@@ -536,42 +559,55 @@ const parity: Pass = {
 /** Tier whose techniques a trial may use to reach a contradiction. */
 const TRIAL_DEPTH = 1;
 
+/** Calls `visit` with every edge whose opposite leads to a contradiction, until it returns true. */
+export function eachTrial(s: Solver, visit: (d: Deduction) => boolean | void): void {
+  const b = s.b, g = b.g;
+  const order: number[] = [];
+  const late: number[] = [];
+  const clueSide = (f: number) => f >= 0 && b.clues[f]! >= 0;
+  // suppositions only start at a loose end or on an edge of a clue
+  for (let e = 0; e < g.ne; e++) {
+    if (b.e[e] !== UNKNOWN) continue;
+    if (b.vLine[g.ev[2 * e]!] === 1 || b.vLine[g.ev[2 * e + 1]!] === 1) order.push(e);
+    else if (clueSide(g.ef[2 * e]!) || clueSide(g.ef[2 * e + 1]!)) late.push(e);
+  }
+  for (const e of [...order, ...late]) {
+    for (const guess of [LINE, CROSS] as const) {
+      const t = s.clone();
+      t.b.set(e, guess);
+      run(t, TRIAL_DEPTH);
+      if (!t.b.conflict) continue;
+      const value: EdgeState = guess === LINE ? CROSS : LINE;
+      const c = t.b.conflict;
+      const d: Deduction = {
+        technique: "trial", tier: 3, edges: [e], value,
+        explain: () => ({
+          message: `suppose ${edgeRef(g, e)} were ${guess === LINE ? "a line" : "crossed"}: following on from that, ${c.why()}. so it's ${value === LINE ? "a line" : "crossed"}`,
+          faces: c.faces,
+          vertices: c.vertices,
+        }),
+      };
+      if (visit(d)) return;
+    }
+  }
+}
+
 const trial: Pass = {
   id: "trial",
   tier: 3,
   run(s, first) {
-    const b = s.b, g = b.g;
-    const order: number[] = [];
-    const late: number[] = [];
-    const clueSide = (f: number) => f >= 0 && b.clues[f]! >= 0;
-    // suppositions only start at a loose end or on an edge of a clue
-    for (let e = 0; e < g.ne; e++) {
-      if (b.e[e] !== UNKNOWN) continue;
-      if (b.vLine[g.ev[2 * e]!] === 1 || b.vLine[g.ev[2 * e + 1]!] === 1) order.push(e);
-      else if (clueSide(g.ef[2 * e]!) || clueSide(g.ef[2 * e + 1]!)) late.push(e);
-    }
-    for (const e of [...order, ...late]) {
-      for (const guess of [LINE, CROSS] as const) {
-        const t = s.clone();
-        t.b.set(e, guess);
-        run(t, TRIAL_DEPTH);
-        if (!t.b.conflict) continue;
-        const value: EdgeState = guess === LINE ? CROSS : LINE;
-        const c = t.b.conflict;
-        const d: Deduction = {
-          technique: "trial", tier: 3, edges: [e], value,
-          explain: () => ({
-            message: `suppose ${edgeRef(g, e)} were ${guess === LINE ? "a line" : "crossed"}: following on from that, ${c.why()}. so it's ${value === LINE ? "a line" : "crossed"}`,
-            faces: c.faces,
-            vertices: c.vertices,
-          }),
-        };
-        if (first) return d;
-        b.set(e, value);
+    let hit: Deduction | null = null;
+    let progress = false;
+    eachTrial(s, (d) => {
+      if (first) {
+        hit = d;
         return true;
       }
-    }
-    return first ? null : false;
+      s.b.set(d.edges[0]!, d.value);
+      progress = true;
+      return true;
+    });
+    return first ? hit : progress;
   },
 };
 
@@ -686,27 +722,24 @@ export function analyse(g: Grid, clues: Int8Array): Analysis {
 
 export type WindowKind = "face" | "dot" | "pair";
 
-/** First deduction from a window of this kind, or null. Never changes `b` except to record a conflict. */
-export function findWindow(b: Board, kind: WindowKind): Deduction | null {
+/** Calls `visit` with every deduction from a window of this kind, until it returns true. Never changes `b` except to record a conflict. */
+export function eachWindow(b: Board, kind: WindowKind, visit: (d: Deduction) => boolean | void): void {
   const tier = kind === "pair" ? 2 : 1;
   const s = new Solver(b);
   for (const w of s.tier(tier).ws) {
     if (w.kind !== kind) continue;
     const ds = windowDeductions(b, w, tier);
-    if (b.conflict) return null;
-    if (ds?.length) return ds[0]!;
+    if (b.conflict) return;
+    for (const d of ds ?? []) if (visit(d)) return;
   }
-  return null;
 }
 
-/** First edge whose opposite leads to a contradiction using the normal-tier passes, or null. */
-export function findTrial(b: Board): Deduction | null {
-  const r = trial.run(new Solver(b), true);
-  return r && typeof r === "object" && !b.conflict ? r : null;
+/** Calls `visit` with every edge whose opposite leads to a contradiction using the normal-tier passes, until it returns true. */
+export function eachTrialStep(b: Board, visit: (d: Deduction) => boolean | void): void {
+  eachTrial(new Solver(b), (d) => !b.conflict && visit(d));
 }
 
-/** First deduction of one inside/outside kind, or null. */
-export function findParity(b: Board, kind: "direct" | "group"): Deduction | null {
-  const r = kind === "direct" ? parityDirect(b, true) : parityGroup(b, true);
-  return r && typeof r === "object" && !b.conflict ? r : null;
+/** Calls `visit` with every deduction of one inside/outside kind, until it returns true. */
+export function eachParity(b: Board, kind: "direct" | "group", visit: (d: Deduction) => boolean | void): void {
+  (kind === "direct" ? eachParityDirect : eachParityGroup)(b, (d) => !b.conflict && visit(d));
 }

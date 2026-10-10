@@ -2,9 +2,10 @@ import { expect, test } from "bun:test";
 import { generate } from "../../core/generate";
 import { createRng } from "../../core/rng";
 import { Session } from "../../core/session";
+import type { Step } from "../../core/types";
 import { info, pattern, type PatternAction, type PatternPuzzle } from "./logic";
 import { Registry } from "../../core/registry";
-import { TechniqueHost, applyStep, findPracticePosition, firstStep } from "../../core/techniques";
+import { TechniqueHost, applyStep, findPracticePosition, findStep, firstStep } from "../../core/techniques";
 import { doneNumbers, patternPlugins } from "./plugins";
 import { LINE_RULES, ruleOnLine } from "./rules";
 import {
@@ -205,7 +206,7 @@ test("a wrong mark never misleads a technique, and gets pointed out before any h
   const bad = sol.indexOf(EMPTY);
   session.dispatch({ type: "set", cells: [bad], value: FILLED });
   for (const t of patternTechniques) {
-    const step = t.find(puzzle, session.state);
+    const step = findStep(pattern, t, puzzle, session.state) as Step<PatternAction> | null;
     for (const a of step?.actions ?? []) for (const c of a.cells) { expect<number>(a.value).toBe(sol[c]!); expect(c).not.toBe(bad); }
   }
   const h1 = session.hint()!;
@@ -236,10 +237,11 @@ test("finished lines get crossed automatically inside the same undo step", () =>
 test("every technique can be practiced", async () => {
   for (const t of patternTechniques) {
     for (const seed of ["a", "b", "c", "d"]) {
-      const t0 = performance.now();
+      const t0 = process.cpuUsage();
       const pos = await findPracticePosition(pattern, patternTechniques, t, seed, sig());
       expect(pos, t.id).not.toBeNull();
-      expect(performance.now() - t0, t.id).toBeLessThan(3000);
+      const { user, system } = process.cpuUsage(t0);
+      expect((user + system) / 1000, t.id).toBeLessThan(3000);
     }
   }
 }, 60000);

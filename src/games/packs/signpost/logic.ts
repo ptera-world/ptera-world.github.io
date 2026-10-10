@@ -321,7 +321,7 @@ export const signpost: PuzzleDef<SignpostPuzzle, SignpostState, SignpostAction, 
   isSolved,
   solve(p) {
     const a = analyze(p);
-    return a.solution ? { next: a.solution.slice() } : null;
+    return a.solution ? { board: { next: a.solution.slice() } } : null;
   },
   hint,
   rate,

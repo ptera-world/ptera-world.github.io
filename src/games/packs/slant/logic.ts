@@ -432,7 +432,7 @@ export const slant: PuzzleDef<SlantPuzzle, SlantState, SlantAction, SlantInterac
   isSolved,
   solve(p) {
     const a = analyze(p);
-    return a.solution ? { marks: a.solution.map(markOf) } : null;
+    return a.solution ? { board: { marks: a.solution.map(markOf) } } : null;
   },
   hint,
   rate,

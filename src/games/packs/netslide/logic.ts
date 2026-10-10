@@ -411,9 +411,10 @@ export const netslide: PuzzleDef<NetslidePuzzle, NetslideState, NetslideAction, 
   },
   describeAction: (_p, a) => describeShift(a),
   isSolved: (p, s) => isSolvedTiles(p, s.tiles),
-  solve(p) {
+  solve(p, s) {
     const goal = target(p);
-    return goal ? { tiles: goal.slice(), moves: 0 } : null;
+    const moves = goal ? solveAll(spec(p), goal, { values: s.tiles }) : null;
+    return moves ? { moves } : null;
   },
   rate,
   hint: (p) => (target(p) ? null : { message: "no finished arrangement of these pieces turned up, so there's no hint for this board" }),

@@ -37,11 +37,17 @@ export function circle(n: number): Pt[] {
   });
 }
 
-const sign = (v: number) => (Math.abs(v) < 1e-12 ? 0 : v > 0 ? 1 : -1);
+/**
+ * Positions are compared on a 2^16 grid over the unit square: every product below then stays
+ * under 2^53, so the test is exact and never depends on rounding.
+ */
+const GRID = 1 << 16;
+const snap = (p: Pt): Pt => [Math.round(p[0] * GRID), Math.round(p[1] * GRID)];
 
 /** True if segments a1-a2 and b1-b2 meet: crossing, touching, or overlapping along a line. */
-export function cross(a1: Pt, a2: Pt, b1: Pt, b2: Pt): boolean {
-  const side = (p: Pt, q: Pt, r: Pt) => sign((q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0]));
+export function cross(p1: Pt, p2: Pt, q1: Pt, q2: Pt): boolean {
+  const a1 = snap(p1), a2 = snap(p2), b1 = snap(q1), b2 = snap(q2);
+  const side = (p: Pt, q: Pt, r: Pt) => Math.sign((q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0]));
   const d1 = side(a1, a2, b1), d2 = side(a1, a2, b2);
   if (d1 !== 0 && d1 === d2) return false;
   if (d1 === 0 && d2 === 0) {
@@ -222,7 +228,7 @@ export const untangle: PuzzleDef<UntanglePuzzle, UntangleState, UntangleAction, 
     "drag the points anywhere you like. the lines stay attached to their points.",
     "the puzzle is done when no two lines cross (or touch, other than at a point they share).",
   ],
-  solve: (p) => (p.layout ? { pts: p.layout.slice() } : null),
+  solve: (p) => (p.layout ? { board: { pts: p.layout.slice() } } : null),
   describe: (p) => `${p.n} points`,
   rate: (p) => ({ label: `${p.edges.length} lines`, score: p.edges.length }),
 };

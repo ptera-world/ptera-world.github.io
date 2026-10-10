@@ -542,7 +542,7 @@ export const unruly: PuzzleDef<UnrulyPuzzle, UnrulyState, UnrulyAction, UnrulyIn
   isSolved,
   solve(p) {
     const a = analyze(p);
-    return a.solution ? { marks: a.solution.map((v, c) => (p.cells[c]! >= 0 ? NONE : markOf(v))) } : null;
+    return a.solution ? { board: { marks: a.solution.map((v, c) => (p.cells[c]! >= 0 ? NONE : markOf(v))) } } : null;
   },
   hint,
   rate,

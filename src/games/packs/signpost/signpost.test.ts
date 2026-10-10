@@ -3,7 +3,7 @@ import { generate } from "../../core/generate";
 import { Registry } from "../../core/registry";
 import { createRng } from "../../core/rng";
 import { Session } from "../../core/session";
-import { TechniqueHost, applyStep, findPracticePosition, firstStep, rateByTechniques } from "../../core/techniques";
+import { TechniqueHost, applyStep, findPracticePosition, findStep, firstStep, rateByTechniques } from "../../core/techniques";
 import { directionTo, geometry, type SignpostPuzzle } from "./grid";
 import { canLink, cellName, gridFormat, sgtFormat, signpost, type SignpostAction, type SignpostFocus } from "./logic";
 import { checkLinks } from "./plugins";
@@ -135,7 +135,7 @@ test("every cell a hint names is highlighted", async () => {
     let st = signpost.init(p);
     for (let i = 0; i < 400; i++) {
       for (const t of signpostTechniques) {
-        const step = t.find(p, st);
+        const step = findStep(signpost, t, p, st);
         if (!step) continue;
         const all = (f: SignpostFocus) => new Set([...f.links.flat(), ...f.because, ...(f.related ?? [])].map((c) => cellName(p, c)));
         for (const n of names(step.message)) expect(all(step.focus as SignpostFocus).has(n)).toBe(true);
@@ -197,6 +197,7 @@ test("formats round-trip; game ids parse like the original", async () => {
 
 test("solve() reaches a solved state", async () => {
   const p = await gen({ width: 4, height: 4 }, "solve");
-  expect(signpost.isSolved(p, signpost.solve!(p)!)).toBe(true);
+  const ans = signpost.solve!(p, signpost.init(p))!;
+  expect("board" in ans && signpost.isSolved(p, ans.board)).toBe(true);
   expect(signpost.isSolved(p, signpost.init(p))).toBe(false);
 });

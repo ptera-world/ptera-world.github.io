@@ -235,7 +235,7 @@ export const galaxies: PuzzleDef<GalaxiesPuzzle, GalaxiesState, GalaxiesAction, 
   isSolved,
   solve(p) {
     const a = analyze(p);
-    return a.solution ? { owner: a.solution.slice() } : null;
+    return a.solution ? { board: { owner: a.solution.slice() } } : null;
   },
   hint,
   rate,

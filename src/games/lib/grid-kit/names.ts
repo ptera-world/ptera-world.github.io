@@ -57,19 +57,18 @@ export interface TechniqueSpec<Pz, S, A extends Action> {
 const defaultAim = (_p: unknown, d: Deduction, vars: number[], target: unknown): boolean =>
   typeof target === "number" && (vars.includes(target) || d.because.includes(target));
 
-/** A technique that reports the first deduction of its kinds that changes the board. */
+/** A technique whose instances are the deductions of its kinds that change the board, in scan order. */
 export function technique<Pz, S, A extends { type: string }>(spec: TechniqueSpec<Pz, S, A>): Technique<Pz, S, A> {
-  const find = (p: Pz, s: S, target?: unknown): Step<A> | null => {
+  const each = (p: Pz, s: S, target: unknown, visit: (step: Step<A>) => boolean | void): void => {
     const r = spec.read(p, s);
-    if (!r) return null;
-    let vars: number[] = [];
+    if (!r) return;
     const aim = spec.aim ?? defaultAim;
-    const d = scan(r.model, r.k, (x) => {
+    scan(r.model, r.k, (x) => {
       if (!spec.kinds.includes(x.kind)) return false;
-      vars = spec.changes(p, s, x);
-      return vars.length > 0 && (target === undefined || aim(p, x, vars, target));
+      const vars = spec.changes(p, s, x);
+      if (!vars.length || (target !== undefined && !aim(p, x, vars, target))) return false;
+      return visit(spec.explain(p, s, x, vars, r.k)) === true;
     }, spec.kinds);
-    return d ? spec.explain(p, s, d, vars, r.k) : null;
   };
   return {
     id: spec.id,
@@ -77,8 +76,12 @@ export function technique<Pz, S, A extends { type: string }>(spec: TechniqueSpec
     puzzles: [spec.puzzle],
     level: spec.level,
     description: spec.description,
-    find: (p, s) => find(p, s),
-    findAt: (p, s, target) => find(p, s, target),
+    instances: (p, s, visit) => each(p, s, undefined, visit),
+    findAt: (p, s, target) => {
+      let hit: Step<A> | null = null;
+      each(p, s, target, (step) => { hit = step; return true; });
+      return hit;
+    },
     ...(spec.requires ? { requires: spec.requires } : {}),
     ...(spec.defaults ? { defaults: spec.defaults } : {}),
     ...(spec.practice ? { practice: spec.practice } : {}),

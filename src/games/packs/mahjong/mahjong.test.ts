@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { generate } from "../../core/generate";
 import { Registry } from "../../core/registry";
 import { Session } from "../../core/session";
-import { TechniqueHost, applyStep, findPracticePosition, firstStep } from "../../core/techniques";
+import { TechniqueHost, applyStep, findPracticePosition, findStep, firstStep } from "../../core/techniques";
 import { LAYOUTS } from "./layouts";
 import { dealFormat, mahjong, type MahjongPuzzle } from "./logic";
 import { boardOf, isFree, solve, stuckPair } from "./solver";
@@ -101,7 +101,8 @@ test("techniques alone clear every preset; practice positions exist", async () =
   }
   for (const t of mahjongTechniques) {
     const pos = await findPracticePosition(mahjong, mahjongTechniques, t, "x", sig());
-    expect(pos?.step.actions.length).toBe(1);
+    const step = pos && findStep(mahjong, t, pos.puzzle, pos.state);
+    expect(step?.actions.length).toBe(1);
   }
 }, 60000);
 

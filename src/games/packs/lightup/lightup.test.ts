@@ -3,7 +3,7 @@ import { generate } from "../../core/generate";
 import { createRng } from "../../core/rng";
 import { Session } from "../../core/session";
 import { Registry } from "../../core/registry";
-import { TechniqueHost, applyStep, findPracticePosition, firstStep, rateByTechniques } from "../../core/techniques";
+import { TechniqueHost, applyStep, findPracticePosition, findStep, firstStep, rateByTechniques } from "../../core/techniques";
 import { BLACK, EMPTY, geometry, litCounts, type LightupPuzzle } from "./grid";
 import { BULB, DOT, NONE, cellList, cellName, gridFormat, lightup, sgtFormat, type LightupAction, type LightupFocus } from "./logic";
 import { checkMarks } from "./plugins";
@@ -139,7 +139,7 @@ test("every cell a hint names is highlighted", async () => {
     let st = lightup.init(p);
     for (let i = 0; i < 400; i++) {
       for (const t of lightupTechniques) {
-        const step = t.find(p, st);
+        const step = findStep(lightup, t, p, st);
         if (!step) continue;
         const f = step.focus as LightupFocus, nf = step.nudgeFocus as LightupFocus;
         const all = (x: LightupFocus) => new Set([...x.cells, ...x.because, ...(x.related ?? [])].map((c) => cellName(p, c)));
@@ -208,6 +208,7 @@ test("formats round-trip and sgt runs split at 26", async () => {
 
 test("solve() reaches a solved state", async () => {
   const p = await gen({ width: 10, height: 7 }, "solve");
-  expect(lightup.isSolved(p, lightup.solve!(p)!)).toBe(true);
+  const ans = lightup.solve!(p, lightup.init(p))!;
+  expect("board" in ans && lightup.isSolved(p, ans.board)).toBe(true);
   expect(lightup.isSolved(p, lightup.init(p))).toBe(false);
 });

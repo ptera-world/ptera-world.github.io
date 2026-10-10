@@ -482,7 +482,7 @@ export function mountTable<Pz, S, A extends Action, I extends { cursor: CardCurs
     session.hooks.refresh.tap(drawOverlay, { owner: "view" }),
   ];
 
-  const fresh = session.depth === 0 && !session.solved && rules.stock !== undefined;
+  const fresh = session.depth === 0 && !session.finished && rules.stock !== undefined;
   if (fresh) {
     const sl = slots[rules.stock!]!;
     const all = piles();

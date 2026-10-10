@@ -282,7 +282,10 @@ export const twiddle: PuzzleDef<TwiddlePuzzle, TwiddleState, TwiddleAction, Twid
   },
   describeAction: (p, a) => describeTurn(p, a),
   isSolved: (p, s) => isSolvedTiles(p, s),
-  solve: (p) => ({ tiles: goal(p).slice(), turns: p.turns.map(() => 0), moves: 0 }),
+  solve(p, s) {
+    const moves = solveAll(specFor(p), goal(p), { values: s.tiles, turns: p.orientable ? s.turns : undefined });
+    return moves ? { moves } : null;
+  },
   rate,
   rules: (p) => [
     `a move turns one ${p.n}×${p.n} block of tiles a quarter turn, either way.`,

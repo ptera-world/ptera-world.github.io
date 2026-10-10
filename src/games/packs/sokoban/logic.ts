@@ -232,12 +232,9 @@ export const sokoban: PuzzleDef<SokoPuzzle, SokoState, SokoAction, SokoInteracti
   initInteraction: () => ({ picked: -1 }),
   reduce,
   isSolved: (p, s) => allHome(p, s.boxes),
-  solve(p) {
-    let s = sokoban.init(p);
+  solve(p, s) {
     const r = solveFrom(p, s);
-    if (!r.pushes) return null;
-    for (const m of r.pushes) s = reduce(p, s, { type: "push", ...m });
-    return s;
+    return r.pushes ? { moves: r.pushes.map((m) => ({ type: "push" as const, ...m })) } : null;
   },
   hint,
   rate(p) {

@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { generate } from "../../core/generate";
-import { applyStep, findPracticePosition, firstStep, rateByTechniques } from "../../core/techniques";
+import { applyStep, findStep, findPracticePosition, firstStep, rateByTechniques } from "../../core/techniques";
 import { goal, gridFormat, isReachable, sgtFormat, sixteen, spec, type SixteenPuzzle } from "./logic";
 import { solveAll } from "../../lib/perm";
 import { sixteenTechniques } from "./techniques";
@@ -33,10 +33,11 @@ test("the placement method solves every size, parity included", async () => {
 
 test("8×8 solves in reasonable time", async () => {
   const p = await gen({ width: 8, height: 8 }, "big");
-  const t0 = performance.now();
+  const t0 = process.cpuUsage();
   const moves = solveAll(spec(8, 8), goal(64), { values: p.tiles });
   expect(moves).not.toBeNull();
-  expect(performance.now() - t0).toBeLessThan(8000);
+  const { user, system } = process.cpuUsage(t0);
+  expect((user + system) / 1000).toBeLessThan(8000);
 });
 
 test("techniques alone solve, and practice positions exist", async () => {
@@ -54,7 +55,7 @@ test("techniques alone solve, and practice positions exist", async () => {
   expect(rateByTechniques(sixteen, sixteenTechniques, p)).not.toBeNull();
   for (const t of sixteenTechniques.slice(0, 2)) {
     const pos = await findPracticePosition(sixteen, sixteenTechniques, t, "x", sig());
-    expect(pos?.step.actions.length).toBeGreaterThan(0);
+    expect(pos && findStep(sixteen, t, pos.puzzle, pos.state)?.actions.length).toBeGreaterThan(0);
   }
 });
 

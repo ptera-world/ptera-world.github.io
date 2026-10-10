@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { generate } from "../../core/generate";
 import { Registry } from "../../core/registry";
 import { Session } from "../../core/session";
-import { TechniqueHost, applyStep, findPracticePosition, firstStep } from "../../core/techniques";
+import { TechniqueHost, applyStep, findPracticePosition, findStep, firstStep } from "../../core/techniques";
 import { actionOf, dealFormat, spider, type SpiderPuzzle, type SpiderState } from "./logic";
 import { checkWinnable, spiderTechniques } from "./techniques";
 
@@ -85,7 +85,8 @@ test("techniques alone win a one-suit deal; practice positions exist", async () 
   expect(spider.isSolved(p, s)).toBe(true);
   for (const t of spiderTechniques) {
     const pos = await findPracticePosition(spider, spiderTechniques, t, "x", sig());
-    expect(pos?.step.actions.length).toBe(1);
+    const step = pos && findStep(spider, t, pos.puzzle, pos.state);
+    expect(step?.actions.length).toBe(1);
   }
 }, 120000);
 

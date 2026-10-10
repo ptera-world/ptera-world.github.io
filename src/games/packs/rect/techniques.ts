@@ -127,7 +127,10 @@ export const edge: RectTechnique = {
   puzzles: [rect],
   level: 1,
   description: "two neighboring cells that no number's rectangle could ever hold together (two numbers side by side, say, or cells out of every rectangle's reach together) have a wall between them.",
-  find: (p, s) => uncrossable(p, s),
+  instances: (p, s, visit) => {
+    const st = uncrossable(p, s);
+    if (st) visit(st);
+  },
   findAt: (p, s, target) => (typeof target === "number" ? uncrossable(p, s, target) : null),
   practice: { params: { width: 7, height: 7, difficulty: "normal" } },
 };
@@ -138,7 +141,10 @@ const make = (kind: Kind, id: string, name: string, level: number, description: 
   puzzles: [rect],
   level,
   description,
-  find: (p, s) => find(p, s, kind),
+  instances: (p, s, visit) => {
+    const st = find(p, s, kind);
+    if (st) visit(st);
+  },
   findAt: (p, s, target) => (typeof target === "number" ? find(p, s, kind, target) : null),
   practice: { params },
 });

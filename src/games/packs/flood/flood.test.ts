@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { generate } from "../../core/generate";
 import { Registry } from "../../core/registry";
 import { Session } from "../../core/session";
-import { TechniqueHost, applyStep, findPracticePosition, firstStep } from "../../core/techniques";
+import { TechniqueHost, applyStep, findStep, findPracticePosition, firstStep } from "../../core/techniques";
 import { fill, flood, gridFormat, sgtFormat, solverRun, type FloodPuzzle } from "./logic";
 import { behindPace, floodTechniques } from "./techniques";
 
@@ -48,9 +48,9 @@ test("wiping out a color really removes it", async () => {
   const p = await gen({ width: 8, height: 8, colours: 4 }, "w");
   let s = flood.init(p);
   for (let i = 0; i < 40 && !flood.isSolved(p, s); i++) {
-    const step = floodTechniques[0]!.find(p, s);
+    const step = findStep(flood, floodTechniques[0]!, p, s);
     if (step) {
-      const c = (step.actions[0] as { colour: number }).colour;
+      const c = (step.actions[0] as unknown as { colour: number }).colour;
       const next = applyStep(flood, p, s, step);
       expect(next.grid.filter((v) => v === c).length).toBe(next.grid.filter((v) => v === next.grid[0]).length);
     }
@@ -79,7 +79,7 @@ test("falling behind is pointed out before any move, and running out loses", asy
 test("practice positions exist", async () => {
   for (const t of floodTechniques) {
     const pos = await findPracticePosition(flood, floodTechniques, t, "x", sig());
-    expect(pos?.step.actions.length).toBeGreaterThan(0);
+    expect(pos && findStep(flood, t, pos.puzzle, pos.state)?.actions.length).toBeGreaterThan(0);
   }
 });
 

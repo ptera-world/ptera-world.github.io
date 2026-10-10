@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { generate } from "../../core/generate";
-import { applyStep, findPracticePosition, firstStep, rateByTechniques } from "../../core/techniques";
+import { applyStep, findStep, findPracticePosition, firstStep, rateByTechniques } from "../../core/techniques";
 import { gridFormat, sgtFormat, twiddle, type TwiddlePuzzle } from "./logic";
 import { twiddleTechniques } from "./techniques";
 
@@ -38,7 +38,7 @@ test("rating and practice", async () => {
   expect(rateByTechniques(twiddle, twiddleTechniques, p)).not.toBeNull();
   for (const t of twiddleTechniques) {
     const pos = await findPracticePosition(twiddle, twiddleTechniques, t, "x", sig());
-    expect(pos?.step.actions.length).toBeGreaterThan(0);
+    expect(pos && findStep(twiddle, t, pos.puzzle, pos.state)?.actions.length).toBeGreaterThan(0);
   }
 });
 

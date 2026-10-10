@@ -1,9 +1,9 @@
 import type { Step, Technique } from "../../core/types";
-import { boardFrom, dotRule, faceRule, loopEarly, type Board, type Deduction } from "./board";
+import { boardFrom, dotRule, faceRule, eachLoopEarly, type Board, type Deduction } from "./board";
 import { cluesOf, gridOf, loopy, type LoopyAction, type LoopyFocus, type LoopyPuzzle, type LoopyState } from "./def";
 import type { Grid } from "./grid";
 import { clueRef, dotRef, edgeRef } from "./names";
-import { findParity, findTrial, findWindow, type WindowKind } from "./solver";
+import { eachParity, eachTrialStep, eachWindow, type WindowKind } from "./solver";
 
 type LoopyTechnique = Technique<LoopyPuzzle, LoopyState, LoopyAction>;
 
@@ -46,29 +46,27 @@ function stepOf(b: Board, d: Deduction, nudge?: { text: string; focus: LoopyFocu
  * Single-clue / single-dot rules. They only read the clue or dot they name, so they keep working
  * next to a mistake elsewhere on the board (auto-apply never stalls because of one).
  */
-function local(kind: string, scan: "faces" | "dots"): (p: LoopyPuzzle, s: LoopyState) => Step<LoopyAction> | null {
-  return (p, s) => {
+function local(kind: string, scan: "faces" | "dots"): Technique<LoopyPuzzle, LoopyState, LoopyAction>["instances"] {
+  return (p, s, visit) => {
     const b = boardOf(p, s);
     const n = scan === "faces" ? b.g.nf : b.g.nv;
     for (let i = 0; i < n; i++) {
       const d = scan === "faces" ? faceRule(b, i) : dotRule(b, i);
-      if (d && d.technique === kind) return stepOf(b, d);
+      if (d && d.technique === kind && visit(stepOf(b, d))) return;
     }
-    return null;
   };
 }
 
-/** Rules that need the whole board to be consistent; null while it has a contradiction. */
-function whole(find: (b: Board) => Deduction | null, nudge?: (g: Grid, d: Deduction) => { text: string; focus: LoopyFocus }) {
-  return (p: LoopyPuzzle, s: LoopyState): Step<LoopyAction> | null => {
+/** Rules that need the whole board to be consistent; visit nothing while it has a contradiction. */
+function whole(each: (b: Board, visit: (d: Deduction) => boolean | void) => void, nudge?: (g: Grid, d: Deduction) => { text: string; focus: LoopyFocus }) {
+  return (p: LoopyPuzzle, s: LoopyState, visit: (step: Step<LoopyAction>) => boolean | void): void => {
     const base = boardOf(p, s);
-    if (base.conflict) return null;
-    const d = find(base.clone());
-    return d ? stepOf(base, d, nudge?.(base.g, d)) : null;
+    if (base.conflict) return;
+    each(base.clone(), (d) => visit(stepOf(base, d, nudge?.(base.g, d))));
   };
 }
 
-const windowFind = (kind: WindowKind) => whole((b) => findWindow(b, kind));
+const windowFind = (kind: WindowKind) => whole((b, visit) => eachWindow(b, kind, visit));
 
 const EASY = { difficulty: "easy", width: 6, height: 6 };
 const NORMAL = { difficulty: "normal", width: 7, height: 7 };
@@ -82,73 +80,73 @@ export const techniques: LoopyTechnique[] = [
   def({
     id: "clue-full", name: "finished number", level: 1,
     description: "once a number has as many lines around it as it says, the rest of its edges can't be lines: cross them.",
-    find: local("clue-full", "faces"),
+    instances: local("clue-full", "faces"),
     practice: { params: EASY },
   }),
   def({
     id: "dot-full", name: "full dot", level: 2,
     description: "the loop passes through a dot at most once, so a dot never has more than two lines. once it has two, cross its other edges.",
-    find: local("dot-full", "dots"),
+    instances: local("dot-full", "dots"),
     practice: { params: EASY },
   }),
   def({
     id: "dot-dead-end", name: "dead end", level: 3,
     description: "the loop never stops. a dot with no lines and only one undecided edge can't use that edge, because a line there would have nowhere to go: cross it.",
-    find: local("dot-dead-end", "dots"),
+    instances: local("dot-dead-end", "dots"),
     practice: { params: EASY },
   }),
   def({
     id: "clue-needs-all", name: "number needs every edge", level: 4,
     description: "if a number still needs as many lines as it has undecided edges, every one of them is a line.",
-    find: local("clue-needs-all", "faces"),
+    instances: local("clue-needs-all", "faces"),
     practice: { params: EASY },
   }),
   def({
     id: "dot-continue", name: "only way on", level: 5,
     description: "a line that reaches a dot must carry on. if only one edge is left at that dot, the line goes that way.",
-    find: local("dot-continue", "dots"),
+    instances: local("dot-continue", "dots"),
     practice: { params: EASY },
   }),
   def({
     id: "loop-early", name: "no early loop", level: 6,
     description: "there's only one loop. joining the two ends of a line closes it, so unless that would finish the whole puzzle, the edge between the two ends is crossed.",
-    find: whole(loopEarly),
+    instances: whole(eachLoopEarly),
     practice: { params: EASY },
   }),
   def({
     id: "window-face", name: "number and its corners", level: 10,
     description: "look at one number together with the dots at its corners. try every way to fill in its edges that gives each corner dot zero or two lines and doesn't close a small loop. an edge that comes out the same every time is decided. this is where patterns like a 3 in a corner or two 3s side by side come from.",
-    find: windowFind("face"),
+    instances: windowFind("face"),
     practice: { params: NORMAL },
   }),
   def({
     id: "window-dot", name: "dot and its numbers", level: 11,
     description: "look at one dot together with the numbers in the cells around it. try every way to fill in those edges that keeps the dot at zero or two lines and gives each number its count. an edge that comes out the same every time is decided.",
-    find: windowFind("dot"),
+    instances: windowFind("dot"),
     practice: { params: NORMAL },
   }),
   def({
     id: "inside-outside", name: "inside and outside", level: 20,
     description: "every cell is either inside the loop or outside it. a line separates the two sides; a cross joins cells on the same side. follow the lines and crosses from cell to cell: if the cells either side of an edge are already known to be on opposite sides, it's a line, and if they're on the same side, it's crossed.",
-    find: whole((b) => findParity(b, "direct")),
+    instances: whole((b, visit) => eachParity(b, "direct", visit)),
     practice: { params: TRICKY },
   }),
   def({
     id: "inside-outside-group", name: "shading around a number", level: 21,
     description: "group the cells around a number (or a dot) by which ones the lines and crosses already tie together, then try shading each group inside or outside. a number counts the edges between differently shaded cells, and a dot needs zero or two. edges that come out the same in every shading that fits are decided.",
-    find: whole((b) => findParity(b, "group")),
+    instances: whole((b, visit) => eachParity(b, "group", visit)),
     practice: { params: TRICKY },
   }),
   def({
     id: "window-pair", name: "two numbers together", level: 22,
     description: "like a number and its corners, but with two neighboring numbers at once: try every way to fill in the edges of both that fits both counts and every dot between them. an edge that comes out the same every time is decided.",
-    find: windowFind("pair"),
+    instances: windowFind("pair"),
     practice: { params: TRICKY },
   }),
   def({
     id: "trial", name: "what if", level: 30,
     description: "suppose an edge is a line (or crossed) and follow the consequences with the simpler rules. if that runs into something impossible, the edge must be the other way.",
-    find: whole(findTrial, (g, d) => ({ text: `suppose ${edgeRef(g, d.edges[0]!)} is a line, or crossed, and follow it through`, focus: { edges: d.edges } })),
+    instances: whole(eachTrialStep, (g, d) => ({ text: `suppose ${edgeRef(g, d.edges[0]!)} is a line, or crossed, and follow it through`, focus: { edges: d.edges } })),
     practice: { params: HARD },
   }),
 ];

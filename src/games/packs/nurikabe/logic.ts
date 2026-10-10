@@ -558,7 +558,7 @@ export const nurikabe: PuzzleDef<NurikabePuzzle, ShadeState, ShadeAction, ShadeI
   isSolved,
   solve(p) {
     const a = analyze(p);
-    return a.solution ? solvedShade(a.solution, numbered(p)) : null;
+    return a.solution ? { board: solvedShade(a.solution, numbered(p)) } : null;
   },
   hint,
   rate,

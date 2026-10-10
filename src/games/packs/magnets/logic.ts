@@ -624,7 +624,7 @@ export const magnets: PuzzleDef<MagnetsPuzzle, MagnetsState, MagnetsAction, Magn
   isSolved,
   solve(p) {
     const a = analyze(p);
-    return a.solution ? { doms: a.solution.map((v) => bit(v)) } : null;
+    return a.solution ? { board: { doms: a.solution.map((v) => bit(v)) } } : null;
   },
   hint,
   rate,

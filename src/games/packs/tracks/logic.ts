@@ -291,7 +291,7 @@ export const tracks: PuzzleDef<TracksPuzzle, TracksState, TracksAction, TracksIn
   isSolved,
   solve(p) {
     const a = analyze(p);
-    return a.solution ? { edges: a.solution.map((v) => (v ? LINE : NONE)), cells: p.given.map(() => NONE) } : null;
+    return a.solution ? { board: { edges: a.solution.map((v) => (v ? LINE : NONE)), cells: p.given.map(() => NONE) } } : null;
   },
   hint,
   rate,

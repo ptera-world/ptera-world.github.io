@@ -9,15 +9,15 @@ export const nextGem: InertiaTechnique = {
   puzzles: [inertia],
   level: 1,
   description: "some rolls lead to places you can never roll back from, cutting gems off for good. head for the nearest gem by the fewest rolls, only ever stopping where every remaining gem can still be reached.",
-  find(p, s) {
-    if (s.dead || !gemCount(s.gems)) return null;
+  instances(p, s, visit) {
+    if (s.dead || !gemCount(s.gems)) return;
     const r = nextGemRoute(p, s);
-    if (!r) return null;
+    if (!r) return;
     const d = r.dirs[0]!;
     const n = r.dirs.length;
     const target = r.gems[0]!;
     const what = r.gems.length === 1 ? `the gem at ${cellAt(p, target)}` : `${r.gems.length} gems`;
-    return {
+    visit({
       message: n === 1
         ? `roll ${DIR_NAMES[d]}: it picks up ${what}, and every other gem can still be reached afterward.`
         : `roll ${DIR_NAMES[d]}: ${n} rolls reach ${what}, never stopping anywhere that cuts a gem off.`,
@@ -25,7 +25,7 @@ export const nextGem: InertiaTechnique = {
       focus: { path: r.paths[0], gems: r.gems } satisfies InertiaFocus,
       nudgeFocus: { gems: [target] } satisfies InertiaFocus,
       actions: [{ type: "move", dir: d }],
-    };
+    });
   },
   practice: { params: { width: 8, height: 7 } },
 };

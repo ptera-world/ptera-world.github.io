@@ -243,19 +243,19 @@ export function propagate(p: UndeadPuzzle, g: Geometry, k: Knowledge, maxLevel: 
   }
 }
 
-export function scanSteps(p: UndeadPuzzle, k: Knowledge, kinds: readonly StepKind[], accept: (s: Step) => boolean): Step | null {
+/** Every step of one of `kinds` (in rule order), until `visit` returns true. Reads k without changing it. */
+export function scanSteps(p: UndeadPuzzle, k: Knowledge, kinds: readonly StepKind[], visit: (s: Step) => boolean): void {
   const g = geometry(p);
-  let found: Step | null = null;
+  let stop = false;
   const emit: Emit = (s) => {
-    if (!kinds.includes(s.kind) || !accept(s)) return 0;
-    found = s;
+    if (!kinds.includes(s.kind) || !visit(s)) return 0;
+    stop = true;
     return 1;
   };
   for (const rule of new Set(kinds.map((kd) => RULE_OF[kd]))) {
     rule(p, g, k, emit);
-    if (found) return found;
+    if (stop) return;
   }
-  return null;
 }
 
 export const isComplete = (g: Geometry, k: Knowledge): boolean => g.empties.every((c) => popcount(k[c]!) === 1);

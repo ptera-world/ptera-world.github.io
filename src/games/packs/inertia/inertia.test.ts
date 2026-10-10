@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { generate } from "../../core/generate";
 import { Registry } from "../../core/registry";
 import { Session } from "../../core/session";
-import { TechniqueHost, applyStep, findPracticePosition, firstStep } from "../../core/techniques";
+import { TechniqueHost, applyStep, findStep, findPracticePosition, firstStep } from "../../core/techniques";
 import { GEM, MINE, STOP, canCollectAll, gridFormat, inertia, roll, sgtFormat, type InertiaPuzzle } from "./logic";
 import { checkReachable, inertiaTechniques } from "./techniques";
 
@@ -85,7 +85,7 @@ test("a roll that cuts a gem off is never hinted, and is pointed out once made",
 
 test("practice positions exist", async () => {
   const pos = await findPracticePosition(inertia, inertiaTechniques, inertiaTechniques[0]!, "x", sig());
-  expect(pos?.step.actions.length).toBe(1);
+  expect(pos && findStep(inertia, inertiaTechniques[0]!, pos.puzzle, pos.state)?.actions.length).toBe(1);
 });
 
 test("formats round-trip; sgt ids parse", async () => {

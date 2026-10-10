@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { generate } from "../../core/generate";
-import { applyStep, findPracticePosition, firstStep, rateByTechniques } from "../../core/techniques";
+import { applyStep, findStep, findPracticePosition, firstStep, rateByTechniques } from "../../core/techniques";
 import { centre, connected } from "./grid";
 import { findArrangement, gridFormat, netslide, sgtFormat, type NetslidePuzzle } from "./logic";
 import { netslideTechniques } from "./techniques";
@@ -51,7 +51,7 @@ test("rating and practice", async () => {
   expect(rateByTechniques(netslide, netslideTechniques, p)).not.toBeNull();
   for (const t of netslideTechniques) {
     const pos = await findPracticePosition(netslide, netslideTechniques, t, "x", sig());
-    expect(pos?.step.actions.length).toBeGreaterThan(0);
+    expect(pos && findStep(netslide, t, pos.puzzle, pos.state)?.actions.length).toBeGreaterThan(0);
   }
 });
 

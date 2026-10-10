@@ -92,16 +92,22 @@ export function applyMove(p: Pos, m: Move, r: Rules): void {
   else p.cols[m.to - COLS]!.push(...cards);
 }
 
-/** The first safe move home among the waste card and the column tops, or null. */
-export function safeHomeMove(p: Pos): Move | null {
+/** Calls `visit` with every safe move home among the waste card and the column tops, until it returns true. */
+export function eachSafeHomeMove(p: Pos, visit: (m: Move) => boolean | void): void {
   const w = p.waste[p.waste.length - 1];
-  if (w !== undefined && isSafeHome(p.found, w)) return { draws: 0, from: WASTE, to: FOUND + suitOf(w), n: 1 };
+  if (w !== undefined && isSafeHome(p.found, w) && visit({ draws: 0, from: WASTE, to: FOUND + suitOf(w), n: 1 }) === true) return;
   for (let j = 0; j < p.cols.length; j++) {
     const col = p.cols[j]!;
     const c = col[col.length - 1];
-    if (c !== undefined && isSafeHome(p.found, c)) return { draws: 0, from: COLS + j, to: FOUND + suitOf(c), n: 1 };
+    if (c !== undefined && isSafeHome(p.found, c) && visit({ draws: 0, from: COLS + j, to: FOUND + suitOf(c), n: 1 }) === true) return;
   }
-  return null;
+}
+
+/** The first safe move home among the waste card and the column tops, or null. */
+export function safeHomeMove(p: Pos): Move | null {
+  let found: Move | null = null;
+  eachSafeHomeMove(p, (m) => { found = m; return true; });
+  return found;
 }
 
 /**
