@@ -20,8 +20,11 @@ import { watchTheme } from "./core/themes";
  */
 
 interface Engine {
-  /** Unmount and release everything; null when this copy can't stop. */
-  stop(): { carried: unknown } | null;
+  /**
+   * Unmount and release everything; null when this copy can't stop. `pending`: a version that
+   * arrived while this copy was being replaced, for the new copy to replace itself with.
+   */
+  stop(): { carried: unknown; pending: string | null } | null;
 }
 const ENGINE = Symbol.for("pteraworld.games.engine");
 const g = globalThis as { pteraGames?: typeof api; [ENGINE]?: Engine };
@@ -33,6 +36,7 @@ const app = new URL("./", import.meta.url).pathname;
 
 g.pteraGames = api;
 api.signal = life.signal;
+const replacement = watchForReplacement();
 const safe = new URLSearchParams(location.search).has("safe");
 api.safe = safe;
 const { packs, sources, checked } = await loadPacks(api, new URL("./packs.json", import.meta.url).href, { safe });
@@ -44,7 +48,7 @@ const fronts = registry.listFrontends();
 const chosen = prefs.get("frontend", null);
 const front = fronts.find((f) => f.id === chosen) ?? fronts[fronts.length - 1];
 
-const stopped = previous ? (front ? previous.stop() : null) : { carried: undefined };
+const stopped = previous ? (front ? previous.stop() : null) : { carried: undefined, pending: null };
 if (!stopped) {
   life.abort();
   g.pteraGames = previousApi;
@@ -62,7 +66,7 @@ if (!stopped) {
       }
       life.abort();
       root.replaceChildren();
-      return { carried };
+      return { carried, pending: replacement.pending() };
     },
   };
   try {
@@ -73,11 +77,17 @@ if (!stopped) {
     console.error("[games] frontend failed", e);
     fallback(e instanceof Error ? e.message : String(e));
   }
-  watchForReplacement();
+  replacement.ready(stopped.pending);
+  void checked.then((any) => { if (any) replacement.request(`sources-${Date.now()}`); });
 }
 
-/** Replace this engine when a deploy changes this app or a source check finds changes. */
-function watchForReplacement(): void {
+/**
+ * Replace this engine with a fresh copy when a deploy changes this app or a source check finds
+ * changes. Listens from the start, so nothing that arrives while this copy loads or replaces
+ * another is missed, but replaces only once `ready`. Always replaces with the newest version
+ * heard; a replacement that fails is retried only when a newer version arrives.
+ */
+function watchForReplacement(): { ready(handedOn: string | null): void; request(tag: string): void; pending(): string | null } {
   let pressed = 0;
   let released: (() => void) | null = null;
   const opts = { capture: true, signal: life.signal };
@@ -88,30 +98,49 @@ function watchForReplacement(): void {
       if (!pressed) released?.();
     }, opts);
   }
+  let next: string | null = null;
+  let ready = false;
   let replacing = false;
-  const replace = async (tag: string): Promise<void> => {
-    if (replacing || life.signal.aborted) return;
+  const run = async (): Promise<void> => {
     replacing = true;
     try {
-      // never mid-gesture: the new engine would get half of it
-      if (pressed) await new Promise<void>((r) => { released = r; });
-      released = null;
-      const next = new URL("./main.js", import.meta.url);
-      next.search = `?v=${encodeURIComponent(tag)}`;
-      await import(/* @vite-ignore */ next.href);
-    } catch (e) {
-      console.error("[games] couldn't replace the engine", e);
+      while (next !== null && !life.signal.aborted) {
+        // never mid-gesture: the new engine would get half of it
+        if (pressed) await new Promise<void>((r) => { released = r; });
+        released = null;
+        const tag = next;
+        next = null;
+        const url = new URL("./main.js", import.meta.url);
+        url.search = `?v=${encodeURIComponent(tag)}`;
+        try {
+          await import(/* @vite-ignore */ url.href);
+        } catch (e) {
+          console.error("[games] couldn't replace the engine", e);
+        }
+      }
     } finally {
       replacing = false;
     }
+  };
+  const request = (tag: string): void => {
+    next = tag;
+    if (ready && !replacing) void run();
   };
   addEventListener("deploy", (e) => {
     const { version, changed } = (e as CustomEvent<{ version: string; changed: string[] }>).detail;
     if (!changed.some((k) => k.startsWith(app) && !k.endsWith(".css"))) return;
     e.preventDefault();
-    void replace(version);
+    request(version);
   }, { signal: life.signal });
-  void checked.then((any) => { if (any) void replace(`sources-${Date.now()}`); });
+  return {
+    ready(handedOn) {
+      ready = true;
+      next ??= handedOn;
+      if (next !== null) void run();
+    },
+    request,
+    pending: () => next,
+  };
 }
 
 function fallback(reason: string): void {

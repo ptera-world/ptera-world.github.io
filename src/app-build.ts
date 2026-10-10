@@ -101,13 +101,20 @@ export async function buildPacks(dirs: string[], root: string, base: string, lis
   return { outputs: out, failed };
 }
 
-/** Bundle an app: the engine entry on its own, and every pack directory through buildPacks. */
-export async function buildApp(app: AppConfig, opts: { minify: boolean }): Promise<{ outputs: AppOutput[]; failed: { id: string; error: string }[] }> {
+/**
+ * Bundle an app: the engine entry on its own, and every pack directory through buildPacks. A
+ * directory in the packs directory without an index.ts is not a pack yet; `skipped` names each
+ * such directory, for callers to report.
+ */
+export async function buildApp(app: AppConfig, opts: { minify: boolean }): Promise<{ outputs: AppOutput[]; failed: { id: string; error: string }[]; skipped: string[] }> {
   const root = resolve(dirname(app.entry));
   const packsDir = app.packs ? resolve(app.packs) : "";
-  const packDirs = packsDir && existsSync(packsDir)
-    ? readdirSync(packsDir, { withFileTypes: true }).filter((d) => d.isDirectory() && existsSync(join(packsDir, d.name, "index.ts"))).map((d) => join(packsDir, d.name)).sort()
-    : [];
-  const packs = await buildPacks(packDirs, root, `${relative(root, packsDir)}/`, "built-in", opts);
-  return { outputs: [await bundle(app.entry, root, "main.js", opts), ...packs.outputs], failed: packs.failed };
+  const dirs = packsDir && existsSync(packsDir) ? readdirSync(packsDir, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name).sort() : [];
+  const isPack = (d: string) => existsSync(join(packsDir, d, "index.ts"));
+  const packs = await buildPacks(dirs.filter(isPack).map((d) => join(packsDir, d)), root, `${relative(root, packsDir)}/`, "built-in", opts);
+  return { outputs: [await bundle(app.entry, root, "main.js", opts), ...packs.outputs], failed: packs.failed, skipped: dirs.filter((d) => !isPack(d)) };
 }
+
+/** The warning for directories buildApp skipped. */
+export const skippedWarning = (app: string, dirs: string[]): string =>
+  `${app}: ${dirs.length} folder${dirs.length > 1 ? "s" : ""} in the packs directory without an index.ts, not built: ${dirs.join(", ")}`;

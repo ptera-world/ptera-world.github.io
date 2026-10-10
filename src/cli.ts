@@ -21,7 +21,7 @@ import { dirname, join, resolve } from "path";
 import { generateGraph } from "./gen-graph";
 import { generateHeadings } from "./gen-headings";
 import { generatePages } from "./gen-pages";
-import { buildApp, buildPacks } from "./app-build";
+import { buildApp, buildPacks, skippedWarning } from "./app-build";
 import { writeServiceWorker } from "./sw/build";
 import { siteConfig, type AppConfig, type AppId, type CollectionId } from "./site-config";
 
@@ -132,7 +132,8 @@ async function buildApps(): Promise<Set<string>> {
     console.log(`\nBundling app ${app.name} → ${outDir}/...`);
     await cp(`public/${id}`, outDir, { recursive: true });
     try {
-      const { outputs, failed } = await buildApp(app, { minify: true });
+      const { outputs, failed, skipped } = await buildApp(app, { minify: true });
+      if (skipped.length) console.warn(`warning: ${skippedWarning(app.name, skipped)}`);
       if (failed.length) {
         for (const f of failed) console.error(`pack ${f.id} failed to build:\n${f.error}\n`);
         console.error(`Bundle failed: ${failed.length} pack${failed.length > 1 ? "s" : ""} of ${app.name} didn't build.`);

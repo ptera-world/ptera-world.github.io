@@ -3,7 +3,7 @@ import { createGraph, type GraphData } from "./graph";
 import { generatedNodes, generatedEdges } from "./generated-graph";
 import { siteConfig, type CollectionId } from "./site-config";
 import { generateGraph } from "./gen-graph";
-import { buildApp, type AppOutput } from "./app-build";
+import { buildApp, skippedWarning, type AppOutput } from "./app-build";
 
 const appCache = new Map<string, Map<string, AppOutput>>();
 
@@ -102,7 +102,8 @@ const server = Bun.serve({
         // rebuilt when the entry script is requested, so a reload picks up source changes
         if (rel === "main.js" || !appCache.has(id)) {
           try {
-            const { outputs, failed } = await buildApp(app, { minify: false });
+            const { outputs, failed, skipped } = await buildApp(app, { minify: false });
+            if (skipped.length) console.warn(`[dev] warning: ${skippedWarning(app.name, skipped)}`);
             for (const f of failed) console.error(`[dev] pack ${f.id} failed to build:\n${f.error}`);
             appCache.set(id, new Map(outputs.map((o) => [o.path, o])));
           } catch (e) {
