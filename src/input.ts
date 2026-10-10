@@ -7,8 +7,9 @@ import { isPanelOpen, closePanel, openPanel } from "./panel";
 
 import { siteConfig, getActiveCollection, siteUrl } from "./site-config";
 import { getSettings } from "./settings";
-import { signal } from "./life";
-import { keybinds, defineSchema, fromBindings, registerComponents, fuzzyMatcher } from "keybinds";
+import { signal, onFrame } from "./life";
+import { keybinds, defineSchema, fromBindings, fuzzyMatcher } from "keybinds";
+import { keybindElement } from "./keybind-elements";
 import type { Command } from "keybinds";
 
 export interface InputCallbacks {
@@ -19,6 +20,8 @@ export interface InputHandle {
   navigateTo(node: Node, push?: boolean, animate?: boolean): void;
   /** Mark a node focused as it already was: no camera move, card, panel, history entry, announcement or onFocusChange. */
   restoreFocus(node: Node): void;
+  /** True while the command palette, cheatsheet or context menu is open. */
+  overlayOpen(): boolean;
   commands: Command[];
 }
 
@@ -406,7 +409,7 @@ export function setupInput(
   }
 
   function panLoop(now: number): void {
-    if (heldKeys.size === 0 || signal.aborted) { panRAF = 0; return; }
+    if (heldKeys.size === 0) { panRAF = 0; return; }
     const dt = lastPanTime ? (now - lastPanTime) / 1000 : 0;
     lastPanTime = now;
     let dx = 0, dy = 0;
@@ -420,7 +423,7 @@ export function setupInput(
       camera.y += dy * move;
       updateTransform(camera);
     }
-    panRAF = requestAnimationFrame(panLoop);
+    panRAF = onFrame(panLoop);
   }
 
   window.addEventListener("keydown", (e) => {
@@ -431,7 +434,7 @@ export function setupInput(
     heldKeys.add(key);
     if (!panRAF) {
       lastPanTime = 0;
-      panRAF = requestAnimationFrame(panLoop);
+      panRAF = onFrame(panLoop);
     }
   }, { signal });
 
@@ -449,15 +452,13 @@ export function setupInput(
 
   // --- Web components (palette + cheatsheet) ---
 
-  registerComponents();
-
   // Body text index: label → searchable text (descriptions + section bodies)
   const bodyIndex = new Map<string, string>();
   for (const node of graph.nodes) {
     bodyIndex.set(node.label, node.description);
   }
 
-  const palette = document.createElement("command-palette") as import("keybinds").CommandPalette;
+  const palette = keybindElement("command-palette");
   paletteEl = palette;
   palette.setAttribute("auto-trigger", "");
   palette.setAttribute("placeholder", "Search nodes, essays, commands\u2026");
@@ -519,7 +520,7 @@ export function setupInput(
     if (palette.hasAttribute("open")) loadHeadings();
   }).observe(palette, { attributes: true, attributeFilter: ["open"] });
 
-  const cheatsheet = document.createElement("keybind-cheatsheet") as import("keybinds").KeybindCheatsheet;
+  const cheatsheet = keybindElement("keybind-cheatsheet");
   cheatsheet.setAttribute("auto-trigger", "");
   cheatsheet.commands = commands;
   cheatsheet.context = {};
@@ -549,7 +550,7 @@ export function setupInput(
   ];
   allCommands.push(...contextMenuCommands);
 
-  const ctxMenu = document.createElement("context-menu") as import("keybinds").ContextMenu;
+  const ctxMenu = keybindElement("context-menu");
   ctxMenu.setAttribute("auto-trigger", "");
   ctxMenu.setAttribute("target", "#viewport");
   ctxMenu.menu = "node";
@@ -573,7 +574,9 @@ export function setupInput(
     setFocus(graph, node);
   }
 
-  return { navigateTo, restoreFocus, commands: allCommands };
+  const overlayOpen = (): boolean => [palette, cheatsheet, ctxMenu].some((el) => el.hasAttribute("open"));
+
+  return { navigateTo, restoreFocus, overlayOpen, commands: allCommands };
 }
 
 function bestNeighbor(from: Node, dir: [number, number], graph: Graph, camera: Camera): Node | null {

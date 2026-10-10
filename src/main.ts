@@ -14,7 +14,7 @@ import { siteConfig, getActiveCollection, siteUrl, type CollectionConfig } from 
 import { groupings } from "./groupings";
 import type { GraphData } from "./graph";
 import { getSettings } from "./settings";
-import { life, signal } from "./life";
+import { life, signal, onFrame, animating } from "./life";
 
 /**
  * The page is replaced while it stays open when a deploy changes a file it reads. This module is
@@ -30,10 +30,14 @@ interface Carried {
   offsets?: [id: string, dx: number, dy: number][];
   panel?: PanelState;
   card?: string | null;
-  /** The element with keyboard focus, by id or by the graph node it belongs to. */
-  focus?: { id?: string; node?: string };
+  /** The element with keyboard focus: by id, by the graph node it belongs to, or by its path from the nearest element with an id. */
+  focus?: { id?: string; node?: string; within?: string; path?: number[]; sig?: string };
+  /** A deploy heard while being replaced, for the replacement to act on. */
+  deploy?: string | null;
 }
 interface Page {
+  /** Resolves once nothing is mid-interaction or animating; stop() right after it loses nothing. */
+  idle?(): Promise<void>;
   /** Release every listener, loop and timer; the caller replaces the page body. */
   stop(): Carried;
 }
@@ -44,20 +48,52 @@ const previous = g[PAGE];
 loadSettingsFromUrl();
 const collectionId = getActiveCollection();
 const dataUrl = siteUrl(`${collectionId === "default" ? "" : `/${collectionId}`}/graph.json`);
-const dataRes = await fetch(dataUrl);
-if (!dataRes.ok) throw new Error(`graph.json: ${dataRes.status}`);
-const data = (await dataRes.json()) as GraphData;
+
+// Listening starts before loading, so a deploy that lands while this copy loads or replaces another
+// is acted on once it has mounted.
+const script = new URL(import.meta.url).pathname;
+const pagePath = location.pathname;
+const reads = (k: string): boolean =>
+  k === script || k === dataUrl || k === siteUrl("/headings.json") || k === pagePath || k === `${pagePath}/` || k.startsWith(siteUrl("/content/"));
+/** The newest deploy heard and not yet acted on. */
+let heard: string | null = null;
+let mounted = false;
+let pressed = 0;
+const capture = { capture: true, signal };
+addEventListener("pointerdown", () => { pressed++; }, capture);
+addEventListener("pointerup", () => { pressed = Math.max(0, pressed - 1); }, capture);
+addEventListener("pointercancel", () => { pressed = Math.max(0, pressed - 1); }, capture);
+addEventListener("blur", () => { pressed = 0; }, { signal });
+addEventListener("deploy", (e) => {
+  const { version, changed } = (e as CustomEvent<{ version: string; changed: string[] }>).detail;
+  if (!changed.some(reads)) return;
+  e.preventDefault();
+  heard = version;
+  if (mounted) void replace();
+}, { signal });
+
+let data: GraphData;
 let carried: Carried | undefined;
-if (previous) {
-  const pageRes = await fetch(location.href);
-  if (!pageRes.ok) throw new Error(`${location.pathname}: ${pageRes.status}`);
-  const next = new DOMParser().parseFromString(await pageRes.text(), "text/html");
-  const focus = new URLSearchParams(location.search).get("focus");
-  // a focused node's card or panel shows its content; fragments have neither
-  if (data.nodes.some((n) => n.id === focus && !n.tags.includes("fragment"))) await fetchContent(focus!);
-  carried = previous.stop();
-  document.title = next.title;
-  document.body.replaceWith(next.body);
+try {
+  const dataRes = await fetch(dataUrl);
+  if (!dataRes.ok) throw new Error(`graph.json: ${dataRes.status}`);
+  data = (await dataRes.json()) as GraphData;
+  if (previous) {
+    const pageRes = await fetch(location.href);
+    if (!pageRes.ok) throw new Error(`${location.pathname}: ${pageRes.status}`);
+    const next = new DOMParser().parseFromString(await pageRes.text(), "text/html");
+    const focus = new URLSearchParams(location.search).get("focus");
+    // a focused node's card or panel shows its content; fragments have neither
+    if (data.nodes.some((n) => n.id === focus && !n.tags.includes("fragment"))) await fetchContent(focus!);
+    await previous.idle?.();
+    carried = previous.stop();
+    heard ??= carried.deploy ?? null;
+    document.title = next.title;
+    document.body.replaceWith(next.body);
+  }
+} catch (e) {
+  life.abort();
+  throw e;
 }
 const offsets = carried?.offsets;
 groupings.push(...data.groupings);
@@ -197,9 +233,7 @@ if (!carried) {
   if (carried.panel) restorePanel(carried.panel);
   const cardNode = carried.card ? graph.nodes.find((n) => n.id === carried.card) : undefined;
   if (cardNode && !carried.panel?.open) showCard(cardNode, graph);
-  const f = carried.focus;
-  const focusEl = f?.id ? document.getElementById(f.id) : f?.node ? document.querySelector<HTMLElement>(`.node[data-id="${CSS.escape(f.node)}"] .node-hit`) : null;
-  focusEl?.focus({ preventScroll: true });
+  if (carried.focus) focusTarget(carried.focus)?.focus({ preventScroll: true });
 }
 
 // Apply settings-driven attributes
@@ -241,8 +275,8 @@ document.fonts.ready.then(() => {
   if (nudged) updatePositions(graph);
   // Double-rAF: first rAF ensures the browser commits the nudged positions,
   // second rAF fires after paint — safe to re-enable transitions.
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
+  onFrame(() => {
+    onFrame(() => {
       delete worldEl.dataset.noTransition;
     });
   });
@@ -281,6 +315,11 @@ window.addEventListener("popstate", () => {
 }, { signal });
 
 g[PAGE] = {
+  async idle() {
+    while (pressed || input.overlayOpen() || animating() || cssAnimating()) {
+      await new Promise((r) => requestAnimationFrame(r));
+    }
+  },
   stop() {
     const state: Carried = {
       camera: { x: camera.x, y: camera.y, zoom: camera.zoom },
@@ -288,57 +327,60 @@ g[PAGE] = {
       panel: panelState(),
       card: getCurrentCardNode()?.id ?? null,
       focus: focusOf(document.activeElement),
+      deploy: heard,
     };
     life.abort();
     return state;
   },
 };
-watchForReplacement();
+mounted = true;
+if (heard) void replace();
 
+function cssAnimating(): boolean {
+  return document.getAnimations().some((a) => a.playState === "running" && a.effect?.getTiming().iterations !== Infinity);
+}
+
+let replacing = false;
+/** Import this script again under the newest deploy heard, until one copy replaces this one. */
+async function replace(): Promise<void> {
+  if (replacing) return;
+  replacing = true;
+  try {
+    while (heard && !signal.aborted) {
+      const next = new URL(import.meta.url);
+      next.search = `?v=${encodeURIComponent(heard)}`;
+      heard = null;
+      try {
+        await import(/* @vite-ignore */ next.href);
+      } catch (e) {
+        console.error("[graph] couldn't replace the page script", e);
+      }
+    }
+  } finally {
+    replacing = false;
+  }
+}
+
+/** Identifies an element so the same control can be found in a rebuilt page. */
 function focusOf(el: Element | null): Carried["focus"] {
   if (!el || el === document.body) return undefined;
   if (el.id) return { id: el.id };
   const node = el.closest<HTMLElement>(".node[data-id]")?.dataset.id;
-  return node ? { node } : undefined;
+  if (node) return { node };
+  const path: number[] = [];
+  let e = el;
+  for (; !e.id && e.parentElement; e = e.parentElement) path.unshift([...e.parentElement.children].indexOf(e));
+  return e.id ? { within: e.id, path, sig: signature(el) } : undefined;
 }
 
-/** Replace this copy when a deploy changes a file the page reads. */
-function watchForReplacement(): void {
-  const script = new URL(import.meta.url).pathname;
-  const page = location.pathname;
-  const content = siteUrl("/content/");
-  const reads = new Set([script, dataUrl, siteUrl("/headings.json"), page, `${page}/`]);
-  let pressed = 0;
-  let released: (() => void) | null = null;
-  const opts = { capture: true, signal };
-  addEventListener("pointerdown", () => { pressed++; }, opts);
-  for (const t of ["pointerup", "pointercancel"]) {
-    addEventListener(t, () => {
-      pressed = Math.max(0, pressed - 1);
-      if (!pressed) released?.();
-    }, opts);
-  }
-  let replacing = false;
-  const replace = async (version: string): Promise<void> => {
-    if (replacing || signal.aborted) return;
-    replacing = true;
-    try {
-      // never mid-gesture: the new copy would get half of it
-      if (pressed) await new Promise<void>((r) => { released = r; });
-      released = null;
-      const next = new URL(import.meta.url);
-      next.search = `?v=${encodeURIComponent(version)}`;
-      await import(/* @vite-ignore */ next.href);
-    } catch (e) {
-      console.error("[graph] couldn't replace the page script", e);
-    } finally {
-      replacing = false;
-    }
-  };
-  addEventListener("deploy", (e) => {
-    const { version, changed } = (e as CustomEvent<{ version: string; changed: string[] }>).detail;
-    if (!changed.some((k) => reads.has(k) || k.startsWith(content))) return;
-    e.preventDefault();
-    void replace(version);
-  }, { signal });
+function focusTarget(f: NonNullable<Carried["focus"]>): HTMLElement | null {
+  if (f.id) return document.getElementById(f.id);
+  if (f.node) return document.querySelector<HTMLElement>(`.node[data-id="${CSS.escape(f.node)}"] .node-hit`);
+  let e: Element | null | undefined = f.within ? document.getElementById(f.within) : null;
+  for (const i of f.path ?? []) e = e?.children[i];
+  return e instanceof HTMLElement && signature(e) === f.sig ? e : null;
+}
+
+function signature(el: Element): string {
+  return [el.tagName, el.textContent, el.getAttribute("title"), el.getAttribute("aria-label")].join("\0");
 }

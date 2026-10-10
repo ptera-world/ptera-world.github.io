@@ -364,85 +364,85 @@ html, body {
 #world[data-no-growth][data-hovering] .node.focused { scale: 1; }
 
 /* Command palette (keybinds web component) */
-command-palette { position: fixed; inset: 0; z-index: 200; }
-command-palette::part(backdrop) { position: fixed; inset: 0; background: rgba(0,0,0,0.5); }
-command-palette::part(dialog) {
+.command-palette { position: fixed; inset: 0; z-index: 200; }
+.command-palette::part(backdrop) { position: fixed; inset: 0; background: rgba(0,0,0,0.5); }
+.command-palette::part(dialog) {
   position: fixed; top: 20%; left: 50%; transform: translateX(-50%);
   width: 90%; max-width: 500px; max-height: 60vh;
   display: flex; flex-direction: column;
   background: #1a1a1a; border: 1px solid #444; border-radius: 10px;
   overflow: hidden; box-shadow: 0 16px 48px rgba(0,0,0,0.5);
 }
-command-palette::part(input) {
+.command-palette::part(input) {
   width: 100%; padding: 14px 16px; border: none; border-bottom: 1px solid #333;
   background: transparent; color: #ddd; font-size: 15px; outline: none; font-family: inherit;
 }
-command-palette::part(list) { flex: 1; overflow-y: auto; margin: 0; padding: 8px 0; list-style: none; }
-command-palette::part(item) {
+.command-palette::part(list) { flex: 1; overflow-y: auto; margin: 0; padding: 8px 0; list-style: none; }
+.command-palette::part(item) {
   display: flex; align-items: center; gap: 12px;
   padding: 8px 16px; cursor: pointer; color: #aaa;
 }
-command-palette::part(item-active) { background: #2a2a2a; color: #fff; }
-command-palette::part(item-disabled) { opacity: 0.4; cursor: not-allowed; }
-command-palette::part(item-label) { flex: 1; }
-command-palette::part(item-label-match) { background: transparent; color: #fff; font-weight: 600; }
-command-palette::part(item-description) {
+.command-palette::part(item-active) { background: #2a2a2a; color: #fff; }
+.command-palette::part(item-disabled) { opacity: 0.4; cursor: not-allowed; }
+.command-palette::part(item-label) { flex: 1; }
+.command-palette::part(item-label-match) { background: transparent; color: #fff; font-weight: 600; }
+.command-palette::part(item-description) {
   font-size: 12px; color: #555; overflow: hidden;
   text-overflow: ellipsis; white-space: nowrap; max-width: 260px;
 }
-command-palette::part(item-category) { font-size: 12px; color: #555; }
-command-palette::part(item-keys) { display: flex; gap: 2px; }
-command-palette::part(item-key) {
+.command-palette::part(item-category) { font-size: 12px; color: #555; }
+.command-palette::part(item-keys) { display: flex; gap: 2px; }
+.command-palette::part(item-key) {
   font-family: monospace; font-size: 11px; padding: 2px 5px;
   background: #222; border: 1px solid #444; border-radius: 3px; color: #666;
 }
-command-palette::part(empty) { padding: 16px; text-align: center; color: #555; }
+.command-palette::part(empty) { padding: 16px; text-align: center; color: #555; }
 
 /* Context menu (keybinds web component) */
-context-menu { position: fixed; z-index: 200; }
-context-menu::part(backdrop) { position: fixed; inset: 0; }
-context-menu::part(list) {
+.context-menu { position: fixed; z-index: 200; }
+.context-menu::part(backdrop) { position: fixed; inset: 0; }
+.context-menu::part(list) {
   background: #1a1a1a; border: 1px solid #444; border-radius: 8px;
   padding: 4px 0; list-style: none; min-width: 160px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.5);
 }
-context-menu::part(item) {
+.context-menu::part(item) {
   display: flex; align-items: center; gap: 12px;
   padding: 6px 14px; cursor: pointer; color: #aaa; font-size: 13px;
 }
-context-menu::part(item-active) { background: #2a2a2a; color: #fff; }
-context-menu::part(item-disabled) { opacity: 0.4; cursor: not-allowed; }
-context-menu::part(item-label) { flex: 1; }
-context-menu::part(item-keys) { display: flex; gap: 2px; }
-context-menu::part(item-key) {
+.context-menu::part(item-active) { background: #2a2a2a; color: #fff; }
+.context-menu::part(item-disabled) { opacity: 0.4; cursor: not-allowed; }
+.context-menu::part(item-label) { flex: 1; }
+.context-menu::part(item-keys) { display: flex; gap: 2px; }
+.context-menu::part(item-key) {
   font-family: monospace; font-size: 11px; padding: 2px 5px;
   background: #222; border: 1px solid #444; border-radius: 3px; color: #666;
 }
 
 /* Keybind cheatsheet (keybinds web component) */
-keybind-cheatsheet { position: fixed; inset: 0; z-index: 200; }
-keybind-cheatsheet::part(backdrop) { position: fixed; inset: 0; background: rgba(0,0,0,0.5); }
-keybind-cheatsheet::part(dialog) {
+.keybind-cheatsheet { position: fixed; inset: 0; z-index: 200; }
+.keybind-cheatsheet::part(backdrop) { position: fixed; inset: 0; background: rgba(0,0,0,0.5); }
+.keybind-cheatsheet::part(dialog) {
   position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
   display: flex; gap: 24px; padding: 16px 24px;
   background: #1a1a1a; border: 1px solid #444; border-radius: 10px;
   box-shadow: 0 16px 48px rgba(0,0,0,0.5); max-width: 90vw; overflow-x: auto;
 }
-keybind-cheatsheet::part(group) { min-width: 140px; }
-keybind-cheatsheet::part(group-title) {
+.keybind-cheatsheet::part(group) { min-width: 140px; }
+.keybind-cheatsheet::part(group-title) {
   font-size: 11px; font-weight: 600; text-transform: uppercase;
   letter-spacing: 0.05em; color: #555; margin-bottom: 8px;
 }
-keybind-cheatsheet::part(list) { margin: 0; padding: 0; list-style: none; }
-keybind-cheatsheet::part(item) {
+.keybind-cheatsheet::part(list) { margin: 0; padding: 0; list-style: none; }
+.keybind-cheatsheet::part(item) {
   display: flex; justify-content: space-between; align-items: center;
   gap: 16px; padding: 4px 0; font-size: 13px; color: #aaa;
 }
-keybind-cheatsheet::part(item-disabled) { opacity: 0.4; }
-keybind-cheatsheet::part(item-label) { white-space: nowrap; }
-keybind-cheatsheet::part(item-keys) { display: flex; gap: 6px; }
-keybind-cheatsheet::part(item-binding) { display: flex; gap: 2px; }
-keybind-cheatsheet::part(item-key) {
+.keybind-cheatsheet::part(item-disabled) { opacity: 0.4; }
+.keybind-cheatsheet::part(item-label) { white-space: nowrap; }
+.keybind-cheatsheet::part(item-keys) { display: flex; gap: 6px; }
+.keybind-cheatsheet::part(item-binding) { display: flex; gap: 2px; }
+.keybind-cheatsheet::part(item-key) {
   font-family: monospace; font-size: 11px; padding: 2px 5px;
   background: #222; border: 1px solid #444; border-radius: 3px; color: #666;
 }

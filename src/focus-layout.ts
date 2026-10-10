@@ -6,7 +6,7 @@
 import type { Graph, Node } from "./graph";
 import { updatePositions, nodeEls, edgeRefs, regionEls, worldEl } from "./dom";
 import { getSettings } from "./settings";
-import { signal } from "./life";
+import { onFrame, cancelFrame } from "./life";
 
 const REPEL = 4000;
 const SPRING_K = 0.018;
@@ -103,7 +103,7 @@ export function createFocusLayout(graph: Graph, defaultFocusId: string | null = 
     focusedId = newId;
 
     if (!focusedId) {
-      cancelAnimationFrame(rafId);
+      cancelFrame(rafId);
       rafId = 0;
       if (settings.dynamicLayout) {
         // Animate snap-back via temporary CSS transition
@@ -147,7 +147,7 @@ export function createFocusLayout(graph: Graph, defaultFocusId: string | null = 
     }
 
     // Start animated simulation
-    cancelAnimationFrame(rafId);
+    cancelFrame(rafId);
     let iterCount = 0;
     const MAX_ITERS = 300;
 
@@ -159,7 +159,7 @@ export function createFocusLayout(graph: Graph, defaultFocusId: string | null = 
     );
 
     function frame(): void {
-      if (!focusedId || signal.aborted) return;
+      if (!focusedId) return;
 
       for (let step = 0; step < STEPS_PER_FRAME && iterCount < MAX_ITERS; step++, iterCount++) {
         let maxV = 0;
@@ -240,13 +240,13 @@ export function createFocusLayout(graph: Graph, defaultFocusId: string | null = 
       updatePositions(graph);
 
       if (iterCount < MAX_ITERS) {
-        rafId = requestAnimationFrame(frame);
+        rafId = onFrame(frame);
       } else {
         rafId = 0;
       }
     }
 
-    rafId = requestAnimationFrame(frame);
+    rafId = onFrame(frame);
   }
 
   function applyNeighborhoodAttr(): void {

@@ -6,7 +6,7 @@ import type { Graph, Node } from "./graph";
 import { groupings, getGrouping, type Grouping } from "./groupings";
 import { updatePositions, animateTo, fadeOutRegions, fadeInRegions, snapNodePositions, nodeEls, worldEl, type NodePositionWithRegion } from "./dom";
 import type { Camera } from "./camera";
-import { signal } from "./life";
+import { onFrame } from "./life";
 
 let currentLayoutGrouping: Grouping | undefined;
 let currentColorGrouping: Grouping | undefined;
@@ -184,7 +184,7 @@ function applyGroupingPositions(animate = true): void {
   }
 
   function step(now: number) {
-    if (generation !== animationGeneration || signal.aborted) return; // cancelled by newer animation or by stop
+    if (generation !== animationGeneration) return; // cancelled by newer animation
     const t = Math.min(1, (now - start) / duration);
     const ease = t * (2 - t); // ease-out
 
@@ -200,7 +200,7 @@ function applyGroupingPositions(animate = true): void {
     updatePositions(graphRef);
 
     if (t < 1) {
-      requestAnimationFrame(step);
+      onFrame(step);
     } else {
       // Snap DOM anchors so baseX/baseY tracks the grouping position.
       // Force a style flush between setting data-no-transition and changing
@@ -208,11 +208,11 @@ function applyGroupingPositions(animate = true): void {
       worldEl.dataset.noTransition = "";
       void worldEl.offsetWidth; // flush pending style recalc
       snapNodePositions(graphRef);
-      requestAnimationFrame(() => delete worldEl.dataset.noTransition);
+      onFrame(() => delete worldEl.dataset.noTransition);
     }
   }
 
-  requestAnimationFrame(step);
+  onFrame(step);
 }
 
 /** Restore grouping from URL on page load */

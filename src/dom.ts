@@ -5,7 +5,7 @@ import type { FilterState } from "./filter";
 import { updateMinimap } from "./minimap";
 import { siteConfig, getActiveCollection } from "./site-config";
 import { getSettings } from "./settings";
-import { signal } from "./life";
+import { onFrame } from "./life";
 
 // Looked up by buildWorld: a copy of this script loads while another still owns the page.
 let viewport: HTMLElement;
@@ -183,16 +183,15 @@ export function animateTo(camera: Camera, tx: number, ty: number, tz: number): v
   const sx = camera.x, sy = camera.y, sz = camera.zoom;
   const start = performance.now();
   function step(now: number) {
-    if (signal.aborted) return;
     const t = Math.min(1, (now - start) / 300);
     const ease = t * (2 - t);
     camera.x = sx + (tx - sx) * ease;
     camera.y = sy + (ty - sy) * ease;
     camera.zoom = sz + (tz - sz) * ease;
     updateTransform(camera);
-    if (t < 1) requestAnimationFrame(step);
+    if (t < 1) onFrame(step);
   }
-  requestAnimationFrame(step);
+  onFrame(step);
 }
 
 export function setFocus(graph: Graph, hovered: Node | null, announceNav = false): void {

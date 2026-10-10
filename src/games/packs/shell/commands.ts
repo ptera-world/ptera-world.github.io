@@ -4,7 +4,6 @@ import {
   formatMouseParts,
   fuzzyMatcher,
   keybinds,
-  registerComponents,
   validateCommands,
   type Command,
   type CommandPalette,
@@ -13,6 +12,7 @@ import {
   type KeybindSettings,
 } from "keybinds";
 import { KEYBINDS_CSS } from "./keybinds-theme";
+import { keybindElement } from "../../../keybind-elements";
 import type { CommandContext, CommandDef } from "../../core/types";
 import { bindCommands, type BindingSchema } from "../../core/commands";
 import { confirmDialog } from "./dialog";
@@ -59,13 +59,12 @@ export class CommandHub {
   private scope = "global";
 
   constructor(host: HTMLElement) {
-    registerComponents();
     style("keybinds", KEYBINDS_CSS);
-    this.palette = document.createElement("command-palette") as CommandPalette;
+    this.palette = keybindElement("command-palette");
     this.palette.matcher = fuzzyMatcher as CommandPalette["matcher"];
-    this.cheatsheet = document.createElement("keybind-cheatsheet") as KeybindCheatsheet;
-    this.settings = document.createElement("keybind-settings") as KeybindSettings;
-    this.menu = document.createElement("context-menu") as ContextMenu;
+    this.cheatsheet = keybindElement("keybind-cheatsheet");
+    this.settings = keybindElement("keybind-settings");
+    this.menu = keybindElement("context-menu");
     host.append(this.palette, this.cheatsheet, this.settings, this.menu);
   }
 

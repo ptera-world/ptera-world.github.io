@@ -6,7 +6,8 @@
   <title>ptera.world</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/style.css">
-  <link rel="preload" href="/graph.json" as="fetch" crossorigin>
+  <!-- inserted from script: a preload the parser makes is never reused by the page script's fetch when a service worker answers both -->
+  <script>{const l=document.createElement("link");l.rel="preload";l.as="fetch";l.crossOrigin="anonymous";l.href="/graph.json";document.head.append(l)}</script>
 </head>
 <body>
   <div id="app">
