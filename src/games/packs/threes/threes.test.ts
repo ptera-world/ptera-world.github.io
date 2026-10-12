@@ -168,3 +168,21 @@ test("techniques play on, and every one has a board to watch and practice on", a
     expect(findStep(gameThrees, t, pos!.puzzle, pos!.state)).not.toBeNull();
   }
 });
+
+test("every technique on auto plays to the end of the game without stalling, and well beyond random play", async () => {
+  const all = techniquesThrees.slice().sort((a, b) => a.level - b.level);
+  let total = 0;
+  const runs = 20;
+  for (let i = 0; i < runs; i++) {
+    const p = await gen({}, `auto${i}`);
+    let s = gameThrees.init(p);
+    for (let m = 0; m < 20000; m++) {
+      const hit = firstStep(gameThrees, all, p, s);
+      if (!hit) break;
+      s = applyStep(gameThrees, p, s, hit.step);
+    }
+    expect(gameThrees.isLost!(p, s)).toBe(true);
+    total += Math.max(...s.grid);
+  }
+  expect(total / runs).toBeGreaterThan(96);
+}, 60000);

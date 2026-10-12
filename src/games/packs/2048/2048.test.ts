@@ -124,3 +124,21 @@ test("every technique has a board to watch and practice on", async () => {
     expect(findStep(game2048, t, pos!.puzzle, pos!.state)).not.toBeNull();
   }
 });
+
+test("every technique on auto plays to the end of the game without stalling, and well beyond random play", async () => {
+  const all = techniques2048.slice().sort((a, b) => a.level - b.level);
+  let total = 0;
+  const runs = 20;
+  for (let i = 0; i < runs; i++) {
+    const p = await gen({ size: 4, target: "8192" }, `auto${i}`);
+    let s = game2048.init(p);
+    for (let m = 0; m < 20000; m++) {
+      const hit = firstStep(game2048, all, p, s);
+      if (!hit) break;
+      s = applyStep(game2048, p, s, hit.step);
+    }
+    expect(game2048.isLost!(p, s)).toBe(true);
+    total += 2 ** Math.max(...s.grid);
+  }
+  expect(total / runs).toBeGreaterThan(192);
+}, 60000);

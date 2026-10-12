@@ -100,7 +100,11 @@ function slides(s: StateThrees, judge: (l: Look) => Verdict | null, visit: (step
     const v = judge({ before: s.grid, state: s, d, r });
     if (v) found.push({ d, v });
   }
-  found.sort((a, b) => (b.v.rank ?? 0) - (a.v.rank ?? 0));
+  const tie = (d: number) => {
+    const r = shift(N, s.grid, d);
+    return r.moves.filter((m) => m.merged).length * 1000 + pairs(r.grid).length * 100 + longestSnake(r.grid).length * 10 + (cornerHolding(r.grid) >= 0 ? 5 : 0) + r.grid.filter((v) => !v).length;
+  };
+  found.sort((a, b) => (b.v.rank ?? 0) - (a.v.rank ?? 0) || tie(b.d) - tie(a.d));
   for (const { d, v } of found) {
     const stop = visit({
       message: v.message,
@@ -258,4 +262,17 @@ export const cornerIt: TechniqueThrees = {
   }, visit),
 };
 
-export const techniquesThrees: TechniqueThrees[] = [onlyMove, makeThree, mergeTwins, feedNext, ladder, lineUp, cornerIt];
+export const leastMess: TechniqueThrees = {
+  id: "threes.least-mess",
+  name: "make the least mess",
+  puzzles: [gameThrees],
+  level: 8,
+  description: "when nothing merges, nothing lines up and nothing builds the chain, any slide adds a tile to a crowded board. take the one that leaves the most pairs side by side, the biggest tile in a corner and the most room.",
+  instances: (p, s, visit) => slides(s, ({ d, r }) => ({
+    message: `nothing better is left. slide ${DIR_NAMES[d]}: it leaves ${pairs(r.grid).length} ${pairs(r.grid).length === 1 ? "pair" : "pairs"} side by side and ${r.grid.filter((v) => !v).length} empty ${r.grid.filter((v) => !v).length === 1 ? "cell" : "cells"}.`,
+    nudge: "which slide leaves the most room and the most pairs?",
+    cells: unique(pairs(r.grid).flat()),
+  }), visit),
+};
+
+export const techniquesThrees: TechniqueThrees[] = [onlyMove, makeThree, mergeTwins, feedNext, ladder, lineUp, cornerIt, leastMess];

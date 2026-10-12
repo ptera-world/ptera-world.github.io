@@ -59,6 +59,33 @@ export function longestSnake(n: number, grid: readonly number[]): number[] {
   return top;
 }
 
+/** How far the nearest biggest tile is from its nearest corner, in steps along rows and columns. */
+export function cornerDistance(n: number, grid: readonly number[]): number {
+  const b = best(grid);
+  let out = Infinity;
+  grid.forEach((v, c) => {
+    if (v !== b || !b) return;
+    for (const k of corners(n)) out = Math.min(out, Math.abs(Math.floor(c / n) - Math.floor(k / n)) + Math.abs((c % n) - (k % n)));
+  });
+  return out;
+}
+
+/** The corner a biggest tile is in, else the corner nearest to one. */
+export function aimCorner(n: number, grid: readonly number[]): number {
+  const home = cornerHolding(n, grid);
+  if (home >= 0) return home;
+  const b = best(grid);
+  let top = -1, dist = Infinity;
+  grid.forEach((v, c) => {
+    if (v !== b || !b) return;
+    for (const k of corners(n)) {
+      const d = Math.abs(Math.floor(c / n) - Math.floor(k / n)) + Math.abs((c % n) - (k % n));
+      if (d < dist) { dist = d; top = k; }
+    }
+  });
+  return top;
+}
+
 /** True if the tile in corner `c` is still in that corner (or merged into there) after the slide. */
 const holds = (before: readonly number[], r: Slid, c: number): boolean => r.grid[c]! >= before[c]!;
 
@@ -99,7 +126,11 @@ function slides(p: Puzzle2048, s: State2048, judge: (l: Look) => Verdict | null,
     const v = judge({ n, before: s.grid, d, r, anchor });
     if (v) found.push({ d, v });
   }
-  found.sort((a, b) => (b.v.rank ?? 0) - (a.v.rank ?? 0));
+  const tie = (d: number) => {
+    const r = slide(n, s.grid, d);
+    return r.moves.filter((m) => m.merged).length * 100 + longestSnake(n, r.grid).length * 10 + r.grid.filter((v) => !v).length;
+  };
+  found.sort((a, b) => (b.v.rank ?? 0) - (a.v.rank ?? 0) || tie(b.d) - tie(a.d));
   for (const { d, v } of found) {
     const stop = visit({
       message: v.message,
@@ -192,15 +223,20 @@ export const claimCorner: Technique2048 = {
   name: "claim a corner",
   puzzles: [game2048],
   level: 4,
-  description: "the biggest tile belongs in a corner, and it stays there for the whole game. when no corner has it yet, a slide that puts it in one claims it.",
+  description: "the biggest tile belongs in a corner, and it stays there for the whole game. when no corner has it yet, a slide that puts it in one claims it, and one that brings it closer to a corner heads that way.",
   instances: (p, s, visit) => slides(p, s, ({ n, before, d, r, anchor }) => {
+    const was = cornerDistance(n, before), now = cornerDistance(n, r.grid);
+    if (anchor >= 0 || now >= was) return null;
     const c = cornerHolding(n, r.grid);
-    if (anchor >= 0 || c < 0) return null;
+    const big = unique(before.flatMap((v, i) => (v === best(before) ? [i] : [])));
     return {
-      message: `no corner holds the ${tileValue(best(before))} yet. slide ${DIR_NAMES[d]}: it goes to the ${cornerName(n, c)} corner.`,
-      nudge: "is the biggest tile in a corner? can a slide put it in one?",
-      cells: [c],
-      look: unique(before.flatMap((v, i) => (v === best(before) ? [i] : []))),
+      message: now === 0
+        ? `no corner holds the ${tileValue(best(before))} yet. slide ${DIR_NAMES[d]}: it goes to the ${cornerName(n, c)} corner.`
+        : `no corner holds the ${tileValue(best(before))} yet. slide ${DIR_NAMES[d]}: it gets closer to one.`,
+      nudge: "is the biggest tile in a corner? can a slide put it in one, or closer to one?",
+      cells: c >= 0 ? [c] : unique(r.grid.flatMap((v, i) => (v === best(r.grid) ? [i] : []))),
+      look: big,
+      rank: was - now,
     };
   }, visit),
   practice: {},
@@ -210,11 +246,11 @@ export const buildSnake: Technique2048 = {
   id: "2048.snake",
   name: "build the snake",
   puzzles: [game2048],
-  level: 6,
+  level: 7,
   description: "from the corner tile, keep the tiles in a chain that only gets smaller: along the edge, then back along the next line in, and so on. then the smaller tiles merge their way up the chain into the corner. a slide that makes the chain longer builds it.",
   instances: (p, s, visit) => slides(p, s, ({ n, before, d, r, anchor }) => {
     const was = longestSnake(n, before), now = longestSnake(n, r.grid);
-    if (anchor < 0 || now.length <= was.length || was.length === 0) return null;
+    if (anchor < 0 || !holds(before, r, anchor) || now.length <= was.length || was.length === 0) return null;
     return {
       message: `slide ${DIR_NAMES[d]}: the chain from the corner grows from ${was.length} tiles to ${now.length}, each one no bigger than the one before it.`,
       nudge: "how long is the chain of shrinking tiles from the corner? what makes it longer?",
@@ -230,10 +266,12 @@ export const farSide: Technique2048 = {
   id: "2048.far-side",
   name: "merge on the far side",
   puzzles: [game2048],
-  level: 7,
-  description: "when there are merges to make, make the ones farthest from the biggest tile first: at least two lines away from the line it sits on, along the way you slide. the chain by the corner stays untouched while the far side gets cleaned up.",
+  level: 5,
+  description: "when the best merge on offer is far from the biggest tile (at least two lines away from the line it sits on, along the way you slide), make it. the chain by the corner stays untouched while the far side gets cleaned up.",
   instances: (p, s, visit) => slides(p, s, ({ n, before, d, r, anchor }) => {
     if (anchor < 0 || !holds(before, r, anchor)) return null;
+    const most = Math.max(...[0, 1, 2, 3].map((e) => { const q = slide(n, before, e); return holds(before, q, anchor) ? q.moves.filter((m) => m.merged).length : 0; }));
+    if (r.moves.filter((m) => m.merged).length < most) return null;
     const lineOf = (c: number) => (d % 2 === 0 ? c % n : Math.floor(c / n));
     const ends = r.moves.filter((m) => m.merged).map((m) => m.to);
     if (!ends.length || ends.some((c) => Math.abs(lineOf(c) - lineOf(anchor)) < 2)) return null;
@@ -251,11 +289,11 @@ export const fullEdge: Technique2048 = {
   id: "2048.full-edge",
   name: "keep the edge full",
   puzzles: [game2048],
-  level: 8,
+  level: 9,
   description: "keep a whole edge through the corner filled with tiles. a full line can't slide along itself, so the corner tile can't be pushed out of it, and sliding along that edge is safe.",
   instances: (p, s, visit) => slides(p, s, ({ n, before, d, r }) => {
     const c = cornerHolding(n, r.grid);
-    if (c < 0) return null;
+    if (c < 0 || (cornerHolding(n, before) >= 0 && !holds(before, r, cornerHolding(n, before)))) return null;
     const line = edgeLines(n, c).find((l) => l.every((i) => r.grid[i]));
     if (!line) return null;
     const was = edgeLines(n, c).some((l) => l.every((i) => before[i]));
@@ -274,7 +312,7 @@ export const makeRoom: Technique2048 = {
   id: "2048.make-room",
   name: "merge to make room",
   puzzles: [game2048],
-  level: 9,
+  level: 6,
   description: "every merge frees a square. when a slide merges tiles and keeps the biggest tile in its corner, it buys room; the more it merges, the more room.",
   instances: (p, s, visit) => slides(p, s, ({ before, d, r, anchor }) => {
     const count = r.moves.filter((m) => m.merged).length;
@@ -296,15 +334,18 @@ export const towardCorner: Technique2048 = {
   puzzles: [game2048],
   level: 10,
   description: "play with the two slides that push toward the biggest tile's corner (say down and left for the bottom left) and keep to them. a third slide is for when those two move nothing, and the one pointing away from the corner is the last resort.",
-  instances: (p, s, visit) => slides(p, s, ({ n, d, anchor }) => {
-    if (anchor < 0) return null;
-    const pair = toward(n, anchor);
+  instances: (p, s, visit) => slides(p, s, ({ n, before, d, r }) => {
+    const aim = aimCorner(n, before);
+    if (aim < 0) return null;
+    const pair = toward(n, aim);
     if (!pair.includes(d)) return null;
+    const home = cornerHolding(n, before) >= 0;
     return {
-      message: `the biggest tile is in the ${cornerName(n, anchor)} corner, so ${dirs(pair)} are the slides that push toward it. ${DIR_NAMES[d]} moves something.`,
+      message: `${home ? "the biggest tile is in" : "the biggest tile is nearest to"} the ${cornerName(n, aim)} corner, so ${dirs(pair)} are the slides that push toward it. ${DIR_NAMES[d]} moves something.`,
       nudge: "where is the biggest tile? which two slides push toward it?",
-      cells: [anchor],
-      look: [anchor],
+      cells: [aim],
+      look: [aim],
+      rank: r.moves.filter((m) => m.merged).length,
     };
   }, visit),
   practice: {},
@@ -314,7 +355,7 @@ export const keepCorner: Technique2048 = {
   id: "2048.keep-corner",
   name: "the safe third slide",
   puzzles: [game2048],
-  level: 5,
+  level: 8,
   description: "when the two slides toward the corner move nothing, take a third that still keeps the biggest tile in its corner. never take one that pulls it out; the last resort is the only slide left.",
   instances: (p, s, visit) => slides(p, s, (l) => {
     const { n, before, d, r, anchor } = l;
@@ -330,4 +371,23 @@ export const keepCorner: Technique2048 = {
   practice: {},
 };
 
-export const techniques2048: Technique2048[] = [onlyMove, reachGoal, growCorner, claimCorner, keepCorner, buildSnake, farSide, fullEdge, makeRoom, towardCorner];
+export const lastResort: Technique2048 = {
+  id: "2048.last-resort",
+  name: "pull out the least",
+  puzzles: [game2048],
+  level: 11,
+  description: "when every slide that keeps the biggest tile in its corner is blocked, one of the others has to be played. take the one that leaves the biggest tile closest to a corner, then bring it straight back.",
+  instances: (p, s, visit) => slides(p, s, ({ n, before, d, r }) => {
+    const dist = cornerDistance(n, r.grid);
+    return {
+      message: `nothing that keeps the ${tileValue(best(before))} in place is left. slide ${DIR_NAMES[d]}: it leaves the biggest tile ${dist === 0 ? "in a corner" : dist === 1 ? "one step from a corner" : `${dist} steps from a corner`}.`,
+      nudge: "which slides are left? which one moves the biggest tile least?",
+      cells: unique(r.grid.flatMap((v, i) => (v === best(r.grid) ? [i] : []))),
+      look: unique(before.flatMap((v, i) => (v === best(before) ? [i] : []))),
+      rank: -dist * 100 + r.moves.filter((m) => m.merged).length,
+    };
+  }, visit),
+  practice: {},
+};
+
+export const techniques2048: Technique2048[] = [onlyMove, reachGoal, growCorner, claimCorner, farSide, makeRoom, buildSnake, keepCorner, fullEdge, towardCorner, lastResort];
