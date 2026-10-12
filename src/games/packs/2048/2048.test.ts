@@ -1,8 +1,8 @@
 import { expect, test } from "bun:test";
 import { generate } from "../../core/generate";
-import { applyStep, findStep, firstStep } from "../../core/techniques";
+import { applyStep, findPracticePosition, findStep, firstStep, isPartOfStep, stepsOf } from "../../core/techniques";
 import { canSlide, game2048, gridFormat, slide, spawn, type Puzzle2048 } from "./logic";
-import { onlyMove, reachGoal, techniques2048 } from "./techniques";
+import { buildSnake, claimCorner, farSide, fullEdge, growCorner, keepCorner, longestSnake, makeRoom, onlyMove, reachGoal, techniques2048, towardCorner } from "./techniques";
 
 const sig = () => new AbortController().signal;
 const gen = (params: Record<string, unknown>, seed: string) => generate(game2048, params, seed, sig()) as Promise<Puzzle2048>;
@@ -61,4 +61,66 @@ test("the grid format round-trips with its goal and seed", async () => {
   expect(gridFormat.parse("2 .\n. 4").seed).toBe(gridFormat.parse("2 .\n. 4").seed);
   expect(() => gridFormat.parse("3 .\n. 4")).toThrow();
   expect(() => gridFormat.parse("2 . .\n. 4")).toThrow();
+});
+
+const board = (rows: string) => gridFormat.parse(rows);
+const dirsOf = (t: Parameters<typeof stepsOf>[1], p: Puzzle2048) => stepsOf(game2048, t, p, game2048.init(p)).map((s) => (s.actions[0] as unknown as { dir: number }).dir).sort();
+
+test("strategies fire on the boards they describe", () => {
+  const cases: [typeof growCorner, string, number[]][] = [
+    [growCorner, ". . . .\n. . . .\n. . . .\n16 16 . .", [1, 3]],
+    [claimCorner, ". . . .\n. . . .\n. . . .\n. 8 . 2", [3]],
+    [keepCorner, "64 32 16 8\n4 . . .\n. . . .\n. . . .", [1]],
+    [buildSnake, "64 32 . .\n. . 16 .\n. . . .\n. . . .", [0]],
+    [farSide, "64 32 . .\n. . . .\n. . . .\n4 4 . .", [3]],
+    [fullEdge, "64 32 16 8\n. . . .\n. . 4 .\n. . . .", [0, 3]],
+    [makeRoom, "64 . . .\n. . . .\n4 4 . .\n2 2 . .", [3]],
+    [towardCorner, "64 . . .\n. . . .\n. . . .\n. . . 2", [0, 3]],
+  ];
+  for (const [t, rows, want] of cases) {
+    const p = board(rows);
+    const got = dirsOf(t, p);
+    expect(got.length).toBeGreaterThan(0);
+    expect({ id: t.id, got: want.filter((d) => got.includes(d)) }).toEqual({ id: t.id, got: want });
+  }
+});
+
+test("strategies stay quiet where they don't apply", () => {
+  const stuck = board("64 32 16 8\n4 . . .\n. . . .\n. . . .");
+  expect(dirsOf(keepCorner, board(". . . .\n. . . .\n. . . .\n. 8 . 2"))).toEqual([]);
+  expect(dirsOf(towardCorner, stuck)).toEqual([]);
+  expect(dirsOf(claimCorner, stuck)).toEqual([]);
+  expect(longestSnake(4, stuck.start)).toEqual([0, 1, 2, 3]);
+  const pulled = board("64 . . .\n. . . .\n. . . .\n. . . 2");
+  expect(dirsOf(keepCorner, pulled)).toEqual([]);
+});
+
+test("a hand move a strategy accounts for is part of one of its steps", () => {
+  const p = board("64 32 . .\n. . 16 .\n. . . .\n. . . .");
+  const s = game2048.init(p);
+  const up = game2048.reduce(p, s, { type: "slide", dir: 0 });
+  expect(isPartOfStep(game2048, p, s, up, stepsOf(game2048, buildSnake, p, s))).toBe(true);
+  const left = game2048.reduce(p, s, { type: "slide", dir: 3 });
+  expect(isPartOfStep(game2048, p, s, left, stepsOf(game2048, buildSnake, p, s))).toBe(false);
+});
+
+test("strategies read the board, not the seed", () => {
+  const p = board("64 32 . .\n. . 16 .\n. . . .\n4 4 . .");
+  const q = { ...p, seed: p.seed + 1 };
+  for (const t of techniques2048) {
+    const a = stepsOf(game2048, t, p, game2048.init(p)).map((s) => [s.message, s.actions]);
+    const b = stepsOf(game2048, t, q, game2048.init(q)).map((s) => [s.message, s.actions]);
+    expect(b).toEqual(a);
+  }
+});
+
+test("every technique has a board to watch and practice on", async () => {
+  const all = techniques2048.slice().sort((a, b) => a.level - b.level);
+  expect(new Set(all.map((t) => t.level)).size).toBe(all.length);
+  for (const t of all) {
+    expect(t.practice).not.toBe(false);
+    const pos = await findPracticePosition(game2048, all, t, "watch", sig(), 24);
+    expect(pos).not.toBeNull();
+    expect(findStep(game2048, t, pos!.puzzle, pos!.state)).not.toBeNull();
+  }
 });

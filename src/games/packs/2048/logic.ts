@@ -10,7 +10,7 @@ export const params = defineSchema({
   size: { type: "int", label: "size", default: 4, min: 3, max: 6 },
   target: {
     type: "enum", label: "goal tile", default: "2048",
-    options: ["128", "256", "512", "1024", "2048", "4096", "8192"].map((v) => ({ value: v, label: v })),
+    options: ["64", "128", "256", "512", "1024", "2048", "4096", "8192"].map((v) => ({ value: v, label: v })),
   },
 });
 
@@ -196,7 +196,7 @@ function generate(v: Values<typeof params>, rng: Rng): Puzzle2048 {
 export const game2048: PuzzleDef<Puzzle2048, State2048, Action2048, null, typeof params> = {
   id: "2048",
   name: "2048",
-  aliases: ["threes", "sliding tiles game", "merge numbers"],
+  aliases: ["sliding tiles game", "merge numbers"],
   tags: ["moves", "numbers", "endless"],
   description: "slide the tiles; two equal tiles that run into each other merge into one. reach the goal tile before the board fills up.",
   generatorVersion: 1,
