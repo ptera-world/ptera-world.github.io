@@ -104,7 +104,7 @@ const targetOf = (t: unknown): PatternTarget | null =>
  * A line rule as a technique: one line per step, most cells decided first. Aimed at a pointed cell
  * or clue number, a rule that works block by block (or run by run) gives only the steps for the
  * block (or run) covering the pointed spot, and a rule about whole lines only the steps for the
- * pointed lines: those deciding the pointed cell first, then most cells decided. Nothing is found
+ * pointed lines: those deciding the pointed cell first, rows before columns. Nothing is found
  * when no unit covers the pointed spot.
  */
 function lineTechnique(
@@ -159,7 +159,7 @@ function lineTechnique(
     return i >= 0 && (hit.find.fill.includes(i) || hit.find.empty.includes(i));
   }
 
-  /** The units covering the pointed spot: those deciding the pointed cell first, then by most cells decided. */
+  /** The units covering the pointed spot, those deciding the pointed cell first (rows, then columns). */
   function pointedAt(p: PatternPuzzle, s: PatternState, t: unknown): (LineHit & { zone: [number, number] })[] {
     const target = targetOf(t);
     if (!target) return [];
@@ -170,7 +170,7 @@ function lineTechnique(
     });
     const cell = target.clue ? undefined : target.cell;
     const rank = (h: LineHit) => (cell !== undefined && decides(h, cell) ? 1 : 0);
-    return pointed.sort((a, b) => rank(b) - rank(a) || gain(b) - gain(a));
+    return pointed.sort((a, b) => rank(b) - rank(a));
   }
 }
 

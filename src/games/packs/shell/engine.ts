@@ -22,6 +22,7 @@ export let aimable!: GamesApi["techniques"]["aimable"];
 export let applyStep!: GamesApi["techniques"]["applyStep"];
 export let colorOf!: GamesApi["techniques"]["colorOf"];
 export let rememberPosition!: GamesApi["techniques"]["rememberPosition"];
+export let stepsAt!: GamesApi["techniques"]["stepsAt"];
 export let generate!: GamesApi["generate"];
 export let labelSides!: GamesApi["board"]["labelSides"];
 export let setLabelSides!: GamesApi["board"]["setLabelSides"];
@@ -45,7 +46,7 @@ export let setTrack!: GamesApi["packs"]["setTrack"];
 export function bind(g: GamesApi): void {
   SessionCtor = g.Session;
   ({ PluginHost: PluginHostCtor, loadPluginConfig } = g.plugins);
-  ({ TechniqueHost: TechniqueHostCtor, findPracticePosition, hintFrom, isPartOfStep, stepsLeft, stepsOf, firstStep, findStep, loadPace, rateByTechniques, findStepAt, aimable, applyStep, colorOf, rememberPosition } = g.techniques);
+  ({ TechniqueHost: TechniqueHostCtor, findPracticePosition, hintFrom, isPartOfStep, stepsLeft, stepsOf, firstStep, findStep, loadPace, rateByTechniques, findStepAt, aimable, applyStep, colorOf, rememberPosition, stepsAt } = g.techniques);
   generate = g.generate;
   ({ labelSides, setLabelSides, cycleLabels, onBoardPrefsChange } = g.board);
   ({ COLOR_TOKENS, SYSTEM_THEME, setTheme, setTokenOverride, themeChoice, tokenOverrides, onThemeChange } = g.look);

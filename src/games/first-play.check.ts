@@ -103,10 +103,21 @@ async function spotOf(page: Page, name: string | null): Promise<{ name: string; 
 const stateOf = (page: Page) => page.evaluate(() => JSON.stringify((globalThis as any).pteraGames.shell.session.state));
 const armedOf = (page: Page) => page.evaluate(() => (globalThis as any).pteraGames.shell.cast.armed?.name ?? null);
 
-async function clickAt(page: Page, p: { x: number; y: number }, button: "left" | "middle" = "left"): Promise<void> {
+/** Casts the picked technique at `p`: a click, or a drag along the row where more than one line fits there. */
+async function castAt(page: Page, p: { x: number; y: number }): Promise<void> {
   await page.mouse.move(p.x, p.y);
   await page.mouse.move(p.x + 1, p.y);
-  await page.mouse.click(p.x, p.y, { button });
+  await page.waitForTimeout(60);
+  const several = await page.evaluate(() => {
+    const sh = (globalThis as any).pteraGames.shell;
+    const t = sh.cast.active();
+    const hit = t && sh.cast.stepOf(t);
+    return !!hit && "choices" in hit;
+  });
+  if (!several) { await page.mouse.click(p.x, p.y); await page.waitForTimeout(150); return; }
+  await page.mouse.down();
+  await page.mouse.move(p.x + 30, p.y, { steps: 5 });
+  await page.mouse.up();
   await page.waitForTimeout(150);
 }
 
@@ -137,12 +148,12 @@ async function castOnce(page: Page, fail: (what: string) => void): Promise<void>
   await page.waitForTimeout(150);
   if (await covers(page, ".w-watch")) fail("the technique demo covers the board");
   const before = await stateOf(page);
-  await clickAt(page, spot);
+  await castAt(page, spot);
   const after = await stateOf(page);
   if (before === after) { fail(`picking "${spot.name}" and clicking where it applies changed nothing`); return; }
   const next = await spotOf(page, spot.name);
   if (next) {
-    await clickAt(page, next);
+    await castAt(page, next);
     if ((await stateOf(page)) === after) fail(`a second "${spot.name}" took more than one click`);
   }
 

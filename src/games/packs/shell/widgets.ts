@@ -5,11 +5,11 @@ import { defineSchema, resolve } from "../../core/schema";
 import type { Source, TimelineEntry } from "../../core/session";
 import { defineWidgets } from "../../core/define";
 import { prefs } from "../../core/storage";
-import { HOLD_MS, holdOtherKey, holdSkillKey, type HoldKey } from "../../core/gestures";
+import { holdOtherKey, holdSkillKey, type HoldKey } from "../../core/gestures";
 import type { Action, AnyPlugin, AnyWidget, SlotId, Technique, WidgetContext, WidgetDef } from "../../core/types";
 import { HOWTO_TOGGLE, HOWTO_WIDGET, WATCH_WIDGET, command, techniqueCommand } from "./names";
 import type { PaletteEntry } from "./casting";
-import { inPalette, learned, noteProgress, pinOf, setPin, skillPrefs, type LearnedBy, type PalettePin } from "./skill-prefs";
+import { HOTBAR_KEYS, learned, pinOf, setPin, skillPrefs, type LearnedBy, type PalettePin } from "./skill-prefs";
 import { isDanger, type ConfirmPolicy } from "./commands";
 import { confirmDialog } from "./dialog";
 import { add, clear, formatTime, h, style } from "../../core/dom";
@@ -57,13 +57,32 @@ button.danger:hover:not(:disabled) { border-color: var(--danger); background: va
 .w-practice { display: flex; flex-direction: column; gap: 6px; align-items: center; text-align: center; max-width: 60ch; }
 .w-practice p { color: var(--text-dim); font-size: 13px; }
 .w-search { position: sticky; top: -12px; background: var(--bg); padding: 4px 0 8px; z-index: 1; }
-.w-results { background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(6px); border: 1px solid var(--accent); border-radius: 12px; padding: 10px 14px; box-shadow: 0 10px 30px rgba(0,0,0,.35); display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; justify-content: center; max-width: 100%; }
+.w-results { background: color-mix(in srgb, var(--surface) 94%, transparent); border: 1px solid var(--accent); border-radius: 12px; padding: 14px 16px; box-shadow: 0 10px 30px rgba(0,0,0,.35); display: flex; flex-direction: column; gap: 10px; width: min(520px, 100%); max-height: 100%; overflow-y: auto; }
+.w-results.lost { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: center; width: auto; }
+.w-results .rs-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
+.w-results .rs-line { display: flex; gap: 1px; height: 14px; border-radius: 4px; overflow: hidden; }
+.w-results .rs-tick { flex: 1; min-width: 1px; background: var(--tc); }
+.w-results .rs-tick.hint { opacity: .55; }
+.w-results .rs-tick.auto { background: repeating-linear-gradient(135deg, var(--tc) 0 2px, transparent 2px 4px); }
+.w-results .rs-tick.hand { box-shadow: inset 0 -4px 0 color-mix(in srgb, var(--text) 40%, transparent); }
+.w-results .rs-rows { display: flex; flex-direction: column; gap: 5px; }
+.w-results .rs-row { display: grid; grid-template-columns: minmax(0, 9em) minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 10px; font-size: 13px; align-items: center; }
+.w-results .rs-name { border-left: 4px solid var(--tc); padding-left: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.w-results .rs-bar { display: flex; height: 10px; }
+.w-results .rs-count { grid-column: 2; font-size: 11px; color: var(--text-dim); }
+.w-results .rs-seg { display: inline-block; height: 10px; background: var(--tc); }
+.w-results .rs-seg.cast { opacity: 1; }
+.w-results .rs-seg.hand { background: color-mix(in srgb, var(--tc) 55%, transparent); box-shadow: inset 0 0 0 1px var(--tc); }
+.w-results .rs-seg.hint { opacity: .5; }
+.w-results .rs-seg.auto { background: repeating-linear-gradient(135deg, var(--tc) 0 2px, transparent 2px 4px); }
+.w-results .rs-key { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 11px; }
+.w-results .rs-key > span { display: inline-flex; align-items: center; gap: 4px; }
+.sh-slot-overlay:has(> .widget:not(:empty)) { backdrop-filter: blur(8px); background: color-mix(in srgb, var(--bg) 35%, transparent); }
 .w-results.anim { animation: results-in 420ms cubic-bezier(.2,.9,.3,1.3); }
 .w-results .big { font-size: 18px; color: var(--accent); }
 .w-results.lost { border-color: var(--danger); }
 .w-results.lost .big { color: var(--danger); }
 .w-results .time { font: 600 18px var(--mono); }
-.w-results ul { list-style: none; font-size: 12px; color: var(--text-dim); display: flex; flex-wrap: wrap; gap: 2px 10px; flex-basis: 100%; justify-content: center; }
 [data-slot="side"] .w-results, [data-slot="panel"] .w-results { flex-direction: column; }
 @keyframes results-in { from { opacity: 0; transform: scale(.85) translateY(10px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .w-results { animation: none; } }
@@ -85,14 +104,24 @@ button.danger:hover:not(:disabled) { border-color: var(--danger); background: va
 .w-strip .st-name { flex: 1; min-width: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .w-strip .st-tile.on { background: color-mix(in srgb, var(--tc, var(--accent)) 22%, transparent); border-color: var(--tc, var(--accent)); }
 .w-strip .st-tile.here { box-shadow: inset 0 0 0 2px var(--tc); }
+.w-strip .st-tile.lit, .w-hotbar .hb-slot.lit { box-shadow: 0 0 0 3px var(--tc), 0 0 14px var(--tc); }
+.w-hotbar { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 4px; width: min(100%, 760px); }
+@media (max-width: 520px) { .w-hotbar { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+.w-hotbar .hb-slot { display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 1px; height: 48px; padding: 3px 6px; font-size: 11px; line-height: 1.15; text-align: left; overflow: hidden; border-top: 4px solid var(--tc, var(--border)); min-width: 0; }
+.w-hotbar .hb-slot.empty { border-style: dashed; border-top-width: 1px; opacity: .6; }
+.w-hotbar .hb-slot.on { background: color-mix(in srgb, var(--tc) 22%, transparent); border-color: var(--tc); }
+.w-hotbar .hb-name { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; width: 100%; }
+.w-hotbar .k { font: 10px var(--mono); color: var(--text-dim); }
+.w-strip .st-tile.dragging { opacity: .6; outline: 2px dashed var(--tc); outline-offset: 2px; }
 .w-strip .k { font: 11px var(--mono); color: var(--text-dim); flex: none; }
 .w-strip .st-watch { flex: none; font-size: 11px; padding: 4px 6px; border-radius: 5px; color: var(--text-dim); }
 .w-strip .st-watch:hover { color: var(--text); background: var(--surface-2); }
-.w-watch { display: flex; flex-direction: column; gap: 8px; }
+.w-watch { display: flex; flex-direction: column; gap: 8px; width: 100%; --ex-h: 340px; }
 .w-watch .head { display: flex; align-items: center; gap: 8px; }
 .w-watch .head .name { flex: 1; border-left: 4px solid var(--tc); padding-left: 8px; }
 .w-watch .head button { padding: 0 8px; }
 #games[data-casting] .boardbox { cursor: crosshair; box-shadow: 0 0 0 2px var(--cast, var(--accent)); border-radius: 10px; }
+.cast-axis { position: absolute; z-index: 3; pointer-events: none; transform: translate(-50%, calc(-100% - 14px)); padding: 2px 8px; border-radius: 99px; font: 600 15px var(--font); color: var(--bg); background: var(--cast, var(--accent)); box-shadow: 0 2px 8px rgba(0,0,0,.35); white-space: nowrap; }
 .w-note { font-size: 13px; padding: 6px 8px; border-radius: 6px; background: var(--surface-2); }
 `;
 
@@ -391,7 +420,16 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
         choose("a click on a spot casts", "aim scope row column cell instance one all both spot", skillPrefs.scope(),
           [["one", "one use of the technique there"], ["all", "every use of it there at once"], ["cell", "only the spot itself"]] as const, (v) => prefs.set("skillScope", v)),
         flag("show what a technique would do before casting it", "preview hover technique cast before", skillPrefs.preview(), (v) => prefs.set("skillPreview", v)),
-        flag("cells keep the color of the technique that decided them", "kept colors technique cells board", skillPrefs.kept(), (v) => prefs.set("skillKept", v)),
+        choose("colors techniques leave on cells", "kept colors technique cells board fade next move recent always hold", skillPrefs.kept(),
+          [["next", "until your next move"], ["fade", "fade out after a while"], ["recent", "for the last few steps"], ["always", "always"], ["hold", "only while the pick-up key is held"], ["off", "never"]] as const, (v) => prefs.set("skillKeptMode", v)),
+        row("kept colors fade time ms recent steps", h("div", { class: "w-inline" },
+          h("span", { style: "flex: 1" }, "fade after (ms) / last steps kept"),
+          h("input", { type: "number", min: 500, max: 60000, step: 500, value: skillPrefs.keptFadeMs(), "aria-label": "fade after (ms)", style: "width: 6em",
+            onchange: (e: Event) => { prefs.set("skillKeptFadeMs", Math.max(500, Number((e.target as HTMLInputElement).value) || 4000)); changed(); } }),
+          h("input", { type: "number", min: 1, max: 99, value: skillPrefs.keptRecent(), "aria-label": "last steps kept", style: "width: 4.5em",
+            onchange: (e: Event) => { prefs.set("skillKeptRecent", Math.max(1, Number((e.target as HTMLInputElement).value) || 3)); changed(); } }))),
+        flag("a move by hand that a technique explains lights that technique up", "recognize hand manual move technique light up", skillPrefs.recognize(), (v) => prefs.set("skillRecognize", v)),
+        flag("hotbar of techniques on 1–0", "hotbar bar keys digits slots", skillPrefs.hotbar(), (v) => { prefs.set("skillHotbar", v); shell.mountWidgets(); }),
         choose("the palette shows", "palette techniques learned all show", skillPrefs.palette(), [["all", "every technique"], ["learned", "techniques you've learned"]] as const, (v) => prefs.set("skillPalette", v)),
         row("learned practice watched cast casts", h("div", { class: "w-inline" }, h("span", null, "learned means"),
           learnedBox("practice", "practiced"), learnedBox("watched", "watched"), learnedBox("cast", "cast once"), learnedBox("casts", "cast"),
@@ -454,25 +492,10 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
         onchange: (e: Event) => th.setPace(Number((e.target as HTMLInputElement).value) || 0),
       });
       const boxes: { t: Technique; hints: HTMLInputElement; auto: HTMLInputElement }[] = [];
-      const shown: (() => void)[] = [];
-      /** A "watch it" toggle opening the technique's replayable explainer under its row. */
+      /** Opens (or closes) the technique's demo beside the board. */
       const watchSlot = (t: Technique) => {
-        const view = shell.view;
-        if (t.practice === false || !view) return null;
-        const box = h("div");
-        let ex: (HTMLElement & { dispose(): void }) | null = null;
-        const close = () => { ex?.dispose(); ex = null; clear(box); };
-        shown.push(close);
-        const btn = h("button", { onclick: () => {
-          if (ex) { close(); btn.textContent = "watch it"; return; }
-          ex = explainer(s.def, t, th.list, view.def, shell.viewSettings(view.def));
-          box.append(ex);
-          const shownBefore = inPalette(t);
-          noteProgress(t, (p) => ({ ...p, watched: true }));
-          if (inPalette(t) !== shownBefore) shell.hooks.palette.call();
-          btn.textContent = "hide";
-        } }, "watch it");
-        return h("div", null, btn, box);
+        if (t.practice === false || !shell.view) return null;
+        return h("button", { onclick: () => shell.watch(shell.watching?.id === t.id ? null : t) }, "watch it");
       };
       ctx.session.hooks.refresh.tap(() => {
         for (const b of boxes) { const c = th.config(b.t); b.hints.checked = c.hints; b.auto.checked = c.auto; }
@@ -508,7 +531,7 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
                 .map(([v, lab]) => h("option", { value: v, selected: pinOf(t) === v }, lab)))))));
       }
       assisted();
-      return () => { for (const c of shown) c(); };
+      return undefined;
     },
   };
 
@@ -800,33 +823,47 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
           return;
         }
         const { past } = s.timeline();
-        let yours = 0, hints = 0;
-        const used = new Map<string, { auto: number; manual: number; hint: number }>();
+        const list = shell.techniques?.list ?? [];
+        type How = "hand" | "cast" | "hint" | "auto";
+        /** Every step of the solve in order: which technique (null: a move no technique accounts for) and how it was made. */
+        const steps: { t: Technique | null; how: How }[] = [];
         for (const e of past) {
           for (const src of e.sources) {
-            if (src.kind === "player") yours++;
-            else if (src.kind === "hint") hints++;
-            else if (src.kind === "technique") {
-              const u = used.get(src.name) ?? { auto: 0, manual: 0, hint: 0 };
-              if (src.auto) u.auto++; else if (src.viaHint) u.hint++; else u.manual++;
-              used.set(src.name, u);
-            }
+            if (src.kind === "player") steps.push({ t: shell.cast.kept.recognizedAt(e.after) ?? null, how: "hand" });
+            else if (src.kind === "hint") steps.push({ t: null, how: "hint" });
+            else if (src.kind === "technique") steps.push({ t: list.find((x) => x.id === src.technique) ?? null, how: src.auto ? "auto" : src.viaHint ? "hint" : "cast" });
           }
         }
+        const hows: readonly How[] = ["hand", "cast", "hint", "auto"];
+        const howName: Record<How, string> = { hand: "by hand", cast: "cast", hint: "from hints", auto: "auto" };
+        const byT = new Map<Technique | null, Record<How, number>>();
+        for (const st of steps) {
+          const c = byT.get(st.t) ?? { hand: 0, cast: 0, hint: 0, auto: 0 };
+          c[st.how]++;
+          byT.set(st.t, c);
+        }
+        const rows = [...byT].sort(([a], [b]) => (a ? list.indexOf(a) : list.length) - (b ? list.indexOf(b) : list.length));
+        const most = Math.max(1, ...rows.map(([, c]) => hows.reduce((n, k) => n + c[k], 0)));
+        const colorFor = (t: Technique | null) => (t ? shell.cast.color(t) : "var(--text-dim)");
         const rating = (() => { try { return s.def.rate?.(s.puzzle)?.label; } catch { return undefined; } })();
         const time = s.origin.kind === "practice" ? null : formatTime(s.finishedAtMs ?? 0);
-        // the strip animates in once per finish, not every time it is re-mounted (tab switches, layout changes)
+        // the panel animates in once per finish, not every time it is re-mounted (tab switches, layout changes)
         const key = `${shell.sessionId}:${s.finishedAtMs}`;
         const fresh = !announced.has(key);
         announced.add(key);
         add(el, h("div", { class: `w-results${fresh ? " anim" : ""}`, role: "status" },
-          h("strong", { class: "big" }, s.outcome === "revealed" ? "revealed" : s.origin.kind === "practice" ? "nice!" : "solved!"),
-          time ? h("div", { class: "time" }, time) : null,
-          rating ? h("div", { class: "w-dim" }, rating) : null,
-          h("ul", null,
-            h("li", null, `${yours} moves by you`),
-            hints ? h("li", null, `${hints} hint${hints > 1 ? "s" : ""}`) : null,
-            [...used].map(([name, u]) => h("li", null, `${name}: ${[u.manual ? `${u.manual} by button` : "", u.hint ? `${u.hint} from hints` : "", u.auto ? `${u.auto} auto` : ""].filter(Boolean).join(", ")}`))),
+          h("div", { class: "rs-head" },
+            h("strong", { class: "big" }, s.outcome === "revealed" ? "revealed" : s.origin.kind === "practice" ? "nice!" : "solved!"),
+            time ? h("span", { class: "time" }, time) : null,
+            rating ? h("span", { class: "w-dim" }, rating) : null,
+            h("span", { class: "w-dim" }, `${steps.length} steps`)),
+          steps.length ? h("div", { class: "rs-line", "aria-label": "every step in order, colored by technique" },
+            steps.map((st) => h("span", { class: `rs-tick ${st.how}`, style: `--tc: ${colorFor(st.t)}`, title: `${st.t?.name ?? "no technique"} · ${howName[st.how]}` }))) : null,
+          rows.length ? h("div", { class: "rs-rows" }, rows.map(([t, c]) => h("div", { class: "rs-row", style: `--tc: ${colorFor(t)}` },
+            h("span", { class: "rs-name" }, t?.name ?? "other moves"),
+            h("span", { class: "rs-bar" }, hows.filter((k) => c[k]).map((k) => h("span", { class: `rs-seg ${k}`, style: `width: ${(c[k] / most) * 100}%` }))),
+            h("span", { class: "rs-count" }, hows.filter((k) => c[k]).map((k) => `${c[k]} ${howName[k]}`).join(" · "))))) : null,
+          h("div", { class: "rs-key w-dim" }, hows.map((k) => h("span", null, h("span", { class: `rs-seg ${k}`, style: "--tc: var(--text-dim); width: 18px" }), howName[k]))),
           h("div", { class: "w-inline" },
             h("button", { class: "primary", onclick: () => ctx.run("shell.new") }, "new game"),
             h("button", { onclick: () => shell.openTab("share") }, "share"),
@@ -922,27 +959,20 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
   };
 
   const strip: WidgetDef = {
-    id: "tools", name: "palette", description: "what a click or tap on the board does: one of the board's marks, or a technique (it stays picked, so every click casts it until you pick something else)", puzzles: "*", defaultSlot: "side", order: 5,
+    id: "tools", name: "palette", description: "what a click or tap on the board does: one of the board's marks, or a technique (it stays picked, so every click casts it until you pick something else)", puzzles: "*", defaultSlot: "side", order: 0,
     mount(el, ctx) {
       const cast = shell.cast;
-      let hold = 0;
-      let held = false;
       const tile = (e: PaletteEntry, glow: boolean) => {
         const keys = e.technique ? shell.hub.keysFor(techniqueCommand("pick", e.technique)) : e.command ? shell.hub.keysFor(e.command) : [];
-        const b = h("button", {
-          class: `st-tile${e.on ? " on" : ""}${glow ? " here" : ""}${e.technique ? " skill" : ""}`,
+        const t = e.technique;
+        const b: HTMLElement = h("button", {
+          class: `st-tile${e.on ? " on" : ""}${glow ? " here" : ""}${t ? " skill" : ""}${t && cast.lit?.id === t.id ? " lit" : ""}`,
           style: e.color ? `--tc: ${e.color}` : undefined,
-          "aria-pressed": String(e.on), "data-entry": e.id, "data-command": e.command ?? (e.technique ? techniqueCommand("pick", e.technique) : undefined),
-          onclick: () => { if (held) { held = false; return; } e.pick(); },
-          onpointerdown: (ev: PointerEvent) => {
-            held = false;
-            if (!e.technique || ev.pointerType === "mouse" || !skillPrefs.watchHold()) return;
-            const t = e.technique;
-            hold = window.setTimeout(() => { held = true; shell.watch(t); }, HOLD_MS);
-          },
-          onpointerup: () => clearTimeout(hold),
-          onpointercancel: () => clearTimeout(hold),
-          oncontextmenu: (ev: Event) => { if (e.technique && skillPrefs.watchHold()) ev.preventDefault(); },
+          "aria-pressed": String(e.on), "data-entry": e.id, "data-drop": t ? `palette:${t.id}` : undefined,
+          "data-command": e.command ?? (t ? techniqueCommand("pick", t) : undefined),
+          onclick: () => { if (!cast.drag.swallowClick()) e.pick(); },
+          onpointerdown: (ev: PointerEvent) => { if (t) cast.drag.down(ev, b, t, { kind: "palette" }); },
+          oncontextmenu: (ev: Event) => { if (t) ev.preventDefault(); },
         }, h("span", { class: "st-name" }, e.label), keys[0] ? h("span", { class: "k" }, keys[0]) : null);
         if (e.technique && skillPrefs.watchButton() && e.technique.practice !== false) {
           const t = e.technique;
@@ -954,6 +984,7 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
         return b;
       };
       const render = () => {
+        if (cast.drag.dragging) return;
         clear(el);
         const entries = cast.entries();
         if (!entries.length) return;
@@ -982,14 +1013,47 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
       const offs = [
         shell.hooks.armed.tap(render),
         shell.hooks.palette.tap(render),
+        shell.hooks.recognized.tap(render),
         shell.hooks.aim.tap(() => { if (skillPrefs.glow()) render(); }),
       ];
-      return () => { clearTimeout(hold); for (const f of offs) f(); };
+      return () => { for (const f of offs) f(); };
+    },
+  };
+
+  const hotbarW: WidgetDef = {
+    id: "hotbar", name: "hotbar", description: "ten techniques on keys 1–0: drag them in from the palette, drag to rearrange, drag one out to empty its slot", puzzles: "*", defaultSlot: "bottom", order: 4,
+    mount(el, ctx) {
+      const cast = shell.cast;
+      const render = () => {
+        if (cast.drag.dragging) return;
+        clear(el);
+        if (!skillPrefs.hotbar() || !shell.techniques?.list.length) return;
+        const list = shell.techniques.list;
+        const bar = h("div", { class: "w-hotbar", role: "toolbar", "aria-label": "hotbar", "data-no-tip": "" },
+          cast.hotbar().map((id, i) => {
+            const t = id ? list.find((x) => x.id === id) ?? null : null;
+            const key = t ? shell.hub.keysFor(techniqueCommand("pick", t))[0] : undefined;
+            const b: HTMLElement = h("button", {
+              class: `hb-slot${t ? "" : " empty"}${t && cast.armed?.id === t.id ? " on" : ""}${t && cast.lit?.id === t.id ? " lit" : ""}`,
+              style: t ? `--tc: ${cast.color(t)}` : undefined, "data-drop": `slot:${i}`,
+              "aria-label": t ? t.name : `empty slot ${HOTBAR_KEYS[i]}`, "aria-pressed": t ? String(cast.armed?.id === t.id) : undefined,
+              onclick: () => { if (!cast.drag.swallowClick() && t) cast.pick(t); },
+              onpointerdown: (ev: PointerEvent) => { if (t) cast.drag.down(ev, b, t, { kind: "slot", slot: i }); },
+              oncontextmenu: (ev: Event) => { if (t) ev.preventDefault(); },
+            }, h("span", { class: "k" }, key ?? HOTBAR_KEYS[i]), t ? h("span", { class: "hb-name" }, t.name) : null);
+            return b;
+          }));
+        el.append(bar);
+      };
+      render();
+      ctx.session.hooks.refresh.tap(render, { owner: ctx.owner });
+      const offs = [shell.hooks.armed.tap(render), shell.hooks.palette.tap(render), shell.hooks.recognized.tap(render)];
+      return () => { for (const f of offs) f(); };
     },
   };
 
   const watchW: WidgetDef = {
-    id: WATCH_WIDGET, name: "watch it", description: "a technique shown on a small board beside yours", puzzles: "*", defaultSlot: "side", order: 6,
+    id: WATCH_WIDGET, name: "watch it", description: "a technique shown on a small board beside yours", puzzles: "*", defaultSlot: "side", order: 2,
     mount(el, ctx) {
       let ex: (HTMLElement & { dispose(): void }) | null = null;
       const render = () => {
@@ -1010,7 +1074,7 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
     },
   };
 
-  return [status, toolbar, game, settings, techniques, historyW, practice, share, packs, results, opened, howto, zoomW, actions, strip, watchW];
+  return [status, toolbar, game, settings, techniques, historyW, practice, share, packs, results, opened, howto, zoomW, actions, strip, hotbarW, watchW];
 }
 
 /** Assisted rating used by packs/mods: hardest technique still left for the player given their auto techniques. */

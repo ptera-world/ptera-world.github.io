@@ -342,6 +342,11 @@ export interface ViewHandle {
    * puzzle's techniques accept as a target. Used to aim techniques at one place.
    */
   target?(): unknown;
+  /**
+   * `target` narrowed to the line through it along `axis` (a row: across, a column: down), or null
+   * when the target is not a spot on both. Lets the player say which line a cast is about.
+   */
+  targetAlong?(target: unknown, axis: "row" | "col"): unknown;
   /** Draw `state` as a see-through preview over the board (null clears it). Optional; frontends fall back to highlighting. */
   preview?(state: unknown | null): void;
   /**

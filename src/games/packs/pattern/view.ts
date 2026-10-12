@@ -680,6 +680,11 @@ export function patternView(look: Look, board: Board, menuHoldMs: number): View<
         // the whole board (clues included) in cell units, so grid cells themselves meet the minimum size
         cells: { cols: W / SIZE, rows: H / SIZE },
         target: () => aim,
+        targetAlong: (t, axis) => {
+          const x = t as PatternTarget | null;
+          if (!x || x.cell === undefined || x.clue) return null;
+          return { cell: x.cell, lines: [axis === "row" ? Math.floor(x.cell / p.w) : p.h + (x.cell % p.w)] } satisfies PatternTarget;
+        },
         preview: (state) => {
           ghost = state as PatternState | null;
           render();

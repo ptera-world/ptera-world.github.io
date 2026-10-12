@@ -40,6 +40,8 @@ export const SKILL_BINDINGS = {
   "shell.skill-swap": { label: "pick the technique before", category: "techniques", description: "swap between the last two techniques you picked" },
   "shell.skill-picker": { label: "technique picker", category: "techniques", description: "opens the palette at the pointer. hold, move toward one and let go to pick it; or tap, then click one or press its number" },
   "shell.skill-watch": { label: "watch the picked technique", category: "techniques", description: "show the picked technique on a small board beside this one" },
+  "shell.skill-move-earlier": { label: "move the picked technique earlier", category: "techniques", description: "one place earlier in the palette (its number key follows)" },
+  "shell.skill-move-later": { label: "move the picked technique later", category: "techniques", description: "one place later in the palette (its number key follows)" },
 } satisfies BindingSchema;
 
 /** Exists while some technique of the open game can be aimed. */

@@ -37,7 +37,7 @@ export const zoomTakeover = (): boolean => prefs.get("zoomTakeover", false);
 export { HOLD_MS } from "../../core/gestures";
 import { HOLD_MS, buttonsSwapped, setButtonsSwapped } from "../../core/gestures";
 import { Casting } from "./casting";
-import { inPalette, noteProgress, skillPrefs } from "./skill-prefs";
+import { HOTBAR_KEYS, inPalette, noteProgress, skillPrefs } from "./skill-prefs";
 import { onModifierHold } from "keybinds";
 
 /** Serialized text, or null if the format can't write or throws on this puzzle. */
@@ -102,6 +102,8 @@ export class Shell {
     palette: new HookEvent<void>("palette"),
     /** The technique whose demo plays beside the board changed (null: none). */
     watch: new HookEvent<{ technique: Technique | null }>("watch"),
+    /** A hand move turned out to be part of an instance of this technique (null: the light from the last one is out). */
+    recognized: new HookEvent<{ technique: Technique | null }>("recognized"),
   };
 
   session: Session<any, any, any, any> | null = null;
@@ -508,6 +510,11 @@ export class Shell {
         this.syncSolvedStatus();
         this.hub.syncContext();
         this.checkPractice(ctx);
+        if (ctx.cause === "action") {
+          this.cast.kept.stamp(ctx.state);
+          if (this.cast.lit) { this.cast.lit = null; this.hooks.recognized.call({ technique: null }); }
+          if (ctx.source?.kind === "player") this.cast.recognize(ctx.prev, ctx.state);
+        }
         this.cast.kept.schedule();
       }, { owner: "shell" }),
       session.hooks.fx.tap((e) => {
@@ -1052,6 +1059,8 @@ export class Shell {
         const m = e instanceof MouseEvent ? { x: e.clientX, y: e.clientY } : undefined;
         cast.openPicker(m);
       },
+      "shell.skill-move-earlier": () => cast.shift(-1),
+      "shell.skill-move-later": () => cast.shift(1),
       "shell.skill-watch": () => {
         const t = cast.armed;
         if (!t) { this.setStatus("no technique picked yet"); return; }
@@ -1066,9 +1075,10 @@ export class Shell {
       "shell.skill-swap": { menu: "board", keys: this.freeKey(["q", "backquote"], taken) },
       "shell.skill-picker": { menu: "board", keys: pickerKey.flatMap((k) => [k, `${k}:up`]), mouse: [] },
       "shell.skill-watch": { menu: "board", keys: this.freeKey(["i", "quote"], taken) },
+      "shell.skill-move-earlier": { when: () => !!cast.armed, keys: this.freeKey(["shift+bracketleft", "shift+comma"], taken) },
+      "shell.skill-move-later": { when: () => !!cast.armed, keys: this.freeKey(["shift+bracketright", "shift+period"], taken) },
     });
-    const digits = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"].filter((d) => !taken.has(d));
-    const palette = cast.palette();
+    const hotbar = skillPrefs.hotbar() ? cast.hotbar() : [];
     const here: CommandDef[] = anyAimable && skillPrefs.herePopup() ? bindCommands(HERE_BINDINGS, {
       "technique.here": (_ctx, ev) => {
         const list = cast.here();
@@ -1080,9 +1090,10 @@ export class Shell {
       },
     }, { "technique.here": { menu: "board" } }) : [];
     return [...skills, ...here, ...th.list.flatMap((t): CommandDef[] => {
-      const slot = palette.findIndex((x) => x.id === t.id);
+      const slot = hotbar.indexOf(t.id);
+      const key = slot >= 0 && !taken.has(HOTBAR_KEYS[slot]!) ? [HOTBAR_KEYS[slot]!] : [];
       return [
-        { id: techniqueCommand("pick", t), label: `pick ${t.name}`, category: "techniques", keys: slot >= 0 && digits[slot] ? [digits[slot]!] : [], run: () => { if (cast.armed?.id !== t.id) cast.pick(t); } },
+        { id: techniqueCommand("pick", t), label: `pick ${t.name}`, category: "techniques", keys: key, run: () => { if (cast.armed?.id !== t.id) cast.pick(t); } },
         ...(aimable(s.def, t) ? [{ id: techniqueCommand("here", t), label: `${t.name} here`, category: "techniques", description: `apply ${t.name} to what you are pointing at`, run: () => { this.updateAim(); cast.apply(t); } } satisfies CommandDef] : []),
         { id: techniqueCommand("find", t), label: `find ${t.name}`, category: "techniques", description: t.description, run: () => this.findTechnique(t) },
         { id: techniqueCommand("apply", t), label: `apply ${t.name}`, category: "techniques", run: () => { if (!th.apply(t)) this.setStatus(`no ${t.name} right now`); } },
@@ -1484,7 +1495,8 @@ const SHELL_CSS = `
 .boardwrap[data-zoomed] .board-scroller { overflow: auto; overscroll-behavior: contain; }
 .board-scroller > .boardbox { margin: auto; }
 .boardbox { position: relative; flex: none; display: flex; align-items: center; justify-content: center; }
-.sh-slot-overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 10px; }
+.sh-slot-overlay { position: absolute; inset: 0; z-index: 20; pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 10px; }
+.sh-slot-overlay > .widget { max-height: 100%; overflow-y: auto; display: flex; justify-content: center; width: 100%; }
 .sh-slot-overlay > .widget { pointer-events: auto; }
 .board-menu-btn { position: absolute; top: 4px; right: 4px; z-index: 2; width: 30px; height: 30px; padding: 0; border-radius: 99px; font-size: 16px; line-height: 1; opacity: 0.8; }
 .board-menu-btn:hover, .board-menu-btn:focus-visible { opacity: 1; }
@@ -1495,7 +1507,7 @@ const SHELL_CSS = `
 .sh-slot:empty { display: none; }
 .sh-slot-top, .sh-slot-bottom { width: 100%; align-items: center; }
 .sh-slot-top > .widget, .sh-slot-bottom > .widget { width: 100%; display: flex; justify-content: center; }
-.sh-slot-side { width: 240px; flex: none; }
+.sh-slot-side { width: 360px; flex: none; }
 .stage[data-side="below"] .sh-slot-side { width: min(100%, 520px); }
 
 .panel { width: 320px; flex: none; border-left: 1px solid var(--border); display: flex; flex-direction: column; min-height: 0; }

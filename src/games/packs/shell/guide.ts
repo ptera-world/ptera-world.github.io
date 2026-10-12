@@ -1,10 +1,7 @@
 import { add, clear, h, style } from "../../core/dom";
 import { prefs } from "../../core/storage";
 import type { WidgetContext } from "../../core/types";
-import { colorOf } from "./engine";
-import { explainer } from "./explainer";
 import { techniqueCommand } from "./names";
-import { noteProgress } from "./skill-prefs";
 import type { Shell } from "./shell";
 
 
@@ -115,14 +112,9 @@ export function guideWidget(shell: Shell, el: HTMLElement, ctx: WidgetContext): 
       available: () => lessons.length > 0 && !!view,
       answer: () => {
         const t = lessons[0]!;
-        const ex = explainer(def, t, techniques, view!.def, shell.viewSettings(view!.def));
-        disposers.push(() => ex.dispose());
-        ex.style.setProperty("--ex-color", colorOf(t, techniques));
-        noteProgress(t, (p) => ({ ...p, watched: true }));
-        shell.hooks.palette.call();
+        shell.watch(t);
         return [
-          `the easiest one is ${t.name}. press play to watch it on a small board:`,
-          ex,
+          `the easiest one is ${t.name}.`,
           act(
             h("button", { class: "primary", onclick: () => ctx.run(techniqueCommand("practice", t)) }, "try it myself"),
             h("button", { onclick: () => goTab("techniques", `[data-technique="${t.id}"]`) }, `all ${techniques.length} techniques`)),

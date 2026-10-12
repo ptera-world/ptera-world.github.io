@@ -1,9 +1,11 @@
 import { buttonsSwapped, held, holdOtherKey, holdSkillKey, setButtonsSwapped, type HoldKey } from "../../core/gestures";
+import { namespace } from "../../core/storage";
 import type { Hint, Step, Technique } from "../../core/types";
-import { aimable, applyStep, colorOf, findStepAt, hintFrom } from "./engine";
+import { aimable, applyStep, colorOf, findStepAt, hintFrom, isPartOfStep, stepsAt, stepsOf } from "./engine";
 import { KeptLayer } from "./kept";
 import { openPicker, type Picker } from "./picker";
-import { inPalette, noteProgress, progressOf, skillPrefs } from "./skill-prefs";
+import { TileDrag, type DragFrom, type DropAt } from "./tile-drag";
+import { hotbarOf, inPalette, noteProgress, progressOf, setHotbar, skillPrefs } from "./skill-prefs";
 import type { Shell } from "./shell";
 
 /** One entry of the palette and the picker: a mark the board places, or a technique. */
@@ -21,6 +23,7 @@ export interface PaletteEntry {
 }
 
 const WHEEL_COOLDOWN_MS = 120;
+const orderStore = namespace("technique-order");
 /** A trigger released sooner than this after opening the picker leaves it open. */
 const TAP_MS = 250;
 
@@ -54,7 +57,7 @@ export class Casting {
   constructor(private shell: Shell) {
     this.kept = new KeptLayer(shell.boardEl, () => {
       const s = shell.session;
-      return s ? { session: s, view: shell.view?.handle ?? null, list: this.list(), on: skillPrefs.kept() } : null;
+      return s ? { session: s, view: shell.view?.handle ?? null, list: this.list(), mode: skillPrefs.kept(), fadeMs: skillPrefs.keptFadeMs(), recent: skillPrefs.keptRecent() } : null;
     });
   }
 
@@ -64,7 +67,87 @@ export class Casting {
 
   /** Techniques the palette shows, in palette order. */
   palette(): Technique[] {
-    return this.list().filter(inPalette);
+    return this.ordered().filter(inPalette);
+  }
+
+  /** Every technique in the player's order for this puzzle; ones never placed keep their own order, after the placed ones. */
+  private ordered(): Technique[] {
+    const list = this.list();
+    const id = this.shell.session?.def.id;
+    const order = id ? orderStore.get<string[]>(id, []) : [];
+    const rank = (t: Technique) => { const i = order.indexOf(t.id); return i < 0 ? order.length + list.indexOf(t) : i; };
+    return [...list].sort((a, b) => rank(a) - rank(b));
+  }
+
+  /** Put the palette's techniques in `ids` order (techniques it doesn't show keep their place after them). */
+  setOrder(ids: readonly string[]): void {
+    const id = this.shell.session?.def.id;
+    if (!id) return;
+    const rest = this.ordered().map((t) => t.id).filter((x) => !ids.includes(x));
+    orderStore.set(id, [...ids, ...rest]);
+    this.shell.hooks.palette.call();
+  }
+
+  /** The open puzzle's hotbar: technique ids by slot, null for an empty slot. */
+  hotbar(): (string | null)[] {
+    const id = this.shell.session?.def.id;
+    return id ? hotbarOf(id, this.palette()) : [];
+  }
+
+  /** Put `t` (null: nothing) in hotbar slot `i`; a technique already in another slot trades places with what was in `i`. */
+  setSlot(i: number, t: Technique | null): void {
+    const id = this.shell.session?.def.id;
+    if (!id) return;
+    const slots = this.hotbar();
+    const from = t ? slots.indexOf(t.id) : -1;
+    if (from >= 0) slots[from] = slots[i] ?? null;
+    slots[i] = t?.id ?? null;
+    setHotbar(id, slots);
+    this.shell.hooks.palette.call();
+  }
+
+  /** Bumped by every move: a recognition still running for an older move stops. */
+  private recognizing = 0;
+
+  /**
+   * A hand move from `prev` to `next`: the easiest technique with an instance in `prev` the move is
+   * part of lights up and colors what the move changed. Reads only the board. Runs a technique at a
+   * time between frames, so a slow technique never holds up play.
+   */
+  recognize(prev: unknown, next: unknown): void {
+    const run = ++this.recognizing;
+    const s = this.shell.session;
+    if (!s || !skillPrefs.recognize()) return;
+    const list = this.list();
+    let i = 0;
+    const tick = () => {
+      if (run !== this.recognizing || this.shell.session !== s || i >= list.length) return;
+      const t = list[i++]!;
+      try {
+        const steps = stepsOf(s.def, t, s.puzzle, prev);
+        if (steps.length && isPartOfStep(s.def, s.puzzle, prev, next, steps)) {
+          this.kept.recognize(next, t);
+          this.shell.hooks.recognized.call({ technique: t });
+          return;
+        }
+      } catch (e) {
+        console.error(`[games] recognizing ${t.id} threw`, e);
+      }
+      setTimeout(tick, 0);
+    };
+    setTimeout(tick, 0);
+  }
+
+  /** Move the picked technique one place earlier (-1) or later (+1) in the palette. */
+  shift(dir: 1 | -1): void {
+    const t = this.armed;
+    if (!t) { this.shell.setStatus("no technique picked yet"); return; }
+    const ids = this.palette().map((x) => x.id);
+    const i = ids.indexOf(t.id);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= ids.length) return;
+    [ids[i], ids[j]] = [ids[j]!, ids[i]!];
+    this.setOrder(ids);
   }
 
   color(t: Technique): string {
@@ -162,16 +245,32 @@ export class Casting {
     return this.armed ?? (this.springHeld ? this.recent[0] ?? null : null);
   }
 
-  /** The step `t` would make: where the player points when it can be aimed, else anywhere. */
-  stepOf(t: Technique): { step: Step; aimed: boolean } | null {
+  /** Where a cast aims: the line the player dragged along, else what they point at. */
+  private target(): unknown {
+    return this.locked?.target ?? this.shell.aim;
+  }
+
+  /**
+   * What `t` would do: one step where the player points (or anywhere, if it can't be aimed), or,
+   * when several instances apply at the spot and the board lets the player say which line, all of
+   * them to choose from.
+   */
+  stepOf(t: Technique): { step: Step; aimed: boolean } | { choices: Step[] } | null {
     const s = this.shell.session;
     if (!s) return null;
-    if (aimable(s.def, t)) {
-      const at = findStepAt(s.def, t, s.puzzle, s.state, this.shell.aim, skillPrefs.scope());
-      return at ? { step: at, aimed: true } : null;
+    if (!aimable(s.def, t)) {
+      const any = this.shell.techniques?.find(t);
+      return any ? { step: any, aimed: false } : null;
     }
-    const any = this.shell.techniques?.find(t);
-    return any ? { step: any, aimed: false } : null;
+    const target = this.target();
+    const scope = skillPrefs.scope();
+    if (scope === "one" && !this.locked && this.shell.view?.handle.targetAlong?.(target, "row") != null) {
+      const all = stepsAt(s.def, t, s.puzzle, s.state, target);
+      if (all.length > 1) return { choices: all };
+      return all[0] ? { step: all[0], aimed: true } : null;
+    }
+    const at = findStepAt(s.def, t, s.puzzle, s.state, target, scope);
+    return at ? { step: at, aimed: true } : null;
   }
 
   /** Aimable techniques that have a step where the player points. */
@@ -194,12 +293,30 @@ export class Casting {
   /** Keep the preview, the board's cast cursor and the palette in step with what a click would do. */
   refresh(): void {
     const t = this.active();
-    if (t && skillPrefs.preview()) this.preview(t);
+    if (t && (skillPrefs.preview() || this.locked)) this.preview(t);
     else if (this.previewing) this.preview(null);
     this.shell.root.toggleAttribute("data-casting", !!t);
     const c = t ? this.color(t) : null;
     if (c) this.shell.root.style.setProperty("--cast", c);
     else this.shell.root.style.removeProperty("--cast");
+  }
+
+  /** The drag indicator: which way a drag across the pointed spot would choose, or has chosen. */
+  private axisEl: HTMLElement | null = null;
+
+  private showAxis(axis: "row" | "col" | "both" | null): void {
+    const box = this.shell.boardEl;
+    if (!axis || !this.pointer) { this.axisEl?.remove(); return; }
+    if (!this.axisEl) this.axisEl = document.createElement("div");
+    const el = this.axisEl;
+    el.className = "cast-axis";
+    el.dataset.axis = axis;
+    el.textContent = axis === "row" ? "↔" : axis === "col" ? "↕" : "↔ ↕";
+    const at = this.locked?.at ?? this.pointer;
+    const r = box.getBoundingClientRect();
+    el.style.left = `${at.x - r.left}px`;
+    el.style.top = `${at.y - r.top}px`;
+    if (el.parentElement !== box) box.append(el);
   }
 
   /** Show what `t` would do here without doing it; null clears. */
@@ -211,28 +328,43 @@ export class Casting {
       if (this.previewing) s.showHint(null);
       this.previewing = false;
       this.shell.view?.handle.preview?.(null);
+      this.showAxis(null);
+      if (t && this.shell.aim !== undefined) this.shell.setStatus(`no ${t.name} here`);
       return;
     }
     this.previewing = true;
+    if ("choices" in hit) {
+      let after = s.state;
+      for (const st of hit.choices) after = applyStep(s.def, s.puzzle, after, st);
+      s.showHint(null);
+      this.shell.view?.handle.preview?.(after);
+      this.showAxis("both");
+      this.shell.setStatus(`${hit.choices.length} ${t.name}s fit here: drag along the line you mean`);
+      return;
+    }
+    this.shell.setStatus("");
+    this.showAxis(this.locked?.axis ?? null);
     s.showHint(hintFrom(t, hit.step, 2) as Hint<any>);
     this.shell.view?.handle.preview?.(applyStep(s.def, s.puzzle, s.state, hit.step));
   }
 
-  /** Carry out `t` where the player points (or anywhere, if it can't be aimed) as one undo step. */
+  /** Carry out `t` where the player points (or anywhere, if it can't be aimed) as one undo step; never when several apply there and none was chosen. */
   apply(t: Technique): boolean {
     const s = this.shell.session;
     const hit = this.stepOf(t);
     this.preview(null);
+    if (hit && "choices" in hit) {
+      this.shell.setStatus(`${hit.choices.length} ${t.name}s fit here: drag along the line you mean`);
+      return false;
+    }
     if (!s || !hit) {
       this.shell.setStatus(`no ${t.name} ${hit === null && this.shell.aim !== undefined ? "here" : "right now"}`);
       return false;
     }
-    const prev = s.state;
     const source = { kind: "technique" as const, technique: t.id, name: t.name, step: hit.step, auto: false };
     s.batch(() => { for (const a of hit.step.actions) s.dispatch(a, { source }); });
     const shown = inPalette(t);
     noteProgress(t, (p) => ({ ...p, casts: (p.casts ?? 0) + 1 }));
-    if (!skillPrefs.kept()) this.kept.flash(t, prev, s.state);
     this.shell.setStatus("");
     if (inPalette(t) !== shown) this.shell.hooks.palette.call();
     return true;
@@ -242,15 +374,37 @@ export class Casting {
   private castAt(touch: boolean): void {
     const t = this.active();
     if (!t) { this.shell.setStatus(this.springHeld ? "no technique picked yet" : "no technique applies here"); return; }
-    this.shell.updateAim();
-    const key = JSON.stringify(this.shell.aim);
-    if (touch && skillPrefs.preview() && this.touchAim !== key) {
+    if (!this.locked) this.shell.updateAim();
+    const key = JSON.stringify(this.target());
+    if (touch && skillPrefs.preview() && !this.locked && this.touchAim !== key) {
       this.touchAim = key;
       this.preview(t);
       return;
     }
     this.touchAim = null;
     this.apply(t);
+    this.locked = null;
+    this.refresh();
+  }
+
+  /** The cast press in progress: where it began, and the line it chose once the drag had a direction. */
+  private press: { x: number; y: number; aim: unknown } | null = null;
+  private locked: { axis: "row" | "col"; target: unknown; at: { x: number; y: number } } | null = null;
+  /** Movement before a drag counts as choosing a line. */
+  private static readonly AXIS_PX = 10;
+
+  /** A cast press moving: the first clear direction picks the line through where it began. */
+  private dragMove(e: PointerEvent): void {
+    const p = this.press;
+    const along = this.shell.view?.handle.targetAlong;
+    if (!p || this.locked || !along) return;
+    const dx = e.clientX - p.x, dy = e.clientY - p.y;
+    if (Math.hypot(dx, dy) < Casting.AXIS_PX) return;
+    const axis = Math.abs(dx) >= Math.abs(dy) ? "row" : "col";
+    const target = along(p.aim, axis);
+    if (target == null) return;
+    this.locked = { axis, target, at: { x: p.x, y: p.y } };
+    this.touchAim = null;
     this.refresh();
   }
 
@@ -259,8 +413,31 @@ export class Casting {
     return this.shell.hub.mouseMatches("shell.skill-picker", e);
   }
 
+  /** Dragging techniques within the palette and to, from and within the hotbar. */
+  drag!: TileDrag;
+  /** The technique the player's last hand move turned out to use, until the next move. */
+  lit: Technique | null = null;
+
+  private dropped(t: Technique, from: DragFrom, at: DropAt): void {
+    if (at?.kind === "slot") { this.setSlot(at.slot, t); return; }
+    if (at?.kind === "palette") {
+      if (from.kind === "slot") { this.setSlot(from.slot, null); return; }
+      if (at.id === t.id) return;
+      const ids = this.palette().map((x) => x.id).filter((x) => x !== t.id);
+      ids.splice(ids.indexOf(at.id) + (at.after ? 1 : 0), 0, t.id);
+      this.setOrder(ids);
+      return;
+    }
+    if (from.kind === "slot") this.setSlot(from.slot, null);
+  }
+
   /** Mouse, keyboard, wheel and touch wiring; bound to `signal`. */
   install(signal: AbortSignal): void {
+    this.drag = new TileDrag({
+      drop: (t, from, at) => this.dropped(t, from, at),
+      held: (t) => { if (skillPrefs.watchHold() && t.practice !== false) this.shell.watch(t); },
+    }, signal);
+    this.shell.hooks.recognized.tap(({ technique }) => { this.lit = technique; });
     const box = this.shell.boardEl;
     const track = (e: PointerEvent) => { this.pointer = { x: e.clientX, y: e.clientY }; };
     box.addEventListener("pointermove", track, { signal });
@@ -294,13 +471,20 @@ export class Casting {
       }
       if (e.button === 2 && this.armed && skillPrefs.rightClick() === "drop") { this.blockPress = true; return; }
       this.sync(e);
-      if (e.button === 0 && this.active()) { this.castPress = true; this.blockPress = true; }
+      if (e.button === 0 && this.active()) {
+        this.castPress = true;
+        this.blockPress = true;
+        this.shell.updateAim();
+        this.press = { x: e.clientX, y: e.clientY, aim: this.shell.aim };
+        this.locked = null;
+      }
     }, { capture: true, signal });
     box.addEventListener("pointerup", (e) => {
       if (e.button === 2 && this.blockPress && this.armed && skillPrefs.rightClick() === "drop") { this.pick(null); return; }
       if (this.castPress && e.button === 0) this.castAt(e.pointerType === "touch");
     }, { capture: true, signal });
-    const end = () => { setTimeout(() => { this.blockPress = false; this.castPress = false; }, 0); };
+    window.addEventListener("pointermove", (e) => { if (this.castPress) this.dragMove(e); }, { capture: true, signal });
+    const end = () => { setTimeout(() => { this.blockPress = false; this.castPress = false; this.press = null; if (this.locked) { this.locked = null; this.refresh(); } }, 0); };
     window.addEventListener("pointerup", end, { capture: true, signal });
     window.addEventListener("pointercancel", end, { capture: true, signal });
     box.addEventListener("wheel", (e) => {
@@ -323,7 +507,7 @@ export class Casting {
       this.sync(e);
     }, { signal });
     box.addEventListener("pointermove", (e) => this.sync(e), { signal });
-    window.addEventListener("blur", () => { this.springHeld = false; this.fitsHeld = { on: false, cycle: 0 }; this.refresh(); }, { signal });
+    window.addEventListener("blur", () => { this.springHeld = false; this.fitsHeld = { on: false, cycle: 0 }; this.kept.reveal(false); this.refresh(); }, { signal });
     this.shell.hooks.aim.tap(() => { if (this.active()) this.refresh(); });
   }
 
@@ -332,6 +516,7 @@ export class Casting {
     const on = (k: HoldKey) => k !== "none" && k !== holdOtherKey() && held(e, k);
     const spring = on(holdSkillKey());
     const fits = on(skillPrefs.holdFits());
+    this.kept.reveal(on(skillPrefs.eyedrop()));
     if (spring === this.springHeld && fits === this.fitsHeld.on) return;
     this.springHeld = spring;
     if (fits !== this.fitsHeld.on) this.fitsHeld = { on: fits, cycle: 0 };
@@ -343,6 +528,9 @@ export class Casting {
     this.armed = null;
     this.previewing = false;
     this.touchAim = null;
+    this.press = null;
+    this.locked = null;
+    this.showAxis(null);
     this.picker?.p.close();
     this.shell.root.removeAttribute("data-casting");
     this.kept.schedule();

@@ -2,6 +2,7 @@ import { namespace, prefs } from "../../core/storage";
 import type { HoldKey } from "../../core/gestures";
 import type { AimScope } from "../../core/techniques";
 import type { Technique } from "../../core/types";
+import type { KeptMode } from "./kept";
 
 /** What makes a technique count as learned, for a palette that shows learned techniques only. */
 export type LearnedBy = "practice" | "watched" | "cast" | "casts";
@@ -31,8 +32,16 @@ declare module "../../core/storage" {
     skillGlow: boolean;
     /** The board menu lists the techniques that apply where it was opened. */
     skillHerePopup: boolean;
-    /** Cells keep the color of the technique that decided them. */
-    skillKept: boolean;
+    /** When the colors techniques leave on cells show. */
+    skillKeptMode: KeptMode;
+    /** "fade" mode: how long a color stays before it has faded (ms). */
+    skillKeptFadeMs: number;
+    /** "recent" mode: how many of the newest steps keep their colors. */
+    skillKeptRecent: number;
+    /** A hand move a technique accounts for lights that technique up and colors its cells like a cast. */
+    skillRecognize: boolean;
+    /** Show the hotbar of techniques on keys 1–0. */
+    skillHotbar: boolean;
     /** While a technique is picked, a right click does the board's other action, or puts the technique down. */
     skillRightClick: "mark" | "drop";
     /** Picker shape; "auto" is a ring for up to eight entries, a grid past that. */
@@ -47,7 +56,7 @@ declare module "../../core/storage" {
 }
 
 export const skillPrefs = {
-  preview: () => prefs.get("skillPreview", false),
+  preview: () => prefs.get("skillPreview", true),
   scope: () => prefs.get("skillScope", "one"),
   palette: () => prefs.get("skillPalette", "all"),
   learnedBy: () => prefs.get("skillLearnedBy", ["practice", "watched", "cast"]),
@@ -58,7 +67,11 @@ export const skillPrefs = {
   eyedrop: () => prefs.get("skillEyedrop", "ctrl"),
   glow: () => prefs.get("skillGlow", false),
   herePopup: () => prefs.get("skillHerePopup", false),
-  kept: () => prefs.get("skillKept", true),
+  kept: () => prefs.get("skillKeptMode", "next"),
+  keptFadeMs: () => prefs.get("skillKeptFadeMs", 4000),
+  keptRecent: () => prefs.get("skillKeptRecent", 3),
+  recognize: () => prefs.get("skillRecognize", true),
+  hotbar: () => prefs.get("skillHotbar", true),
   rightClick: () => prefs.get("skillRightClick", "mark"),
   picker: () => prefs.get("skillPicker", "auto"),
   watchAuto: () => prefs.get("skillWatchAuto", true),
@@ -101,4 +114,23 @@ export function inPalette(t: Technique): boolean {
   const pin = pinOf(t);
   if (pin !== "auto") return pin === "always";
   return skillPrefs.palette() === "all" || learned(t);
+}
+
+/** Slots in the hotbar, keyed 1–9 then 0. */
+export const HOTBAR_SLOTS = 10;
+export const HOTBAR_KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"] as const;
+const hotbarStore = namespace("technique-hotbar");
+
+/**
+ * The puzzle's hotbar: technique ids by slot (null: empty). Never arranged: the first ten of
+ * `palette`, in order.
+ */
+export function hotbarOf(puzzleId: string, palette: readonly Technique[]): (string | null)[] {
+  const saved = hotbarStore.get<(string | null)[] | null>(puzzleId, null);
+  const slots = saved ?? palette.slice(0, HOTBAR_SLOTS).map((t) => t.id);
+  return Array.from({ length: HOTBAR_SLOTS }, (_, i) => slots[i] ?? null);
+}
+
+export function setHotbar(puzzleId: string, slots: readonly (string | null)[]): void {
+  hotbarStore.set(puzzleId, Array.from({ length: HOTBAR_SLOTS }, (_, i) => slots[i] ?? null));
 }

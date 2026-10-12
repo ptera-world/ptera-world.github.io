@@ -7,11 +7,13 @@ import { SessionCtor, applyStep, colorOf, findPracticePosition, findStep, hintFr
 
 const CSS = `
 .ex { display: flex; flex-direction: column; gap: 8px; }
-.ex-stage { position: relative; width: 100%; aspect-ratio: var(--ex-aspect, 1); max-height: 340px; display: flex; align-items: center; justify-content: center; border-radius: 10px; background: var(--surface-2); overflow: hidden; }
+.ex-stage { position: relative; width: 100%; height: var(--ex-h, 300px); display: flex; align-items: center; justify-content: center; border-radius: 10px; background: var(--surface-2); overflow: hidden; }
 .ex-stage > .view { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; pointer-events: none; }
 .ex-caption { min-height: 3.2em; line-height: 1.45; font-size: 14px; padding: 8px 10px; border-left: 3px solid var(--ex-color, var(--hint)); background: var(--surface); border-radius: 0 8px 8px 0; }
 .ex-caption .step { color: var(--text-dim); font-size: 12px; display: block; }
 .ex-controls { display: flex; gap: 6px; align-items: center; }
+.ex-controls button { flex: none; }
+.ex-controls .ex-play { width: 6.5em; }
 .ex-controls .dots { display: flex; gap: 4px; flex: 1; justify-content: center; }
 .ex-controls .dots span { width: 7px; height: 7px; border-radius: 50%; background: var(--border); }
 .ex-controls .dots span.on { background: var(--ex-color, var(--hint)); }
@@ -41,9 +43,9 @@ export function explainer(def: AnyPuzzleDef, t: Technique, all: readonly Techniq
   const caption = h("div", { class: "ex-caption", "aria-live": "polite" });
   const dots = h("div", { class: "dots", "aria-hidden": "true" });
   const back = h("button", { "aria-label": "previous step" }, "‹");
-  const play = h("button", { class: "primary" }, "play");
+  const play = h("button", { class: "primary ex-play" }, "play");
   const next = h("button", { "aria-label": "next step" }, "›");
-  root.append(stage, caption, h("div", { class: "ex-controls" }, back, dots, play, next));
+  root.append(stage, h("div", { class: "ex-controls" }, back, dots, play, next), caption);
   stage.append(h("span", { class: "ex-loading" }, `finding a ${t.name}…`));
 
   let handle: ViewHandle | null = null;
@@ -106,7 +108,6 @@ export function explainer(def: AnyPuzzleDef, t: Technique, all: readonly Techniq
       stage.append(h("span", { class: "ex-loading" }, `this board can't be shown here (${e instanceof Error ? e.message : e})`));
       return;
     }
-    stage.style.setProperty("--ex-aspect", String(handle.aspect ?? 1));
     const nudge = hintFrom(t, p.step, 1);
     const full = hintFrom(t, p.step, 2);
     const after = applyStep(def, p.puzzle, p.state, p.step);
