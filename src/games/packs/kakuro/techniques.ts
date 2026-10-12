@@ -47,35 +47,28 @@ function step(p: KakuroPuzzle, s: KakuroState, d: Deduction, vars: number[], why
 }
 
 const runOf = (p: KakuroPuzzle, d: Deduction) => geometry(p).runs[(d.data as { run: number }).run]!;
-/** A cell target restricted to the across runs. */
-interface AcrossTarget { across: number }
+/** A white cell narrowed to one of its runs (see ViewHandle.targetAlong). */
+export interface KakuroLineTarget { cell: number; run: number }
+
+const isLine = (t: unknown): t is KakuroLineTarget =>
+  !!t && typeof (t as KakuroLineTarget).cell === "number" && typeof (t as KakuroLineTarget).run === "number";
 
 const comesFrom = (d: Deduction, c: number, vars: number[]) => vars.includes(c) || d.because.includes(c);
 
 /**
- * A technique whose aimed find at a white cell in two runs is the across run's step when the
- * across run has one, else the first step either run gives.
+ * A technique aimed at a cell (every deduction from or about it) or at a cell narrowed to one run
+ * (only that run's deductions; one about a single cell and no run is on no run).
  */
 function aimed(spec: TechniqueSpec<KakuroPuzzle, KakuroState, KakuroAction>): KakuroTechnique {
-  const t = technique<KakuroPuzzle, KakuroState, KakuroAction>({
+  return technique<KakuroPuzzle, KakuroState, KakuroAction>({
     ...spec,
-    aim(p, d, vars, target) {
+    aim(_p, d, vars, target) {
       if (typeof target === "number") return comesFrom(d, target, vars);
-      const { across } = target as AcrossTarget;
-      const run = (d.data as { run?: number } | undefined)?.run;
-      return comesFrom(d, across, vars) && (run === undefined || geometry(p).runs[run]!.dir === "across");
+      if (!isLine(target)) return false;
+      return comesFrom(d, target.cell, vars) && (d.data as { run?: number } | undefined)?.run === target.run;
     },
+    spot: (_p, target) => (typeof target === "number" ? target : isLine(target) ? target.cell : null),
   });
-  return {
-    ...t,
-    findAt(p, s, target) {
-      if (typeof target === "number" && p.white[target] && geometry(p).runsOf[target]!.length > 1) {
-        const row = t.findAt!(p, s, { across: target } satisfies AcrossTarget);
-        if (row) return row;
-      }
-      return t.findAt!(p, s, target);
-    },
-  };
 }
 
 const base = { puzzle: kakuro, read, changes };

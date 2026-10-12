@@ -10,9 +10,10 @@ import {
   type BoardPrefs,
 } from "../../lib/grid-kit/view";
 import {
-  DIGIT_MASK, kakuro,
+  DIGIT_MASK, geometry, kakuro,
   type KakuroAction, type KakuroConflicts, type KakuroInteraction, type KakuroPuzzle, type KakuroState,
 } from "./logic";
+import type { KakuroLineTarget } from "./techniques";
 
 /** Derived: KakuroConflicts to flag on the board. */
 export const CONFLICTS_KEY = "kakuro.conflicts";
@@ -222,6 +223,12 @@ export function kakuroView(board: BoardPrefs): View<KakuroPuzzle, KakuroState, K
         commands,
         context: (): KakuroContext => ({ kakuroNotes: session.interaction.candidates }),
         target: () => (hover >= 0 ? hover : session.interaction.cursor),
+        targetAlong: (t, axis): KakuroLineTarget | null => {
+          if (typeof t !== "number" || !p.white[t]) return null;
+          const g = geometry(p);
+          const run = g.runsOf[t]!.find((r) => g.runs[r]!.dir === (axis === "row" ? "across" : "down"));
+          return run === undefined ? null : { cell: t, run };
+        },
         preview: (st) => {
           preview = st as KakuroState | null;
           render();

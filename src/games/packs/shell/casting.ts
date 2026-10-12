@@ -1,6 +1,6 @@
 import { buttonsSwapped, held, holdOtherKey, holdSkillKey, setButtonsSwapped, type HoldKey } from "../../core/gestures";
 import { namespace } from "../../core/storage";
-import type { Hint, Step, Technique } from "../../core/types";
+import type { AnyPuzzleDef, Hint, Step, Technique } from "../../core/types";
 import { aimable, applyStep, colorOf, findStepAt, hintFrom, isPartOfStep, stepsAt, stepsOf } from "./engine";
 import { KeptLayer } from "./kept";
 import { openPicker, type Picker } from "./picker";
@@ -255,7 +255,7 @@ export class Casting {
    * when several instances apply at the spot and the board lets the player say which line, all of
    * them to choose from.
    */
-  stepOf(t: Technique): { step: Step; aimed: boolean } | { choices: Step[] } | null {
+  stepOf(t: Technique): { step: Step; aimed: boolean; alsoLines?: boolean } | { choices: Step[]; lines: boolean } | null {
     const s = this.shell.session;
     if (!s) return null;
     if (!aimable(s.def, t)) {
@@ -264,10 +264,16 @@ export class Casting {
     }
     const target = this.target();
     const scope = skillPrefs.scope();
-    if (scope === "one" && !this.locked && this.shell.view?.handle.targetAlong?.(target, "row") != null) {
-      const all = stepsAt(s.def, t, s.puzzle, s.state, target);
-      if (all.length > 1) return { choices: all };
-      return all[0] ? { step: all[0], aimed: true } : null;
+    const along = this.shell.view?.handle.targetAlong;
+    if (scope === "one" && !this.locked && along) {
+      const row = along(target, "row"), col = along(target, "col");
+      if (row != null || col != null) {
+        const split = splitAt(s, t, target, row, col);
+        if (split.cell.length === 1) return { step: split.cell[0]!, aimed: true, alsoLines: split.lines.length > 0 };
+        if (split.cell.length > 1) return { choices: split.cell, lines: false };
+        if (split.lines.length === 1) return { step: split.lines[0]!, aimed: true };
+        return split.lines.length ? { choices: split.lines, lines: true } : null;
+      }
     }
     const at = findStepAt(s.def, t, s.puzzle, s.state, target, scope);
     return at ? { step: at, aimed: true } : null;
@@ -338,12 +344,12 @@ export class Casting {
       for (const st of hit.choices) after = applyStep(s.def, s.puzzle, after, st);
       s.showHint(null);
       this.shell.view?.handle.preview?.(after);
-      this.showAxis("both");
-      this.shell.setStatus(`${hit.choices.length} ${t.name}s fit here: drag along the line you mean`);
+      this.showAxis(hit.lines ? "both" : null);
+      this.shell.setStatus(choicesText(t, hit));
       return;
     }
     this.shell.setStatus("");
-    this.showAxis(this.locked?.axis ?? null);
+    this.showAxis(this.locked?.axis ?? (hit.aimed && "alsoLines" in hit && hit.alsoLines ? "both" : null));
     s.showHint(hintFrom(t, hit.step, 2) as Hint<any>);
     this.shell.view?.handle.preview?.(applyStep(s.def, s.puzzle, s.state, hit.step));
   }
@@ -354,7 +360,7 @@ export class Casting {
     const hit = this.stepOf(t);
     this.preview(null);
     if (hit && "choices" in hit) {
-      this.shell.setStatus(`${hit.choices.length} ${t.name}s fit here: drag along the line you mean`);
+      this.shell.setStatus(choicesText(t, hit));
       return false;
     }
     if (!s || !hit) {
@@ -536,3 +542,25 @@ export class Casting {
     this.kept.schedule();
   }
 }
+
+/**
+ * The instances of `t` at `target`, split into those only about the pointed cell (a click casts
+ * them) and those about the row or column through it (a drag picks the line). Instances that
+ * would leave the board the same are one. Cell instances are the ones neither narrowed target finds.
+ */
+export function splitAt(s: { def: AnyPuzzleDef; puzzle: unknown; state: unknown }, t: Technique, target: unknown, row: unknown, col: unknown): { cell: Step[]; lines: Step[] } {
+  const result = (st: Step) => JSON.stringify(applyStep(s.def, s.puzzle, s.state, st));
+  const distinct = (steps: Step[]) => {
+    const seen = new Set<string>();
+    return steps.filter((st) => { const k = result(st); if (seen.has(k)) return false; seen.add(k); return true; });
+  };
+  const on = (x: unknown) => (x == null ? [] : stepsAt(s.def, t, s.puzzle, s.state, x));
+  const lines = distinct([...on(row), ...on(col)]);
+  const lineKeys = new Set(lines.map(result));
+  const cell = distinct(stepsAt(s.def, t, s.puzzle, s.state, target).filter((st) => !lineKeys.has(result(st))));
+  return { cell, lines };
+}
+
+/** What the status says when a click can't tell which instance is meant. */
+const choicesText = (t: Technique, hit: { choices: Step[]; lines: boolean }): string =>
+  hit.lines ? `${hit.choices.length} ${t.name}s fit here: drag along the line you mean` : `${hit.choices.length} different ${t.name}s fit this one cell`;

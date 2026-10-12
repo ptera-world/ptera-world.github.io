@@ -1,12 +1,13 @@
 import type { Step, Technique } from "../../core/types";
 import { LINE, NO, UNK, edgeGrid } from "../../lib/edges";
 import { tracks, CROSS, EMPTY, NONE, TRACK, cellList, cellName, countName, edgeList, type TracksAction, type TracksFocus, type TracksPuzzle, type TracksState } from "./logic";
-import { closeObvious, countCells, freshKnowledge, scanSteps, sides, target, type Knowledge, type Step as SolverStep, type StepKind } from "./solver";
+import { closeObvious, freshKnowledge, scanSteps, sides, target, type Knowledge, type Step as SolverStep, type StepKind } from "./solver";
 
 type TracksTechnique = Technique<TracksPuzzle, TracksState, TracksAction>;
 
 /** What a technique can be aimed at: a cell. */
-export type TracksTarget = { cell: number };
+/** A cell, or a cell narrowed to its row or column count (see ViewHandle.targetAlong). */
+export type TracksTarget = { cell: number; count?: number };
 
 const knowledgeCache = new WeakMap<TracksState, Knowledge | null>();
 
@@ -57,21 +58,22 @@ type Hit = { raw: SolverStep; ch: Changes };
 
 const lineKinds: readonly StepKind[] = ["count-full", "count-needs", "neighbours"];
 
-/** The count (a column below w, else a row) a line-based step reasons about, if `c` is in that line. */
-function lineOf(p: TracksPuzzle, st: SolverStep, c: number): number | null {
-  if (!lineKinds.includes(st.kind) || st.count === undefined) return null;
-  return countCells(p, st.count).includes(c) ? st.count : null;
-}
+/** The count a step reasons about (a column below w, else a row), or null for a step about one cell. */
+const countOf = (st: SolverStep): number | null => (lineKinds.includes(st.kind) && st.count !== undefined ? st.count : null);
 
-/** The hits in scan order, stopping when `visit` returns true; with a target, only hits that reason from or touch the target's cell. */
+/**
+ * The hits in scan order, stopping when `visit` returns true. With a target, only hits that reason
+ * from or touch the target's cell, and with a narrowed target only those about its count.
+ */
 function each(p: TracksPuzzle, s: TracksState, kinds: readonly StepKind[], visit: (hit: Hit) => boolean | void, target?: TracksTarget): void {
   const k = knowledge(p, s);
   if (!k) return;
   const g = edgeGrid(p.w, p.h);
   const touches = (st: SolverStep) => !target || st.because.includes(target.cell) || st.tracks.includes(target.cell) || st.empties.includes(target.cell)
     || [...st.lines, ...st.nos].some((e) => g.ea[e] === target.cell || g.eb[e] === target.cell);
+  const onLine = (st: SolverStep) => target?.count === undefined || countOf(st) === target.count;
   scanSteps(p, k, kinds, (raw) => {
-    if (!touches(raw)) return false;
+    if (!touches(raw) || !onLine(raw)) return false;
     const ch = changes(p, s, raw);
     return size(ch) > 0 && visit({ raw, ch }) === true;
   });
@@ -79,24 +81,14 @@ function each(p: TracksPuzzle, s: TracksState, kinds: readonly StepKind[], visit
 
 const asTarget = (t: unknown): TracksTarget | null => (t && typeof (t as TracksTarget).cell === "number" ? t as TracksTarget : null);
 
-/**
- * Hits at `target`: those changing the pointed cell or one of its edges first, then the rest, each
- * group in scan order except that when the group opens with a column's hit holding the cell, the
- * first row's hit holding it moves ahead of it.
- */
+/** Hits at `target`: those changing the pointed cell or one of its edges first, then the rest, each group in scan order. */
 function hitsAt(p: TracksPuzzle, s: TracksState, kinds: readonly StepKind[], target: TracksTarget): Hit[] {
   const g = edgeGrid(p.w, p.h);
   const c = target.cell;
   const own = (h: Hit) => h.ch.tracks.includes(c) || h.ch.empties.includes(c) || [...h.ch.lines, ...h.ch.crosses].some((e) => g.ea[e] === c || g.eb[e] === c);
   const first: Hit[] = [], later: Hit[] = [];
   each(p, s, kinds, (hit) => { (own(hit) ? first : later).push(hit); }, target);
-  const rowsFirst = (group: Hit[]): Hit[] => {
-    const lead = group[0] && lineOf(p, group[0].raw, c);
-    if (lead === null || lead === undefined || lead >= p.w) return group;
-    const row = group.findIndex((h) => { const l = lineOf(p, h.raw, c); return l !== null && l >= p.w; });
-    return row < 0 ? group : [group[row]!, ...group.filter((_, i) => i !== row)];
-  };
-  return [...rowsFirst(first), ...rowsFirst(later)];
+  return [...first, ...later];
 }
 
 function outcome(p: TracksPuzzle, ch: Changes): string {

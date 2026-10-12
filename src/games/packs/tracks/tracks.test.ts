@@ -6,7 +6,7 @@ import { createRng } from "../../core/rng";
 import { Session } from "../../core/session";
 import { TechniqueHost, applyStep, findPracticePosition, findStep, findStepAt, firstStep, rateByTechniques, stepsAt } from "../../core/techniques";
 import { edgeGrid } from "../../lib/edges";
-import { CROSS, EMPTY, LINE, NONE, TRACK, cellName, sgtFormat, tracks, type TracksAction, type TracksFocus } from "./logic";
+import { CROSS, EMPTY, LINE, NONE, TRACK, cellName, sgtFormat, tracks, type TracksAction, type TracksFocus, type TracksState } from "./logic";
 import { checkMarks } from "./plugins";
 import { analyze, countCells, countSolutions, freshKnowledge, logicSolve, trackEdges, type Level, type TracksPuzzle } from "./solver";
 import { tracksTechniques } from "./techniques";
@@ -180,7 +180,6 @@ test("solve() reaches a solved state", async () => {
 });
 
 test("an aimed step at a cell changes nothing outside the line or cell it reasons about", async () => {
-  const lineTechniques = ["tracks.count-full", "tracks.count-needs"];
   let aimed = 0;
   for (const difficulty of ["easy", "medium"]) {
     const p = await gen({ width: 7, height: 7, difficulty }, `aimed-${difficulty}`);
@@ -195,14 +194,6 @@ test("an aimed step at a cell changes nothing outside the line or cell it reason
           const unit = new Set(f.counts?.length ? countCells(p, f.counts[0]!) : f.because);
           const cells = (step.actions as TracksAction[]).flatMap((a) => (a.type === "cell" ? a.cells : []));
           for (const x of cells) expect(unit.has(x)).toBe(true);
-          if (!lineTechniques.includes(t.id) || !unit.has(c)) continue;
-          if (f.counts![0]! < p.w) {
-            const rowHolds = (r: { actions: unknown[]; focus?: unknown }) =>
-              (r.focus as TracksFocus).counts![0]! >= p.w && (r.actions as TracksAction[]).some((a) => a.type === "cell" && a.cells.includes(c));
-            let row = false;
-            t.instances(p, st, (r) => { row ||= rowHolds(r); });
-            expect(row).toBe(false);
-          }
         }
       }
       const hit = firstStep(tracks, tracksTechniques, p, st);
@@ -260,4 +251,34 @@ test("aimed finds: findAt is instancesAt's first, each instance changes the boar
     cells += checkAimed(tracks, tracksTechniques, p, s, Array.from({ length: p.w * p.h }, (_, i) => ({ cell: i })));
   }
   expect(cells).toBeGreaterThan(0);
+}, 300000);
+
+test("a cell narrowed to its row or column count aims at that count's instances only; cell-only ones are on no line", async () => {
+  const cellOnlyIds = ["tracks.no-room", "tracks.through", "tracks.no-loop", "tracks.trial"];
+  let both = 0, cellOnly = 0;
+  for (const t of tracksTechniques) {
+    const pos = await findPracticePosition(tracks, tracksTechniques, t, "line", new AbortController().signal);
+    if (!pos) continue;
+    const p = pos.puzzle as TracksPuzzle, st = pos.state as TracksState;
+    const at = (target: unknown) => { const out: Step[] = []; t.instancesAt!(p, st, target, (x) => { out.push(x as Step); }); return out; };
+    for (let c = 0; c < p.w * p.h; c++) {
+      const plain = at({ cell: c });
+      const lines = [p.w + Math.floor(c / p.w), c % p.w].map((count) => ({ count, steps: at({ cell: c, count }) }));
+      for (const { count, steps } of lines) {
+        expect(steps).toEqual(plain.filter((x) => (x.focus as TracksFocus).counts?.[0] === count));
+        if (steps.length) expect(t.findAt!(p, st, { cell: c, count }) as Step | null).toEqual(steps[0]!);
+        else expect(t.findAt!(p, st, { cell: c, count })).toBeNull();
+      }
+      if (lines.every((l) => l.steps.length)) {
+        expect(plain.length).toBeGreaterThanOrEqual(2);
+        both++;
+      }
+      if (cellOnlyIds.includes(t.id) && plain.length) {
+        for (const l of lines) expect(l.steps).toEqual([]);
+        cellOnly++;
+      }
+    }
+  }
+  expect(both).toBeGreaterThan(0);
+  expect(cellOnly).toBeGreaterThan(0);
 }, 300000);

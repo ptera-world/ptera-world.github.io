@@ -1,4 +1,5 @@
 import { expect, test } from "bun:test";
+import type { Step } from "../../core/types";
 import { work } from "../../lib/work";
 import { generate } from "../../core/generate";
 import { createRng } from "../../core/rng";
@@ -9,7 +10,7 @@ import { bit, countSolutions, solveLevel } from "../../lib/grid-kit/csp";
 import { cellName, type Focus } from "../../lib/grid-kit/names";
 import {
   analyze, combosFor, fillDigits, findConflicts, geometry, initialDoms, isSolved, kakuro, makeLayout, model, pzprFormat, textFormat, withSums,
-  type KakuroAction, type KakuroPuzzle, type Level,
+  type KakuroAction, type KakuroPuzzle, type KakuroState, type Level,
 } from "./logic";
 import { checkMarks } from "./plugins";
 import { kakuroTechniques } from "./techniques";
@@ -241,8 +242,8 @@ test("solve() reaches a solved state", async () => {
   expect(isSolved(p, kakuro.init(p))).toBe(false);
 });
 
-test("an aimed step at a cell changes only cells of one run holding it, the across run's when it has one", async () => {
-  let seen = 0, across = 0;
+test("an aimed step at a cell changes only cells of one run holding it", async () => {
+  let seen = 0;
   for (const difficulty of LEVELS) {
     const p = await gen({ width: 6, height: 6, difficulty }, `aimed-${difficulty}`);
     const g = geometry(p);
@@ -256,17 +257,6 @@ test("an aimed step at a cell changes only cells of one run holding it, the acro
           const cells = (step.actions as KakuroAction[]).flatMap((a) => (a.type === "narrow" ? a.cells : []));
           expect(cells.length).toBeGreaterThan(0);
           expect(holding.some((run) => cells.every((x) => run.has(x))) || cells.every((x) => x === c)).toBe(true);
-          if (!/across|down/.test(step.message)) continue;
-          let rowHas = false;
-          t.instances(p, st, (s) => {
-            const f = s.focus as Focus;
-            const mine = (s.actions as KakuroAction[]).some((a) => a.type === "narrow" && a.cells.includes(c)) || f.because.includes(c);
-            if (mine && /the across/.test(s.message)) rowHas = true;
-          });
-          if (rowHas) {
-            expect(step.message).toContain("the across");
-            across++;
-          }
           seen++;
         }
       }
@@ -276,5 +266,36 @@ test("an aimed step at a cell changes only cells of one run holding it, the acro
     }
   }
   expect(seen).toBeGreaterThan(50);
-  expect(across).toBeGreaterThan(0);
 }, 60000);
+
+test("a cell narrowed to its across or down run aims at that run's instances only; cell-only ones are on no run", async () => {
+  let both = 0, cellOnly = 0;
+  for (const t of kakuroTechniques) {
+    const pos = await findPracticePosition(kakuro, kakuroTechniques, t, "line", new AbortController().signal);
+    if (!pos) continue;
+    const p = pos.puzzle as KakuroPuzzle, st = pos.state as KakuroState;
+    const g = geometry(p);
+    const at = (target: unknown) => { const out: Step[] = []; t.instancesAt!(p, st, target, (x) => { out.push(x as Step); }); return out; };
+    const about = (x: Step, clue: number) => { const f = x.focus as Focus; return f.because.includes(clue) || (f.related ?? []).includes(clue); };
+    for (const c of g.whites) {
+      const plain = at(c);
+      const lines = g.runsOf[c]!.map((r) => ({ r, steps: at({ cell: c, run: r }) }));
+      for (const { r, steps } of lines) {
+        expect(steps).toEqual(plain.filter((x) => about(x, g.runs[r]!.clue)));
+        if (steps.length) expect(t.findAt!(p, st, { cell: c, run: r }) as Step | null).toEqual(steps[0]!);
+        else expect(t.findAt!(p, st, { cell: c, run: r })).toBeNull();
+      }
+      if (lines.length === 2 && lines.every((l) => l.steps.length)) {
+        expect(plain.length).toBeGreaterThanOrEqual(2);
+        both++;
+      }
+      const off = plain.filter((x) => lines.every((l) => !l.steps.some((y) => JSON.stringify(y) === JSON.stringify(x))));
+      if (off.length) {
+        expect(t.id).toBe("kakuro.trial");
+        cellOnly++;
+      }
+    }
+  }
+  expect(both).toBeGreaterThan(0);
+  expect(cellOnly).toBeGreaterThan(0);
+}, 300000);

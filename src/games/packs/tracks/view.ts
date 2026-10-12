@@ -363,6 +363,11 @@ export function tracksView(board: Board): View<TracksPuzzle, TracksState, Tracks
         cells: { cols: p.w + 1, rows: p.h + 1 },
         commands,
         target: (): TracksTarget => ({ cell: hover >= 0 ? hover : session.interaction.cursor }),
+        targetAlong: (t, axis): TracksTarget | null => {
+          const c = (t as TracksTarget | null)?.cell;
+          if (typeof c !== "number" || c < 0 || c >= p.w * p.h) return null;
+          return { cell: c, count: axis === "row" ? p.w + Math.floor(c / p.w) : c % p.w };
+        },
         preview: (st) => {
           preview = st as TracksState | null;
           render();
