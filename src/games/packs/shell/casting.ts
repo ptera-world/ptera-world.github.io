@@ -301,7 +301,10 @@ export class Casting {
     const t = this.active();
     if (t && (skillPrefs.preview() || this.locked)) this.preview(t);
     else if (this.previewing) this.preview(null);
+    const was = this.shell.root.hasAttribute("data-casting");
     this.shell.root.toggleAttribute("data-casting", !!t);
+    // views size their hit zones and draw the pointed-spot outline from data-casting
+    if (was !== !!t) this.shell.session?.hooks.refresh.call();
     const c = t ? this.color(t) : null;
     if (c) this.shell.root.style.setProperty("--cast", c);
     else this.shell.root.style.removeProperty("--cast");

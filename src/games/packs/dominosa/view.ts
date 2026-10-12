@@ -9,6 +9,8 @@ import {
   type Conflicts, type DominosaAction, type DominosaFocus, type DominosaInteraction, type DominosaPuzzle, type DominosaState,
 } from "./logic";
 import type { DominosaTarget } from "./techniques";
+import { CAST_BAND, sideAt } from "../../lib/edge-hit";
+import { DOWN, LEFT, RIGHT, UP } from "../../lib/edges";
 
 /** Derived: Conflicts to flag on the board. */
 export const CONFLICTS_KEY = "dominosa.conflicts";
@@ -30,6 +32,8 @@ const CSS = `
 .dominosa-board .line.preview { stroke: var(--hint); opacity: 0.6; }
 .dominosa-board .focus { fill: none; stroke: var(--hint); stroke-width: 0.9; pointer-events: none; }
 .dominosa-board .focus.why { stroke-dasharray: 1.2 0.8; stroke-width: 0.6; }
+.dominosa-board .cast-mark { display: none; fill: none; stroke: var(--cast); stroke-width: 0.8; pointer-events: none; }
+[data-casting] .dominosa-board .cast-mark { display: inline; }
 .dominosa-board .labels text { fill: var(--text-dim); font: 500 3.6px var(--font); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
 .dominosa-board .cursor { fill: none; stroke: var(--focus); stroke-width: 0.6; pointer-events: none; }
 ${inputIs("pointer")} .dominosa-board .cursor { display: none; }
@@ -121,7 +125,8 @@ export function dominosaView(board: Board): View<DominosaPuzzle, DominosaState, 
       }
       const base = s("g"), pieces = s("g"), numsL = s("g"), over = s("g");
       const cursor = s("rect", { class: "cursor", rx: 1 });
-      svg.append(labels, base, pieces, numsL, over, cursor);
+      const castMark = s("path", { class: "cast-mark" });
+      svg.append(labels, base, pieces, numsL, over, cursor, castMark);
       root.append(svg);
 
       const cx = (c: number) => (c % p.w) * SIZE;
@@ -145,6 +150,8 @@ export function dominosaView(board: Board): View<DominosaPuzzle, DominosaState, 
 
       let hover = -1;
       let hoverCell = -1;
+      /** Where the pointer last was over the board (a pointerdown, or a mouse move), or null off it. */
+      let last: { clientX: number; clientY: number } | null = null;
       let preview: DominosaState | null = null;
 
       const render = () => {
@@ -185,23 +192,53 @@ export function dominosaView(board: Board): View<DominosaPuzzle, DominosaState, 
         cursor.setAttribute("y", String(ky * half + (ky % 2 ? half / 2 : 0.3)));
         cursor.setAttribute("width", String(kx % 2 ? half : SIZE - 0.6));
         cursor.setAttribute("height", String(ky % 2 ? half : SIZE - 0.6));
+        showCast();
       };
 
-      /** The placement whose edge is nearest the pointer inside its cell, and the cell under it, and whether the pointer is near that cell's center. */
-      const pointAt = (e: PointerEvent): { q: number; cell: number; centre: boolean } => {
+      /**
+       * The placement whose edge is nearest the pointer inside its cell, the cell under it, whether the
+       * pointer is near that cell's center, and the pointer's offset in the cell (shares of its size).
+       */
+      const pointAt = (e: { clientX: number; clientY: number }): { q: number; cell: number; centre: boolean; fx: number; fy: number } => {
         const mtx = svg.getScreenCTM();
-        if (!mtx) return { q: -1, cell: -1, centre: false };
+        if (!mtx) return { q: -1, cell: -1, centre: false, fx: 0, fy: 0 };
         const pt = new DOMPoint(e.clientX, e.clientY).matrixTransform(mtx.inverse());
         const x = Math.floor(pt.x / SIZE), y = Math.floor(pt.y / SIZE);
-        if (x < 0 || y < 0 || x >= p.w || y >= p.h) return { q: -1, cell: -1, centre: false };
+        if (x < 0 || y < 0 || x >= p.w || y >= p.h) return { q: -1, cell: -1, centre: false, fx: 0, fy: 0 };
         const cell = y * p.w + x;
         const dx = pt.x - (x * SIZE + SIZE / 2), dy = pt.y - (y * SIZE + SIZE / 2);
         const centre = Math.abs(dx) < SIZE * 0.2 && Math.abs(dy) < SIZE * 0.2;
         let nb = -1;
         if (Math.abs(dx) > Math.abs(dy)) nb = dx < 0 ? (x > 0 ? cell - 1 : -1) : (x < p.w - 1 ? cell + 1 : -1);
         else if (Math.abs(dy) > Math.abs(dx)) nb = dy < 0 ? (y > 0 ? cell - p.w : -1) : (y < p.h - 1 ? cell + p.w : -1);
-        return { q: nb < 0 ? -1 : g.between(cell, nb), cell, centre };
+        return { q: nb < 0 ? -1 : g.between(cell, nb), cell, centre, fx: pt.x / SIZE - x, fy: pt.y / SIZE - y };
       };
+      /** The cell next to `c` on side `d` (UP, RIGHT, DOWN, LEFT), or -1 at the border. */
+      const neighbour = (c: number, d: number): number => {
+        const x = c % p.w, y = Math.floor(c / p.w);
+        if (d === UP) return y > 0 ? c - p.w : -1;
+        if (d === DOWN) return y < p.h - 1 ? c + p.w : -1;
+        if (d === LEFT) return x > 0 ? c - 1 : -1;
+        return d === RIGHT && x < p.w - 1 ? c + 1 : -1;
+      };
+      /** What the pointer points at: a placement or a cell, with the casting band while a technique is picked; the cursor's off the board. */
+      const pointed = (): DominosaTarget => {
+        const at = last && pointAt(last);
+        if (!at || at.cell < 0) {
+          const q = cursorQ();
+          return q >= 0 ? { placement: q } : { cell: cursorCell() };
+        }
+        if (svg.closest("[data-casting]")) {
+          const d = sideAt(at.fx, at.fy, CAST_BAND, (side) => neighbour(at.cell, side) >= 0);
+          return d < 0 ? { cell: at.cell } : { placement: g.between(at.cell, neighbour(at.cell, d)) };
+        }
+        return !at.centre && at.q >= 0 ? { placement: at.q } : { cell: at.cell };
+      };
+      function showCast(): void {
+        const t = pointed();
+        const b = "placement" in t ? box(t.placement, 0.6) : { x: cx(t.cell) + 0.6, y: cy(t.cell) + 0.6, width: SIZE - 1.2, height: SIZE - 1.2 };
+        castMark.setAttribute("d", `M${b.x} ${b.y}h${b.width}v${b.height}h${-b.width}z`);
+      }
       const cursorTo = (q: number) => {
         const a = g.pa[q]!, b = g.pb[q]!;
         session.setInteraction((i) => ({ ...i, cx: (a % p.w) + (b % p.w), cy: Math.floor(a / p.w) + Math.floor(b / p.w) }));
@@ -221,6 +258,8 @@ export function dominosaView(board: Board): View<DominosaPuzzle, DominosaState, 
       const onDown = (e: PointerEvent) => {
         const at = pointAt(e);
         if (at.cell < 0) return;
+        last = { clientX: e.clientX, clientY: e.clientY };
+        showCast();
         e.preventDefault();
         const second = secondary(e, session.def.id);
         if (e.pointerType !== "touch" && (e.button === 0 || e.button === 2) && second && at.centre) {
@@ -256,6 +295,8 @@ export function dominosaView(board: Board): View<DominosaPuzzle, DominosaState, 
           if (pressTimer && pointAt(e).q !== pressQ) onCancel();
           return;
         }
+        last = { clientX: e.clientX, clientY: e.clientY };
+        showCast();
         const at = pointAt(e);
         const q = at.centre ? -1 : at.q;
         if (q !== hover || at.cell !== hoverCell) {
@@ -264,7 +305,9 @@ export function dominosaView(board: Board): View<DominosaPuzzle, DominosaState, 
           render();
         }
       };
-      const onLeave = () => {
+      // a lifted finger leaves the board, but the spot it pressed stays the one a cast aims at
+      const onLeave = (e: PointerEvent) => {
+        if (e.pointerType !== "touch") { last = null; showCast(); }
         if (hover !== -1 || hoverCell !== -1) {
           hover = -1;
           hoverCell = -1;
@@ -330,12 +373,7 @@ export function dominosaView(board: Board): View<DominosaPuzzle, DominosaState, 
         aspect: vbW / vbH,
         cells: { cols: p.w, rows: p.h },
         commands,
-        target: (): DominosaTarget | undefined => {
-          if (hover >= 0) return { placement: hover };
-          if (hoverCell >= 0) return { cell: hoverCell };
-          const q = cursorQ();
-          return q >= 0 ? { placement: q } : { cell: cursorCell() };
-        },
+        target: pointed,
         preview: (st) => {
           preview = st as DominosaState | null;
           render();

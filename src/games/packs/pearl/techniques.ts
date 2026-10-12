@@ -5,8 +5,8 @@ import { freshKnowledge, scanSteps, type Knowledge, type Step as SolverStep, typ
 
 type PearlTechnique = Technique<PearlPuzzle, PearlState, PearlAction>;
 
-/** What a technique can be aimed at: a cell. */
-export type PearlTarget = { cell: number };
+/** What a technique can be aimed at: a cell or an edge. */
+export type PearlTarget = { cell: number } | { edge: number };
 
 const knowledgeCache = new WeakMap<PearlState, Knowledge>();
 
@@ -43,15 +43,26 @@ function changes(p: PearlPuzzle, s: PearlState, st: SolverStep): { lines: number
 
 type Hit = { raw: SolverStep; lines: number[]; crosses: number[] };
 
+/** Kinds whose every step tests one edge on its own. */
+const perEdgeKinds: readonly StepKind[] = ["loop", "trial"];
+
+/**
+ * The hits in scan order, stopping when `visit` returns true. Aimed at an edge: only hits that
+ * change it. Aimed at a cell: hits that reason from it or touch one of its edges, except that a step
+ * testing one edge is never at a cell.
+ */
 function each(p: PearlPuzzle, s: PearlState, kinds: readonly StepKind[], visit: (hit: Hit) => boolean | void, target?: PearlTarget): void {
   const k = knowledge(p, s);
   const g = edgeGrid(p.w, p.h);
-  const touches = (st: SolverStep) => !target || st.because.includes(target.cell)
-    || [...st.lines, ...st.nos].some((e) => g.ea[e] === target.cell || g.eb[e] === target.cell);
+  const keep = (raw: SolverStep, ch: { lines: number[]; crosses: number[] }): boolean => {
+    if (!target) return true;
+    if ("edge" in target) return ch.lines.includes(target.edge) || ch.crosses.includes(target.edge);
+    if (perEdgeKinds.includes(raw.kind)) return false;
+    return raw.because.includes(target.cell) || [...raw.lines, ...raw.nos].some((e) => g.ea[e] === target.cell || g.eb[e] === target.cell);
+  };
   scanSteps(p, k, kinds, (raw) => {
-    if (!touches(raw)) return false;
     const ch = changes(p, s, raw);
-    return ch.lines.length + ch.crosses.length > 0 && visit({ raw, ...ch }) === true;
+    return ch.lines.length + ch.crosses.length > 0 && keep(raw, ch) && visit({ raw, ...ch }) === true;
   });
 }
 
@@ -72,14 +83,15 @@ function outcome(p: PearlPuzzle, lines: readonly number[], crosses: readonly num
 
 type Make = (p: PearlPuzzle, hit: Hit) => Step<PearlAction>;
 
-const asTarget = (t: unknown): PearlTarget | null => (t && typeof (t as PearlTarget).cell === "number" ? t as PearlTarget : null);
+const asTarget = (t: unknown): PearlTarget | null =>
+  t && typeof t === "object" && (typeof (t as { cell?: unknown }).cell === "number" || typeof (t as { edge?: unknown }).edge === "number") ? t as PearlTarget : null;
 
-/** Hits at `target`, those changing an edge of the pointed cell first, each group in scan order. */
+/** Hits at `target`: at an edge in scan order; at a cell those changing one of its edges first, each group in scan order. */
 function hitsAt(p: PearlPuzzle, s: PearlState, kinds: readonly StepKind[], target: PearlTarget): Hit[] {
   const g = edgeGrid(p.w, p.h);
   const first: Hit[] = [], later: Hit[] = [];
   each(p, s, kinds, (hit) => {
-    const own = [...hit.lines, ...hit.crosses].some((e) => g.ea[e] === target.cell || g.eb[e] === target.cell);
+    const own = "edge" in target || [...hit.lines, ...hit.crosses].some((e) => g.ea[e] === target.cell || g.eb[e] === target.cell);
     (own ? first : later).push(hit);
   }, target);
   return [...first, ...later];
@@ -103,6 +115,7 @@ function technique(def: Omit<PearlTechnique, "instances" | "findAt" | "instances
       const target = asTarget(t);
       const hit = target && hitsAt(p, s, kinds, target)[0];
       if (!hit || !target) return null;
+      if ("edge" in target) return make(p, hit);
       const g = edgeGrid(p.w, p.h);
       const at = (e: number) => g.ea[e] === target.cell || g.eb[e] === target.cell;
       const lines = hit.lines.filter(at), crosses = hit.crosses.filter(at);

@@ -1,4 +1,6 @@
 import { expect, test } from "bun:test";
+import { CAST_BAND, sideAt } from "../../lib/edge-hit";
+import { DOWN, LEFT, RIGHT, UP } from "../../lib/edges";
 import type { AnyPuzzleDef, Step, Technique } from "../../core/types";
 import { generate } from "../../core/generate";
 import { Registry } from "../../core/registry";
@@ -215,3 +217,47 @@ test("aimed finds: findAt is instancesAt's first, each instance changes the boar
   }
   expect(cells).toBeGreaterThan(0);
 }, 300000);
+
+const edgesOf = (x: Step) => (x.actions as NumberlinkAction[]).flatMap((a) => a.edges);
+const cellsOf = (_x: Step): number[] => [];
+
+test("a technique that tests one edge at a time: an edge target gives only that edge's test, a cell target none", async () => {
+  let edges = 0;
+  for (const t of numberlinkTechniques) {
+    if (!["numberlink.colors", "numberlink.no-loop", "numberlink.reach", "numberlink.trial"].includes(t.id) || t.practice === false) continue;
+    const pos = await findPracticePosition(numberlink, numberlinkTechniques, t, "edge", new AbortController().signal);
+    if (!pos) continue;
+    const p = pos.puzzle as any, st = pos.state as any;
+    const at = (target: unknown) => { const out: Step[] = []; t.instancesAt!(p, st, target, (x) => { out.push(x as Step); }); return out; };
+    for (let e = 0; e < edgeGrid(p.w, p.h).ne; e++) {
+      const onEdge = at({ edge: e });
+      if (!onEdge.length) continue;
+      edges++;
+      for (const x of onEdge) {
+        expect(edgesOf(x)).toEqual([e]);
+        expect(cellsOf(x)).toEqual([]);
+      }
+      expect(t.cellAt!(p, st, { edge: e }) as Step | null).toEqual(t.findAt!(p, st, { edge: e }) as Step | null);
+      for (const c of [edgeGrid(p.w, p.h).ea[e]!, edgeGrid(p.w, p.h).eb[e]!]) {
+        const onCell = at({ cell: c });
+        expect(onCell).toEqual([]);
+      }
+    }
+  }
+  expect(edges).toBeGreaterThan(0);
+}, 300000);
+
+test("the casting band: the middle of a cell is the cell, within 30% of an edge is that edge, the nearest one at a corner", () => {
+  const all = () => true;
+  expect(sideAt(0.5, 0.5, CAST_BAND, all)).toBe(-1);
+  expect(sideAt(0.31, 0.69, CAST_BAND, all)).toBe(-1);
+  expect(sideAt(0.29, 0.5, CAST_BAND, all)).toBe(LEFT);
+  expect(sideAt(0.75, 0.5, CAST_BAND, all)).toBe(RIGHT);
+  expect(sideAt(0.5, 0.1, CAST_BAND, all)).toBe(UP);
+  expect(sideAt(0.5, 0.95, CAST_BAND, all)).toBe(DOWN);
+  expect(sideAt(0.05, 0.2, CAST_BAND, all)).toBe(LEFT);
+  expect(sideAt(0.2, 0.05, CAST_BAND, all)).toBe(UP);
+  expect(sideAt(0.1, 0.1, CAST_BAND, all)).toBe(UP);
+  expect(sideAt(0.05, 0.2, CAST_BAND, (d) => d !== LEFT)).toBe(UP);
+  expect(sideAt(0.05, 0.5, CAST_BAND, (d) => d !== LEFT)).toBe(-1);
+});

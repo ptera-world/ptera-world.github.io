@@ -5,9 +5,8 @@ import { closeObvious, freshKnowledge, scanSteps, sides, target, type Knowledge,
 
 type TracksTechnique = Technique<TracksPuzzle, TracksState, TracksAction>;
 
-/** What a technique can be aimed at: a cell. */
-/** A cell, or a cell narrowed to its row or column count (see ViewHandle.targetAlong). */
-export type TracksTarget = { cell: number; count?: number };
+/** A cell, a cell narrowed to its row or column count (see ViewHandle.targetAlong), or an edge. */
+export type TracksTarget = { cell: number; count?: number } | { edge: number };
 
 const knowledgeCache = new WeakMap<TracksState, Knowledge | null>();
 
@@ -61,28 +60,43 @@ const lineKinds: readonly StepKind[] = ["count-full", "count-needs", "neighbours
 /** The count a step reasons about (a column below w, else a row), or null for a step about one cell. */
 const countOf = (st: SolverStep): number | null => (lineKinds.includes(st.kind) && st.count !== undefined ? st.count : null);
 
+/** Kinds whose every step tests one cell or one edge on its own. */
+const perEdgeKinds: readonly StepKind[] = ["trial"];
+
 /**
- * The hits in scan order, stopping when `visit` returns true. With a target, only hits that reason
- * from or touch the target's cell, and with a narrowed target only those about its count.
+ * The hits in scan order, stopping when `visit` returns true. Aimed at an edge: only hits that
+ * change it. Aimed at a cell: hits that reason from or touch it, except that a step testing one
+ * cell or edge counts only when it tests that cell; narrowed to a count, only hits about it.
  */
 function each(p: TracksPuzzle, s: TracksState, kinds: readonly StepKind[], visit: (hit: Hit) => boolean | void, target?: TracksTarget): void {
   const k = knowledge(p, s);
   if (!k) return;
   const g = edgeGrid(p.w, p.h);
-  const touches = (st: SolverStep) => !target || st.because.includes(target.cell) || st.tracks.includes(target.cell) || st.empties.includes(target.cell)
-    || [...st.lines, ...st.nos].some((e) => g.ea[e] === target.cell || g.eb[e] === target.cell);
-  const onLine = (st: SolverStep) => target?.count === undefined || countOf(st) === target.count;
+  const keep = (raw: SolverStep, ch: Changes): boolean => {
+    if (!target) return true;
+    if ("edge" in target) return ch.lines.includes(target.edge) || ch.crosses.includes(target.edge);
+    const c = target.cell;
+    if (target.count !== undefined && countOf(raw) !== target.count) return false;
+    if (perEdgeKinds.includes(raw.kind)) return !raw.lines.length && !raw.nos.length && (raw.tracks.includes(c) || raw.empties.includes(c));
+    return raw.because.includes(c) || raw.tracks.includes(c) || raw.empties.includes(c)
+      || [...raw.lines, ...raw.nos].some((e) => g.ea[e] === c || g.eb[e] === c);
+  };
   scanSteps(p, k, kinds, (raw) => {
-    if (!touches(raw) || !onLine(raw)) return false;
     const ch = changes(p, s, raw);
-    return size(ch) > 0 && visit({ raw, ch }) === true;
+    return size(ch) > 0 && keep(raw, ch) && visit({ raw, ch }) === true;
   });
 }
 
-const asTarget = (t: unknown): TracksTarget | null => (t && typeof (t as TracksTarget).cell === "number" ? t as TracksTarget : null);
+const asTarget = (t: unknown): TracksTarget | null =>
+  t && typeof t === "object" && (typeof (t as { cell?: unknown }).cell === "number" || typeof (t as { edge?: unknown }).edge === "number") ? t as TracksTarget : null;
 
-/** Hits at `target`: those changing the pointed cell or one of its edges first, then the rest, each group in scan order. */
+/** Hits at `target`: at an edge in scan order; at a cell those changing it or one of its edges first, then the rest, each group in scan order. */
 function hitsAt(p: TracksPuzzle, s: TracksState, kinds: readonly StepKind[], target: TracksTarget): Hit[] {
+  if ("edge" in target) {
+    const all: Hit[] = [];
+    each(p, s, kinds, (hit) => { all.push(hit); }, target);
+    return all;
+  }
   const g = edgeGrid(p.w, p.h);
   const c = target.cell;
   const own = (h: Hit) => h.ch.tracks.includes(c) || h.ch.empties.includes(c) || [...h.ch.lines, ...h.ch.crosses].some((e) => g.ea[e] === c || g.eb[e] === c);
@@ -132,6 +146,7 @@ function technique(def: Omit<TracksTechnique, "instances" | "findAt" | "instance
       const target = asTarget(t);
       const hit = target && hitsAt(p, s, kinds, target)[0];
       if (!hit || !target) return null;
+      if ("edge" in target) return make(p, hit);
       const g = edgeGrid(p.w, p.h);
       const c = target.cell;
       const at = (e: number) => g.ea[e] === c || g.eb[e] === c;

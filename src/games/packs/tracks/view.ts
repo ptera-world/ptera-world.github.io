@@ -10,6 +10,7 @@ import {
 } from "./logic";
 import { BIT, countCells, entryCell, exitCell, target } from "./solver";
 import type { TracksTarget } from "./techniques";
+import { CAST_BAND, sideAt } from "../../lib/edge-hit";
 
 /** Derived: Conflicts to flag on the board. */
 export const CONFLICTS_KEY = "tracks.conflicts";
@@ -37,6 +38,8 @@ const CSS = `
 .tracks-board .focus { fill: none; stroke: var(--hint); stroke-width: 0.9; pointer-events: none; }
 .tracks-board .focus.why { stroke-dasharray: 1.2 0.8; stroke-width: 0.6; }
 .tracks-board .focus-edge { stroke: var(--hint); stroke-width: 3.4; stroke-linecap: round; opacity: 0.45; pointer-events: none; }
+.tracks-board .cast-mark { display: none; fill: none; stroke: var(--cast); stroke-width: 0.8; stroke-linecap: round; pointer-events: none; }
+[data-casting] .tracks-board .cast-mark { display: inline; }
 .tracks-board .labels text { fill: var(--text-dim); font: 500 3.4px var(--font); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
 .tracks-board .cursor { fill: none; stroke: var(--focus); stroke-width: 0.6; pointer-events: none; }
 ${inputIs("pointer")} .tracks-board .cursor { display: none; }
@@ -130,7 +133,8 @@ export function tracksView(board: Board): View<TracksPuzzle, TracksState, Tracks
       }
       const base = s("g"), marks = s("g"), rails = s("g"), over = s("g");
       const cursor = s("rect", { width: SIZE - 0.6, height: SIZE - 0.6, rx: 1, class: "cursor" });
-      svg.append(labels, base, marks, rails, over, cursor);
+      const castMark = s("path", { class: "cast-mark" });
+      svg.append(labels, base, marks, rails, over, cursor, castMark);
       root.append(svg);
 
       const cx = (c: number) => (c % p.w) * SIZE + SIZE / 2;
@@ -167,7 +171,8 @@ export function tracksView(board: Board): View<TracksPuzzle, TracksState, Tracks
       const mid = (e: number) => [(cx(g.ea[e]!) + cx(g.eb[e]!)) / 2, (cy(g.ea[e]!) + cy(g.eb[e]!)) / 2] as const;
 
       let preview: TracksState | null = null;
-      let hover = -1;
+      /** Where the pointer last was over the board (a pointerdown, or a mouse move), or null off it. */
+      let last: { clientX: number; clientY: number } | null = null;
 
       const render = () => {
         const st = session.state;
@@ -217,21 +222,43 @@ export function tracksView(board: Board): View<TracksPuzzle, TracksState, Tracks
         const cur = session.interaction.cursor;
         cursor.setAttribute("x", String(cx(cur) - SIZE / 2 + 0.3));
         cursor.setAttribute("y", String(cy(cur) - SIZE / 2 + 0.3));
+        showCast();
       };
 
-      /** The cell under the pointer, and the edge it is near (-1 near the middle). */
-      const pointAt = (e: PointerEvent): { cell: number; edge: number; centre: boolean } => {
+      /** The cell under the pointer, the edge it is near (-1 near the middle), and the pointer's offset in the cell (shares of its size). */
+      const pointAt = (e: { clientX: number; clientY: number }): { cell: number; edge: number; centre: boolean; fx: number; fy: number } => {
         const mtx = svg.getScreenCTM();
-        if (!mtx) return { cell: -1, edge: -1, centre: false };
+        if (!mtx) return { cell: -1, edge: -1, centre: false, fx: 0, fy: 0 };
         const pt = new DOMPoint(e.clientX, e.clientY).matrixTransform(mtx.inverse());
         const x = Math.floor(pt.x / SIZE), y = Math.floor(pt.y / SIZE);
-        if (x < 0 || y < 0 || x >= p.w || y >= p.h) return { cell: -1, edge: -1, centre: false };
+        if (x < 0 || y < 0 || x >= p.w || y >= p.h) return { cell: -1, edge: -1, centre: false, fx: 0, fy: 0 };
         const cell = y * p.w + x;
+        const fx = pt.x / SIZE - x, fy = pt.y / SIZE - y;
         const dx = pt.x - (x * SIZE + SIZE / 2), dy = pt.y - (y * SIZE + SIZE / 2);
-        if (Math.max(Math.abs(dx), Math.abs(dy)) < SIZE * 0.22) return { cell, edge: -1, centre: true };
+        if (Math.max(Math.abs(dx), Math.abs(dy)) < SIZE * 0.22) return { cell, edge: -1, centre: true, fx, fy };
         const d = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? LEFT : RIGHT) : (dy < 0 ? UP : DOWN);
-        return { cell, edge: edgeAt(g, cell, d), centre: false };
+        return { cell, edge: edgeAt(g, cell, d), centre: false, fx, fy };
       };
+      /** What the pointer points at: an edge or a cell, with the casting band while a technique is picked; the cursor cell off the board. */
+      const pointed = (): TracksTarget => {
+        const at = last && pointAt(last);
+        if (!at || at.cell < 0) return { cell: session.interaction.cursor };
+        if (svg.closest("[data-casting]")) {
+          const d = sideAt(at.fx, at.fy, CAST_BAND, (side) => edgeAt(g, at.cell, side) >= 0);
+          return d < 0 ? { cell: at.cell } : { edge: edgeAt(g, at.cell, d) };
+        }
+        return at.edge >= 0 ? { edge: at.edge } : { cell: at.cell };
+      };
+      function showCast(): void {
+        const t = pointed();
+        if ("edge" in t) {
+          const a = g.ea[t.edge]!, b = g.eb[t.edge]!;
+          castMark.setAttribute("d", `M${cx(a)} ${cy(a)}L${cx(b)} ${cy(b)}`);
+        } else {
+          const x = cx(t.cell) - SIZE / 2 + 0.6, y = cy(t.cell) - SIZE / 2 + 0.6, w = SIZE - 1.2;
+          castMark.setAttribute("d", `M${x} ${y}h${w}v${w}h${-w}z`);
+        }
+      }
       const toggleEdge = (e: number, v: number) => session.dispatch({ type: "edge", edges: [e], value: session.state.edges[e] === v ? NONE : v });
       const toggleCell = (c: number, v: number) => session.dispatch({ type: "cell", cells: [c], value: session.state.cells[c] === v ? NONE : v });
       const cycleCell = (c: number) => {
@@ -246,6 +273,8 @@ export function tracksView(board: Board): View<TracksPuzzle, TracksState, Tracks
       const onDown = (e: PointerEvent) => {
         const at = pointAt(e);
         if (at.cell < 0 || drag) return;
+        last = { clientX: e.clientX, clientY: e.clientY };
+        showCast();
         e.preventDefault();
         session.setInteraction((i) => ({ ...i, cursor: at.cell }));
         if (session.locked) return;
@@ -264,7 +293,10 @@ export function tracksView(board: Board): View<TracksPuzzle, TracksState, Tracks
       };
       const onMove = (e: PointerEvent) => {
         if (!drag || e.pointerId !== drag.pointerId) {
-          if (e.pointerType !== "touch") hover = pointAt(e).cell;
+          if (e.pointerType !== "touch") {
+            last = { clientX: e.clientX, clientY: e.clientY };
+            showCast();
+          }
           return;
         }
         const at = pointAt(e);
@@ -300,7 +332,8 @@ export function tracksView(board: Board): View<TracksPuzzle, TracksState, Tracks
       svg.addEventListener("pointermove", onMove);
       svg.addEventListener("pointerup", onUp);
       svg.addEventListener("pointercancel", onCancel);
-      svg.addEventListener("pointerleave", () => { hover = -1; });
+      // a lifted finger leaves the board, but the spot it pressed stays the one a cast aims at
+      svg.addEventListener("pointerleave", (e) => { if (e.pointerType === "touch") return; last = null; showCast(); });
 
       const move = (dx: number, dy: number) => () => session.setInteraction((i) => {
         const x = Math.min(p.w - 1, Math.max(0, (i.cursor % p.w) + dx));
@@ -362,9 +395,9 @@ export function tracksView(board: Board): View<TracksPuzzle, TracksState, Tracks
         aspect: vbW / vbH,
         cells: { cols: p.w + 1, rows: p.h + 1 },
         commands,
-        target: (): TracksTarget => ({ cell: hover >= 0 ? hover : session.interaction.cursor }),
+        target: pointed,
         targetAlong: (t, axis): TracksTarget | null => {
-          const c = (t as TracksTarget | null)?.cell;
+          const c = t && typeof t === "object" && !("edge" in t) ? (t as { cell?: number }).cell : undefined;
           if (typeof c !== "number" || c < 0 || c >= p.w * p.h) return null;
           return { cell: c, count: axis === "row" ? p.w + Math.floor(c / p.w) : c % p.w };
         },

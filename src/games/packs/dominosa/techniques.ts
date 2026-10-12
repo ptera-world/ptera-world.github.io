@@ -36,9 +36,18 @@ function effective(p: DominosaPuzzle, s: DominosaState, st: SolverStep): number[
   return st.placements.filter((q) => s.marks[q] === NONE && coveredBy(p, s.marks, g.pa[q]!) < 0 && coveredBy(p, s.marks, g.pb[q]!) < 0);
 }
 
-function touches(p: DominosaPuzzle, st: SolverStep, target: DominosaTarget): boolean {
+/** Kinds whose every step tests one placement on its own. */
+const perPlacementKinds: readonly StepKind[] = ["parity", "probe"];
+
+/**
+ * True if a step whose board changes are `placements` is at `target`: at a placement, it changes
+ * it; at a cell, it reasons from the cell or changes a placement covering it, except that a step
+ * testing one placement is never at a cell.
+ */
+function touches(p: DominosaPuzzle, st: SolverStep, placements: readonly number[], target: DominosaTarget): boolean {
   const g = geometry(p);
-  if ("placement" in target) return st.placements.includes(target.placement);
+  if ("placement" in target) return placements.includes(target.placement);
+  if (perPlacementKinds.includes(st.kind)) return false;
   return st.because.includes(target.cell) || st.placements.some((q) => g.pa[q] === target.cell || g.pb[q] === target.cell);
 }
 
@@ -48,9 +57,9 @@ function each(p: DominosaPuzzle, s: DominosaState, kinds: readonly StepKind[], v
   const k = knowledge(p, s);
   if (!k) return;
   scanSteps(geometry(p), k, kinds, (raw) => {
-    if (target && !touches(p, raw, target)) return false;
     const placements = effective(p, s, raw);
-    return placements.length > 0 && visit({ raw, placements }) === true;
+    if (!placements.length || (target && !touches(p, raw, placements, target))) return false;
+    return visit({ raw, placements }) === true;
   });
 }
 
@@ -116,10 +125,9 @@ function technique(def: Omit<DominosaTechnique, "instances" | "findAt" | "instan
       const target = asTarget(t);
       const hit = target && hitsAt(p, s, kinds, target)[0];
       if (!hit || !target) return null;
+      if ("placement" in target) return make(p, hit);
       const g = geometry(p);
-      const placements = "placement" in target
-        ? hit.placements.filter((q) => q === target.placement)
-        : hit.placements.filter((q) => g.pa[q] === target.cell || g.pb[q] === target.cell);
+      const placements = hit.placements.filter((q) => g.pa[q] === target.cell || g.pb[q] === target.cell);
       return placements.length ? make(p, { ...hit, placements }) : null;
     },
   };

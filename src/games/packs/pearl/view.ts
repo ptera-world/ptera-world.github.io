@@ -7,6 +7,7 @@ import { DOWN, LEFT, RIGHT, UP, edgeAt, edgeGrid, step } from "../../lib/edges";
 import { pearl, CROSS, LINE, NONE, toggle, type Conflicts, type PearlAction, type PearlFocus, type PearlInteraction, type PearlPuzzle, type PearlState } from "./logic";
 import { BLACK, WHITE } from "./solver";
 import type { PearlTarget } from "./techniques";
+import { CAST_BAND, sideAt } from "../../lib/edge-hit";
 
 /** Derived: Conflicts to flag on the board. */
 export const CONFLICTS_KEY = "pearl.conflicts";
@@ -29,6 +30,8 @@ const CSS = `
 .pearl-board .focus { fill: none; stroke: var(--hint); stroke-width: 0.9; pointer-events: none; }
 .pearl-board .focus.why { stroke-dasharray: 1.2 0.8; stroke-width: 0.6; }
 .pearl-board .focus-edge { stroke: var(--hint); stroke-width: 3; stroke-linecap: round; opacity: 0.45; pointer-events: none; }
+.pearl-board .cast-mark { display: none; fill: none; stroke: var(--cast); stroke-width: 0.8; stroke-linecap: round; pointer-events: none; }
+[data-casting] .pearl-board .cast-mark { display: inline; }
 .pearl-board .labels text { fill: var(--text-dim); font: 500 3.6px var(--font); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
 .pearl-board .cursor { fill: none; stroke: var(--focus); stroke-width: 0.6; pointer-events: none; }
 ${inputIs("pointer")} .pearl-board .cursor { display: none; }
@@ -115,7 +118,8 @@ export function pearlView(board: Board): View<PearlPuzzle, PearlState, PearlActi
       }
       const base = s("g"), linesL = s("g"), pearlsL = s("g"), over = s("g");
       const cursor = s("rect", { width: SIZE - 0.6, height: SIZE - 0.6, rx: 1, class: "cursor" });
-      svg.append(labels, base, linesL, pearlsL, over, cursor);
+      const castMark = s("path", { class: "cast-mark" });
+      svg.append(labels, base, linesL, pearlsL, over, cursor, castMark);
       root.append(svg);
 
       const cx = (c: number) => (c % p.w) * SIZE + SIZE / 2;
@@ -132,7 +136,8 @@ export function pearlView(board: Board): View<PearlPuzzle, PearlState, PearlActi
       const mid = (e: number) => [(cx(g.ea[e]!) + cx(g.eb[e]!)) / 2, (cy(g.ea[e]!) + cy(g.eb[e]!)) / 2] as const;
 
       let preview: PearlState | null = null;
-      let hover = -1;
+      /** Where the pointer last was over the board (a pointerdown, or a mouse move), or null off it. */
+      let last: { clientX: number; clientY: number } | null = null;
 
       const render = () => {
         const st = session.state;
@@ -166,19 +171,41 @@ export function pearlView(board: Board): View<PearlPuzzle, PearlState, PearlActi
         const cur = session.interaction.cursor;
         cursor.setAttribute("x", String(cx(cur) - SIZE / 2 + 0.3));
         cursor.setAttribute("y", String(cy(cur) - SIZE / 2 + 0.3));
+        showCast();
       };
 
-      const pointAt = (e: PointerEvent): { cell: number; edge: number } => {
+      /** The cell under the pointer, the edge of it nearest the pointer, and the pointer's offset in the cell (shares of its size). */
+      const pointAt = (e: { clientX: number; clientY: number }): { cell: number; edge: number; fx: number; fy: number } => {
         const mtx = svg.getScreenCTM();
-        if (!mtx) return { cell: -1, edge: -1 };
+        if (!mtx) return { cell: -1, edge: -1, fx: 0, fy: 0 };
         const pt = new DOMPoint(e.clientX, e.clientY).matrixTransform(mtx.inverse());
         const x = Math.floor(pt.x / SIZE), y = Math.floor(pt.y / SIZE);
-        if (x < 0 || y < 0 || x >= p.w || y >= p.h) return { cell: -1, edge: -1 };
+        if (x < 0 || y < 0 || x >= p.w || y >= p.h) return { cell: -1, edge: -1, fx: 0, fy: 0 };
         const cell = y * p.w + x;
         const dx = pt.x - (x * SIZE + SIZE / 2), dy = pt.y - (y * SIZE + SIZE / 2);
         const d = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? LEFT : RIGHT) : (dy < 0 ? UP : DOWN);
-        return { cell, edge: edgeAt(g, cell, d) };
+        return { cell, edge: edgeAt(g, cell, d), fx: pt.x / SIZE - x, fy: pt.y / SIZE - y };
       };
+      /** What the pointer points at: an edge or a cell, with the casting band while a technique is picked; the cursor cell off the board. */
+      const pointed = (): PearlTarget => {
+        const at = last && pointAt(last);
+        if (!at || at.cell < 0) return { cell: session.interaction.cursor };
+        if (svg.closest("[data-casting]")) {
+          const d = sideAt(at.fx, at.fy, CAST_BAND, (side) => edgeAt(g, at.cell, side) >= 0);
+          return d < 0 ? { cell: at.cell } : { edge: edgeAt(g, at.cell, d) };
+        }
+        return at.edge >= 0 ? { edge: at.edge } : { cell: at.cell };
+      };
+      function showCast(): void {
+        const t = pointed();
+        if ("edge" in t) {
+          const a = g.ea[t.edge]!, b = g.eb[t.edge]!;
+          castMark.setAttribute("d", `M${cx(a)} ${cy(a)}L${cx(b)} ${cy(b)}`);
+        } else {
+          const x = cx(t.cell) - SIZE / 2 + 0.6, y = cy(t.cell) - SIZE / 2 + 0.6, w = SIZE - 1.2;
+          castMark.setAttribute("d", `M${x} ${y}h${w}v${w}h${-w}z`);
+        }
+      }
 
       let drag: { pointerId: number; from: number; mode: number | null; moved: boolean; edge: number; sec: boolean; touch: boolean; drawn: number } | null = null;
       let pressTimer = 0;
@@ -187,6 +214,8 @@ export function pearlView(board: Board): View<PearlPuzzle, PearlState, PearlActi
       const onDown = (e: PointerEvent) => {
         const at = pointAt(e);
         if (at.cell < 0 || drag) return;
+        last = { clientX: e.clientX, clientY: e.clientY };
+        showCast();
         e.preventDefault();
         session.setInteraction((i) => ({ ...i, cursor: at.cell }));
         if (session.locked) return;
@@ -205,8 +234,8 @@ export function pearlView(board: Board): View<PearlPuzzle, PearlState, PearlActi
       const onMove = (e: PointerEvent) => {
         if (!drag || e.pointerId !== drag.pointerId) {
           if (e.pointerType !== "touch") {
-            const c = pointAt(e).cell;
-            if (c !== hover) hover = c;
+            last = { clientX: e.clientX, clientY: e.clientY };
+            showCast();
           }
           return;
         }
@@ -241,7 +270,8 @@ export function pearlView(board: Board): View<PearlPuzzle, PearlState, PearlActi
       svg.addEventListener("pointermove", onMove);
       svg.addEventListener("pointerup", onUp);
       svg.addEventListener("pointercancel", onCancel);
-      svg.addEventListener("pointerleave", () => { hover = -1; });
+      // a lifted finger leaves the board, but the spot it pressed stays the one a cast aims at
+      svg.addEventListener("pointerleave", (e) => { if (e.pointerType === "touch") return; last = null; showCast(); });
 
       const move = (dx: number, dy: number) => () => session.setInteraction((i) => {
         const x = Math.min(p.w - 1, Math.max(0, (i.cursor % p.w) + dx));
@@ -299,7 +329,7 @@ export function pearlView(board: Board): View<PearlPuzzle, PearlState, PearlActi
         aspect: vbW / vbH,
         cells: { cols: p.w, rows: p.h },
         commands,
-        target: (): PearlTarget => ({ cell: hover >= 0 ? hover : session.interaction.cursor }),
+        target: pointed,
         preview: (st) => {
           preview = st as PearlState | null;
           render();

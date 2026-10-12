@@ -9,6 +9,7 @@ import { KIT_CSS, SIZE, cursorBindings, cursorHandlers, cursorRect, drawFocus, f
 import { numberlink, CROSS, LINE, NONE, lineColors, pairColor, type NumberlinkAction, type NumberlinkFocus, type NumberlinkInteraction, type NumberlinkPuzzle, type NumberlinkState } from "./logic";
 import { CONFLICTS_KEY } from "./plugins";
 import type { NumberlinkTarget } from "./techniques";
+import { CAST_BAND, sideAt } from "../../lib/edge-hit";
 
 const CSS = `
 .numberlink-board .tint { opacity: 0.22; pointer-events: none; }
@@ -21,6 +22,8 @@ const CSS = `
 .numberlink-board .faded { opacity: 0.2; }
 .numberlink-board .cross { stroke: var(--text-dim); stroke-width: 0.5; stroke-linecap: round; pointer-events: none; }
 .numberlink-board .focus-edge { stroke: var(--hint); stroke-width: 4.4; stroke-linecap: round; opacity: 0.45; pointer-events: none; }
+.numberlink-board .cast-mark { display: none; fill: none; stroke: var(--cast); stroke-width: 0.8; stroke-linecap: round; pointer-events: none; }
+[data-casting] .numberlink-board .cast-mark { display: inline; }
 `;
 
 const settings = defineSchema({
@@ -97,7 +100,10 @@ export function numberlinkView(board: BoardPrefs): View<NumberlinkPuzzle, Number
       });
       const placeCursor = cursorRect(f);
       let preview: NumberlinkState | null = null;
-      let hover = -1;
+      /** Where the pointer last was over the board (a pointerdown, or a mouse move), or null off it. */
+      let last: { clientX: number; clientY: number } | null = null;
+      const castMark = s("path", { class: "cast-mark" });
+      f.svg.append(castMark);
 
       const drawEdges = (layer: SVGGElement, edges: readonly number[], only?: (e: number) => boolean) => {
         const col = lineColors(p, edges);
@@ -139,6 +145,7 @@ export function numberlinkView(board: BoardPrefs): View<NumberlinkPuzzle, Number
           f.over.append(s("line", { x1, y1, x2, y2, class: "focus-edge" }));
         }
         placeCursor(session.interaction.cursor);
+        showCast();
       };
 
       // --- input ---
@@ -170,22 +177,44 @@ export function numberlinkView(board: BoardPrefs): View<NumberlinkPuzzle, Number
       };
 
       type Pen = { pointerId: number; head: number; pair: number; fresh: boolean; moved: boolean; done: boolean; at: Point; sec: boolean; touch: boolean };
-      type Point = { cell: number; edge: number };
+      /** The cell under the pointer, the edge it is near (-1 near the middle), and the pointer's offset in the cell (shares of its size). */
+      type Point = { cell: number; edge: number; fx: number; fy: number };
       let pen: Pen | null = null;
       let pressTimer = 0;
       const cancelPress = () => { clearTimeout(pressTimer); pressTimer = 0; };
 
-      const pointAt = (e: PointerEvent): Point => {
+      const pointAt = (e: { clientX: number; clientY: number }): Point => {
         const pt = f.point(e);
-        if (!pt) return { cell: -1, edge: -1 };
+        if (!pt) return { cell: -1, edge: -1, fx: 0, fy: 0 };
         const x = Math.floor(pt.x / SIZE), y = Math.floor(pt.y / SIZE);
-        if (x < 0 || y < 0 || x >= p.w || y >= p.h) return { cell: -1, edge: -1 };
+        if (x < 0 || y < 0 || x >= p.w || y >= p.h) return { cell: -1, edge: -1, fx: 0, fy: 0 };
         const cell = y * p.w + x;
+        const fx = pt.x / SIZE - x, fy = pt.y / SIZE - y;
         const dx = pt.x - (x * SIZE + SIZE / 2), dy = pt.y - (y * SIZE + SIZE / 2);
-        if (Math.max(Math.abs(dx), Math.abs(dy)) < SIZE * 0.22) return { cell, edge: -1 };
+        if (Math.max(Math.abs(dx), Math.abs(dy)) < SIZE * 0.22) return { cell, edge: -1, fx, fy };
         const d = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? LEFT : RIGHT) : (dy < 0 ? UP : DOWN);
-        return { cell, edge: edgeAt(g, cell, d) };
+        return { cell, edge: edgeAt(g, cell, d), fx, fy };
       };
+      /** What the pointer points at: an edge or a cell, with the casting band while a technique is picked; the cursor cell off the board. */
+      const pointed = (): NumberlinkTarget => {
+        const at = last && pointAt(last);
+        if (!at || at.cell < 0) return { cell: session.interaction.cursor };
+        if (f.svg.closest("[data-casting]")) {
+          const d = sideAt(at.fx, at.fy, CAST_BAND, (side) => edgeAt(g, at.cell, side) >= 0);
+          return d < 0 ? { cell: at.cell } : { edge: edgeAt(g, at.cell, d) };
+        }
+        return at.edge >= 0 ? { edge: at.edge } : { cell: at.cell };
+      };
+      function showCast(): void {
+        const t = pointed();
+        if ("edge" in t) {
+          const [x1, y1] = mid(g.ea[t.edge]!), [x2, y2] = mid(g.eb[t.edge]!);
+          castMark.setAttribute("d", `M${x1} ${y1}L${x2} ${y2}`);
+        } else {
+          const x = f.cx(t.cell) + 0.6, y = f.cy(t.cell) + 0.6, w = SIZE - 1.2;
+          castMark.setAttribute("d", `M${x} ${y}h${w}v${w}h${-w}z`);
+        }
+      }
 
       /** Start a pen on c: a dot (its line is redrawn once the pen moves), a loose end, an empty cell, or a line with one dot (cut back to c). */
       const startPen = (c: number): { pair: number; fresh: boolean } | null => {
@@ -230,6 +259,8 @@ export function numberlinkView(board: BoardPrefs): View<NumberlinkPuzzle, Number
       const onDown = (e: PointerEvent) => {
         const at = pointAt(e);
         if (at.cell < 0 || pen) return;
+        last = { clientX: e.clientX, clientY: e.clientY };
+        showCast();
         e.preventDefault();
         session.setInteraction((i) => (i.cursor === at.cell ? i : { ...i, cursor: at.cell }));
         if (session.locked) return;
@@ -248,7 +279,10 @@ export function numberlinkView(board: BoardPrefs): View<NumberlinkPuzzle, Number
       };
       const onMove = (e: PointerEvent) => {
         if (!pen || e.pointerId !== pen.pointerId) {
-          if (e.pointerType !== "touch") hover = f.cellAt(e);
+          if (e.pointerType !== "touch") {
+            last = { clientX: e.clientX, clientY: e.clientY };
+            showCast();
+          }
           return;
         }
         const c = f.cellAt(e);
@@ -289,7 +323,8 @@ export function numberlinkView(board: BoardPrefs): View<NumberlinkPuzzle, Number
       const onContext = (e: Event) => e.preventDefault();
       const onUp = (e: PointerEvent) => finish(e, true);
       const onCancel = (e: PointerEvent) => finish(e, false);
-      const onLeave = () => { hover = -1; };
+      // a lifted finger leaves the board, but the spot it pressed stays the one a cast aims at
+      const onLeave = (e: PointerEvent) => { if (e.pointerType === "touch") return; last = null; showCast(); };
       svg.addEventListener("contextmenu", onContext);
       svg.addEventListener("pointerdown", onDown);
       svg.addEventListener("pointermove", onMove);
@@ -354,7 +389,7 @@ export function numberlinkView(board: BoardPrefs): View<NumberlinkPuzzle, Number
         aspect: f.aspect,
         cells: { cols: p.w, rows: p.h },
         commands,
-        target: (): NumberlinkTarget => ({ cell: hover >= 0 ? hover : session.interaction.cursor }),
+        target: pointed,
         preview: (st) => {
           preview = st as NumberlinkState | null;
           render();

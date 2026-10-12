@@ -6,8 +6,8 @@ import { EMPTY_BIT, closeObvious, eachStep, freshKnowledge, pairOf, type Knowled
 
 type NumberlinkTechnique = Technique<NumberlinkPuzzle, NumberlinkState, NumberlinkAction>;
 
-/** What a technique can be aimed at: a cell. */
-export type NumberlinkTarget = { cell: number };
+/** What a technique can be aimed at: a cell or an edge. */
+export type NumberlinkTarget = { cell: number } | { edge: number };
 
 const knowledgeCache = new WeakMap<NumberlinkState, Knowledge | null>();
 
@@ -28,14 +28,27 @@ export function knowledge(p: NumberlinkPuzzle, s: NumberlinkState): Knowledge | 
 
 type Hit = { st: SolverStep; k: Knowledge };
 
+/** Kinds whose every step tests one edge on its own. */
+const perEdgeKinds: readonly StepKind[] = ["colors", "loop", "reach", "trial"];
+
+/**
+ * The hits in scan order, stopping when `visit` returns true. Aimed at an edge: only hits that
+ * change it. Aimed at a cell: hits that reason from it or touch one of its edges, except that a step
+ * testing one edge is never at a cell.
+ */
 function each(p: NumberlinkPuzzle, s: NumberlinkState, kinds: readonly StepKind[], visit: (hit: Hit) => boolean | void, target?: NumberlinkTarget): void {
   const k = knowledge(p, s);
   if (!k) return;
   const g = edgeGrid(p.w, p.h);
-  const touches = (st: SolverStep) => !target || st.because.includes(target.cell)
-    || [...st.lines, ...st.nos].some((e) => g.ea[e] === target.cell || g.eb[e] === target.cell);
+  const sets = (st: SolverStep, e: number) => (st.lines.includes(e) && s.edges[e] !== LINE) || (st.nos.includes(e) && s.edges[e] !== CROSS);
+  const keep = (st: SolverStep): boolean => {
+    if (!target) return true;
+    if ("edge" in target) return sets(st, target.edge);
+    if (perEdgeKinds.includes(st.kind)) return false;
+    return st.because.includes(target.cell) || [...st.lines, ...st.nos].some((e) => g.ea[e] === target.cell || g.eb[e] === target.cell);
+  };
   const changes = (st: SolverStep) => st.lines.some((e) => s.edges[e] !== LINE) || st.nos.some((e) => s.edges[e] !== CROSS);
-  eachStep(p, k, kinds, (st) => touches(st) && changes(st) && visit({ st, k }) === true);
+  eachStep(p, k, kinds, (st) => changes(st) && keep(st) && visit({ st, k }) === true);
 }
 
 const colorName = (m: number): string => {
@@ -71,10 +84,16 @@ function build(s: NumberlinkState, st: SolverStep, message: string, nudge: strin
 
 type Make = (p: NumberlinkPuzzle, s: NumberlinkState, hit: Hit) => Step<NumberlinkAction>;
 
-const asTarget = (t: unknown): NumberlinkTarget | null => (t && typeof (t as NumberlinkTarget).cell === "number" ? t as NumberlinkTarget : null);
+const asTarget = (t: unknown): NumberlinkTarget | null =>
+  t && typeof t === "object" && (typeof (t as { cell?: unknown }).cell === "number" || typeof (t as { edge?: unknown }).edge === "number") ? t as NumberlinkTarget : null;
 
-/** Hits at `target`, those changing an edge of the pointed cell first, each group in scan order. */
+/** Hits at `target`: at an edge in scan order; at a cell those changing one of its edges first, each group in scan order. */
 function hitsAt(p: NumberlinkPuzzle, s: NumberlinkState, kinds: readonly StepKind[], target: NumberlinkTarget): Hit[] {
+  if ("edge" in target) {
+    const all: Hit[] = [];
+    each(p, s, kinds, (hit) => { all.push(hit); }, target);
+    return all;
+  }
   const g = edgeGrid(p.w, p.h);
   const at = (e: number) => g.ea[e] === target.cell || g.eb[e] === target.cell;
   const first: Hit[] = [], later: Hit[] = [];
@@ -103,6 +122,7 @@ function technique(def: Omit<NumberlinkTechnique, "instances" | "findAt" | "inst
       const target = asTarget(t);
       const hit = target && hitsAt(p, s, kinds, target)[0];
       if (!hit || !target) return null;
+      if ("edge" in target) return make(p, s, hit);
       const g = edgeGrid(p.w, p.h);
       const at = (e: number) => g.ea[e] === target.cell || g.eb[e] === target.cell;
       const lines = hit.st.lines.filter((e) => at(e) && s.edges[e] !== LINE);
