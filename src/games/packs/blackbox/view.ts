@@ -1,5 +1,6 @@
 import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
 import { s, style, inputIs } from "../../core/dom";
+import { buttonsSwapped, secondary } from "../../core/gestures";
 import type { CommandDef, View } from "../../core/types";
 import { entryAt, entryOf, hitCode, reflectCode } from "./beam";
 import { blackbox, ballCount, beamLabels, canCheck, type BlackboxAction, type BlackboxFocus, type BlackboxInteraction, type BlackboxPuzzle, type BlackboxState } from "./logic";
@@ -237,16 +238,16 @@ export function blackboxView(board: Board): View<BlackboxPuzzle, BlackboxState, 
           pressTimer = window.setTimeout(() => {
             pressTimer = 0;
             navigator.vibrate?.(15);
-            act(pressPos, true);
+            act(pressPos, !buttonsSwapped(session.def.id));
             pressPos = -1;
           }, 450);
           return;
         }
-        act(pos, e.button === 2);
+        act(pos, e.button !== 1 && secondary(e, session.def.id));
       };
       const onUp = (e: PointerEvent) => {
         if (e.pointerType !== "touch") return;
-        if (pressTimer && pressPos >= 0) { cancelPress(); act(pressPos, false); }
+        if (pressTimer && pressPos >= 0) { cancelPress(); act(pressPos, buttonsSwapped(session.def.id)); }
         pressPos = -1;
       };
       const onMove = (e: PointerEvent) => {

@@ -220,9 +220,6 @@ export function hint(p: DominosaPuzzle, s: DominosaState): Hint<DominosaAction> 
     return { message: `the ${dominoName(g.pd[c.duplicates[0]!]!)} domino is placed more than once`, focus: { placements: c.duplicates, because: [] } satisfies DominosaFocus };
   }
   if (c.stuck.length) return { message: `nothing can cover ${cellList(p, c.stuck)} any more`, focus: { placements: [], because: c.stuck } satisfies DominosaFocus };
-  const a = analyze(p);
-  if (a.count === 0) return { message: "this puzzle has no solution" };
-  if (a.count === 2) return { message: "this puzzle has more than one solution, so it can need a guess" };
   return { message: "none of the techniques you have hints on applies here" };
 }
 

@@ -64,8 +64,6 @@ export const pegsView: View<PegsPuzzle, PegsState, PegsAction, PegsInteraction> 
     { sample: swatch(pegSvg()), meaning: "a peg" },
     { sample: swatch(holeSvg), meaning: "an empty hole" },
     { sample: swatch(pegSvg("color-mix(in srgb, var(--accent) 55%, var(--surface))") + `<circle cx="5" cy="5" r="4.3" fill="none" stroke="var(--accent)" stroke-width="0.6" stroke-dasharray="1 0.8"/>`), meaning: "the picked-up peg, and holes it can jump into" },
-    { sample: swatch(pegSvg() + `<circle cx="5" cy="5" r="4.4" fill="none" stroke="var(--hint)" stroke-width="1"/>`), meaning: "hint: the peg to jump" },
-    { sample: swatch(holeSvg + `<circle cx="5" cy="5" r="4.4" fill="none" stroke="var(--hint)" stroke-width="0.7"/>`), meaning: "hint: where it lands" },
   ],
   mount(root, { session }) {
     style("pegs", CSS);

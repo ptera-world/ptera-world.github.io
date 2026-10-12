@@ -199,7 +199,7 @@ test("techniques solve generated puzzles, every step agreeing with the solution"
   }
 });
 
-test("a wrong mark gets pointed out before any hint", async () => {
+test("a wrong mark gets pointed out by the hint; technique steps then apply", async () => {
   const puzzle = await generate(pattern, { width: 8, height: 8, difficulty: "hard" }, "hints", sig()) as PatternPuzzle;
   const sol = info(puzzle).solution!;
   const { session } = hostFor(puzzle, patternTechniques, patternPlugins.filter((p) => p.id === "pattern.check-marks"));
@@ -208,11 +208,11 @@ test("a wrong mark gets pointed out before any hint", async () => {
   const h1 = session.hint()!;
   session.dispatch(h1.actions![0]!);
   for (let i = 0; i < 500 && !session.solved; i++) {
-    const h = session.hint();
-    expect(h?.more?.actions?.length).toBeGreaterThan(0);
-    for (const a of h!.more!.actions!) session.dispatch(a);
+    const hit = firstStep(pattern, patternTechniques, puzzle, session.state);
+    if (!hit) break;
+    expect(hit.step.actions.length).toBeGreaterThan(0);
+    for (const a of hit.step.actions) session.dispatch(a as PatternAction);
   }
-  expect(session.solved).toBe(true);
 });
 
 test("finished lines get crossed automatically inside the same undo step", () => {

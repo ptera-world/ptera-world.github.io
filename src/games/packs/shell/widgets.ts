@@ -17,6 +17,7 @@ import { tiles, type SurfaceStyle } from "./surfaces";
 import { sessionList } from "./session-list";
 import type { Shell, ShareLevel } from "./shell";
 import { trySerialize } from "./shell";
+import { explainer } from "./explainer";
 
 
 const CSS = `
@@ -78,6 +79,7 @@ button.danger:hover:not(:disabled) { border-color: var(--danger); background: va
 .w-howto .legend .sw svg { width: 100%; height: 100%; }
 .w-skills { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
 .w-skills button { font-size: 13px; padding: 5px 10px; }
+.w-skills button.here { border-color: var(--hint); box-shadow: inset 0 0 0 1px var(--hint); }
 .w-note { font-size: 13px; padding: 6px 8px; border-radius: 6px; background: var(--surface-2); }
 `;
 
@@ -112,6 +114,10 @@ function describe(sources: readonly Source[]): { who: string; kind: string } {
 const announced = new Set<string>();
 
 const widget = defineWidgets<any, any>();
+
+const SKILL_SETTINGS = defineSchema({
+  hoverPreview: { type: "bool", label: "preview while pointing at the board", default: false, description: "show what the first technique that applies at the spot you point at would do" },
+});
 
 export function builtinWidgets(shell: Shell): AnyWidget[] {
   style("widgets", CSS);
@@ -209,7 +215,6 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
     mount(el, ctx) {
       const s = ctx.session;
       const host = shell.host!;
-      const th = shell.techniques!;
       const search = h("input", { type: "search", placeholder: "search settings", "aria-label": "search settings" });
       const body = h("div", { class: "w-section" });
       el.append(h("div", { class: "w-search" }, search), body);
@@ -242,22 +247,6 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
       };
 
       const plugins = host.plugins();
-      if (th.list.length) {
-        const sec = section("techniques");
-        const pace = h("input", {
-          type: "number", min: 0, max: 5000, step: 50, value: loadPace(),
-          onchange: (e: Event) => th.setPace(Number((e.target as HTMLInputElement).value) || 0),
-        });
-        sec.append(row("auto-apply speed pace delay instant", h("div", { class: "w-inline" },
-          h("span", null, "auto-apply: ms between steps"), pace, h("small", null, "0 = all at once"))));
-        for (const t of th.list) {
-          const cfg = th.config(t);
-          sec.append(row(`${t.name} ${t.description} technique auto hint`,
-            h("div", { class: "head" }, h("span", { class: "name" }, t.name),
-              h("label", { class: "w-inline", title: "offer as a hint" }, h("input", { type: "checkbox", checked: cfg.hints, onchange: (e: Event) => th.setConfig(t, { ...th.config(t), hints: (e.target as HTMLInputElement).checked }) }), "hints"),
-              h("label", { class: "w-inline", title: "apply automatically" }, h("input", { type: "checkbox", checked: cfg.auto, onchange: (e: Event) => { th.setConfig(t, { ...th.config(t), auto: (e.target as HTMLInputElement).checked }); shell.hub.refresh(); } }), "auto"))));
-        }
-      }
       const assists = plugins.filter((p) => p.category !== "effects");
       if (assists.length) pluginRows(section("assists"), assists);
       const fx = plugins.filter((p) => p.category === "effects");
@@ -269,6 +258,7 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
           h("option", { value: SYSTEM_THEME, selected: themeChoice() === SYSTEM_THEME }, "follow system"),
           shell.registry.listThemes().map((th) => h("option", { value: th.id, selected: themeChoice() === th.id }, th.name))))));
       const overrides = tokenOverrides();
+      if (Object.keys(overrides).length) theme.append(row("reset colors theme custom", h("button", { onclick: () => { for (const id of Object.keys(tokenOverrides())) setTokenOverride(shell.registry, id, null); shell.openTab("settings"); } }, "reset every color to the theme's")));
       for (const tok of COLOR_TOKENS) {
         const current = getComputedStyle(document.documentElement).getPropertyValue(`--${tok.id}`).trim();
         const toHex = (c: string) => (/^#[0-9a-f]{6}$/i.test(c) ? c : /^#[0-9a-f]{3}$/i.test(c) ? "#" + c.slice(1).replace(/(.)/g, "$1$1") : "#888888");
@@ -402,26 +392,57 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
           ? "your auto-applied techniques solve this whole board on their own."
           : rest ? `with your auto techniques on, the hardest thing left for you is: ${rest.hardest.name}.` : "this board needs more than the listed techniques.";
       };
+      const pace = h("input", {
+        type: "number", min: 0, max: 5000, step: 50, value: loadPace(), "aria-label": "milliseconds between automatic steps",
+        onchange: (e: Event) => th.setPace(Number((e.target as HTMLInputElement).value) || 0),
+      });
+      const boxes: { t: Technique; hints: HTMLInputElement; auto: HTMLInputElement }[] = [];
+      const shown: (() => void)[] = [];
+      /** A "watch it" toggle opening the technique's replayable explainer under its row. */
+      const watchSlot = (t: Technique) => {
+        const view = shell.view;
+        if (t.practice === false || !view) return null;
+        const box = h("div");
+        let ex: (HTMLElement & { dispose(): void }) | null = null;
+        const close = () => { ex?.dispose(); ex = null; clear(box); };
+        shown.push(close);
+        const btn = h("button", { onclick: () => {
+          if (ex) { close(); btn.textContent = "watch it"; return; }
+          ex = explainer(s.def, t, th.list, view.def, shell.viewSettings(view.def));
+          box.append(ex);
+          btn.textContent = "hide";
+        } }, "watch it");
+        return h("div", null, btn, box);
+      };
+      ctx.session.hooks.refresh.tap(() => {
+        for (const b of boxes) { const c = th.config(b.t); b.hints.checked = c.hints; b.auto.checked = c.auto; }
+      }, { owner: ctx.owner });
       const lessons = th.list.filter((t) => t.practice !== false);
       if (lessons.length) el.append(h("button", { class: "primary", title: "practice every technique in order, easiest first", onclick: () => void shell.startPractice(s.def, lessons[0]!, randomSeed()) }, "start the tutorial"));
       el.append(note, h("div", { class: "w-inline" },
         h("h3", { style: "flex: 1; font-size: 12px; color: var(--text-dim); letter-spacing: 0.06em" }, "techniques"),
         h("button", { onclick: check, title: "mark which techniques have an instance on the board right now" }, "what applies now?")), list);
+      el.append(h("div", { class: "w-inline" }, h("span", null, "auto-apply: ms between steps"), pace, h("small", null, "0 = all at once")));
       for (const t of th.list) {
         const mark = h("span", { class: "applies" });
         applies.set(t.id, mark);
         const cfg = th.config(t);
+        const hintsBox = h("input", { type: "checkbox", checked: cfg.hints, onchange: (e: Event) => th.setConfig(t, { ...th.config(t), hints: (e.target as HTMLInputElement).checked }) });
+        const autoBox = h("input", { type: "checkbox", checked: cfg.auto, onchange: (e: Event) => { th.setConfig(t, { ...th.config(t), auto: (e.target as HTMLInputElement).checked }); assisted(); shell.hub.refresh(); } });
+        boxes.push({ t, hints: hintsBox, auto: autoBox });
         list.append(h("div", { class: "w-row w-tech" },
           h("div", { class: "head" }, h("strong", { class: "name" }, t.name), mark),
           h("details", null, h("summary", null, "how it works"), h("p", null, t.description)),
+          watchSlot(t),
           h("div", { class: "w-inline buttons" },
             h("button", { onclick: () => shell.findTechnique(t), title: "show one on the board" }, "find"),
             h("button", { onclick: () => ctx.run(techniqueCommand("apply", t)), title: "carry one out" }, "apply"),
             t.practice === false ? null : h("button", { onclick: () => ctx.run(techniqueCommand("practice", t)), title: "a board where this is the next step" }, "practice"),
-            h("label", { class: "w-inline", title: "offer as a hint" }, h("input", { type: "checkbox", checked: cfg.hints, onchange: (e: Event) => th.setConfig(t, { ...th.config(t), hints: (e.target as HTMLInputElement).checked }) }), "hints"),
-            h("label", { class: "w-inline", title: "apply automatically" }, h("input", { type: "checkbox", checked: cfg.auto, onchange: (e: Event) => { th.setConfig(t, { ...th.config(t), auto: (e.target as HTMLInputElement).checked }); assisted(); shell.hub.refresh(); } }), "auto"))));
+            h("label", { class: "w-inline", title: "offer as a hint" }, hintsBox, "hints"),
+            h("label", { class: "w-inline", title: "apply automatically" }, autoBox, "auto"))));
       }
       assisted();
+      return () => { for (const c of shown) c(); };
     },
   };
 
@@ -834,12 +855,14 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
     },
   };
 
-  const skills: WidgetDef = {
-    id: "skills", name: "skills", description: "techniques as buttons: point at one (or hold it) to preview what it would do, tap to do it. aimed at the cell or line you point at when the technique can be", puzzles: "*", defaultSlot: "off", order: 36,
-    mount(el) {
+  const skills: WidgetDef<any, any, any, any, typeof SKILL_SETTINGS> = {
+    id: "skills", name: "skills", description: "techniques as buttons. point at a spot on the board and the ones that apply there light up; point at a button to preview what it would do, tap to do it", puzzles: "*", defaultSlot: "bottom", order: 36,
+    settings: SKILL_SETTINGS,
+    mount(el, ctx) {
       const th = shell.techniques;
       if (!th?.list.length) return;
       const bar = h("div", { class: "w-skills" });
+      const buttons = new Map<string, HTMLElement>();
       for (const t of th.list) {
         let held = 0;
         const b = h("button", {
@@ -851,10 +874,19 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
           onpointerdown: (e: PointerEvent) => { if (e.pointerType !== "mouse") held = window.setTimeout(() => { held = -1; shell.previewSkill(t); }, 350); },
           onclick: () => { if (held === -1) { held = 0; shell.previewSkill(null); return; } clearTimeout(held); shell.applySkill(t); },
         }, t.name);
+        buttons.set(t.id, b);
         bar.append(b);
       }
+      const mark = () => {
+        const here = shell.skillsHere();
+        for (const [id, b] of buttons) b.classList.toggle("here", here.some((t) => t.id === id));
+        if (ctx.settings.hoverPreview) shell.previewSkill(here[0] ?? null);
+      };
       el.append(bar);
-      return () => shell.previewSkill(null);
+      mark();
+      ctx.session.hooks.change.tap(mark, { owner: ctx.owner });
+      const off = shell.hooks.aim.tap(mark);
+      return () => { off(); shell.previewSkill(null); };
     },
   };
 

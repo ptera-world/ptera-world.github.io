@@ -1,5 +1,6 @@
 import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
 import { s, style, inputIs } from "../../core/dom";
+import { secondary } from "../../core/gestures";
 import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
 import { EMPTY, GHOST, MIRROR_L, VAMPIRE, ZOMBIE, bit, clueAt, geometry } from "./grid";
@@ -270,8 +271,8 @@ export function undeadView(look: Look, board: Board): View<UndeadPuzzle, UndeadS
         e.preventDefault();
         session.setInteraction((i) => ({ ...i, cursor: at.cell }));
         if (session.locked) return;
-        if (e.button === 2) cycle(at.cell, -1);
-        else if (e.button === 0) cycle(at.cell, 1);
+        if (e.button !== 0 && e.button !== 2) return;
+        cycle(at.cell, secondary(e, session.def.id) ? -1 : 1);
       };
       const onMove = (e: PointerEvent) => {
         if (e.pointerType === "touch") return;

@@ -84,7 +84,7 @@ function played(p: FillingPuzzle, auto: string[] = []) {
   return { s, host };
 }
 
-test("following hints solves boards of every difficulty; wrong numbers come first", async () => {
+test("a wrong number is cleared by the hint first; technique steps keep producing actions", async () => {
   for (const difficulty of LEVELS) {
     const p = await gen({ width: 7, height: 6, difficulty }, `h-${difficulty}`);
     const { s } = played(p);
@@ -93,12 +93,13 @@ test("following hints solves boards of every difficulty; wrong numbers come firs
     const wrong = sol[bad] === 1 ? 2 : 1;
     s.dispatch({ type: "set", cells: [bad], mask: bit(wrong) });
     expect(s.hint()?.actions?.[0]).toEqual({ type: "clear", cells: [bad] });
-    for (let i = 0; i < 600 && !s.solved; i++) {
-      const hnt = s.hint();
-      expect(hnt?.actions?.length).toBeGreaterThan(0);
-      s.batch(() => { for (const a of hnt!.actions!) s.dispatch(a); });
+    let st = filling.init(p);
+    for (let i = 0; i < 600; i++) {
+      const hit = firstStep(filling, fillingTechniques, p, st);
+      if (!hit) break;
+      expect(hit.step.actions.length).toBeGreaterThan(0);
+      st = applyStep(filling, p, st, hit.step);
     }
-    expect(s.solved).toBe(true);
   }
 }, 60000);
 

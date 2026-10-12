@@ -26,6 +26,7 @@ export const COLOR_TOKENS: readonly { id: string; label: string }[] = [
   { id: "focus", label: "selection / focus" },
   { id: "cell", label: "cells" },
   { id: "cell-lit", label: "lit / filled cells" },
+  ...[1, 2, 3, 4, 5, 6, 7, 8].map((k) => ({ id: `palette-${k}`, label: `piece color ${k}` })),
 ];
 
 /** The theme choice that follows the OS light/dark preference. */

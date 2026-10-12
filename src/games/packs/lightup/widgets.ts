@@ -1,5 +1,6 @@
 import type { WidgetDef } from "../../core/types";
 import { h, style } from "../../core/dom";
+import { buttonsSwapped } from "../../core/gestures";
 import { lightup, type LightupAction, type LightupInteraction, type LightupPuzzle, type LightupState } from "./logic";
 
 type LightupWidget = WidgetDef<LightupPuzzle, LightupState, LightupAction, LightupInteraction>;
@@ -24,16 +25,16 @@ export const markMode: LightupWidget = {
   order: 15,
   mount(el, { session, owner, run }) {
     style("lightup-widgets", CSS);
-    const lightBtn = h("button", { type: "button", title: "tapping a cell puts a light there (or takes it away)", onclick: () => { if (session.interaction.markMode) run("lightup.mode"); } }, "a light");
-    const markBtn = h("button", { type: "button", title: "tapping a cell puts a no-light mark there: a dot noting that it can't hold a light", onclick: () => { if (!session.interaction.markMode) run("lightup.mode"); } }, "a no-light mark");
+    const lightBtn = h("button", { type: "button", title: "tapping a cell puts a light there (or takes it away)", onclick: () => { if (buttonsSwapped(session.def.id)) run("shell.swap-buttons"); } }, "a light");
+    const markBtn = h("button", { type: "button", title: "tapping a cell puts a no-light mark there: a dot noting that it can't hold a light", onclick: () => { if (!buttonsSwapped(session.def.id)) run("shell.swap-buttons"); } }, "a no-light mark");
     el.append(h("div", { class: "lightup-switch" },
       h("span", { class: "lightup-switch-label", id: "lightup-switch-label" }, "a tap places"),
       h("div", { class: "lightup-mode", role: "group", "aria-labelledby": "lightup-switch-label" }, lightBtn, markBtn)));
     const render = () => {
-      lightBtn.setAttribute("aria-pressed", String(!session.interaction.markMode));
-      markBtn.setAttribute("aria-pressed", String(session.interaction.markMode));
+      lightBtn.setAttribute("aria-pressed", String(!buttonsSwapped(session.def.id)));
+      markBtn.setAttribute("aria-pressed", String(buttonsSwapped(session.def.id)));
     };
-    session.hooks.interaction.tap(render, { owner });
+    session.hooks.refresh.tap(render, { owner });
     render();
   },
 };

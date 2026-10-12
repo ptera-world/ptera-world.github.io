@@ -1,26 +1,6 @@
-import { hintFrom } from "../../core/define";
-import type { Hint, Plugin, Step } from "../../core/types";
-import { samegame, COLOUR_NAMES, cellAt, group, isEmpty, type SamegameAction, type SamegameFocus, type SamegameInteraction, type SamegamePuzzle, type SamegameState } from "./logic";
+import type { Plugin } from "../../core/types";
+import { samegame, COLOUR_NAMES, cellAt, isEmpty, type SamegameAction, type SamegameFocus, type SamegameInteraction, type SamegamePuzzle, type SamegameState } from "./logic";
 import { clearFrom, loneColour } from "./solver";
-
-/** The first removal of a whole clearing order, else the puzzle's own hint. */
-export function hint(p: SamegamePuzzle, s: SamegameState): Hint<SamegameAction> | null {
-  if (isEmpty(s.grid)) return samegame.hint?.(p, s) ?? null;
-  const path = clearFrom(p, s.grid).path;
-  if (!path?.length) return samegame.hint?.(p, s) ?? null;
-  const cell = path[0]!;
-  const cells = group(p.w, p.h, s.grid, cell);
-  const name = COLOUR_NAMES[s.grid[cell]!]!;
-  const after = path.length - 1;
-  const found: Step<SamegameAction> = {
-    message: `remove the ${cells.length} ${name} tiles at ${cellAt(p, cell)}: the board can still be cleared after that${after ? ` (in ${after} more ${after === 1 ? "removal" : "removals"})` : ", and that clears it"}.`,
-    nudge: `try the ${name} tiles in column ${cellAt(p, cell).replace(/\d+$/, "")}`,
-    focus: { cells } satisfies SamegameFocus,
-    nudgeFocus: { cells: Array.from({ length: p.h }, (_, y) => y * p.w + (cell % p.w)) } satisfies SamegameFocus,
-    actions: [{ type: "remove", cell }],
-  };
-  return hintFrom(null, found, 1) as Hint<SamegameAction>;
-}
 
 /** Runs ahead of technique hints (priority 100): a board that can no longer be cleared is pointed out first. */
 export const checkClearable: Plugin<SamegamePuzzle, SamegameState, SamegameAction, SamegameInteraction> = {

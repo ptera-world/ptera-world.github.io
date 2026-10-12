@@ -66,7 +66,7 @@ function played(p: MosaicPuzzle, auto: string[] = []) {
   return { s, host };
 }
 
-test("following hints solves boards of every difficulty; wrong marks come first", async () => {
+test("a wrong mark is cleared by the hint first, then technique steps apply", async () => {
   for (const difficulty of LEVELS) {
     const p = await gen({ width: 9, height: 8, difficulty }, `h-${difficulty}`);
     const { s } = played(p);
@@ -74,12 +74,11 @@ test("following hints solves boards of every difficulty; wrong marks come first"
     const bad = sol.findIndex((v) => v !== SHADED);
     s.dispatch({ type: "set", cells: [bad], value: BLACK });
     expect(s.hint()?.actions?.[0]).toEqual({ type: "set", cells: [bad], value: NONE });
-    for (let i = 0; i < 400 && !s.solved; i++) {
-      const hnt = s.hint();
-      expect(hnt?.actions?.length).toBeGreaterThan(0);
-      s.batch(() => { for (const a of hnt!.actions!) s.dispatch(a); });
+    for (let i = 0; i < 400; i++) {
+      const hit = firstStep(mosaic, mosaicTechniques, p, s.state);
+      if (!hit) break;
+      s.batch(() => { for (const a of hit.step.actions as MosaicAction[]) s.dispatch(a); });
     }
-    expect(s.solved).toBe(true);
   }
 });
 

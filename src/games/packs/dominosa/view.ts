@@ -1,5 +1,6 @@
 import { bindCommands, bindingsOver, handlersOver, type BindingSchema, type Ids } from "../../core/commands";
 import { s, style, inputIs } from "../../core/dom";
+import { buttonsSwapped, secondary } from "../../core/gestures";
 import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
 import { geometry } from "./grid";
@@ -221,7 +222,8 @@ export function dominosaView(board: Board): View<DominosaPuzzle, DominosaState, 
         const at = pointAt(e);
         if (at.cell < 0) return;
         e.preventDefault();
-        if (e.button === 2 && at.centre) {
+        const second = secondary(e, session.def.id);
+        if (e.pointerType !== "touch" && (e.button === 0 || e.button === 2) && second && at.centre) {
           toggleHighlight(p.numbers[at.cell]!);
           return;
         }
@@ -232,17 +234,16 @@ export function dominosaView(board: Board): View<DominosaPuzzle, DominosaState, 
           pressTimer = window.setTimeout(() => {
             pressTimer = 0;
             navigator.vibrate?.(15);
-            session.dispatch(toggle(session.state, pressQ, LINE));
+            session.dispatch(toggle(session.state, pressQ, buttonsSwapped(session.def.id) ? DOMINO : LINE));
             pressQ = -1;
           }, settings.longPressMs as number);
-        } else if (e.button === 2) session.dispatch(toggle(session.state, at.q, LINE));
-        else if (e.button === 0) session.dispatch(toggle(session.state, at.q, DOMINO));
+        } else if (e.button === 0 || e.button === 2) session.dispatch(toggle(session.state, at.q, second ? LINE : DOMINO));
       };
       const onUp = (e: PointerEvent) => {
         if (e.pointerType !== "touch") return;
         if (pressTimer) {
           cancelPress();
-          if (pressQ >= 0) session.dispatch(toggle(session.state, pressQ, DOMINO));
+          if (pressQ >= 0) session.dispatch(toggle(session.state, pressQ, buttonsSwapped(session.def.id) ? LINE : DOMINO));
         }
         pressQ = -1;
       };

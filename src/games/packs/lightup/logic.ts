@@ -45,8 +45,6 @@ export type LightupAction = { type: "set"; cells: number[]; value: Mark };
 
 export interface LightupInteraction {
   cursor: number;
-  /** Primary input places dots instead of lights (touch). */
-  markMode: boolean;
 }
 
 function setMarks(p: LightupPuzzle, s: LightupState, cells: readonly number[], value: number): LightupState {
@@ -210,7 +208,7 @@ export function wrongMarksHint(p: LightupPuzzle, s: LightupState): Hint<LightupA
   };
 }
 
-/** Fallback when no technique offers a hint: a visible rule break, or why there's no next step. */
+/** Fallback when no technique offers a hint: a rule break visible on the board. */
 export function hint(p: LightupPuzzle, s: LightupState): Hint<LightupAction> | null {
   const c = findConflicts(p, s.marks);
   if (c.lights.length) return { message: `the lights on ${cellList(p, c.lights)} shine on each other`, focus: { cells: c.lights, because: [] } satisfies LightupFocus };
@@ -219,9 +217,6 @@ export function hint(p: LightupPuzzle, s: LightupState): Hint<LightupAction> | n
     return { message: `the ${p.cells[q]} on ${cellName(p, q)} can't get exactly ${p.cells[q]} touching lights any more`, focus: { cells: [], because: [q] } satisfies LightupFocus };
   }
   if (c.dark.length) return { message: `nothing can light ${cellList(p, c.dark)} any more`, focus: { cells: c.dark, because: [] } satisfies LightupFocus };
-  const a = analyze(p);
-  if (a.count === 0) return { message: "this puzzle has no solution" };
-  if (a.count === 2) return { message: "this puzzle has more than one solution, so it can need a guess" };
   return { message: "none of the techniques you have hints on applies here" };
 }
 
@@ -259,7 +254,7 @@ export const lightup: PuzzleDef<LightupPuzzle, LightupState, LightupAction, Ligh
   generate,
   formats: [sgtFormat, gridFormat],
   init: (p) => ({ marks: p.cells.map(() => NONE) }),
-  initInteraction: (p) => ({ cursor: geometry(p).empties[0] ?? 0, markMode: false }),
+  initInteraction: (p) => ({ cursor: geometry(p).empties[0] ?? 0 }),
   reduce,
   isRetraction: (a) => a.value === NONE,
   rules: () => [

@@ -1,6 +1,6 @@
 import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
-import { HOLD_MS } from "../../core/gestures";
+import { HOLD_MS, buttonsSwapped } from "../../core/gestures";
 import { bindCommands, type BindingSchema, type CommandHandler, type Ids } from "../../core/commands";
 import { colName, rowName } from "../../core/names";
 import { s, style, inputIs } from "../../core/dom";
@@ -459,8 +459,8 @@ export function netView({ look = (_id, fallback) => fallback, labelSides = () =>
           "net.tap-cw": setTap("cw"),
           "net.tap-ccw": setTap("ccw"),
           "net.tap-lock": setTap("lock"),
-          "net.tap-at": pointerCell(tap),
-          "net.rotate-ccw-at": pointerCell((c) => rotate(c, -1)),
+          "net.tap-at": pointerCell((c) => (buttonsSwapped(session.def.id) ? rotate(c, -1) : tap(c))),
+          "net.rotate-ccw-at": pointerCell((c) => (buttonsSwapped(session.def.id) ? tap(c) : rotate(c, -1))),
           "net.lock-at": pointerCell(startPaint),
           "net.source-at": pointerCell(setSource),
         }, {

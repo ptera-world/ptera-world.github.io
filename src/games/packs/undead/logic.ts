@@ -223,9 +223,6 @@ export function hint(p: UndeadPuzzle, s: UndeadState): Hint<UndeadAction> | null
   const c = findConflicts(p, s);
   if (c.clues.length) return { message: `${clueName(p, c.clues[0]!)} can't be met any more`, focus: { cells: [], because: [], clues: c.clues } satisfies UndeadFocus };
   if (c.totals.length) return { message: `the number of ${MONSTER_PLURALS[c.totals[0]!]} can't be right any more`, focus: { cells: [], because: [], totals: c.totals } satisfies UndeadFocus };
-  const a = analyze(p);
-  if (a.count === 0) return { message: "this puzzle has no solution" };
-  if (a.count === 2) return { message: "this puzzle has more than one solution, so it can need a guess" };
   return { message: "none of the techniques you have hints on applies here" };
 }
 

@@ -336,9 +336,6 @@ export function hint(p: RangePuzzle, s: RangeState): Hint<RangeAction> | null {
   if (c.touching.length) return { message: `the blacks on ${cellList(p, c.touching)} touch`, focus: { cells: c.touching, because: [] } satisfies Focus };
   if (c.clues.length) return { message: `the number on ${cellList(p, c.clues)} can't see the right count any more`, focus: { cells: [], because: c.clues } satisfies Focus };
   if (c.cut.length) return { message: `${cellList(p, c.cut)} ${c.cut.length === 1 ? "is" : "are"} cut off from the other white cells`, focus: { cells: c.cut, because: [] } satisfies Focus };
-  const a = analyze(p);
-  if (a.count === 0) return { message: "this puzzle has no solution" };
-  if (a.count === 2) return { message: "this puzzle has more than one solution, so it can need a guess" };
   return { message: "none of the techniques you have hints on applies here" };
 }
 

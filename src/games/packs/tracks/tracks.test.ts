@@ -63,7 +63,7 @@ function played(p: TracksPuzzle, auto: string[] = []) {
   return s;
 }
 
-test("following hints solves every difficulty; wrong marks come first", async () => {
+test("wrong marks are pointed out first; technique steps follow", async () => {
   for (const difficulty of ["easy", "medium", "hard"]) {
     const p = await gen({ width: 8, height: 8, difficulty }, `h-${difficulty}`);
     const s = played(p);
@@ -71,12 +71,12 @@ test("following hints solves every difficulty; wrong marks come first", async ()
     const bad = analyze(p).solution!.findIndex((v, e) => v === 1 && !p.given[g.ea[e]!] && !p.given[g.eb[e]!]);
     s.dispatch({ type: "edge", edges: [bad], value: CROSS });
     expect(s.hint()?.actions?.[0]).toEqual({ type: "edge", edges: [bad], value: NONE });
+    s.dispatch({ type: "edge", edges: [bad], value: NONE });
     for (let i = 0; i < 600 && !s.solved; i++) {
-      const h = s.hint();
-      expect(h?.actions?.length).toBeGreaterThan(0);
-      s.batch(() => { for (const a of h!.actions!) s.dispatch(a); });
+      const hit = firstStep(tracks, tracksTechniques, p, s.state);
+      if (!hit) break;
+      s.batch(() => { for (const a of hit.step.actions as TracksAction[]) s.dispatch(a); });
     }
-    expect(s.solved).toBe(true);
   }
 });
 

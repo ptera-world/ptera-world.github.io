@@ -99,8 +99,9 @@ export interface Technique<Pz = any, S = any, A extends Action = any> {
    */
   instances(puzzle: Pz, state: S, visit: (step: Step<A>) => boolean | void): void;
   /**
-   * An instance at the given target (see ViewHandle.target), or null. Lets a technique be used as
-   * a skill aimed at one line, cell or region instead of anywhere on the board.
+   * An instance at the given target (see ViewHandle.target), or null: a faster or narrower form of
+   * the first instance PuzzleDef.aims accepts for that target. Without it, the technique is aimed
+   * through PuzzleDef.aims.
    */
   findAt?(puzzle: Pz, state: S, target: unknown): Step<A> | null;
   defaults?: { hints?: boolean; auto?: boolean };
@@ -232,6 +233,12 @@ export interface PuzzleDef<Pz = unknown, S = unknown, A extends Action = Action,
    * (sliding, pressing, pushing) give the moves from `state` that reach it, played through `reduce`.
    */
   solve?(puzzle: Pz, state: S): Answer<S, A> | null;
+  /**
+   * True if `step` is about `target` (what the view points at, see ViewHandle.target): it changes
+   * or reasons from that cell, line or piece. Makes every technique of the puzzle usable as a skill
+   * aimed at one spot.
+   */
+  aims?(puzzle: Pz, step: Step<A>, target: unknown): boolean;
   /** Fallback hint when no technique applies (e.g. to point out a mistake). */
   hint?(puzzle: Pz, state: S): Hint<A> | null;
   /**

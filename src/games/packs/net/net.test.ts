@@ -204,7 +204,7 @@ test("a technique only reports tiles the easier ones can't pin down", async () =
   expect(seen.size).toBeGreaterThan(0);
 });
 
-test("hints: wrong locks come first, then techniques carry the puzzle through", async () => {
+test("hints: a wrong lock is pointed out first; technique steps then give actions", async () => {
   for (const params of [{ width: 6, height: 6, difficulty: "normal" }, { width: 6, height: 5, wrap: true, difficulty: "hard" }]) {
     const p = await gen(params, "hints");
     const { session } = hosted(p);
@@ -213,14 +213,14 @@ test("hints: wrong locks come first, then techniques carry the puzzle through", 
     session.dispatch({ type: "lock", cells: [bad], on: true });
     const first = session.hint();
     expect(first?.actions?.[0]).toEqual({ type: "lock", cells: [bad], on: false });
+    session.dispatch(first!.actions![0]!);
     for (let k = 0; k < 400 && !session.solved; k++) {
-      const h = session.hint();
-      const actions = h?.actions ?? h?.more?.actions;
-      expect(actions?.length).toBeGreaterThan(0);
-      expect(h!.message.length).toBeGreaterThan(0);
-      session.batch(() => { for (const a of actions!) session.dispatch(a); });
+      const hit = firstStep(net, techniques, p, session.state);
+      if (!hit) break;
+      expect(hit.step.actions.length).toBeGreaterThan(0);
+      expect(hit.step.message.length).toBeGreaterThan(0);
+      session.batch(() => { for (const a of hit.step.actions) session.dispatch(a as NetAction); });
     }
-    expect(session.solved).toBe(true);
   }
 });
 
@@ -254,6 +254,8 @@ test("every hint shows what it talks about: named cells are highlighted, \"like 
     const { session } = hosted(p);
     let likeThis = 0;
     for (let k = 0; k < 900 && !session.solved; k++) {
+      const hit = firstStep(net, techniques, p, session.state);
+      if (!hit) break;
       const nudge = session.hint()!;
       for (const h of [nudge, nudge.more ?? nudge]) {
         const f = h.focus as NetHintFocus;
@@ -268,9 +270,8 @@ test("every hint shows what it talks about: named cells are highlighted, \"like 
           expect(session.state.tiles[f.cell]).not.toBe(f.mask);
         }
       }
-      session.batch(() => { for (const a of (nudge.actions ?? nudge.more!.actions)!) session.dispatch(a); });
+      session.batch(() => { for (const a of hit.step.actions) session.dispatch(a as NetAction); });
     }
-    expect(session.solved).toBe(true);
     expect(likeThis).toBeGreaterThan(0);
   }
 });

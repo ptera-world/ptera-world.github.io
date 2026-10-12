@@ -75,19 +75,19 @@ function played(p: PearlPuzzle, auto: string[] = []) {
   return s;
 }
 
-test("following hints solves both difficulties; wrong marks come first", async () => {
+test("wrong marks come first; technique steps apply", async () => {
   for (const difficulty of ["easy", "hard"]) {
     const p = await gen({ width: 8, height: 8, difficulty }, `h-${difficulty}`);
     const s = played(p);
     const bad = analyze(p).solution!.findIndex((v) => v === 1);
     s.dispatch({ type: "set", edges: [bad], value: CROSS });
     expect(s.hint()?.actions?.[0]).toEqual({ type: "set", edges: [bad], value: NONE });
+    s.dispatch({ type: "set", edges: [bad], value: NONE });
     for (let i = 0; i < 400 && !s.solved; i++) {
-      const h = s.hint();
-      expect(h?.actions?.length).toBeGreaterThan(0);
-      s.batch(() => { for (const a of h!.actions!) s.dispatch(a); });
+      const hit = firstStep(pearl, pearlTechniques, p, s.state);
+      if (!hit) break;
+      s.batch(() => { for (const a of hit.step.actions) s.dispatch(a as PearlAction); });
     }
-    expect(s.solved).toBe(true);
   }
 });
 

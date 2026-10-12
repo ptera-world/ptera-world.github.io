@@ -1,5 +1,6 @@
 import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
 import { s, style, inputIs } from "../../core/dom";
+import { secondary } from "../../core/gestures";
 import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
 import type { Conflicts, GalaxiesAction, GalaxiesFocus, GalaxiesInteraction, GalaxiesPuzzle, GalaxiesState } from "./logic";
@@ -209,15 +210,16 @@ export function galaxiesView(board: Board): View<GalaxiesPuzzle, GalaxiesState, 
         if (session.locked || drag) return;
         svg.setPointerCapture?.(e.pointerId);
         let brush = -1, toggle = false;
-        if (e.button === 2) brush = -1;
+        const erase = e.button !== 1 && secondary(e, session.def.id);
+        if (erase) brush = -1;
         else if (at.dot >= 0) brush = at.dot;
         else if (session.state.owner[at.tile]! >= 0) {
           brush = session.state.owner[at.tile]!;
           toggle = brush === session.interaction.brush && g.coreOf[at.tile] === -1;
         } else brush = session.interaction.brush;
-        if (e.button !== 2 && brush >= 0) setBrush(brush);
+        if (!erase && brush >= 0) setBrush(brush);
         drag = { pointerId: e.pointerId, brush, painted: new Set(), moved: false, start: at.tile, toggle, drawn: 0 };
-        if (at.dot < 0 && !toggle && (brush >= 0 || e.button === 2)) paint(at.tile);
+        if (at.dot < 0 && !toggle && (brush >= 0 || erase)) paint(at.tile);
       };
       const onMove = (e: PointerEvent) => {
         const at = pointAt(e);

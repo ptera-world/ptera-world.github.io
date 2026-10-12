@@ -1,9 +1,8 @@
-import { hintFrom } from "../../core/define";
-import type { Hint, Plugin, Step, Technique } from "../../core/types";
+import type { Plugin, Technique } from "../../core/types";
 import { cardName, safeHomeReason } from "../../lib/cards/deck";
 import { planner } from "../../lib/plan";
 import type { CardFocus } from "../../lib/cards/table";
-import { describeMove, freecell, whereTo, fromPos, pileName, toPos, type FreecellAction, type FreecellInteraction, type FreecellPuzzle, type FreecellState } from "./logic";
+import { freecell, whereTo, fromPos, pileName, toPos, type FreecellAction, type FreecellInteraction, type FreecellPuzzle, type FreecellState } from "./logic";
 import { applyMove, clonePos, eachSafeHomeMove, isSafeHome, solve, type Move } from "./solver";
 
 type FreecellTechnique = Technique<FreecellPuzzle, FreecellState, FreecellAction>;
@@ -57,20 +56,6 @@ function reason(p: FreecellPuzzle, s: FreecellState, path: readonly Move[]): str
   return "it keeps the winning line going";
 }
 
-function stepFor(p: FreecellPuzzle, s: FreecellState, path: readonly Move[]): Step<FreecellAction> {
-  const m = path[0]!;
-  const src = s.piles[m.from]!.c;
-  const rest = path.length - 1;
-  const tail = rest ? ` the solver finds a win ${rest} ${rest === 1 ? "move" : "moves"} after that.` : " that wins.";
-  return {
-    message: `${describeMove(p, s, m)}: ${reason(p, s, path)}.${tail}`,
-    nudge: `look at ${pileName(p, m.from)}`,
-    focus: { cards: src.slice(src.length - m.n), to: m.to } satisfies CardFocus,
-    nudgeFocus: { piles: [m.from] } satisfies CardFocus,
-    actions: [{ type: "move", ...m }],
-  };
-}
-
 export const safeHome: FreecellTechnique = {
   id: "freecell.safe-home",
   name: "safe home",
@@ -109,13 +94,6 @@ export const checkWinnable: Plugin<FreecellPuzzle, FreecellState, FreecellAction
     }, { owner, priority: 90 });
   },
 };
-
-export function fallbackHint(p: FreecellPuzzle, s: FreecellState): Hint<FreecellAction> | null {
-  const r = plan(p, s);
-  if (r.path?.length) return hintFrom(null, stepFor(p, s, r.path), 1) as Hint<FreecellAction>;
-  if (r.path || r.impossible) return null;
-  return { message: "the search for a win ran out of time from here, so there's no suggestion. undoing a move or two may help." };
-}
 
 /** The moves of a winning line from `s`, or null if none is known. */
 export function solveFrom(p: FreecellPuzzle, s: FreecellState): { moves: FreecellAction[] } | null {

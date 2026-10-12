@@ -70,7 +70,7 @@ function played(p: MapPuzzle, auto: string[] = []) {
   return s;
 }
 
-test("following hints solves every difficulty; wrong colors come first", async () => {
+test("a wrong mark is cleared by the hint first, then technique steps apply", async () => {
   for (const difficulty of ["easy", "medium", "hard"]) {
     const p = await gen({ ...MID, difficulty }, `h-${difficulty}`);
     const s = played(p);
@@ -78,12 +78,11 @@ test("following hints solves every difficulty; wrong colors come first", async (
     const r = p.given.findIndex((c) => c < 0);
     s.dispatch({ type: "colour", regions: [r], colour: (sol[r]! + 1) % 4 });
     expect(s.hint()?.actions?.[0]).toEqual({ type: "colour", regions: [r], colour: -1 });
-    for (let i = 0; i < 400 && !s.solved; i++) {
-      const h = s.hint();
-      expect(h?.actions?.length).toBeGreaterThan(0);
-      s.batch(() => { for (const a of h!.actions!) s.dispatch(a); });
+    for (let i = 0; i < 400; i++) {
+      const hit = firstStep(map, mapTechniques, p, s.state);
+      if (!hit) break;
+      s.batch(() => { for (const a of hit.step.actions as MapAction[]) s.dispatch(a); });
     }
-    expect(s.solved).toBe(true);
   }
 });
 

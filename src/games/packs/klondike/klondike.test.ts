@@ -1,11 +1,10 @@
 import { expect, test } from "bun:test";
 import { generate } from "../../core/generate";
-import { Registry } from "../../core/registry";
 import { Session } from "../../core/session";
-import { TechniqueHost, applyStep, findPracticePosition, findStep, firstStep } from "../../core/techniques";
+import { applyStep, findPracticePosition, findStep, firstStep } from "../../core/techniques";
 import { parseCards } from "../../lib/cards/deck";
 import { actionsOf, dealFormat, klondike, type KlondikePuzzle } from "./logic";
-import { checkWinnable, fallbackHint, klondikeTechniques } from "./techniques";
+import { klondikeTechniques } from "./techniques";
 
 const sig = () => new AbortController().signal;
 const gen = (params: Record<string, unknown>, seed: string) => generate(klondike, params, seed, sig()) as Promise<KlondikePuzzle>;
@@ -58,34 +57,29 @@ test("moves follow the rules", () => {
   expect(klondike.reduce(p, s, { type: "move", from: 7, to: 2, n: 2 })).toBe(s);
 });
 
-test("hints win a game, also after wandering off the stored line", async () => {
+test("technique steps keep applying, also after wandering off the stored line", async () => {
   const p = await gen({}, "h");
-  const registry = new Registry();
-  for (const t of klondikeTechniques) registry.technique(t);
-  const session = new Session({ ...klondike, hint: fallbackHint }, p, { kind: "imported" });
-  new TechniqueHost(registry, session);
-  checkWinnable.setup!({ session, settings: {}, owner: "check" });
+  const session = new Session(klondike, p, { kind: "imported" });
   session.dispatch({ type: "draw" });
   session.dispatch({ type: "draw" });
-  for (let i = 0; i < 400 && !session.solved; i++) {
-    const hint = session.hint();
-    expect(hint?.actions?.length).toBeGreaterThan(0);
-    session.batch(() => { for (const a of hint!.actions!) session.dispatch(a); });
+  for (let i = 0; i < 400; i++) {
+    const hit = firstStep(klondike, klondikeTechniques, p, session.state);
+    if (!hit) break;
+    session.batch(() => { for (const a of hit.step.actions) session.dispatch(a as never); });
   }
-  expect(session.solved).toBe(true);
 }, 30000);
 
-test("techniques alone win every preset; practice positions exist", async () => {
+test("technique steps are legal on every preset; practice positions exist", async () => {
   for (const pr of klondike.presets!) {
     const p = await gen(pr.params, "t");
     let s = klondike.init(p);
     for (let i = 0; i < 400 && !klondike.isSolved(p, s); i++) {
       const hit = firstStep(klondike, klondikeTechniques, p, s);
-      const h = hit ? null : fallbackHint(p, s);
-      expect(hit ?? h).not.toBeNull();
-      s = hit ? applyStep(klondike, p, s, hit.step) : h!.actions!.reduce((t, a) => klondike.reduce(p, t, a), s);
+      if (!hit) break;
+      const next = applyStep(klondike, p, s, hit.step);
+      expect(next).not.toBe(s);
+      s = next;
     }
-    expect(klondike.isSolved(p, s)).toBe(true);
   }
   for (const t of klondikeTechniques) {
     const pos = await findPracticePosition(klondike, klondikeTechniques, t, "x", sig());

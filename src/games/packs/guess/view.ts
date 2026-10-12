@@ -1,3 +1,4 @@
+import { buttonsSwapped, secondary } from "../../core/gestures";
 import { bindCommands, bindingsOver, handlersOver, oneBased, type BindingSchema, type Ids } from "../../core/commands";
 import { s, style, inputIs } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
@@ -6,16 +7,16 @@ import { guess, COLOUR_NAMES, canSubmit, isOver, type GuessAction, type GuessFoc
 
 const FILLS = [
   "var(--cell)",
-  "var(--guess-1, hsl(0 70% 55%))",
-  "var(--guess-2, hsl(50 90% 55%))",
-  "var(--guess-3, hsl(130 50% 45%))",
-  "var(--guess-4, hsl(215 70% 55%))",
-  "var(--guess-5, hsl(28 90% 55%))",
-  "var(--guess-6, hsl(275 50% 55%))",
-  "var(--guess-7, hsl(25 45% 38%))",
-  "var(--guess-8, hsl(195 75% 72%))",
-  "var(--guess-9, hsl(95 55% 70%))",
-  "var(--guess-10, hsl(330 75% 75%))",
+  "var(--guess-1, var(--palette-1))",
+  "var(--guess-2, var(--palette-2))",
+  "var(--guess-3, var(--palette-3))",
+  "var(--guess-4, var(--palette-4))",
+  "var(--guess-5, var(--palette-5))",
+  "var(--guess-6, var(--palette-6))",
+  "var(--guess-7, var(--palette-7))",
+  "var(--guess-8, var(--palette-8))",
+  "var(--guess-9, var(--palette-1))",
+  "var(--guess-10, var(--palette-2))",
 ] as const;
 
 const CSS = `
@@ -198,6 +199,11 @@ export function guessView(): View<GuessPuzzle, GuessState, GuessAction, GuessInt
         return { x: pt.x, y: pt.y, tray, row: inBoard ? r : -1, slot: inBoard ? slot : -1, submit };
       };
       const place = (slot: number, colour: number) => session.dispatch({ type: "peg", index: slot, colour });
+      const id = session.def.id;
+      const toggleColour = (slot: number) => {
+        const c = session.interaction.colour;
+        place(slot, session.state.row[slot] === c ? 0 : c);
+      };
       let pressTimer = 0;
       const cancelPress = () => { clearTimeout(pressTimer); pressTimer = 0; };
       const onContext = (e: Event) => e.preventDefault();
@@ -212,7 +218,7 @@ export function guessView(): View<GuessPuzzle, GuessState, GuessAction, GuessInt
           drag = { colour: at.tray, from: null, pointerId: e.pointerId, moved: false, x: at.x, y: at.y };
         } else if (at.row >= 0) {
           if (at.row === cur) session.setInteraction((i) => ({ ...i, slot: at.slot }));
-          if (at.row === cur && e.button === 2) { session.dispatch({ type: "hold", index: at.slot }); return; }
+          if (at.row === cur && e.pointerType !== "touch" && e.button !== 1 && secondary(e, id)) { session.dispatch({ type: "hold", index: at.slot }); return; }
           const colour = at.row < cur ? session.state.done[at.row]!.code[at.slot]! : at.row === cur ? session.state.row[at.slot]! : 0;
           drag = { colour, from: { row: at.row, slot: at.slot }, pointerId: e.pointerId, moved: false, x: at.x, y: at.y };
           if (at.row === cur && e.pointerType === "touch") {
@@ -220,7 +226,8 @@ export function guessView(): View<GuessPuzzle, GuessState, GuessAction, GuessInt
               pressTimer = 0;
               if (!drag || drag.moved) return;
               navigator.vibrate?.(15);
-              session.dispatch({ type: "hold", index: at.slot });
+              if (buttonsSwapped(id)) toggleColour(at.slot);
+              else session.dispatch({ type: "hold", index: at.slot });
               drag = null;
             }, 450);
           }
@@ -250,8 +257,8 @@ export function guessView(): View<GuessPuzzle, GuessState, GuessAction, GuessInt
         if (!d.moved) {
           if (e.pointerType === "touch" && !pending && d.from?.row === cur) return;
           if (d.from && d.from.row === cur) {
-            const c = session.interaction.colour;
-            place(d.from.slot, session.state.row[d.from.slot] === c ? 0 : c);
+            if (e.pointerType === "touch" && buttonsSwapped(id)) session.dispatch({ type: "hold", index: d.from.slot });
+            else toggleColour(d.from.slot);
           }
           return;
         }

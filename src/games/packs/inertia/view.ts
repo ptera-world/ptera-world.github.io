@@ -14,7 +14,7 @@ const CSS = `
 .inertia-board .stop { fill: none; stroke: var(--text-dim); stroke-width: 0.8; }
 .inertia-board .mine { fill: var(--danger); }
 .inertia-board .mine-spike { stroke: var(--danger); stroke-width: 0.8; }
-.inertia-board .gem { fill: var(--gem, #2bb3c0); stroke: color-mix(in srgb, var(--gem, #2bb3c0) 60%, var(--text)); stroke-width: 0.4; }
+.inertia-board .gem { fill: var(--gem, var(--palette-6)); stroke: color-mix(in srgb, var(--gem, var(--palette-6)) 60%, var(--text)); stroke-width: 0.4; }
 .inertia-board .ball { fill: var(--accent); stroke: color-mix(in srgb, var(--accent) 50%, var(--text)); stroke-width: 0.6; transition: transform var(--roll, 0ms) linear; }
 .inertia-board .ball.dead { fill: var(--danger); }
 .inertia-board .aim { fill: none; stroke: var(--accent); stroke-width: 0.8; stroke-dasharray: 1.2 1; pointer-events: none; }
@@ -40,7 +40,7 @@ declare module "../../core/commands" {
 }
 
 const swatch = (body: string) => `<svg viewBox="-0.5 -0.5 11 11"><rect width="10" height="10" fill="var(--cell)" stroke="var(--border)" stroke-width="0.2"/>${body}</svg>`;
-const GEM_SVG = `<path d="M5 2.2L7.8 5L5 7.8L2.2 5Z" fill="var(--gem, #2bb3c0)" stroke="color-mix(in srgb, var(--gem, #2bb3c0) 60%, var(--text))" stroke-width="0.4"/>`;
+const GEM_SVG = `<path d="M5 2.2L7.8 5L5 7.8L2.2 5Z" fill="var(--gem, var(--palette-6))" stroke="color-mix(in srgb, var(--gem, var(--palette-6)) 60%, var(--text))" stroke-width="0.4"/>`;
 const MINE_SVG = `<circle cx="5" cy="5" r="2.2" fill="var(--danger)"/><path d="M5 1.6V8.4M1.6 5H8.4M2.6 2.6L7.4 7.4M7.4 2.6L2.6 7.4" stroke="var(--danger)" stroke-width="0.8"/>`;
 const STOP_SVG = `<circle cx="5" cy="5" r="3.4" fill="none" stroke="var(--text-dim)" stroke-width="0.8"/>`;
 const BALL_SVG = (fill: string) => `<circle cx="5" cy="5" r="3" fill="${fill}" stroke="color-mix(in srgb, var(--accent) 50%, var(--text))" stroke-width="0.6"/>`;

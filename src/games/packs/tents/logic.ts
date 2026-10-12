@@ -489,9 +489,6 @@ export function hint(p: TentsPuzzle, s: TentsState): Hint<TentsAction> | null {
   if (c.touching.length) return { message: `the tents on ${cellList(p, c.touching)} touch`, focus: { cells: c.touching, because: [] } satisfies Focus };
   if (c.counts.length) return { message: `${lineName(p, c.counts[0]!)} can't get the right number of tents any more`, focus: { cells: [], because: [], related: g.lines[c.counts[0]!]! } satisfies Focus };
   if (c.lonely.length) return { message: `${cellList(p, c.lonely)} can't be paired with a tree or tent`, focus: { cells: c.lonely, because: [] } satisfies Focus };
-  const a = analyze(p);
-  if (a.count === 0) return { message: "this puzzle has no solution" };
-  if (a.count === 2) return { message: "this puzzle has more than one solution, so it can need a guess" };
   return { message: "none of the techniques you have hints on applies here" };
 }
 

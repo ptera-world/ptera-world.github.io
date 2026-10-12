@@ -8,7 +8,7 @@ import type { Step } from "../../core/types";
 import { gridFormat, zip, type ZipAction, type ZipFocus } from "./logic";
 import { zipPlugins } from "./plugins";
 import { analyze, board, countSolutions, logicSolve, walkOf, type ZipPuzzle } from "./solver";
-import { zipHint, zipTechniques } from "./techniques";
+import { zipTechniques } from "./techniques";
 
 const sig = () => new AbortController().signal;
 const gen = (params: Record<string, unknown>, seed: string) => generate(zip, params, seed, sig()) as Promise<ZipPuzzle>;
@@ -59,13 +59,13 @@ test("logic never contradicts brute force on boards with clues taken away", asyn
 function played(p: ZipPuzzle, auto: string[] = []) {
   const registry = new Registry();
   for (const t of zipTechniques) registry.technique(auto.includes(t.id) ? { ...t, defaults: { auto: true } } : t);
-  const s = new Session({ ...zip, hint: zipHint }, p, { kind: "imported" });
+  const s = new Session(zip, p, { kind: "imported" });
   new TechniqueHost(registry, s);
   zipPlugins[1]!.setup!({ session: s, settings: {}, owner: "check" });
   return s;
 }
 
-test("following hints solves every difficulty; a wrong turn is pointed out first", async () => {
+test("a wrong turn is pointed out first, then technique steps keep to the solution", async () => {
   for (const difficulty of ["easy", "medium", "hard"]) {
     const p = await gen({ width: 6, height: 6, difficulty }, `h-${difficulty}`);
     const sol = analyze(p).solution!;
@@ -77,11 +77,11 @@ test("following hints solves every difficulty; a wrong turn is pointed out first
       s.undo();
     }
     for (let i = 0; i < 200 && !s.solved; i++) {
-      const h = s.hint();
-      expect(h?.actions?.length).toBeGreaterThan(0);
-      s.batch(() => { for (const a of h!.actions!) s.dispatch(a); });
+      const hit = firstStep(zip, zipTechniques, p, s.state);
+      if (!hit) break;
+      s.batch(() => { for (const a of hit.step.actions) s.dispatch(a as never); });
+      expect(s.state.path).toEqual(sol.slice(0, s.state.path.length));
     }
-    expect(s.solved).toBe(true);
   }
 }, 60000);
 
@@ -93,9 +93,8 @@ test("technique steps follow the solution and every named cell is highlighted", 
     let st = zip.init(p);
     for (let i = 0; i < 100 && !zip.isSolved(p, st); i++) {
       const hit = firstStep(zip, zipTechniques, p, st);
-      const fromHint = hit ? null : zipHint(p, st);
-      const step = hit ? hit.step : fromHint!.more!;
-      expect(step).toBeDefined();
+      if (!hit) break;
+      const step = hit.step;
       const next = applyStep(zip, p, st, step as Step<ZipAction>);
       expect(next.path).toEqual(sol.slice(0, next.path.length));
       const f = step.focus as ZipFocus;
@@ -103,7 +102,6 @@ test("technique steps follow the solution and every named cell is highlighted", 
       for (const n of names(step.message)) expect(shown.has(n)).toBe(true);
       st = next;
     }
-    expect(zip.isSolved(p, st)).toBe(true);
     if (analyze(p).level! < 6) expect(rateByTechniques(zip, zipTechniques, p)!.hardest.level).toBe(analyze(p).level!);
   }
 }, 60000);

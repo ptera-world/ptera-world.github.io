@@ -1,5 +1,6 @@
 import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
 import { s, style } from "../../core/dom";
+import { buttonsSwapped, secondary } from "../../core/gestures";
 import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
 import { DOWN, LEFT, RIGHT, UP, edgeAt, edgeGrid, otherEnd, pieces, step } from "../../lib/edges";
@@ -168,7 +169,7 @@ export function numberlinkView(board: BoardPrefs): View<NumberlinkPuzzle, Number
         }
       };
 
-      type Pen = { pointerId: number; head: number; pair: number; fresh: boolean; moved: boolean; done: boolean; at: Point; button: number; touch: boolean };
+      type Pen = { pointerId: number; head: number; pair: number; fresh: boolean; moved: boolean; done: boolean; at: Point; sec: boolean; touch: boolean };
       type Point = { cell: number; edge: number };
       let pen: Pen | null = null;
       let pressTimer = 0;
@@ -234,13 +235,13 @@ export function numberlinkView(board: BoardPrefs): View<NumberlinkPuzzle, Number
         if (session.locked) return;
         if (e.pointerType !== "touch" && e.button !== 0 && e.button !== 2) return;
         f.svg.setPointerCapture?.(e.pointerId);
-        pen = { pointerId: e.pointerId, head: at.cell, pair: 0, fresh: false, moved: false, done: false, at, button: e.button, touch: e.pointerType === "touch" };
+        pen = { pointerId: e.pointerId, head: at.cell, pair: 0, fresh: false, moved: false, done: false, at, sec: secondary(e, session.def.id), touch: e.pointerType === "touch" };
         if (pen.touch && at.edge >= 0) {
           pressTimer = window.setTimeout(() => {
             pressTimer = 0;
             if (!pen || pen.moved) return;
             navigator.vibrate?.(15);
-            toggleEdge(pen.at.edge, CROSS);
+            toggleEdge(pen.at.edge, buttonsSwapped(session.def.id) ? LINE : CROSS);
             pen = null;
           }, settings.longPressMs);
         }
@@ -251,7 +252,7 @@ export function numberlinkView(board: BoardPrefs): View<NumberlinkPuzzle, Number
           return;
         }
         const c = f.cellAt(e);
-        if (c < 0 || c === pen.head || pen.button === 2 || pen.done) return;
+        if (c < 0 || c === pen.head || (pen.sec && !pen.touch) || pen.done) return;
         if (!pen.moved) {
           const start = startPen(pen.head);
           if (!start) { pen.done = true; return; }
@@ -282,7 +283,7 @@ export function numberlinkView(board: BoardPrefs): View<NumberlinkPuzzle, Number
           return;
         }
         if (!commit || (pn.touch && !pending) || pn.at.edge < 0) return;
-        toggleEdge(pn.at.edge, pn.button === 2 ? CROSS : LINE);
+        toggleEdge(pn.at.edge, pn.sec ? CROSS : LINE);
       };
       const svg = f.svg;
       const onContext = (e: Event) => e.preventDefault();

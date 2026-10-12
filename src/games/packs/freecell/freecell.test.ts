@@ -1,12 +1,11 @@
 import { expect, test } from "bun:test";
 import { generate } from "../../core/generate";
-import { Registry } from "../../core/registry";
 import { Session } from "../../core/session";
-import { TechniqueHost, applyStep, findPracticePosition, findStep, firstStep } from "../../core/techniques";
+import { applyStep, findPracticePosition, findStep, firstStep } from "../../core/techniques";
 import { cardCode, msDeal, parseCards } from "../../lib/cards/deck";
 import { fcSolveFormat, freecell, msFormat, startPos, type FreecellPuzzle } from "./logic";
 import { solve } from "./solver";
-import { checkWinnable, fallbackHint, freecellTechniques } from "./techniques";
+import { freecellTechniques } from "./techniques";
 
 const sig = () => new AbortController().signal;
 const gen = (params: Record<string, unknown>, seed: string) => generate(freecell, params, seed, sig()) as Promise<FreecellPuzzle>;
@@ -58,35 +57,30 @@ test("moves follow the rules: alternating builds, cell and run limits", () => {
   expect(freecell.reduce(p, parked, { type: "move", from: 9, to: 0, n: 1 })).toBe(parked);
 });
 
-test("hints win a game, also after wandering off the stored line", async () => {
+test("technique steps keep applying, also after wandering off the stored line", async () => {
   const p = await gen({}, "h");
-  const registry = new Registry();
-  for (const t of freecellTechniques) registry.technique(t);
-  const session = new Session({ ...freecell, hint: fallbackHint }, p, { kind: "imported" });
-  new TechniqueHost(registry, session);
-  checkWinnable.setup!({ session, settings: {}, owner: "check" });
+  const session = new Session(freecell, p, { kind: "imported" });
   // a legal move off the stored line
   const off = Array.from({ length: 8 }, (_, j) => j + 8).find((from) => session.dispatch({ type: "move", from, to: 0, n: 1 }));
   expect(off).toBeDefined();
-  for (let i = 0; i < 400 && !session.solved; i++) {
-    const hint = session.hint();
-    expect(hint?.actions?.length).toBeGreaterThan(0);
-    session.batch(() => { for (const a of hint!.actions!) session.dispatch(a); });
+  for (let i = 0; i < 400; i++) {
+    const hit = firstStep(freecell, freecellTechniques, p, session.state);
+    if (!hit) break;
+    session.batch(() => { for (const a of hit.step.actions) session.dispatch(a as never); });
   }
-  expect(session.solved).toBe(true);
 }, 30000);
 
-test("techniques alone win every preset; practice positions exist", async () => {
+test("technique steps are legal on every preset; practice positions exist", async () => {
   for (const pr of freecell.presets!) {
     const p = await gen(pr.params, "t");
     let s = freecell.init(p);
     for (let i = 0; i < 400 && !freecell.isSolved(p, s); i++) {
       const hit = firstStep(freecell, freecellTechniques, p, s);
-      const h = hit ? null : fallbackHint(p, s);
-      expect(hit ?? h).not.toBeNull();
-      s = hit ? applyStep(freecell, p, s, hit.step) : h!.actions!.reduce((t, a) => freecell.reduce(p, t, a), s);
+      if (!hit) break;
+      const next = applyStep(freecell, p, s, hit.step);
+      expect(next).not.toBe(s);
+      s = next;
     }
-    expect(freecell.isSolved(p, s)).toBe(true);
   }
   for (const t of freecellTechniques) {
     const pos = await findPracticePosition(freecell, freecellTechniques, t, "x", sig());

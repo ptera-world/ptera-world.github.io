@@ -1,6 +1,7 @@
 import type { Binding } from "../../core/commands";
 import { s, inputIs } from "../../core/dom";
 import type { Side } from "../../core/names";
+import { buttonsSwapped, secondary } from "../../core/gestures";
 import type { Session } from "../../core/session";
 import type { Focus } from "./names";
 
@@ -154,7 +155,7 @@ export interface StrokeSpec {
  * Pointer input shared by the grid views: every gesture is a stroke. A click or tap is a stroke
  * of one cell; dragging adds every cell entered that had the first cell's mark. Mouse: left is
  * primary, right is secondary. Touch: a tap is primary; holding still on the first cell switches
- * the stroke to secondary.
+ * the stroke to secondary. The player's button swap for the puzzle exchanges both pairs.
  */
 export class Strokes {
   stroke: Stroke | null = null;
@@ -203,13 +204,15 @@ export class Strokes {
     if (e.pointerType !== "touch" && e.button !== 0 && e.button !== 2) return;
     this.pointerId = e.pointerId;
     this.f.svg.setPointerCapture?.(e.pointerId);
-    this.start(c, e.pointerType !== "touch" && e.button === 2 ? "secondary" : "primary");
+    const id = this.session.def.id;
+    const touchFirst = buttonsSwapped(id) ? "secondary" : "primary";
+    this.start(c, e.pointerType === "touch" ? touchFirst : secondary(e, id) ? "secondary" : "primary");
     if (e.pointerType === "touch") {
       this.timer = window.setTimeout(() => {
         this.timer = 0;
         if (this.stroke?.cells.length !== 1) return;
         navigator.vibrate?.(15);
-        this.start(c, "secondary");
+        this.start(c, touchFirst === "primary" ? "secondary" : "primary");
         this.spec.redraw();
       }, this.spec.holdMs());
     }

@@ -72,7 +72,7 @@ function played(p: UndeadPuzzle, auto: string[] = []) {
   return s;
 }
 
-test("following hints solves every difficulty; wrong monsters come first", async () => {
+test("wrong monsters are pointed out first; technique steps follow", async () => {
   for (const difficulty of ["easy", "medium", "hard"]) {
     const p = await gen({ width: 6, height: 6, difficulty }, `h-${difficulty}`);
     const s = played(p);
@@ -81,12 +81,12 @@ test("following hints solves every difficulty; wrong monsters come first", async
     const wrong = sol[c] === 1 ? 2 : 1;
     s.dispatch({ type: "set", cells: [c], value: wrong });
     expect(s.hint()?.actions?.[0]).toEqual({ type: "set", cells: [c], value: 0 });
+    s.dispatch({ type: "set", cells: [c], value: 0 });
     for (let i = 0; i < 400 && !s.solved; i++) {
-      const h = s.hint();
-      expect(h?.actions?.length).toBeGreaterThan(0);
-      s.batch(() => { for (const a of h!.actions!) s.dispatch(a); });
+      const hit = firstStep(undead, undeadTechniques, p, s.state);
+      if (!hit) break;
+      s.batch(() => { for (const a of hit.step.actions as UndeadAction[]) s.dispatch(a); });
     }
-    expect(s.solved).toBe(true);
   }
 });
 

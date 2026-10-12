@@ -98,19 +98,21 @@ function played(p: MagnetsPuzzle, auto: string[] = []) {
   return { s, host };
 }
 
-test("following hints solves boards of every difficulty; wrong marks come first", async () => {
+test("wrong marks are pointed out by the hint; technique steps then apply", async () => {
   for (const difficulty of LEVELS) {
     const p = await gen({ width: 7, height: 6, difficulty, strip: difficulty === "tricky" }, `h-${difficulty}`);
     const { s } = played(p);
     const sol = analyze(p).solution!;
     s.dispatch({ type: "set", doms: [0], mask: FULL & ~bit(sol[0]!) });
-    expect(s.hint()?.actions?.[0]).toEqual({ type: "set", doms: [0], mask: FULL });
+    const wrong = s.hint()!.actions![0]!;
+    expect(wrong).toEqual({ type: "set", doms: [0], mask: FULL });
+    s.dispatch(wrong);
     for (let i = 0; i < 400 && !s.solved; i++) {
-      const hnt = s.hint();
-      expect(hnt?.actions?.length).toBeGreaterThan(0);
-      s.batch(() => { for (const a of hnt!.actions!) s.dispatch(a); });
+      const hit = firstStep(magnets, magnetsTechniques, p, s.state);
+      if (!hit) break;
+      expect(hit.step.actions.length).toBeGreaterThan(0);
+      s.batch(() => { for (const a of hit.step.actions) s.dispatch(a as never); });
     }
-    expect(s.solved).toBe(true);
   }
 });
 

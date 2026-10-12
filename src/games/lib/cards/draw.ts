@@ -11,15 +11,15 @@ export const CARD_R = 0.8;
  * --card-red, --card-back, and for the four-colour deck --card-clubs and --card-diamonds.
  */
 export const CARD_CSS = `
-.cards-table .card-face rect.body { fill: var(--card-face, #fbfaf6); stroke: var(--card-edge, rgb(0 0 0 / 0.35)); stroke-width: 0.15; }
-.cards-table .card-back rect.body { fill: var(--card-back, var(--accent)); stroke: var(--card-edge, rgb(0 0 0 / 0.35)); stroke-width: 0.15; }
+.cards-table .card-face rect.body { fill: var(--card-face, var(--cell)); stroke: var(--card-edge, var(--border)); stroke-width: 0.15; }
+.cards-table .card-back rect.body { fill: var(--card-back, var(--accent)); stroke: var(--card-edge, var(--border)); stroke-width: 0.15; }
 .cards-table .card-back rect.inner { fill: none; stroke: rgb(255 255 255 / 0.55); stroke-width: 0.3; }
 .cards-table .card-back path { fill: none; stroke: rgb(255 255 255 / 0.35); stroke-width: 0.25; }
 .cards-table .card text { font-family: var(--font); font-weight: 700; pointer-events: none; }
-.cards-table .card .s0, .cards-table .card .s3 { fill: var(--card-ink, #1d1d1f); }
-.cards-table .card .s1, .cards-table .card .s2 { fill: var(--card-red, #c62828); }
-.cards-table.four-color .card .s0 { fill: var(--card-clubs, #1b7a36); }
-.cards-table.four-color .card .s1 { fill: var(--card-diamonds, #1e5bbf); }
+.cards-table .card .s0, .cards-table .card .s3 { fill: var(--card-ink, var(--text)); }
+.cards-table .card .s1, .cards-table .card .s2 { fill: var(--card-red, var(--danger)); }
+.cards-table.four-color .card .s0 { fill: var(--card-clubs, var(--palette-2)); }
+.cards-table.four-color .card .s1 { fill: var(--card-diamonds, var(--palette-5)); }
 `;
 
 function faceGroup(f: Face): SVGGElement {

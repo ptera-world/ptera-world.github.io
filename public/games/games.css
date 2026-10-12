@@ -18,6 +18,15 @@
   --cell: Canvas;
   --cell-lit: Mark;
   --focus: Highlight;
+  /* pieces told apart only by colour (flood colours, mine counts, cars, line clues), in a fixed order */
+  --palette-1: #5b8fd9;
+  --palette-2: #4f9e5c;
+  --palette-3: #d9534f;
+  --palette-4: #9b6fd6;
+  --palette-5: #d98a3a;
+  --palette-6: #3aa6a6;
+  --palette-7: #c9a227;
+  --palette-8: #cc5f9f;
   /* opacity of things that are finished (completed digits, satisfied clues) */
   --done-opacity: 0.35;
   --font: system-ui, sans-serif;

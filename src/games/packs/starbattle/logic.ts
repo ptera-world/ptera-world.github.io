@@ -267,9 +267,6 @@ export function hint(p: StarBattlePuzzle, s: ShadeState): Hint<ShadeAction> | nu
   const c = findConflicts(p, s.marks);
   if (c.touching.length) return { message: `the stars on ${cellList(p, c.touching)} touch`, focus: { cells: c.touching, because: [] } satisfies Focus };
   if (c.crowded.length) return { message: `${cellList(p, c.crowded)} put more than ${p.k} ${p.k === 1 ? "star" : "stars"} in a row, column or region`, focus: { cells: c.crowded, because: [] } satisfies Focus };
-  const a = analyze(p);
-  if (a.count === 0) return { message: "this puzzle has no solution" };
-  if (a.count === 2) return { message: "this puzzle has more than one solution, so it can need a guess" };
   return { message: "none of the techniques you have hints on applies here" };
 }
 

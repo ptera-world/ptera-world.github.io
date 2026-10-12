@@ -1,3 +1,4 @@
+import { secondary } from "../../core/gestures";
 import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
 import { s, style, inputIs } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
@@ -10,10 +11,10 @@ import type { MapTarget } from "./techniques";
 export const CONFLICTS_KEY = "map.conflicts";
 
 const FILLS = [
-  "var(--map-red, hsl(2 70% 64%))",
-  "var(--map-yellow, hsl(46 85% 60%))",
-  "var(--map-green, hsl(135 40% 52%))",
-  "var(--map-blue, hsl(212 65% 62%))",
+  "var(--map-red, var(--palette-1))",
+  "var(--map-yellow, var(--palette-2))",
+  "var(--map-green, var(--palette-3))",
+  "var(--map-blue, var(--palette-4))",
 ] as const;
 
 const CSS = `
@@ -224,7 +225,7 @@ export function mapView(board: Board): View<MapPuzzle, MapState, MapAction, MapI
         const next = ((cur + 1 + dir + 5) % 5) - 1;
         session.dispatch({ type: "colour", regions: [r], colour: next });
       };
-      let press: { region: number; button: number; pointerId: number } | null = null;
+      let press: { region: number; back: boolean; pointerId: number } | null = null;
       const onContext = (e: Event) => e.preventDefault();
       const onDown = (e: PointerEvent) => {
         const c = cellAt(e);
@@ -232,7 +233,7 @@ export function mapView(board: Board): View<MapPuzzle, MapState, MapAction, MapI
         e.preventDefault();
         session.setInteraction((i) => ({ ...i, cursor: c }));
         if (session.locked) return;
-        press = { region: p.map[c]!, button: e.button, pointerId: e.pointerId };
+        press = { region: p.map[c]!, back: e.pointerType !== "touch" && e.button !== 1 && secondary(e, session.def.id), pointerId: e.pointerId };
         svg.setPointerCapture?.(e.pointerId);
       };
       const onUp = (e: PointerEvent) => {
@@ -241,7 +242,7 @@ export function mapView(board: Board): View<MapPuzzle, MapState, MapAction, MapI
         press = null;
         const c = cellAt(e);
         const to = c < 0 ? -1 : p.map[c]!;
-        if (to === from.region) cycle(to, from.button === 2 ? -1 : 1);
+        if (to === from.region) cycle(to, from.back ? -1 : 1);
         else if (to >= 0 && editable(to) && session.state.colours[from.region]! >= 0) {
           session.dispatch({ type: "colour", regions: [to], colour: session.state.colours[from.region]! });
         }

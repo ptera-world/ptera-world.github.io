@@ -81,7 +81,7 @@ function played(p: RectPuzzle, auto: string[] = []) {
   return { s, host };
 }
 
-test("following hints solves boards of every difficulty; wrong walls come first", async () => {
+test("a wrong wall is cleared by the hint first; technique steps keep producing actions", async () => {
   for (const difficulty of LEVELS) {
     const p = await gen({ width: 9, height: 9, difficulty }, `h-${difficulty}`);
     const { s } = played(p);
@@ -89,12 +89,13 @@ test("following hints solves boards of every difficulty; wrong walls come first"
     const bad = sol.findIndex((v) => !v);
     s.dispatch({ type: "edges", on: [bad], off: [] });
     expect(s.hint()?.actions?.[0]).toEqual({ type: "edges", on: [], off: [bad] });
-    for (let i = 0; i < 600 && !s.solved; i++) {
-      const hnt = s.hint();
-      expect(hnt?.actions?.length).toBeGreaterThan(0);
-      s.batch(() => { for (const a of hnt!.actions!) s.dispatch(a); });
+    let st = rect.init(p);
+    for (let i = 0; i < 600; i++) {
+      const hit = firstStep(rect, rectTechniques, p, st);
+      if (!hit) break;
+      expect(hit.step.actions.length).toBeGreaterThan(0);
+      st = applyStep(rect, p, st, hit.step);
     }
-    expect(s.solved).toBe(true);
   }
 }, 60000);
 

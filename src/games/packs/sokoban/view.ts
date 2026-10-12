@@ -15,8 +15,8 @@ const CSS = `
 .sokoban-board .floor { fill: var(--cell); stroke: var(--border); stroke-width: 0.2; }
 .sokoban-board .wall { fill: color-mix(in srgb, var(--text) 75%, var(--bg)); stroke: var(--text); stroke-width: 0.2; }
 .sokoban-board .goal { fill: none; stroke: var(--accent); stroke-width: 0.8; }
-.sokoban-board .box rect { fill: var(--sokoban-box, #c08a4a); stroke: color-mix(in srgb, var(--sokoban-box, #c08a4a) 50%, var(--text)); stroke-width: 0.6; }
-.sokoban-board .box path { stroke: color-mix(in srgb, var(--sokoban-box, #c08a4a) 50%, var(--text)); stroke-width: 0.5; fill: none; }
+.sokoban-board .box rect { fill: var(--sokoban-box, var(--palette-5)); stroke: color-mix(in srgb, var(--sokoban-box, var(--palette-5)) 50%, var(--text)); stroke-width: 0.6; }
+.sokoban-board .box path { stroke: color-mix(in srgb, var(--sokoban-box, var(--palette-5)) 50%, var(--text)); stroke-width: 0.5; fill: none; }
 .sokoban-board .box.home rect { fill: var(--accent); stroke: color-mix(in srgb, var(--accent) 50%, var(--text)); }
 .sokoban-board .box.home path { stroke: color-mix(in srgb, var(--accent) 50%, var(--text)); }
 .sokoban-board .box.stuck rect { fill: var(--danger); }
@@ -55,12 +55,11 @@ export const sokoView: View<SokoPuzzle, SokoState, SokoAction, SokoInteraction> 
   ],
   legend: [
     { sample: swatch(`<circle cx="5" cy="5" r="3" fill="var(--text)"/>`), meaning: "the warehouse keeper" },
-    { sample: swatch(BOX("var(--sokoban-box, #c08a4a)")), meaning: "a box" },
+    { sample: swatch(BOX("var(--sokoban-box, var(--palette-5))")), meaning: "a box" },
     { sample: swatch(`<circle cx="5" cy="5" r="2.2" fill="none" stroke="var(--accent)" stroke-width="0.8"/>`), meaning: "a goal" },
     { sample: swatch(BOX("var(--accent)")), meaning: "a box on a goal" },
     { sample: swatch(BOX("var(--danger)")), meaning: "a stuck box: it can never reach a goal" },
     { sample: `<svg viewBox="-0.5 -0.5 11 11"><rect width="10" height="10" fill="color-mix(in srgb, var(--text) 75%, var(--bg))"/></svg>`, meaning: "a wall" },
-    { sample: swatch(`<path d="M2 5H8M6 3L8 5L6 7" fill="none" stroke="var(--hint)" stroke-width="1.2"/>`), meaning: "hint: the push to make" },
   ],
   mount(root, { session }) {
     style("sokoban", CSS);

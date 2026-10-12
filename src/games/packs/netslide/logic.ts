@@ -417,7 +417,6 @@ export const netslide: PuzzleDef<NetslidePuzzle, NetslideState, NetslideAction, 
     return moves ? { moves } : null;
   },
   rate,
-  hint: (p) => (target(p) ? null : { message: "no finished arrangement of these pieces turned up, so there's no hint for this board" }),
   rules: (p) => [
     "a move slides one whole row or column along by one; the piece pushed off one end comes back on at the other.",
     "the middle row and the middle column can't slide, so the center piece never moves.",

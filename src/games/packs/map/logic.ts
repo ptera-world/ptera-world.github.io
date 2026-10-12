@@ -267,9 +267,6 @@ export function hint(p: MapPuzzle, s: MapState): Hint<MapAction> | null {
   const c = findConflicts(p, s);
   if (c.clashes.length) return { message: `${regionList(p, c.clashes)} ${c.clashes.length === 1 ? "has" : "have"} the same color as a neighbor`, focus: { regions: c.clashes, because: [] } satisfies MapFocus };
   if (c.stuck.length) return { message: `${regionList(p, c.stuck)} can't take any color: the neighbors use all four`, focus: { regions: c.stuck, because: [] } satisfies MapFocus };
-  const a = analyze(p);
-  if (a.count === 0) return { message: "this map has no solution" };
-  if (a.count === 2) return { message: "this map has more than one solution, so it can need a guess" };
   return { message: "none of the techniques you have hints on applies here" };
 }
 

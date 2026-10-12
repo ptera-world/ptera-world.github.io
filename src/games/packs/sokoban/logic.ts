@@ -178,24 +178,13 @@ export function solveFrom(p: SokoPuzzle, s: SokoState): ReturnType<typeof solveP
   return r;
 }
 
-/** Boxes that can never reach a goal, or a position the search proves unsolvable, as a hint to undo. */
-export function stuckHint(p: SokoPuzzle, s: SokoState): Hint<SokoAction> | null {
+/** Boxes that can never reach a goal (against walls or other boxes): readable from the board. */
+export function hint(p: SokoPuzzle, s: SokoState): Hint<SokoAction> | null {
   if (allHome(p, s.boxes)) return null;
   const stuck = stuckBoxes(p, s.boxes);
-  if (stuck.length) {
-    const one = stuck.length === 1;
-    return { message: `the ${one ? "box" : "boxes"} at ${stuck.map((c) => cellName(p, c)).join(", ")} can't be moved onto a goal any more (${one ? "it's" : "they're"} against walls or other boxes). undo to get back.`, focus: { boxes: stuck } satisfies SokoFocus };
-  }
-  const r = solveFrom(p, s);
-  if (!r.pushes && !r.gaveUp) return { message: "the boxes can't all reach goals from here any more. undo to get back." };
-  return null;
-}
-
-export function hint(p: SokoPuzzle, s: SokoState): Hint<SokoAction> | null {
-  const r = solveFrom(p, s);
-  if (r.gaveUp) return { message: "this level is too big for the hint search" };
-  if (!r.pushes) return { message: "the boxes can't all reach goals from here any more. undo to get back." };
-  return { message: "no suggestion from here" };
+  if (!stuck.length) return null;
+  const one = stuck.length === 1;
+  return { message: `the ${one ? "box" : "boxes"} at ${stuck.map((c) => cellName(p, c)).join(", ")} can't be moved onto a goal any more (${one ? "it's" : "they're"} against walls or other boxes). undo to get back.`, focus: { boxes: stuck } satisfies SokoFocus };
 }
 
 function describeAction(p: SokoPuzzle, a: SokoAction, before: SokoState, after: SokoState): string {

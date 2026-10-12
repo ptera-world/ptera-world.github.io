@@ -436,9 +436,6 @@ export function hint(p: MagnetsPuzzle, s: MagnetsState): Hint<MagnetsAction> | n
     const li = c.counts[0]! >> 1;
     return { message: `${lineName(p, li)} can't get its ${(c.counts[0]! & 1) ? "minus" : "plus"} count right any more`, focus: { cells: [], because: [], related: g.lines[li]! } satisfies Focus };
   }
-  const a = analyze(p);
-  if (a.count === 0) return { message: "this puzzle has no solution" };
-  if (a.count === 2) return { message: "this puzzle has more than one solution, so it can need a guess" };
   return { message: "none of the techniques you have hints on applies here" };
 }
 

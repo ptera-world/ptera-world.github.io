@@ -73,19 +73,20 @@ function played(p: SlantPuzzle, auto: string[] = []) {
   return { s, host };
 }
 
-test("following hints solves boards of every difficulty; wrong lines come first", async () => {
+test("wrong lines come first, then technique steps stay on the solution", async () => {
   for (const difficulty of LEVELS) {
     const p = await gen({ width: 8, height: 8, difficulty }, `h-${difficulty}`);
     const { s } = played(p);
     const sol = analyze(p).solution!;
     s.dispatch({ type: "set", cells: [0], value: markOf(sol[0] === BACK ? FWD : BACK) });
     expect(s.hint()?.actions?.[0]).toEqual({ type: "set", cells: [0], value: NONE });
+    s.undo();
     for (let i = 0; i < 400 && !s.solved; i++) {
-      const hnt = s.hint();
-      expect(hnt?.actions?.length).toBeGreaterThan(0);
-      s.batch(() => { for (const a of hnt!.actions!) s.dispatch(a); });
+      const hit = firstStep(slant, slantTechniques, p, s.state);
+      if (!hit) break;
+      s.batch(() => { for (const a of hit.step.actions) s.dispatch(a as never); });
+      s.state.marks.forEach((m, c) => { if (m !== NONE) expect(valueOfMark(m)).toBe(sol[c]!); });
     }
-    expect(s.solved).toBe(true);
   }
 });
 

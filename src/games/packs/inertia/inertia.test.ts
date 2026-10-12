@@ -4,7 +4,7 @@ import { Registry } from "../../core/registry";
 import { Session } from "../../core/session";
 import { TechniqueHost } from "../../core/techniques";
 import { GEM, MINE, STOP, canCollectAll, gridFormat, inertia, roll, sgtFormat, type InertiaPuzzle } from "./logic";
-import { checkReachable, hint } from "./techniques";
+import { checkReachable } from "./techniques";
 
 const sig = () => new AbortController().signal;
 const gen = (params: Record<string, unknown>, seed: string) => generate(inertia, params, seed, sig()) as Promise<InertiaPuzzle>;
@@ -19,19 +19,12 @@ test("generation is deterministic with sgt's proportions", async () => {
   expect(count(STOP)).toBe(17);
 });
 
-test("every generated board can be fully collected, and the hint alone does it without dying", async () => {
+test("every generated board can be fully collected", async () => {
   for (const pr of [...inertia.presets!.map((x) => x.params), { width: 5, height: 9 }]) {
     for (const seed of ["s1", "s2", "s3"]) {
       const p = await gen(pr, seed);
       let s = inertia.init(p);
       expect(canCollectAll(p, s.pos, s.gems)).toBe(true);
-      for (let i = 0; i < 2000 && !inertia.isSolved(p, s); i++) {
-        const h = hint(p, s);
-        expect(h).not.toBeNull();
-        s = h!.actions!.reduce((t, a) => inertia.reduce(p, t, a), s);
-        expect(s.dead).toBe(false);
-      }
-      expect(inertia.isSolved(p, s)).toBe(true);
     }
   }
 }, 60000);
@@ -49,7 +42,7 @@ test("rolling: gems don't stop the ball, stops and walls do, mines kill", () => 
   expect(inertia.isLost!(p, dead)).toBeTruthy();
 });
 
-test("a roll that cuts a gem off is never hinted, and is pointed out once made", async () => {
+test("a roll that cuts a gem off is pointed out once made", async () => {
   let checked = 0;
   for (let i = 0; i < 400 && checked < 5; i++) {
     const p = await gen({ width: 6, height: 5 }, `cut${i}`);
@@ -70,12 +63,11 @@ test("a roll that cuts a gem off is never hinted, and is pointed out once made",
     if (!found) continue;
     const bad = found.bad;
     checked++;
-    const session = new Session({ ...inertia, hint }, p, { kind: "imported" });
+    const session = new Session(inertia, p, { kind: "imported" });
     for (const d of found.path) session.dispatch({ type: "move", dir: d });
     const registry = new Registry();
     new TechniqueHost(registry, session);
     checkReachable.setup!({ session, settings: {}, owner: "check" });
-    expect(session.hint()?.actions?.[0]).not.toEqual({ type: "move", dir: bad });
     session.dispatch({ type: "move", dir: bad });
     expect(session.hint()?.message).toMatch(/never reach|no single route/);
   }

@@ -1,7 +1,6 @@
-import { hintFrom } from "../../core/define";
-import type { Hint, Step, Technique } from "../../core/types";
+import type { Step, Technique } from "../../core/types";
 import {
-  guess, COLOUR_NAMES, REASON_LIMIT, bestGuess, candidates, codeCount, isOver, rankedGuesses,
+  guess, COLOUR_NAMES, REASON_LIMIT, candidates, codeCount, isOver,
   type GuessAction, type GuessFocus, type GuessPuzzle, type GuessState,
 } from "./logic";
 
@@ -63,30 +62,5 @@ export const lastCode: GuessTechnique = {
     });
   },
 };
-
-function guessStep(s: GuessState, best: { code: number[]; worst: number; left: number }): Step<GuessAction> {
-  return {
-    message: `${best.left} codes still fit. guessing ${describeCode(best.code)} leaves at most ${best.worst} of them, whatever the marks`,
-    nudge: "which guess would split the codes that still fit most evenly?",
-    focus: { slots: best.code.map((_, i) => i), rows: [] } satisfies GuessFocus,
-    nudgeFocus: { slots: [], rows: allRows(s) } satisfies GuessFocus,
-    actions: [{ type: "row", code: best.code }, { type: "submit" }],
-  };
-}
-
-/** The puzzle's hint: the guess that leaves the fewest codes possible in the worst case, else the puzzle's own hint. */
-export function guessHint(p: GuessPuzzle, s: GuessState): Hint<GuessAction> | null {
-  const valid = (st: Step<GuessAction>) => st.actions.length > 0 && !Object.is(st.actions.reduce((t, a) => guess.reduce(p, t, a), s), s);
-  const best = reasoning(p, s) ? bestGuess(p, s) : null;
-  if (best) {
-    const first = guessStep(s, best);
-    if (valid(first)) return hintFrom(null, first, 1) as Hint<GuessAction>;
-    for (const g of rankedGuesses(p, s).slice(1)) {
-      const st = guessStep(s, g);
-      if (valid(st)) return hintFrom(null, st, 1) as Hint<GuessAction>;
-    }
-  }
-  return guess.hint?.(p, s) ?? null;
-}
 
 export const guessTechniques: GuessTechnique[] = [knownPeg, lastCode];

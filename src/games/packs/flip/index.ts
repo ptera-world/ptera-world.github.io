@@ -2,7 +2,7 @@ import type { GamesApi } from "../../api";
 import type { Registry } from "../../core/registry";
 import { defineSchema } from "../../core/schema";
 import { definePlugins } from "../../core/define";
-import { flip, solvePresses, type FlipAction, type FlipInteraction, type FlipPuzzle, type FlipState } from "./logic";
+import { chaseDirectionName, chaseMoves, flip, solvePresses, type FlipAction, type FlipInteraction, type FlipPuzzle, type FlipState } from "./logic";
 import { SOLUTION_KEY, flipView } from "./view";
 import type { Technique } from "../../core/types";
 import { cellName } from "../../lib/grid-kit/names";
@@ -29,34 +29,29 @@ const solutionAssist = definePlugins<FlipPuzzle, FlipState, FlipAction, FlipInte
 });
 
 /**
- * Light chasing: a light in a row above the last is turned off by pressing the cell under it, which
- * changes nothing in the rows above. Instances are the lit cells of the topmost row that has any.
- * Presses next to each other share cells, so a lesson could not tell one press from another: no practice.
+ * Light chasing along a direction where one offset of the pattern reaches furthest back: a lit
+ * cell whose press (the cell minus that offset) exists is turned off by it, and the press touches
+ * only cells further along. Instances are those presses for the chasable lights nearest the start.
+ * Presses overlap, so a lesson could not tell one press from another: no practice.
  */
 const chase: Technique<FlipPuzzle, FlipState, FlipAction> = {
   id: "flip.chase",
   name: "chase the lights",
   puzzles: [flip],
-  requires: ["cross-presses"],
+  requires: ["chase-direction"],
   level: 1,
-  description: "work down from the top: press the cell right under every lit light. that turns the light off and touches nothing above it, so each row you finish stays dark and only the bottom row is left lit.",
+  description: "pick a direction where only one cell of the press pattern reaches furthest back. a light that has a cell behind it in that spot can be turned off by pressing that cell, and the press only touches cells further along. keep pushing the lights forward like that, and only the far end of the board stays lit.",
   practice: false,
   instances(p, s, visit) {
-    for (let r = 0; r < p.h - 1; r++) {
-      const row = Array.from({ length: p.w }, (_, c) => r * p.w + c);
-      const lit = row.filter((c) => s.lights[c]);
-      if (!lit.length) continue;
-      for (const c of lit) {
-        const below = c + p.w;
-        if (visit({
-          message: `${cellName(p, c)} is on in the highest row that still has lights. pressing ${cellName(p, below)} under it turns it off without touching anything above`,
-          nudge: `row ${r + 1} still has a light on`,
-          focus: [c, below],
-          nudgeFocus: row,
-          actions: [{ type: "press", cell: below }],
-        })) return;
-      }
-      return;
+    const dir = chaseDirectionName(p);
+    for (const m of chaseMoves(p, s.lights)) {
+      if (visit({
+        message: `${cellName(p, m.light)} is the first light along the chase; pressing ${cellName(p, m.press)} turns it off without touching anything behind it`,
+        nudge: `a light on the first line along the chase (${dir}) can be pushed further`,
+        focus: [m.light, m.press],
+        nudgeFocus: m.line,
+        actions: [{ type: "press", cell: m.press }],
+      })) return;
     }
   },
 };

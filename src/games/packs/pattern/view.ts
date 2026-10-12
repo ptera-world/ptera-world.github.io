@@ -1,4 +1,5 @@
 import { defineSchema } from "../../core/schema";
+import { secondary as isSecondary } from "../../core/gestures";
 import type { CommandDef, View } from "../../core/types";
 import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
 import { s, style, inputIs, inputKind } from "../../core/dom";
@@ -146,20 +147,10 @@ const BINDINGS = {
   "pattern.fill": { label: "fill / unfill", category: "nonogram", description: "fill the selected cell, or clear it if it's already filled", keys: ["space", "Enter"] },
   "pattern.cross": { label: "cross / uncross", category: "nonogram", description: "cross out the selected cell (mark it as empty), or clear the cross", keys: ["x", "period"] },
   "pattern.clear": { label: "clear cell", category: "nonogram", description: "remove the fill or cross from the selected cell", keys: ["Backspace", "Delete"] },
-  "pattern.mode": { label: "cross mode", category: "nonogram", description: "when on, a tap or left-click crosses cells out instead of filling them (right-click does the opposite)", keys: ["m"] },
 } satisfies BindingSchema;
 
 declare module "../../core/commands" {
   interface CommandNames extends Ids<typeof BINDINGS> {}
-}
-
-/** The keys this view adds to the command context. */
-export interface PatternContext {
-  patternCrossMode: boolean;
-}
-
-declare module "../../core/types" {
-  interface CommandContext extends Partial<PatternContext> {}
 }
 
 /** A 10×10 cell sample on the board background; the same colors the board CSS uses. */
@@ -554,8 +545,7 @@ export function patternView(look: Look, board: Board, menuHoldMs: number): View<
         e.preventDefault();
         aim = lineTarget(cell);
         svg.setPointerCapture(e.pointerId);
-        const swap = session.interaction.crossMode && e.button === 0;
-        const secondary = (e.button === 2) !== swap;
+        const secondary = e.button !== 1 && isSecondary(e, session.def.id);
         const from = session.state.cells[cell]!;
         const target: Cell = e.button === 1 ? UNKNOWN : targetFor(from, secondary);
         drag = { pointerId: e.pointerId, start: cell, cur: cell, from, target, secondary, prior: session.state.cells, timer: 0 };
@@ -653,9 +643,6 @@ export function patternView(look: Look, board: Board, menuHoldMs: number): View<
         "pattern.fill": mark("fill"),
         "pattern.cross": mark("cross"),
         "pattern.clear": mark("clear"),
-        "pattern.mode": () => session.setInteraction((i) => ({ ...i, crossMode: !i.crossMode })),
-      }, {
-        "pattern.mode": { checked: () => session.interaction.crossMode, menu: "board" },
       });
       return {
         aspect: W / H,
@@ -669,7 +656,6 @@ export function patternView(look: Look, board: Board, menuHoldMs: number): View<
         // right-click crosses; a touch hold crosses unless hold-to-cross is off, then it is the shell menu
         gestures: { secondaryClick: true, hold: (settings.longPressMs) > 0 },
         commands,
-        context: (): PatternContext => ({ patternCrossMode: session.interaction.crossMode }),
         locate: (f) => {
           const focus = f as PatternFocus | undefined;
           if (!focus) return [];

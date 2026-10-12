@@ -293,9 +293,6 @@ export function wrongMarksHint(p: MosaicPuzzle, s: MosaicState): Hint<MosaicActi
 export function hint(p: MosaicPuzzle, s: MosaicState): Hint<MosaicAction> | null {
   const c = findConflicts(p, s.marks);
   if (c.clues.length) return { message: `the number on ${cellList(p, c.clues)} can't be met any more`, focus: { cells: [], because: c.clues } satisfies Focus };
-  const a = analyze(p);
-  if (a.count === 0) return { message: "this puzzle has no solution" };
-  if (a.count === 2) return { message: "this puzzle has more than one solution, so it can need a guess" };
   return { message: "none of the techniques you have hints on applies here" };
 }
 

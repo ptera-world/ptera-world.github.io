@@ -65,7 +65,7 @@ function played(p: RangePuzzle, auto: string[] = []) {
   return { s, host };
 }
 
-test("following hints solves boards of every difficulty; wrong marks come first", async () => {
+test("a wrong mark is cleared by the hint first; technique steps keep producing actions", async () => {
   for (const difficulty of LEVELS) {
     const p = await gen({ width: 9, height: 8, difficulty }, `h-${difficulty}`);
     const { s } = played(p);
@@ -73,12 +73,13 @@ test("following hints solves boards of every difficulty; wrong marks come first"
     const bad = p.nums.findIndex((v, c) => v === 0 && sol[c] !== SHADED);
     s.dispatch({ type: "set", cells: [bad], value: BLACK });
     expect(s.hint()?.actions?.[0]).toEqual({ type: "set", cells: [bad], value: NONE });
-    for (let i = 0; i < 400 && !s.solved; i++) {
-      const hnt = s.hint();
-      expect(hnt?.actions?.length).toBeGreaterThan(0);
-      s.batch(() => { for (const a of hnt!.actions!) s.dispatch(a); });
+    let st = range.init(p);
+    for (let i = 0; i < 600; i++) {
+      const hit = firstStep(range, rangeTechniques, p, st);
+      if (!hit) break;
+      expect(hit.step.actions.length).toBeGreaterThan(0);
+      st = applyStep(range, p, st, hit.step);
     }
-    expect(s.solved).toBe(true);
   }
 });
 

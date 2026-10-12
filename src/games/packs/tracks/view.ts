@@ -1,5 +1,6 @@
 import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
 import { s, style, inputIs } from "../../core/dom";
+import { buttonsSwapped, secondary } from "../../core/gestures";
 import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
 import { DOWN, LEFT, RIGHT, UP, edgeAt, edgeGrid, step } from "../../lib/edges";
@@ -238,7 +239,7 @@ export function tracksView(board: Board): View<TracksPuzzle, TracksState, Tracks
         session.dispatch({ type: "cell", cells: [c], value: v === NONE ? TRACK : v === TRACK ? EMPTY : NONE });
       };
 
-      let drag: { pointerId: number; from: number; mode: number | null; moved: boolean; at: ReturnType<typeof pointAt>; button: number; touch: boolean; drawn: number } | null = null;
+      let drag: { pointerId: number; from: number; mode: number | null; moved: boolean; at: ReturnType<typeof pointAt>; sec: boolean; touch: boolean; drawn: number } | null = null;
       let pressTimer = 0;
       const cancelPress = () => { clearTimeout(pressTimer); pressTimer = 0; };
       const onContext = (e: Event) => e.preventDefault();
@@ -249,14 +250,14 @@ export function tracksView(board: Board): View<TracksPuzzle, TracksState, Tracks
         session.setInteraction((i) => ({ ...i, cursor: at.cell }));
         if (session.locked) return;
         svg.setPointerCapture?.(e.pointerId);
-        drag = { pointerId: e.pointerId, from: at.cell, mode: null, moved: false, at, button: e.button, touch: e.pointerType === "touch", drawn: 0 };
+        drag = { pointerId: e.pointerId, from: at.cell, mode: null, moved: false, at, sec: secondary(e, session.def.id), touch: e.pointerType === "touch", drawn: 0 };
         if (drag.touch) {
           pressTimer = window.setTimeout(() => {
             pressTimer = 0;
             if (!drag || drag.moved) return;
             navigator.vibrate?.(15);
-            if (drag.at.centre) toggleCell(drag.at.cell, EMPTY);
-            else if (drag.at.edge >= 0) toggleEdge(drag.at.edge, CROSS);
+            if (drag.at.centre) toggleCell(drag.at.cell, buttonsSwapped(session.def.id) ? TRACK : EMPTY);
+            else if (drag.at.edge >= 0) toggleEdge(drag.at.edge, buttonsSwapped(session.def.id) ? LINE : CROSS);
             drag = null;
           }, settings.longPressMs as number);
         }
@@ -267,7 +268,7 @@ export function tracksView(board: Board): View<TracksPuzzle, TracksState, Tracks
           return;
         }
         const at = pointAt(e);
-        if (at.cell < 0 || at.cell === drag.from || drag.button === 2) return;
+        if (at.cell < 0 || at.cell === drag.from || (drag.sec && !drag.touch)) return;
         let edge = -1;
         for (let d = 0; d < 4; d++) if (step(g, drag.from, d) === at.cell) edge = edgeAt(g, drag.from, d);
         if (edge < 0) return;
@@ -286,9 +287,9 @@ export function tracksView(board: Board): View<TracksPuzzle, TracksState, Tracks
         cancelPress();
         if (d.moved || (d.touch && !pending)) return;
         if (d.at.centre) {
-          if (d.touch) cycleCell(d.at.cell);
-          else toggleCell(d.at.cell, d.button === 2 ? EMPTY : TRACK);
-        } else if (d.at.edge >= 0) toggleEdge(d.at.edge, d.button === 2 ? CROSS : LINE);
+          if (d.touch && !d.sec) cycleCell(d.at.cell);
+          else toggleCell(d.at.cell, d.sec ? EMPTY : TRACK);
+        } else if (d.at.edge >= 0) toggleEdge(d.at.edge, d.sec ? CROSS : LINE);
       };
       const onCancel = (e: PointerEvent) => {
         if (drag && e.pointerId === drag.pointerId) drag = null;

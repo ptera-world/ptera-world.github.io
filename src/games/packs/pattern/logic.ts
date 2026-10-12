@@ -43,8 +43,6 @@ export type PatternAction = { type: "set"; cells: number[]; value: Cell };
 
 export interface PatternInteraction {
   cursor: number;
-  /** Primary input crosses instead of fills (for touch). */
-  crossMode: boolean;
   /** Clue number the player is pointing at, if any. */
   clue?: ClueRef | null;
 }
@@ -292,7 +290,7 @@ export const pattern: PuzzleDef<PatternPuzzle, PatternState, PatternAction, Patt
   generate,
   formats: [sgtFormat, nonFormat, pictureFormat],
   init: (p) => ({ cells: Array.from({ length: p.w * p.h }, () => UNKNOWN) }),
-  initInteraction: (p) => ({ cursor: Math.floor(p.h / 2) * p.w + Math.floor(p.w / 2), crossMode: false, clue: null }),
+  initInteraction: (p) => ({ cursor: Math.floor(p.h / 2) * p.w + Math.floor(p.w / 2), clue: null }),
   isRetraction: (a) => a.type === "set" && a.value === UNKNOWN,
   rules: () => [
     "fill in cells so every row and column matches its clue.",

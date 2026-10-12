@@ -52,8 +52,6 @@ export type MinesAction =
 
 export interface MinesInteraction {
   cursor: number;
-  /** Touch: taps place flags instead of opening. */
-  flagMode: boolean;
 }
 
 /** Hint focus understood by the mines views. */
@@ -329,7 +327,7 @@ export const mines: PuzzleDef<MinesPuzzle, MinesState, MinesAction, MinesInterac
   generate,
   formats: [sgtFormat, gridFormat],
   init,
-  initInteraction: (p) => ({ cursor: p.start ?? Math.floor(p.h / 2) * p.w + Math.floor(p.w / 2), flagMode: false }),
+  initInteraction: (p) => ({ cursor: p.start ?? Math.floor(p.h / 2) * p.w + Math.floor(p.w / 2) }),
   reduce,
   isRetraction: (a) => a.type === "flag" && a.on === false,
   describeAction: (p, a, _before, after) => {
@@ -350,6 +348,10 @@ export const mines: PuzzleDef<MinesPuzzle, MinesState, MinesAction, MinesInterac
   ],
   isLost: (_p, s) => (s.dead >= 0 ? { focus: { cells: [s.dead], sources: [] } satisfies MinesFocus } : false),
   isSolved: (p, s) => s.dead < 0 && p.mines.every((m, c) => m || s.open[c]),
+  aims: (_p, step, target) => {
+    const f = step.focus as MinesFocus | undefined;
+    return typeof target === "number" && !!f && (f.cells.includes(target) || f.sources.includes(target));
+  },
   solve: (p) => ({ board: { open: p.mines.map((m) => (m ? 0 : 1)), flags: p.mines.slice(), dead: -1 } }),
   hint,
   rate,

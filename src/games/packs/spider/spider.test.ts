@@ -1,10 +1,6 @@
 import { expect, test } from "bun:test";
 import { generate } from "../../core/generate";
-import { Registry } from "../../core/registry";
-import { Session } from "../../core/session";
-import { TechniqueHost } from "../../core/techniques";
 import { actionOf, dealFormat, spider, type SpiderPuzzle, type SpiderState } from "./logic";
-import { checkWinnable, fallbackHint } from "./techniques";
 
 const sig = () => new AbortController().signal;
 const gen = (params: Record<string, unknown>, seed: string) => generate(spider, params, seed, sig()) as Promise<SpiderPuzzle>;
@@ -57,32 +53,6 @@ test("only one-suit runs move together, no deal onto an empty column, a finished
   expect(done.piles[9]!.c.length).toBe(0);
   expect(spider.isSolved(p, done)).toBe(false);
 });
-
-test("hints win a one-suit game, also after wandering off the stored line", async () => {
-  const p = await gen({ suits: "1" }, "h");
-  const registry = new Registry();
-  const session = new Session({ ...spider, hint: fallbackHint }, p, { kind: "imported" });
-  new TechniqueHost(registry, session);
-  checkWinnable.setup!({ session, settings: {}, owner: "check" });
-  session.dispatch({ type: "deal" });
-  for (let i = 0; i < 600 && !session.solved; i++) {
-    const hint = session.hint();
-    expect(hint?.actions?.length).toBeGreaterThan(0);
-    session.batch(() => { for (const a of hint!.actions!) session.dispatch(a); });
-  }
-  expect(session.solved).toBe(true);
-}, 60000);
-
-test("the hint alone wins a one-suit deal", async () => {
-  const p = await gen({ suits: "1" }, "t");
-  let s = spider.init(p);
-  for (let i = 0; i < 600 && !spider.isSolved(p, s); i++) {
-    const h = fallbackHint(p, s);
-    expect(h).not.toBeNull();
-    s = h!.actions!.reduce((t, a) => spider.reduce(p, t, a), s);
-  }
-  expect(spider.isSolved(p, s)).toBe(true);
-}, 120000);
 
 test("deal text round-trips and checks the cards", async () => {
   const p = await gen({ suits: "2", winnable: false }, "fmt");

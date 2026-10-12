@@ -18,8 +18,8 @@ const S = 100;
 /** Cell color palette (ids 1..9), as custom properties a theme can override (`--sdk-color-1` …). */
 export const PALETTE = [
   "", "rgba(214, 214, 214, 0.45)", "rgba(120, 120, 120, 0.55)", "rgba(40, 40, 40, 0.8)",
-  "rgba(170, 230, 120, 0.4)", "rgba(240, 140, 220, 0.4)", "rgba(250, 160, 80, 0.4)",
-  "rgba(240, 90, 90, 0.4)", "rgba(250, 230, 100, 0.4)", "rgba(110, 170, 250, 0.45)",
+  "color-mix(in srgb, var(--palette-1) 40%, transparent)", "color-mix(in srgb, var(--palette-2) 40%, transparent)", "color-mix(in srgb, var(--palette-3) 40%, transparent)",
+  "color-mix(in srgb, var(--palette-4) 40%, transparent)", "color-mix(in srgb, var(--palette-5) 40%, transparent)", "color-mix(in srgb, var(--palette-6) 45%, transparent)",
 ];
 export const colorVar = (id: number): string => `var(--sdk-color-${id}, ${PALETTE[id]})`;
 
@@ -34,7 +34,7 @@ const CSS = `
 .sdk-board .cell.conflict { fill: var(--danger-soft); }
 .sdk-board .open { fill: none; stroke: var(--warn); stroke-width: 3; stroke-dasharray: 10 6; pointer-events: none; }
 .sdk-board .thin { stroke: var(--border); stroke-width: 1.5; fill: none; }
-.sdk-board .thick { stroke: #777; stroke-width: 4; fill: none; stroke-linecap: square; }
+.sdk-board .thick { stroke: var(--text-dim); stroke-width: 4; fill: none; stroke-linecap: square; }
 .sdk-board .value { font: 600 ${S * 0.62}px var(--font); fill: var(--text); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
 .sdk-board .value.entered { fill: var(--focus); font-weight: 500; }
 .sdk-board .value.conflict, .sdk-board .value.mistake { fill: var(--danger); }
@@ -54,15 +54,15 @@ ${inputIs("pointer")} .sdk-board .cursor { display: none; }
 .sdk-board .color { pointer-events: none; }
 .sdk-board .sdk-diagonal { stroke: var(--text-dim); stroke-width: 2; opacity: 0.45; }
 .sdk-board .sdk-cage { fill: none; stroke: var(--text); stroke-width: 1.6; stroke-dasharray: 7 5; opacity: 0.85; }
-.sdk-board .sdk-keen { fill: none; stroke: #999; stroke-width: 5; stroke-linecap: square; }
+.sdk-board .sdk-keen { fill: none; stroke: var(--border); stroke-width: 5; stroke-linecap: square; }
 .sdk-board .sdk-label-bg { fill: var(--bg); }
 .sdk-board .sdk-label { font: 600 ${S * 0.19}px var(--font); fill: var(--text); dominant-baseline: auto; }
-.sdk-board .sdk-thermo { stroke: #555; stroke-width: ${S * 0.26}; stroke-linecap: round; stroke-linejoin: round; fill: none; }
-.sdk-board .sdk-thermo-bulb { fill: #555; }
-.sdk-board .sdk-whispers { stroke: #3a8a4a; stroke-width: ${S * 0.16}; stroke-linecap: round; stroke-linejoin: round; fill: none; opacity: 0.85; }
-.sdk-board .sdk-renban { stroke: #8a4ab0; stroke-width: ${S * 0.18}; stroke-linecap: round; stroke-linejoin: round; fill: none; opacity: 0.85; }
-.sdk-board .sdk-arrow-circle { fill: none; stroke: #999; stroke-width: 3; }
-.sdk-board .sdk-arrow { fill: none; stroke: #999; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.sdk-board .sdk-thermo { stroke: var(--text-dim); stroke-width: ${S * 0.26}; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+.sdk-board .sdk-thermo-bulb { fill: var(--text-dim); }
+.sdk-board .sdk-whispers { stroke: var(--palette-2); stroke-width: ${S * 0.16}; stroke-linecap: round; stroke-linejoin: round; fill: none; opacity: 0.85; }
+.sdk-board .sdk-renban { stroke: var(--palette-4); stroke-width: ${S * 0.18}; stroke-linecap: round; stroke-linejoin: round; fill: none; opacity: 0.85; }
+.sdk-board .sdk-arrow-circle { fill: none; stroke: var(--border); stroke-width: 3; }
+.sdk-board .sdk-arrow { fill: none; stroke: var(--border); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
 .sdk-board .sdk-kropki { stroke: var(--text); stroke-width: 2.5; }
 .sdk-board .sdk-kropki-white { fill: var(--bg); }
 .sdk-board .sdk-kropki-black { fill: var(--text); }
@@ -427,10 +427,12 @@ export function latinView(def: PuzzleRef, board: BoardPrefs = noLabels): View<La
           setSelection(session, [cell], cell);
         }
       };
+      /** The cell under the pointer, or -1. */
+      let hover = -1;
       const onMove = (e: PointerEvent) => {
-        if (!drag) return;
         const cell = toCell(e, 0.12);
-        if (cell < 0) return;
+        if (cell >= 0) hover = cell;
+        if (!drag || cell < 0) return;
         const sel = session.interaction.selection;
         if (drag === "add" && !sel.includes(cell)) setSelection(session, [...sel, cell], cell);
         else if (drag === "remove" && sel.includes(cell)) setSelection(session, sel.filter((c) => c !== cell), cell);
@@ -462,12 +464,14 @@ export function latinView(def: PuzzleRef, board: BoardPrefs = noLabels): View<La
       ];
       render();
 
+      svg.addEventListener("pointerleave", () => { hover = -1; });
       const rects = (cells: Iterable<number>) => [...cells].map((c) => cellRects[c]!.getBoundingClientRect());
       const cellAt = (e: Event | undefined): number =>
         e instanceof MouseEvent && svg.contains(e.target as Node) ? toCell(e, 0) : -1;
 
       return {
         aspect: vb[2]! / vb[3]!,
+        target: () => (hover >= 0 ? hover : session.interaction.cursor),
         cells: { cols: vb[2]! / S, rows: vb[3]! / S },
         locate: (focus) => rects(focusCells(focus)),
         preview: (state) => {

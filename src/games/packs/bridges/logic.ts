@@ -16,13 +16,9 @@ export type BridgesAction =
   | { type: "mark"; edge: number; on?: boolean }
   | { type: "many"; actions: BridgesAction[] };
 
-export type Mode = "bridge" | "mark";
-
 export interface BridgesInteraction {
   /** Island index under the keyboard cursor. */
   cursor: number;
-  /** "mark": pointer taps and drags take away bridges / put ✕ instead of adding ("tap removes"). */
-  mode: Mode;
   /** In-progress drag from an island; edge is the targeted edge or -1. */
   drag: { from: number; edge: number } | null;
 }
@@ -142,24 +138,10 @@ export function mistakeHint(p: BridgesPuzzle, s: BridgesState): Hint<BridgesActi
   };
 }
 
-/** Fallback when no technique applies: what breaks the rules, else the next bridge of the solution. */
+/** Fallback when no technique applies: what visibly breaks the rules. */
 export function hint(p: BridgesPuzzle, s: BridgesState): Hint<BridgesAction> | null {
   if (isValidSolution(p, s.b)) return null;
-  const g = graph(p);
-  const problem = boardProblem(p, s);
-  if (problem) return problem;
-  const a = analyze(p);
-  if (a.solution) {
-    const e = g.edges.find((x) => s.b[x.id]! < a.solution![x.id]!);
-    if (e) {
-      return {
-        message: `no clean deduction from here, but ${edgeName(p, g, e.id)} take ${a.solution[e.id] === 1 ? "one bridge" : `${a.solution[e.id]} bridges`}`,
-        focus: { islands: [e.a, e.b], edges: [e.id] } satisfies Focus,
-        actions: [{ type: "set", edge: e.id, n: a.solution[e.id]! }],
-      };
-    }
-  }
-  return null;
+  return boardProblem(p, s);
 }
 
 export function rate(p: BridgesPuzzle): Rating | null {
@@ -203,7 +185,7 @@ export const bridges: PuzzleDef<BridgesPuzzle, BridgesState, BridgesAction, Brid
   generate: (v, rng, ctx) => generate(v, rng, ctx),
   formats,
   init: (p) => emptyState(p),
-  initInteraction: () => ({ cursor: 0, mode: "bridge", drag: null }),
+  initInteraction: () => ({ cursor: 0, drag: null }),
   reduce,
   isRetraction,
   describeAction: (p, a, _before, after) => {

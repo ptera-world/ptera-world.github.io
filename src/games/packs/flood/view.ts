@@ -7,7 +7,7 @@ import { flood, COLOUR_NAMES, region, type FloodAction, type FloodFocus, type Fl
 const SIZE = 10;
 
 /** Cell colors; a theme can override any of them with --flood-0 … --flood-9. */
-export const PALETTE = ["#d9443f", "#e8c62c", "#3fa34d", "#3b6fd6", "#ef8a2b", "#8b4fc7", "#8a5a33", "#5fc4e8", "#a6d64a", "#ef7fb6"] as const;
+export const PALETTE = ["var(--palette-1)", "var(--palette-2)", "var(--palette-3)", "var(--palette-4)", "var(--palette-5)", "var(--palette-6)", "var(--palette-7)", "var(--palette-8)", "var(--palette-1)", "var(--palette-2)"] as const;
 export const colourVar = (c: number) => `var(--flood-${c}, ${PALETTE[c]})`;
 
 const CSS = `

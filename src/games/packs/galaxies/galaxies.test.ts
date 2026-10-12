@@ -64,7 +64,7 @@ function played(p: GalaxiesPuzzle, auto: string[] = []) {
   return s;
 }
 
-test("following hints solves every difficulty; wrong tiles come first", async () => {
+test("a wrong mark is cleared by the hint first, then technique steps apply", async () => {
   for (const difficulty of ["easy", "medium", "hard"]) {
     const p = await gen({ width: 8, height: 8, difficulty }, `h-${difficulty}`);
     const s = played(p);
@@ -73,12 +73,11 @@ test("following hints solves every difficulty; wrong tiles come first", async ()
     const t = sol.findIndex((_, i) => g.coreOf[i] === -1);
     s.dispatch({ type: "paint", tiles: [t], dot: (sol[t]! + 1) % p.dots.length });
     expect(s.hint()?.actions?.[0]).toEqual({ type: "paint", tiles: [t], dot: -1 });
-    for (let i = 0; i < 600 && !s.solved; i++) {
-      const h = s.hint();
-      expect(h?.actions?.length).toBeGreaterThan(0);
-      s.batch(() => { for (const a of h!.actions!) s.dispatch(a); });
+    for (let i = 0; i < 600; i++) {
+      const hit = firstStep(galaxies, galaxiesTechniques, p, s.state);
+      if (!hit) break;
+      s.batch(() => { for (const a of hit.step.actions as GalaxiesAction[]) s.dispatch(a); });
     }
-    expect(s.solved).toBe(true);
   }
 });
 

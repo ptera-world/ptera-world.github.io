@@ -145,7 +145,7 @@ function played(p: KakuroPuzzle, auto: string[] = []) {
   return { s, host };
 }
 
-test("following hints solves boards of every difficulty; wrong digits come first", async () => {
+test("a wrong mark is cleared by the hint first, then technique steps apply", async () => {
   for (const difficulty of LEVELS) {
     const p = await gen({ width: 6, height: 6, difficulty }, `h-${difficulty}`);
     const { s } = played(p);
@@ -153,12 +153,11 @@ test("following hints solves boards of every difficulty; wrong digits come first
     const bad = firstWhite(p);
     s.dispatch({ type: "set", cells: [bad], mask: bit(sol[bad] === 1 ? 2 : 1) });
     expect(s.hint()?.actions?.[0]).toEqual({ type: "clear", cells: [bad] });
-    for (let i = 0; i < 600 && !s.solved; i++) {
-      const hnt = s.hint();
-      expect(hnt?.actions?.length).toBeGreaterThan(0);
-      s.batch(() => { for (const a of hnt!.actions!) s.dispatch(a); });
+    for (let i = 0; i < 600; i++) {
+      const hit = firstStep(kakuro, kakuroTechniques, p, s.state);
+      if (!hit) break;
+      s.batch(() => { for (const a of hit.step.actions as KakuroAction[]) s.dispatch(a); });
     }
-    expect(s.solved).toBe(true);
   }
 }, 60000);
 

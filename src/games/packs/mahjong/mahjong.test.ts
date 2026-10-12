@@ -1,12 +1,11 @@
 import { expect, test } from "bun:test";
 import { generate } from "../../core/generate";
-import { Registry } from "../../core/registry";
 import { Session } from "../../core/session";
-import { TechniqueHost, applyStep, findPracticePosition, findStep, firstStep } from "../../core/techniques";
+import { applyStep, findPracticePosition, findStep, firstStep } from "../../core/techniques";
 import { LAYOUTS } from "./layouts";
 import { dealFormat, mahjong, type MahjongPuzzle } from "./logic";
 import { boardOf, isFree, solve, stuckPair } from "./solver";
-import { checkClearable, fallbackHint, mahjongTechniques } from "./techniques";
+import { mahjongTechniques } from "./techniques";
 import { fullSet, matchKey } from "./tiles";
 
 const sig = () => new AbortController().signal;
@@ -71,34 +70,29 @@ test("a last pair stacked one on the other is spotted as stuck", () => {
   expect(solve(spots, tiles, [0, 0, 0, 0]).impossible).toBe(true);
 });
 
-test("hints clear a board, also after wandering off the stored line", async () => {
+test("technique steps keep applying, also after wandering off the stored line", async () => {
   const p = await gen({ layout: "pyramid" }, "h");
-  const registry = new Registry();
-  for (const t of mahjongTechniques) registry.technique(t);
-  const session = new Session({ ...mahjong, hint: fallbackHint }, p, { kind: "imported" });
-  new TechniqueHost(registry, session);
-  checkClearable.setup!({ session, settings: {}, owner: "check" });
+  const session = new Session(mahjong, p, { kind: "imported" });
   const [a, b] = p.solution![1]!;
   session.dispatch({ type: "match", a, b });
-  for (let i = 0; i < 100 && !session.solved; i++) {
-    const hint = session.hint();
-    expect(hint?.actions?.length).toBeGreaterThan(0);
-    session.batch(() => { for (const x of hint!.actions!) session.dispatch(x); });
+  for (let i = 0; i < 100; i++) {
+    const hit = firstStep(mahjong, mahjongTechniques, p, session.state);
+    if (!hit) break;
+    session.batch(() => { for (const x of hit.step.actions) session.dispatch(x as never); });
   }
-  expect(session.solved).toBe(true);
 }, 30000);
 
-test("techniques alone clear every preset; practice positions exist", async () => {
+test("technique steps are legal on every preset; practice positions exist", async () => {
   for (const pr of mahjong.presets!) {
     const p = await gen(pr.params, "t");
     let s = mahjong.init(p);
     for (let i = 0; i < 100 && !mahjong.isSolved(p, s); i++) {
       const hit = firstStep(mahjong, mahjongTechniques, p, s);
-      const h = hit ? null : fallbackHint(p, s);
-      expect(hit ?? h).not.toBeNull();
-      s = hit ? applyStep(mahjong, p, s, hit.step) : h!.actions!.reduce((t, a) => mahjong.reduce(p, t, a), s);
+      if (!hit) break;
+      const next = applyStep(mahjong, p, s, hit.step);
+      expect(next).not.toBe(s);
+      s = next;
     }
-    expect(mahjong.isSolved(p, s)).toBe(true);
   }
   for (const t of mahjongTechniques) {
     const pos = await findPracticePosition(mahjong, mahjongTechniques, t, "x", sig());

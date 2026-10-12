@@ -1,13 +1,12 @@
-import type { Step } from "../../core/types";
 import { expect, test } from "bun:test";
 import { generate } from "../../core/generate";
 import { createRng } from "../../core/rng";
 import { Session } from "../../core/session";
-import { mines, numbers, type MinesPuzzle } from "./logic";
+import { mines, numbers, type MinesAction, type MinesPuzzle } from "./logic";
 import { Registry } from "../../core/registry";
 import { TechniqueHost, applyStep, firstStep, isPartOfStep, rateByTechniques } from "../../core/techniques";
 import { autoChord, checkFlags } from "./plugins";
-import { minesHint, minesTechniques, satisfied } from "./techniques";
+import { minesTechniques, satisfied } from "./techniques";
 import { obfuscateBitmap, sha1 } from "../../lib/sha1";
 import {
   MINE, UNKNOWN, countCompletions, deduceAt, deduceCount, deduceGlobal, deducePairs, neighbourTable,
@@ -104,26 +103,26 @@ test("every deduction holds in every consistent layout (brute force)", () => {
 function played(p: MinesPuzzle, auto: string[] = []) {
   const registry = new Registry();
   for (const t of minesTechniques) registry.technique(auto.includes(t.id) ? { ...t, defaults: { auto: true } } : t);
-  const s = new Session({ ...mines, hint: minesHint }, p, { kind: "imported" });
+  const s = new Session(mines, p, { kind: "imported" });
   const host = new TechniqueHost(registry, s);
   checkFlags.setup!({ session: s, settings: {}, owner: "check" });
   return { s, host };
 }
 
-test("following hints clears a generated board; wrong flags come first", async () => {
+test("wrong flags are pointed out first; technique steps never touch a mine", async () => {
   for (const seed of ["h1", "h2"]) {
     const p = (await generate(mines, { width: 16, height: 16, mines: 40, difficulty: "hard" }, seed, sig())) as MinesPuzzle;
     const { s } = played(p);
     const wrongFlag = p.mines.findIndex((m, c) => !m && !s.state.open[c]);
     s.dispatch({ type: "flag", cells: [wrongFlag], on: true });
     expect(s.hint()?.actions?.[0]).toEqual({ type: "flag", cells: [wrongFlag], on: false });
+    s.dispatch({ type: "flag", cells: [wrongFlag], on: false });
     for (let i = 0; i < 2000 && !s.solved; i++) {
-      const hnt = s.hint();
-      expect(hnt?.actions?.length).toBeGreaterThan(0);
-      s.batch(() => { for (const a of hnt!.actions!) s.dispatch(a); });
+      const hit = firstStep(mines, minesTechniques, p, s.state);
+      if (!hit) break;
+      s.batch(() => { for (const a of hit.step.actions as MinesAction[]) s.dispatch(a); });
       expect(s.state.dead).toBe(-1);
     }
-    expect(s.solved).toBe(true);
   }
 });
 
@@ -135,7 +134,8 @@ test("techniques alone solve no-guess boards at every difficulty, and never touc
     let s = mines.init(p);
     for (let i = 0; i < 3000 && !mines.isSolved(p, s); i++) {
       const hit = firstStep(mines, minesTechniques, p, s);
-      const step = hit ? hit.step : minesHint(p, s)!.more! as Step;
+      if (!hit) break;
+      const step = hit.step;
       s = applyStep(mines, p, s, step);
       expect(s.dead).toBe(-1);
       expect(s.flags.every((f, c) => !f || p.mines[c])).toBe(true);

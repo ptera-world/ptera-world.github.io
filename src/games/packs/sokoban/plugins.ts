@@ -1,5 +1,5 @@
 import type { Plugin } from "../../core/types";
-import { sokoban, stuckHint, type SokoAction, type SokoFocus, type SokoInteraction, type SokoPuzzle, type SokoState } from "./logic";
+import { sokoban, hint, type SokoAction, type SokoFocus, type SokoInteraction, type SokoPuzzle, type SokoState } from "./logic";
 import { stuckBoxes } from "./solver";
 
 type SokoPlugin = Plugin<SokoPuzzle, SokoState, SokoAction, SokoInteraction>;
@@ -25,16 +25,16 @@ export const showStuck: SokoPlugin = {
   },
 };
 
-/** Runs ahead of technique hints (priority 100): a stuck box or a lost position is pointed out first. */
+/** Runs ahead of technique hints (priority 100): a stuck box is pointed out first. */
 export const checkStuck: SokoPlugin = {
   id: "sokoban.check-stuck",
   name: "hints check every box can still get home",
-  description: "asking for a hint first says so if a box is stuck or the boxes can no longer all reach goals",
+  description: "asking for a hint says so if a box is stuck",
   category: "assists",
   appliesTo: [sokoban],
   enabledByDefault: true,
   setup({ session, owner }) {
-    session.hooks.hint.tap(({ puzzle, state }) => stuckHint(puzzle, state) ?? undefined, { owner, priority: 90 });
+    session.hooks.hint.tap(({ puzzle, state }) => hint(puzzle, state) ?? undefined, { owner, priority: 90 });
   },
 };
 

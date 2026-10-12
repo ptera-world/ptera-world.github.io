@@ -26,6 +26,7 @@ export const GAME_BINDINGS = {
   "shell.apply-hint": { label: "apply hint", category: "game", keys: ["shift+h"] },
   "shell.reveal": { label: "reveal solution", category: "game" },
   "shell.pause": { label: "pause", category: "game", keys: ["p"] },
+  "shell.swap-buttons": { label: "swap left and right click", category: "game", description: "the board's two opposite actions trade buttons (and tap / hold on touch), for this puzzle" },
   "shell.new": { label: "new game", category: "game", keys: ["$mod+Enter"] },
 } satisfies BindingSchema;
 

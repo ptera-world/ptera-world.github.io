@@ -1,27 +1,5 @@
-import { hintFrom } from "../../core/define";
-import type { Hint, Plugin, Step } from "../../core/types";
-import { inertia, DIR_NAMES, canCollectAll, cellAt, gemCount, nextGemRoute, unreachableGems, type InertiaAction, type InertiaFocus, type InertiaInteraction, type InertiaPuzzle, type InertiaState } from "./logic";
-
-/** The first roll of the nearest-gem route that keeps every gem reachable, else the puzzle's own hint. */
-export function hint(p: InertiaPuzzle, s: InertiaState): Hint<InertiaAction> | null {
-  if (s.dead || !gemCount(s.gems)) return inertia.hint?.(p, s) ?? null;
-  const r = nextGemRoute(p, s);
-  if (!r) return inertia.hint?.(p, s) ?? null;
-  const d = r.dirs[0]!;
-  const n = r.dirs.length;
-  const target = r.gems[0]!;
-  const what = r.gems.length === 1 ? `the gem at ${cellAt(p, target)}` : `${r.gems.length} gems`;
-  const found: Step<InertiaAction> = {
-    message: n === 1
-      ? `roll ${DIR_NAMES[d]}: it picks up ${what}, and every other gem can still be reached afterward.`
-      : `roll ${DIR_NAMES[d]}: ${n} rolls reach ${what}, never stopping anywhere that cuts a gem off.`,
-    nudge: `head for the gem at ${cellAt(p, target)}`,
-    focus: { path: r.paths[0], gems: r.gems } satisfies InertiaFocus,
-    nudgeFocus: { gems: [target] } satisfies InertiaFocus,
-    actions: [{ type: "move", dir: d }],
-  };
-  return hintFrom(null, found, 1) as Hint<InertiaAction>;
-}
+import type { Plugin } from "../../core/types";
+import { inertia, canCollectAll, cellAt, gemCount, unreachableGems, type InertiaAction, type InertiaFocus, type InertiaInteraction, type InertiaPuzzle, type InertiaState } from "./logic";
 
 /** Runs ahead of technique hints (priority 100): gems that can no longer be reached are pointed out first. */
 export const checkReachable: Plugin<InertiaPuzzle, InertiaState, InertiaAction, InertiaInteraction> = {

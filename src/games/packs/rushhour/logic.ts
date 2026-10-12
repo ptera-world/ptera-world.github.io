@@ -124,10 +124,6 @@ function describeAction(p: RushPuzzle, a: RushAction, before: RushState): string
   return `${carName(a.car)} ${dir}${Math.abs(d) > 1 ? ` ${Math.abs(d)}` : ""}`;
 }
 
-/** "move C down 2", in the words hints use. */
-export const describeSlide = (p: RushPuzzle, s: RushState, m: { car: number; to: number }): string =>
-  `move ${describeAction(p, { type: "slide", ...m }, s)}`;
-
 function generate(v: Values<typeof params>, rng: Rng, ctx: GenerateContext): Promise<RushPuzzle> {
   return generatePuzzle({ w: v.width, h: v.height, difficulty: LEVEL_NAMES.indexOf(v.difficulty as (typeof LEVEL_NAMES)[number]) }, rng, ctx);
 }

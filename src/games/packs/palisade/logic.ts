@@ -354,9 +354,6 @@ export function hint(p: PalisadePuzzle, s: PalisadeState): Hint<PalisadeAction> 
   const c = findConflicts(p, s.marks);
   if (c.clues.length) return { message: `the number on ${cellList(p, c.clues)} can't be met any more`, focus: { cells: [], because: c.clues } satisfies Focus };
   if (c.regions.length) return { message: `${cellList(p, c.regions)} ${c.regions.length === 1 ? "is" : "are"} in a region of the wrong size`, focus: { cells: c.regions, because: [] } satisfies Focus };
-  const a = analyze(p);
-  if (a.count === 0) return { message: "this puzzle has no solution" };
-  if (a.count === 2) return { message: "this puzzle has more than one solution, so it can need a guess" };
   return { message: "none of the techniques you have hints on applies here" };
 }
 

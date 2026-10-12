@@ -228,9 +228,6 @@ export function hint(p: PearlPuzzle, s: PearlState): Hint<PearlAction> | null {
   if (c.cells.length) return { message: `the lines at ${cellList(p, c.cells)} can't be right: the loop goes into a cell once and out once`, focus: { edges: [], because: c.cells } satisfies PearlFocus };
   if (c.pearls.length) return { message: `the pearl at ${cellList(p, c.pearls)} is broken`, focus: { edges: [], because: c.pearls } satisfies PearlFocus };
   if (c.loop.length) return { message: "a loop is closed but it isn't the whole answer", focus: { edges: [], because: c.loop } satisfies PearlFocus };
-  const a = analyze(p);
-  if (a.count === 0) return { message: "this puzzle has no solution" };
-  if (a.count === 2) return { message: "this puzzle has more than one solution, so it can need a guess" };
   return { message: "none of the techniques you have hints on applies here" };
 }
 

@@ -41,7 +41,7 @@ const when = (ms: number): string => {
  * Saved games as a vertical list: open, delete (asks first; shift+click skips asking), select
  * several to delete together, or clear them all. `filter` limits which games are shown.
  */
-export function sessionList(host: SessionListHost, opts: { filter?: (m: SessionMeta) => boolean; limit?: number; tools?: boolean } = {}): HTMLElement & { refresh(): void } {
+export function sessionList(host: SessionListHost, opts: { filter?: (m: SessionMeta) => boolean; limit?: number; tools?: boolean; empty?: string } = {}): HTMLElement & { refresh(): void } {
   style("session-list", CSS);
   const root = h("div", { class: "sl" });
   const picked = new Set<string>();
@@ -58,7 +58,7 @@ export function sessionList(host: SessionListHost, opts: { filter?: (m: SessionM
     const all = host.savedGames().filter(opts.filter ?? (() => true));
     const list = opts.limit ? all.slice(0, opts.limit) : all;
     if (!list.length) {
-      root.append(h("p", { class: "w-dim" }, "no saved games yet."));
+      root.append(h("p", { class: "w-dim" }, opts.empty ?? "no saved games yet."));
       return;
     }
     if (opts.tools !== false) {

@@ -503,9 +503,6 @@ export function hint(p: KakuroPuzzle, s: KakuroState): Hint<KakuroAction> | null
   const c = findConflicts(p, s.doms);
   if (c.repeats.length) return { message: `${cellList(p, c.repeats)} repeat a digit in one run`, focus: { cells: c.repeats, because: [] } satisfies Focus };
   if (c.sums.length) return { message: `the digits on ${cellList(p, c.sums)} don't add up to their sum`, focus: { cells: c.sums, because: [] } satisfies Focus };
-  const a = analyze(p);
-  if (a.count === 0) return { message: "this puzzle has no solution" };
-  if (a.count === 2) return { message: "this puzzle has more than one solution, so it can need a guess" };
   return { message: "none of the techniques you have hints on applies here" };
 }
 

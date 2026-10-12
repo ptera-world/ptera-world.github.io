@@ -1,4 +1,5 @@
 import { defineWidgets } from "../../core/define";
+import { buttonsSwapped } from "../../core/gestures";
 import { h, style } from "../../core/dom";
 import { pattern, type PatternAction, type PatternInteraction, type PatternPuzzle, type PatternState } from "./logic";
 
@@ -22,14 +23,15 @@ export const crossMode = widget({
   order: 15,
   mount(el, { session, owner, run }) {
     style("pattern-widgets", CSS);
-    const fillBtn = h("button", { type: "button", onclick: () => { if (session.interaction.crossMode) run("pattern.mode"); } }, "fill");
-    const crossBtn = h("button", { type: "button", onclick: () => { if (!session.interaction.crossMode) run("pattern.mode"); } }, "cross");
+    const id = session.def.id;
+    const fillBtn = h("button", { type: "button", onclick: () => { if (buttonsSwapped(id)) { run("shell.swap-buttons"); render(); } } }, "fill");
+    const crossBtn = h("button", { type: "button", onclick: () => { if (!buttonsSwapped(id)) { run("shell.swap-buttons"); render(); } } }, "cross");
     el.append(h("div", { class: "pattern-mode", role: "group", "aria-label": "what a tap does" }, fillBtn, crossBtn));
     const render = () => {
-      fillBtn.setAttribute("aria-pressed", String(!session.interaction.crossMode));
-      crossBtn.setAttribute("aria-pressed", String(session.interaction.crossMode));
+      fillBtn.setAttribute("aria-pressed", String(!buttonsSwapped(id)));
+      crossBtn.setAttribute("aria-pressed", String(buttonsSwapped(id)));
     };
-    session.hooks.interaction.tap(render, { owner });
+    session.hooks.refresh.tap(render, { owner });
     render();
   },
 });

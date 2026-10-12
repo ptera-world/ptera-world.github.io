@@ -1,6 +1,5 @@
 import { cellName as at } from "../../lib/grid-kit/names";
-import { hintFrom } from "../../core/define";
-import type { Hint, Step, Technique } from "../../core/types";
+import type { Step, Technique } from "../../core/types";
 import { twiddle, describeTurn, goalTile, hintFor, type TwiddleAction, type TwiddleFocus, type TwiddlePuzzle, type TwiddleState } from "./logic";
 import type { PermStep, StepKind } from "../../lib/perm";
 
@@ -51,13 +50,3 @@ export const blockCycle: TwiddleTechnique = {
 };
 
 export const twiddleTechniques: TwiddleTechnique[] = [turnHome, blockCycle];
-
-/** The hint: the endgame step when there is one, else the puzzle's own hint. */
-export function hint(p: TwiddlePuzzle, s: TwiddleState): Hint<TwiddleAction> | null {
-  let found: Step<TwiddleAction> | null = null;
-  step(p, s, (st) => { found = st; return true; }, ["endgame", "parity"], (h) => ({
-    message: `the last tiles are sorted together: ${sequence(p, h.actions)}${h.left ? `, then ${moves(h.left)}` : ", and the board is done"}.`,
-    nudge: "sort the last few tiles in the corner together",
-  }));
-  return found ? (hintFrom(null, found, 1) as Hint<TwiddleAction>) : twiddle.hint?.(p, s) ?? null;
-}

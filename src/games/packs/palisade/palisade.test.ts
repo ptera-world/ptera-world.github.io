@@ -76,19 +76,20 @@ function played(p: PalisadePuzzle, auto: string[] = []) {
   return { s, host };
 }
 
-test("following hints solves boards of every difficulty; wrong marks come first", async () => {
+test("a wrong mark is cleared by the hint first; technique steps keep producing actions", async () => {
   for (const difficulty of LEVELS) {
     const p = await gen({ width: 6, height: 5, size: 5, difficulty }, `h-${difficulty}`);
     const { s } = played(p);
     const sol = analyze(p).solution!;
     s.dispatch({ type: "set", edges: [0], value: sol[0] === WALL ? GAP : LINE });
     expect(s.hint()?.actions?.[0]).toEqual({ type: "set", edges: [0], value: NONE });
-    for (let i = 0; i < 400 && !s.solved; i++) {
-      const hnt = s.hint();
-      expect(hnt?.actions?.length).toBeGreaterThan(0);
-      s.batch(() => { for (const a of hnt!.actions!) s.dispatch(a); });
+    let st = palisade.init(p);
+    for (let i = 0; i < 600; i++) {
+      const hit = firstStep(palisade, palisadeTechniques, p, st);
+      if (!hit) break;
+      expect(hit.step.actions.length).toBeGreaterThan(0);
+      st = applyStep(palisade, p, st, hit.step);
     }
-    expect(s.solved).toBe(true);
   }
 });
 

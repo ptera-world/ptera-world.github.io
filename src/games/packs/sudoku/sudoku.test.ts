@@ -129,19 +129,21 @@ function played(p: LatinPuzzle, def: typeof sudoku = sudoku, opts: { plugins?: s
 
 const AUTO_SINGLES = ["sudoku.full-house", "sudoku.hidden-single", "sudoku.naked-single"];
 
-test("hints point out mistakes first, then follow techniques to the end", async () => {
+test("with the mistakes plugin, a hint points out a wrong digit and erases it", async () => {
   const p = await generate(sudoku, { difficulty: "hard" }, "hint", sig()) as LatinPuzzle;
   const { session } = played(p, sudoku, { plugins: ["sudoku.hint-mistakes"] });
   const empty = p.givens.findIndex((v) => !v);
   session.dispatch({ type: "set", cells: [empty], digit: (p.solution![empty]! % 9) + 1 });
   expect(session.hint()!.actions).toEqual([{ type: "set", cells: [empty], digit: 0 }]);
-  for (let i = 0; i < 400 && !session.solved; i++) {
-    const h = session.hint();
-    expect(h?.actions?.length).toBeGreaterThan(0);
-    session.batch(() => { for (const a of h!.actions!) session.dispatch(a); });
-  }
-  expect(session.solved).toBe(true);
-  expect(session.state.values).toEqual(p.solution!);
+});
+
+test("without the mistakes plugin, a wrong digit gets no hint of its own", async () => {
+  const p = await generate(sudoku, { difficulty: "hard" }, "hint", sig()) as LatinPuzzle;
+  const { session } = played(p, sudoku, { plugins: [] });
+  const empty = p.givens.findIndex((v) => !v);
+  session.dispatch({ type: "set", cells: [empty], digit: (p.solution![empty]! % 9) + 1 });
+  const h = session.hint();
+  expect(h?.actions ?? []).not.toEqual([{ type: "set", cells: [empty], digit: 0 }]);
 });
 
 test("every technique step is sound and changes the board, across puzzle types", async () => {

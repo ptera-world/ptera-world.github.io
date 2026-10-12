@@ -299,9 +299,6 @@ export function wrongHint(p: RectPuzzle, s: RectState): Hint<RectAction> | null 
 export function hint(p: RectPuzzle, s: RectState): Hint<RectAction> | null {
   const c = findConflicts(p, s.walls);
   if (c.wrong.length) return { message: `${cellList(p, c.wrong)} ${c.wrong.length === 1 ? "is" : "are"} walled into a rectangle that doesn't hold one matching number`, focus: { cells: c.wrong, because: [] } satisfies Focus };
-  const a = analyze(p);
-  if (a.count === 0) return { message: "this puzzle has no solution" };
-  if (a.count === 2) return { message: "this puzzle has more than one solution, so it can need a guess" };
   return { message: "none of the techniques you have hints on applies here" };
 }
 

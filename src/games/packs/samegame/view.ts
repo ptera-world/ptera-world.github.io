@@ -8,7 +8,7 @@ const SIZE = 10;
 const INSET = 0.6;
 
 /** Tile colors by color number 1…9; a theme can override any with --samegame-1 … --samegame-9. */
-export const PALETTE = ["", "#d9443f", "#3b6fd6", "#3fa34d", "#e8c62c", "#8b4fc7", "#ef8a2b", "#3fc1c9", "#ef7fb6", "#8f8f8f"] as const;
+export const PALETTE = ["", "var(--palette-1)", "var(--palette-2)", "var(--palette-3)", "var(--palette-4)", "var(--palette-5)", "var(--palette-6)", "var(--palette-7)", "var(--palette-8)", "var(--palette-1)"] as const;
 const colourVar = (c: number) => `var(--samegame-${c}, ${PALETTE[c]})`;
 
 const CSS = `
@@ -61,7 +61,6 @@ function legend(p: SamegamePuzzle) {
       meaning: `color ${i + 1}, ${COLOUR_NAMES[i + 1]}`,
     })),
     { sample: swatch(`<rect x="${INSET}" y="${INSET}" width="${SIZE - 2 * INSET}" height="${SIZE - 2 * INSET}" rx="1.4" fill="${colourVar(1)}"/><rect x="0.4" y="0.4" width="9.2" height="9.2" rx="1.6" fill="none" stroke="var(--text)" stroke-width="0.9"/>`), meaning: "the group a click would remove" },
-    { sample: swatch(`<rect x="${INSET}" y="${INSET}" width="${SIZE - 2 * INSET}" height="${SIZE - 2 * INSET}" rx="1.4" fill="${colourVar(2)}"/><rect x="0.4" y="0.4" width="9.2" height="9.2" rx="1.6" fill="none" stroke="var(--hint)" stroke-width="0.9"/>`), meaning: "hint: the group to remove" },
   ];
 }
 

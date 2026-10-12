@@ -1,10 +1,9 @@
-import { hintFrom } from "../../core/define";
-import type { Hint, Plugin, Step, Technique } from "../../core/types";
+import type { Plugin, Technique } from "../../core/types";
 import { cardName, safeHomeReason } from "../../lib/cards/deck";
 import { planner } from "../../lib/plan";
 import type { CardFocus } from "../../lib/cards/table";
-import { actionsOf, dealPos, describeMove, fromPos, klondike, pileName, rulesOf, toPos, whereTo, type KlondikeAction, type KlondikeInteraction, type KlondikePuzzle, type KlondikeState } from "./logic";
-import { applyMove, clonePos, COLS, eachSafeHomeMove, isSafeHome, solve, STOCK, WASTE, type Move, type Pos } from "./solver";
+import { actionsOf, dealPos, fromPos, klondike, pileName, rulesOf, toPos, whereTo, type KlondikeAction, type KlondikeInteraction, type KlondikePuzzle, type KlondikeState } from "./logic";
+import { applyMove, clonePos, COLS, eachSafeHomeMove, isSafeHome, solve, WASTE, type Move, type Pos } from "./solver";
 
 type KlondikeTechnique = Technique<KlondikePuzzle, KlondikeState, KlondikeAction>;
 
@@ -63,21 +62,6 @@ function reason(p: KlondikePuzzle, s: KlondikeState, path: readonly Move[]): str
   return "it keeps the winning line going";
 }
 
-function stepFor(p: KlondikePuzzle, s: KlondikeState, path: readonly Move[]): Step<KlondikeAction> {
-  const m = path[0]!;
-  const before = fromPos(drawn(p, s, m), 0);
-  const rest = path.length - 1;
-  const tail = rest ? ` the solver finds a win ${rest} ${rest === 1 ? "step" : "steps"} after that.` : " that wins.";
-  const draw = m.draws ? `click the stock ${m.draws === 1 ? "once" : `${m.draws} times`} to bring up ${cardName(leadOf(before, m))}, then play ` : "";
-  const src = s.piles[m.from]!.c;
-  return {
-    message: `${draw}${describeMove(before, m)}: ${reason(p, s, path)}.${tail}`,
-    nudge: m.draws ? "look through the stock" : `look at ${pileName(m.from)}`,
-    focus: (m.draws ? { piles: [STOCK], to: m.to } : { cards: src.slice(src.length - m.n), to: m.to }) satisfies CardFocus,
-    nudgeFocus: { piles: [m.draws ? STOCK : m.from] } satisfies CardFocus,
-    actions: actionsOf(m),
-  };
-}
 
 export const safeHome: KlondikeTechnique = {
   id: "klondike.safe-home",
@@ -117,13 +101,6 @@ export const checkWinnable: Plugin<KlondikePuzzle, KlondikeState, KlondikeAction
     }, { owner, priority: 90 });
   },
 };
-
-export function fallbackHint(p: KlondikePuzzle, s: KlondikeState): Hint<KlondikeAction> | null {
-  const r = plan(p, s);
-  if (r.path?.length) return hintFrom(null, stepFor(p, s, r.path), 1) as Hint<KlondikeAction>;
-  if (r.path || r.impossible) return null;
-  return { message: "the search for a win ran out of time from here, so there's no suggestion. undoing a move or two may help." };
-}
 
 /** The actions of a winning line from `s`, or null if none is known. */
 export function solveFrom(p: KlondikePuzzle, s: KlondikeState): { moves: KlondikeAction[] } | null {

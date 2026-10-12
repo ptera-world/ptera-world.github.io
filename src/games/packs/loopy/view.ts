@@ -1,4 +1,4 @@
-import { HOLD_MS } from "../../core/gestures";
+import { HOLD_MS, buttonsSwapped } from "../../core/gestures";
 import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
 import { colName, rowName, type Side } from "../../core/names";
@@ -20,9 +20,9 @@ const CSS = `
 .loopy-board .edge.cross { stroke: none; }
 .loopy-board .edge.stray { stroke: var(--warn); }
 .loopy-board .edge.wrong { stroke: var(--danger); }
-.loopy-board .edge.seg0 { stroke: var(--loopy-seg0, #e8a46a); } .loopy-board .edge.seg1 { stroke: var(--loopy-seg1, #7ab8e8); }
-.loopy-board .edge.seg2 { stroke: var(--loopy-seg2, #b48ce8); } .loopy-board .edge.seg3 { stroke: var(--loopy-seg3, #e87a9c); }
-.loopy-board .edge.seg4 { stroke: var(--loopy-seg4, #8fd17a); } .loopy-board .edge.seg5 { stroke: var(--loopy-seg5, #e8d27a); }
+.loopy-board .edge.seg0 { stroke: var(--loopy-seg0, var(--palette-1)); } .loopy-board .edge.seg1 { stroke: var(--loopy-seg1, var(--palette-2)); }
+.loopy-board .edge.seg2 { stroke: var(--loopy-seg2, var(--palette-3)); } .loopy-board .edge.seg3 { stroke: var(--loopy-seg3, var(--palette-4)); }
+.loopy-board .edge.seg4 { stroke: var(--loopy-seg4, var(--palette-5)); } .loopy-board .edge.seg5 { stroke: var(--loopy-seg5, var(--palette-6)); }
 .loopy-board.solved .edge.line { stroke: var(--accent); }
 .loopy-board .x { stroke: var(--text-dim); color: var(--text-dim); display: none; pointer-events: none; }
 .loopy-board .x.on { display: inline; }
@@ -97,7 +97,7 @@ const LEGEND: readonly { sample: string; meaning: string }[] = [
   { sample: sw(dot("var(--warn)")), meaning: "an orange dot is where a line stops for now (a loose end)" },
   { sample: sw(edge("var(--warn)", 2.4) + dots), meaning: "orange lines form a loop that closed too early, leaving other lines out" },
   { sample: sw(edge("var(--danger)", 2.4) + dots), meaning: "a red line or cross disagrees with the answer (when \"show mistakes\" is on)" },
-  { sample: sw(`<line x1="3" y1="10" x2="10" y2="10" stroke="var(--loopy-seg0, #e8a46a)" stroke-width="2.4" stroke-linecap="round"/><line x1="10" y1="10" x2="17" y2="10" stroke="var(--loopy-seg1, #7ab8e8)" stroke-width="2.4" stroke-linecap="round"/>`), meaning: "each separate piece of line in its own color (when that check is on)" },
+  { sample: sw(`<line x1="3" y1="10" x2="10" y2="10" stroke="var(--loopy-seg0, var(--palette-1))" stroke-width="2.4" stroke-linecap="round"/><line x1="10" y1="10" x2="17" y2="10" stroke="var(--loopy-seg1, var(--palette-2))" stroke-width="2.4" stroke-linecap="round"/>`), meaning: "each separate piece of line in its own color (when that check is on)" },
   { sample: sw(cell("var(--accent-soft)")), meaning: "shaded inside the loop, worked out from your lines and crosses (when shading is on)" },
   { sample: sw(cell("var(--surface-2)")), meaning: "shaded outside the loop (when outside shading is on)" },
   { sample: sw(cell("var(--hint-soft)") + edge("var(--hint)", 2.4, 'stroke-dasharray="2 1.6"')), meaning: "what the current hint is talking about" },
@@ -448,7 +448,8 @@ export function makeLoopyView(look: Look = plainLook, labels: Labels = noLabels,
       const markCmd = (mode: Mode) => (_ctx: Record<string, unknown>, ev?: Event) => {
         if (ev instanceof MouseEvent) {
           if (!(ev.target instanceof Node) || !svg.contains(ev.target) || gesture || mousePointer < 0) return false;
-          begin(ev, mousePointer, mode, false);
+          const flip = buttonsSwapped(session.def.id) ? { line: "cross", cross: "line", erase: "erase" } as const : null;
+          begin(ev, mousePointer, flip ? flip[mode] : mode, false);
           return true;
         }
         toggle(session.interaction.cursor, mode);

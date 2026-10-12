@@ -5,7 +5,7 @@ import type { Registry } from "../../core/registry";
 import { randomSeed } from "../../core/rng";
 import { canonical, fromQuery, resolve, toQuery, type Schema, type Values } from "../../core/schema";
 import type { Origin, Session, SharedHistory, Snapshot } from "../../core/session";
-import { PluginHostCtor, SessionCtor, TechniqueHostCtor, applyStep, colorOf, findStepAt, rememberPosition, cycleLabels, findPracticePosition, generate, hintFrom, isPartOfStep, stepsLeft, stepsOf, loadPluginConfig, onBoardPrefsChange, onThemeChange } from "./engine";
+import { PluginHostCtor, SessionCtor, TechniqueHostCtor, aimable, applyStep, colorOf, findStepAt, rememberPosition, cycleLabels, findPracticePosition, generate, hintFrom, isPartOfStep, stepsLeft, stepsOf, loadPluginConfig, onBoardPrefsChange, onThemeChange } from "./engine";
 import { packJson, unpackJson, type Patch } from "../../core/patch";
 
 /** What a share link carries beyond the puzzle itself. */
@@ -35,7 +35,7 @@ import { SAVE_PREFIX, INDEX_KEY, finished, findSession, listSessions, loadSessio
 export const zoomTakeover = (): boolean => prefs.get("zoomTakeover", false);
 
 export { HOLD_MS } from "../../core/gestures";
-import { HOLD_MS } from "../../core/gestures";
+import { HOLD_MS, buttonsSwapped, setButtonsSwapped } from "../../core/gestures";
 import { onModifierHold } from "keybinds";
 
 /** Serialized text, or null if the format can't write or throws on this puzzle. */
@@ -92,6 +92,8 @@ export class Shell {
     zoom: new HookEvent<{ zoom: number }>("zoom"),
     /** The saved-games list changed (here or in another tab). */
     sessions: new HookEvent<void>("sessions"),
+    /** What the player points at on the board changed (see `aim`). */
+    aim: new HookEvent<{ target: unknown }>("aim"),
   };
 
   session: Session<any, any, any, any> | null = null;
@@ -186,6 +188,11 @@ export class Shell {
     this.rearmHold();
     this.installZoom();
     this.installLongPress();
+    let aimRaf = 0;
+    this.els.boardbox.addEventListener("pointermove", () => {
+      cancelAnimationFrame(aimRaf);
+      aimRaf = requestAnimationFrame(() => this.updateAim());
+    });
     this.hub.setSource("shell", () => this.shellCommands());
     const c = isCarried(carried) ? carried : null;
     if (c) this.activeTab = c.tab;
@@ -445,6 +452,7 @@ export class Shell {
     this.zoom = 1;
     this.session = session;
     this.openId = id;
+    this.aim = undefined;
     this.techniques = new TechniqueHostCtor(this.registry, session);
     const o = session.origin;
     const practiced = o.kind === "practice" ? this.registry.techniquesFor(session.def).find((t) => t.id === o.technique) : undefined;
@@ -486,6 +494,7 @@ export class Shell {
         this.saveNow();
       }, { owner: "shell" }),
       session.hooks.refresh.tap(() => { this.hub.syncContext(); this.paintHintColor(); }, { owner: "shell" }),
+      session.hooks.interaction.tap(() => this.updateAim(), { owner: "shell" }),
       // a finished board (solved or revealed): player moves are refused until it is unlocked
       session.hooks.solved.tap(() => this.syncLock(), { owner: "shell" }),
       session.hooks.action.tap((a, { source }) => {
@@ -907,6 +916,7 @@ export class Shell {
           this.saveNow();
         },
         "shell.pause": () => this.togglePause(),
+        "shell.swap-buttons": () => { setButtonsSwapped(def.id, !buttonsSwapped(def.id)); s.hooks.refresh.call(); },
         "shell.new": () => this.newGameSame(),
       }, {
         "shell.unlock": { when: (c) => !!c.locked && !c.lost },
@@ -920,6 +930,7 @@ export class Shell {
         "shell.apply-hint": { when: (c) => !c.finished },
         "shell.reveal": { danger: true, when: (c) => !c.finished && !!def.solve, confirm: () => "show the whole solution?" },
         "shell.pause": { when: (c) => !c.finished, checked: () => s.paused },
+        "shell.swap-buttons": { menu: "board", when: () => !!this.view?.handle.gestures?.secondaryClick, checked: () => buttonsSwapped(def.id) },
         "shell.new": { danger: progress, confirm: confirmNew },
       }),
       ...(def.presets ?? []).map((p, i): CommandDef => ({
@@ -938,12 +949,22 @@ export class Shell {
     ];
   }
 
+  /** What the player last pointed at on the board (ViewHandle.target), kept while they move off it (to a button). */
+  aim: unknown = undefined;
+
+  /** Re-read the view's target; fires `aim` when it changed. */
+  updateAim(): void {
+    const t = this.view?.handle.target?.();
+    if (t === undefined || JSON.stringify(t) === JSON.stringify(this.aim)) return;
+    this.aim = t;
+    this.hooks.aim.call({ target: t });
+  }
+
   /** The step a technique would make, aimed at what the player points at when it can be. */
   skillStep(t: Technique): { step: Step; aimed: boolean } | null {
     const s = this.session;
     if (!s) return null;
-    const target = this.view?.handle.target?.();
-    const at = findStepAt(s.def, t, s.puzzle, s.state, target);
+    const at = findStepAt(s.def, t, s.puzzle, s.state, this.aim);
     if (at) return { step: at, aimed: true };
     const any = this.techniques?.find(t);
     return any ? { step: any, aimed: false } : null;
@@ -958,7 +979,7 @@ export class Shell {
       if (this.previewing) s.showHint(null);
       this.previewing = false;
       this.view?.handle.preview?.(null);
-      if (t) this.setStatus(`no ${t.name} ${this.view?.handle.target?.() !== undefined && t.findAt ? "here" : "right now"}`);
+      if (t) this.setStatus(`no ${t.name} ${this.aim !== undefined && aimable(s.def, t) ? "here" : "right now"}`);
       return;
     }
     const hint = hintFrom(t, hit.step, 2);
@@ -983,28 +1004,28 @@ export class Shell {
   /** Aimable techniques that have a step at what the player points at right now. */
   skillsHere(): Technique[] {
     const s = this.session;
-    const target = this.view?.handle.target?.();
+    const target = this.aim;
     if (!s || target === undefined || target === null) return [];
-    return (this.techniques?.list ?? []).filter((t) => t.findAt && findStepAt(s.def, t, s.puzzle, s.state, target));
+    return (this.techniques?.list ?? []).filter((t) => findStepAt(s.def, t, s.puzzle, s.state, target));
   }
 
   private techniqueCommands(): CommandDef[] {
     const th = this.techniques;
     const s = this.session;
     if (!th || !s) return [];
-    const aimable = th.list.some((t) => t.findAt);
-    const here: CommandDef[] = aimable ? bindCommands(HERE_BINDINGS, {
+    const anyAimable = th.list.some((t) => aimable(s.def, t));
+    const here: CommandDef[] = anyAimable ? bindCommands(HERE_BINDINGS, {
       "technique.here": (_ctx, ev) => {
         const list = this.skillsHere();
         if (!list.length) { this.setStatus("no technique applies here right now"); return; }
         const pe = ev as MouseEvent | undefined;
         const x = pe?.clientX ?? innerWidth / 2, y = pe?.clientY ?? innerHeight / 2;
-        const items = list.map((t) => ({ cmd: { id: techniqueCommand("here", t), label: t.name, description: t.description, run: () => this.applySkill(t) } as CommandDef, enabled: true, keys: [] as string[] }));
+        const items = list.map((t) => ({ cmd: { id: techniqueCommand("here", t), label: t.name, description: t.description, run: () => this.applySkill(t) } as CommandDef, enabled: true, keys: [] as string[], preview: (on: boolean) => this.previewSkill(on ? t : null) }));
         void popup("tiles", x, y, items, (id) => { const t = list.find((x) => techniqueCommand("here", x) === id); if (t) this.applySkill(t); });
       },
     }, { "technique.here": { menu: "board" } }) : [];
     return [...here, ...th.list.flatMap((t): CommandDef[] => [
-      ...(t.findAt ? [{ id: techniqueCommand("here", t), label: `${t.name} here`, category: "techniques", description: `apply ${t.name} to what you are pointing at`, run: () => this.applySkill(t) } satisfies CommandDef] : []),
+      ...(aimable(s.def, t) ? [{ id: techniqueCommand("here", t), label: `${t.name} here`, category: "techniques", description: `apply ${t.name} to what you are pointing at`, run: () => this.applySkill(t) } satisfies CommandDef] : []),
       { id: techniqueCommand("find", t), label: `find ${t.name}`, category: "techniques", description: t.description, run: () => this.findTechnique(t) },
       { id: techniqueCommand("apply", t), label: `apply ${t.name}`, category: "techniques", run: () => { if (!th.apply(t)) this.setStatus(`no ${t.name} right now`); } },
       {
@@ -1278,10 +1299,9 @@ export class Shell {
         def.tags?.length ? h("span", { class: "tags" }, def.tags.map((tag) => h("span", { class: "tag", style: tagStyle(tag) }, tag))) : null,
         n ? h("a", { href: `?p=${p}&tab=techniques`, class: "learn", onclick: go(`p=${p}&tab=techniques`) }, `learn · ${n} techniques`) : null);
     }).map((el, i) => ({ el, def: all[i]! }));
-    const going = listSessions().some((m) => !finished(m) && !m.practice);
-    const resume = going ? h("section", { class: "index-continue" }, h("h2", null, "continue"),
-      sessionList(this, { filter: (m) => !finished(m) && !m.practice, limit: 5, tools: false })) : null;
-    this.els.index.append(h("div", { class: "index-inner" }, resume, search, filters, list));
+    const resume = h("aside", { class: "index-continue", "aria-label": "games in progress" }, h("h2", null, "continue"),
+      sessionList(this, { filter: (m) => !finished(m) && !m.practice, limit: 12, tools: false, empty: "nothing in progress." }));
+    this.els.index.append(h("div", { class: "index-inner" }, h("div", { class: "index-main" }, search, filters, list), resume));
     render();
     this.hub.refresh();
   }
@@ -1424,14 +1444,16 @@ const SHELL_CSS = `
 [data-mode="index"] .stage { display: none; }
 #games:not([data-mode="index"]) .index-wrap { display: none; }
 .index-wrap { padding: 16px; display: flex; justify-content: center; }
-.index-inner { width: 100%; max-width: 960px; display: flex; flex-direction: column; gap: 12px; }
+.index-inner { width: 100%; max-width: 1240px; display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 20px; align-items: start; }
+.index-main { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+@media (max-width: 760px) { .index-inner { grid-template-columns: minmax(0, 1fr); } }
 .index-tags { display: flex; flex-wrap: wrap; gap: 6px; }
 .index-tags:empty { display: none; }
 .index-tags button { padding: 3px 10px; font-size: 13px; border-radius: 99px; }
 .index-tags button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); }
 .index-search { max-width: 320px; }
-.index-continue { display: flex; flex-direction: column; gap: 6px; max-width: 520px; }
-.index-continue h2, .index-inner > h2 { font-size: 13px; color: var(--text-dim); letter-spacing: .06em; font-weight: normal; }
+.index-continue { display: flex; flex-direction: column; gap: 6px; position: sticky; top: 16px; }
+.index-continue h2, .index-main > h2 { font-size: 13px; color: var(--text-dim); letter-spacing: .06em; font-weight: normal; }
 .index .aka { font-size: 12px; color: var(--text-dim); font-style: normal; }
 .index .tags { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 14px 10px; }
 .tag { font-size: 11px; padding: 1px 7px; border-radius: 99px; color: var(--tag-ink); background: var(--tag-bg); border: 1px solid var(--tag-line); }

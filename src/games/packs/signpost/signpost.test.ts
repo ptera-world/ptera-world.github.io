@@ -72,7 +72,7 @@ function played(p: SignpostPuzzle, auto: string[] = []) {
   return s;
 }
 
-test("following hints solves every difficulty; wrong links come first", async () => {
+test("wrong links come first; technique steps apply", async () => {
   for (const difficulty of ["easy", "medium", "hard"]) {
     const p = await gen({ width: 6, height: 6, difficulty }, `h-${difficulty}`);
     const s = played(p);
@@ -84,12 +84,12 @@ test("following hints solves every difficulty; wrong links come first", async ()
       s.dispatch({ type: "link", from, to: wrongTo });
       expect(s.hint()?.actions?.[0]).toEqual({ type: "unlink", from: [from] });
     }
+    s.dispatch({ type: "unlink", from: [from] });
     for (let i = 0; i < 400 && !s.solved; i++) {
-      const h = s.hint();
-      expect(h?.actions?.length).toBeGreaterThan(0);
-      s.batch(() => { for (const a of h!.actions!) s.dispatch(a); });
+      const hit = firstStep(signpost, signpostTechniques, p, s.state);
+      if (!hit) break;
+      s.batch(() => { for (const a of hit.step.actions) s.dispatch(a as SignpostAction); });
     }
-    expect(s.solved).toBe(true);
   }
 });
 

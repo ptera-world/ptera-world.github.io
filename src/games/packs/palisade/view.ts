@@ -1,5 +1,6 @@
 import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
 import { s, style } from "../../core/dom";
+import { buttonsSwapped, secondary } from "../../core/gestures";
 import { defineSchema } from "../../core/schema";
 import type { View } from "../../core/types";
 import {
@@ -142,7 +143,7 @@ export function palisadeView(board: BoardPrefs): View<PalisadePuzzle, PalisadeSt
         if (ev.pointerType !== "touch" && ev.button !== 0 && ev.button !== 2) return;
         pointerId = ev.pointerId;
         f.svg.setPointerCapture?.(ev.pointerId);
-        const want = ev.button === 2 ? GAP : LINE;
+        const swapped = buttonsSwapped(session.def.id), want = secondary(ev, session.def.id) ? GAP : LINE;
         const from = session.state.marks[e]!;
         stroke = { value: from === want ? NONE : want, from, edges: [e] };
         if (ev.pointerType === "touch") {
@@ -150,7 +151,8 @@ export function palisadeView(board: BoardPrefs): View<PalisadePuzzle, PalisadeSt
             holdTimer = 0;
             if (stroke?.edges.length !== 1) return;
             navigator.vibrate?.(15);
-            stroke = { value: from === GAP ? NONE : GAP, from, edges: [e] };
+            const alt = swapped ? LINE : GAP;
+            stroke = { value: from === alt ? NONE : alt, from, edges: [e] };
             render();
           }, settings.longPressMs);
         }

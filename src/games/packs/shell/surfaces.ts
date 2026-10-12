@@ -11,7 +11,15 @@ export interface SurfaceItem {
   cmd: CommandDef;
   enabled: boolean;
   keys: string[];
+  /** Called with true while the item is pointed at or focused (e.g. to preview what it does), false after. */
+  preview?(on: boolean): void;
 }
+
+/** Pointer and focus handlers that drive an item's preview. */
+const previewing = (it: SurfaceItem) => it.preview ? {
+  onpointerenter: () => it.preview!(true), onpointerleave: () => it.preview!(false),
+  onfocus: () => it.preview!(true), onblur: () => it.preview!(false),
+} : {};
 
 const CSS = `
 .sf-backdrop { position: fixed; inset: 0; z-index: 900; }
@@ -41,7 +49,8 @@ export function tiles(items: readonly SurfaceItem[], run: (id: string) => void):
     role: "menuitem", "data-command": it.cmd.id, disabled: !it.enabled,
     class: isDanger(it.cmd) ? "danger" : undefined,
     "aria-pressed": it.cmd.checked ? String(it.cmd.checked()) : undefined,
-    onclick: () => run(it.cmd.id),
+    onclick: () => { it.preview?.(false); run(it.cmd.id); },
+    ...previewing(it),
   }, h("span", null, it.cmd.label), it.keys.length ? h("span", { class: "k" }, it.keys[0]) : null)));
 }
 
@@ -54,7 +63,7 @@ export function popup(kind: "radial" | "tiles", x: number, y: number, items: rea
   return new Promise((resolve) => {
     const back = h("div", { class: "sf-backdrop" });
     let panel: HTMLElement;
-    const close = () => { openOverlays.delete(close); back.remove(); panel.remove(); document.removeEventListener("keydown", onKey, true); resolve(); };
+    const close = () => { for (const it of items) it.preview?.(false); openOverlays.delete(close); back.remove(); panel.remove(); document.removeEventListener("keydown", onKey, true); resolve(); };
     openOverlays.add(close);
     const pick = (id: string) => { close(); run(id); };
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); close(); } };
@@ -82,7 +91,8 @@ export function popup(kind: "radial" | "tiles", x: number, y: number, items: rea
             class: ["slice", isDanger(it.cmd) ? "danger" : "", it.cmd.checked?.() ? "on" : ""].join(" "),
             role: "menuitem", "data-command": it.cmd.id, disabled: !it.enabled,
             style: `left:${Math.cos(a) * 76}px;top:${Math.sin(a) * 76}px`,
-            onclick: () => pick(it.cmd.id),
+            onclick: () => { it.preview?.(false); pick(it.cmd.id); },
+            ...previewing(it),
           }, it.cmd.label);
         }));
       document.body.append(back, panel);

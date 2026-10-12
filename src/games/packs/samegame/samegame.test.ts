@@ -1,11 +1,9 @@
 import { expect, test } from "bun:test";
 import { generate } from "../../core/generate";
-import { Registry } from "../../core/registry";
 import { Session } from "../../core/session";
-import { TechniqueHost } from "../../core/techniques";
 import { collapse, gridFormat, samegame, sgtFormat, type SamegamePuzzle } from "./logic";
 import { findClear } from "./solver";
-import { checkClearable, hint } from "./techniques";
+import { checkClearable } from "./techniques";
 
 const sig = () => new AbortController().signal;
 const gen = (params: Record<string, unknown>, seed: string) => generate(samegame, params, seed, sig()) as Promise<SamegamePuzzle>;
@@ -42,37 +40,18 @@ test("the search finds a clear when one exists and proves none otherwise", () =>
   expect(r.impossible).toBe(true);
 });
 
-test("hints clear a board after a wrong turn is undone, and the check runs first", async () => {
-  const p = await gen({ width: 10, height: 5, colours: 3 }, "h");
-  const registry = new Registry();
-  const session = new Session({ ...samegame, hint }, p, { kind: "imported" });
-  new TechniqueHost(registry, session);
-  checkClearable.setup!({ session, settings: {}, owner: "check" });
-  for (let i = 0; i < 200 && !session.solved; i++) {
-    const hint = session.hint();
-    expect(hint?.actions?.length).toBeGreaterThan(0);
-    session.batch(() => { for (const a of hint!.actions!) session.dispatch(a); });
-  }
-  expect(session.solved).toBe(true);
+test("a lone tile is pointed out when asking for a hint", () => {
   const q = gridFormat.parse("1122\n3312");
-  const s2 = new Session({ ...samegame, hint }, q, { kind: "imported" });
+  const s2 = new Session(samegame, q, { kind: "imported" });
   checkClearable.setup!({ session: s2, settings: {}, owner: "check" });
   s2.dispatch({ type: "remove", cell: 0 });
   expect(s2.hint()?.message).toContain("lone");
 });
 
-test("the hint alone clears every preset", async () => {
-  for (const pr of samegame.presets!) {
-    const p = await gen(pr.params, "t");
-    let s = samegame.init(p);
-    for (let i = 0; i < 400 && !samegame.isSolved(p, s); i++) {
-      const h = hint(p, s);
-      expect(h).not.toBeNull();
-      s = h!.actions!.reduce((t, a) => samegame.reduce(p, t, a), s);
-    }
-    expect(samegame.isSolved(p, s)).toBe(true);
-  }
-}, 30000);
+test("the hint is empty without the check plugin", async () => {
+  const p = await gen({ width: 10, height: 5, colours: 3 }, "h");
+  expect(new Session(samegame, p, { kind: "imported" }).hint()).toBeNull();
+});
 
 test("scoring, being stuck", async () => {
   const p = gridFormat.parse("1112\n2223");

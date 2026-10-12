@@ -1,5 +1,4 @@
-import { hintFrom } from "../../core/define";
-import type { Hint, Step, Technique } from "../../core/types";
+import type { Step, Technique } from "../../core/types";
 import { plural } from "../../lib/grid-kit/names";
 import { mines, cellName, mineCount, numbers, visibleKnowledge, type MinesAction, type MinesFocus, type MinesPuzzle, type MinesState } from "./logic";
 import { MINE, UNKNOWN, deduceAt, deduceCount, deduceGlobal, deducePairs, neighbourTable, type Deduction } from "./solver";
@@ -177,23 +176,6 @@ function overlapStep(p: MinesPuzzle, d: Deduction | undefined): Step<MinesAction
     nudgeFocus: { cells: [], sources: [a] } satisfies MinesFocus,
     actions: actionsOf(d),
   };
-}
-
-function regionStep(p: MinesPuzzle, d: Deduction): Step<MinesAction> {
-  const first = d.sources[0];
-  return {
-    message: `trying every way the ${d.remaining} remaining mines can fit: ${outcome(d)}`,
-    nudge: first === undefined ? "think about where the remaining mines can go" : `try every way the mines can fit near ${cellName(p, first)}`,
-    focus: focusOf(d),
-    nudgeFocus: { cells: [], sources: d.sources } satisfies MinesFocus,
-    actions: actionsOf(d),
-  };
-}
-
-/** The puzzle's hint: what trying every way the remaining mines fit decides, else the puzzle's own hint. */
-export function minesHint(p: MinesPuzzle, s: MinesState): Hint<MinesAction> | null {
-  const d = regionDeduction(p, s);
-  return d ? (hintFrom(null, regionStep(p, d), 1) as Hint<MinesAction>) : mines.hint?.(p, s) ?? null;
 }
 
 export const minesTechniques: MinesTechnique[] = [forcedFlags, satisfied, mineCountTechnique, overlap];

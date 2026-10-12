@@ -3,7 +3,7 @@ import { generate } from "./generate";
 import type { Registry } from "./registry";
 import type { Session } from "./session";
 import { namespace } from "./storage";
-import type { Action, AnyPuzzleDef, Hint, Step, Technique } from "./types";
+import type { Action, AnyPuzzleDef, Step, Technique } from "./types";
 
 import { hintFrom } from "./define";
 export { hintFrom };
@@ -66,9 +66,21 @@ export function colorOf(t: Technique, list: readonly Technique[]): string {
   return `hsl(${Math.round((i * 137.508 + 280) % 360)} 70% 58%)`;
 }
 
-/** Safe targeted find (see Technique.findAt); null when the technique has no targeted form. */
+/** True if `t` can be aimed at a target: through its own findAt, or the puzzle's aims. */
+export const aimable = (def: AnyPuzzleDef, t: Technique): boolean => !!t.findAt || !!def.aims;
+
+/** Safe targeted find: the technique's findAt, else its first instance the puzzle's aims accepts; null when it can't be aimed. */
 export function findStepAt<Pz, S>(def: AnyPuzzleDef, t: Technique, puzzle: Pz, state: S, target: unknown): Step | null {
-  if (!t.findAt || target === undefined || target === null) return null;
+  if (target === undefined || target === null || !aimable(def, t)) return null;
+  if (!t.findAt) {
+    let hit: Step | null = null;
+    validInstances(def, t, puzzle, state, (step) => {
+      if (!def.aims!(puzzle, step, target)) return false;
+      hit = step;
+      return true;
+    });
+    return hit;
+  }
   try {
     const step = t.findAt(puzzle, state, target);
     if (!step || step.actions.length === 0) return null;
@@ -267,8 +279,8 @@ export function rememberedPosition(def: AnyPuzzleDef, t: Technique, all: readonl
 
 /**
  * A position where `target` is the easiest technique that applies: generated from seeded
- * puzzles, played forward with easier techniques (or the puzzle's own hint when none applies)
- * until target is next. Deterministic in seed.
+ * puzzles, played forward with easier techniques (or, where none applies, the first move
+ * of the puzzle's answer) until target is next. Deterministic in seed.
  * Returns null if none is found within `tries` puzzles.
  */
 export async function findPracticePosition(
@@ -294,7 +306,8 @@ export async function findPracticePosition(
         if (shown) return { puzzle, state: shown, seed: s };
         break;
       }
-      const moves = hit?.step.actions ?? def.hint?.(puzzle, state)?.actions ?? [];
+      const answer = hit ? null : def.solve?.(puzzle, state);
+      const moves = hit?.step.actions ?? (answer && "moves" in answer ? answer.moves.slice(0, 1) : []);
       const next = applyStep(def, puzzle, state, { message: "", actions: moves });
       if (Object.is(next, state)) break;
       state = next;

@@ -1,5 +1,6 @@
 import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
 import { s, style, inputIs } from "../../core/dom";
+import { secondary } from "../../core/gestures";
 import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
 import { geometry } from "./grid";
@@ -259,7 +260,7 @@ export function signpostView(board: Board): View<SignpostPuzzle, SignpostState, 
         if (session.locked) return;
         pointerId = e.pointerId;
         svg.setPointerCapture?.(e.pointerId);
-        drag = { from: at.cell, back: e.button === 2, x: at.x, y: at.y, moved: false };
+        drag = { from: at.cell, back: e.button !== 1 && secondary(e, session.def.id), x: at.x, y: at.y, moved: false };
         render();
       };
       const onMove = (e: PointerEvent) => {

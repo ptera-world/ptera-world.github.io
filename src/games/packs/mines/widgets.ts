@@ -1,5 +1,6 @@
 import { defineWidgets } from "../../core/define";
 import { h, style } from "../../core/dom";
+import { buttonsSwapped } from "../../core/gestures";
 import { mines, mineCount, type MinesAction, type MinesInteraction, type MinesPuzzle, type MinesState } from "./logic";
 
 const widget = defineWidgets<MinesPuzzle, MinesState, MinesAction, MinesInteraction>();
@@ -45,14 +46,14 @@ export const flagMode = widget({
   order: 15,
   mount(el, { session, owner, run }) {
     style("mines-widgets", CSS);
-    const openBtn = h("button", { type: "button", title: "taps open cells", onclick: () => { if (session.interaction.flagMode) run("mines.mode"); } }, "open");
-    const flagBtn = h("button", { type: "button", class: "flag", title: "taps put flags on cells instead of opening them", onclick: () => { if (!session.interaction.flagMode) run("mines.mode"); } }, "flag");
+    const openBtn = h("button", { type: "button", title: "taps open cells", onclick: () => { if (buttonsSwapped(session.def.id)) run("shell.swap-buttons"); } }, "open");
+    const flagBtn = h("button", { type: "button", class: "flag", title: "taps put flags on cells instead of opening them", onclick: () => { if (!buttonsSwapped(session.def.id)) run("shell.swap-buttons"); } }, "flag");
     el.append(h("div", { class: "mines-mode", role: "group", "aria-label": "what a tap does" }, openBtn, flagBtn));
     const render = () => {
-      openBtn.setAttribute("aria-pressed", String(!session.interaction.flagMode));
-      flagBtn.setAttribute("aria-pressed", String(session.interaction.flagMode));
+      openBtn.setAttribute("aria-pressed", String(!buttonsSwapped(session.def.id)));
+      flagBtn.setAttribute("aria-pressed", String(buttonsSwapped(session.def.id)));
     };
-    session.hooks.interaction.tap(render, { owner });
+    session.hooks.refresh.tap(render, { owner });
     render();
   },
 });

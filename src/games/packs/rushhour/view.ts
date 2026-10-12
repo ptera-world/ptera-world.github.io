@@ -29,9 +29,9 @@ ${inputIs("pointer")} .rushhour-board .car.selected rect { stroke: color-mix(in 
 .rushhour-moves { font-family: var(--mono); color: var(--text-dim); min-height: 1.4em; }
 `;
 
-const RED = "var(--rushhour-red, #d63a2f)";
+const RED = "var(--rushhour-red, var(--danger))";
 /** Other cars by index; a theme can override any with --rushhour-1 … --rushhour-8. */
-const PALETTE = ["#4f86c6", "#e0b23c", "#5aa36a", "#9a6fc0", "#e07b39", "#4bb3b3", "#c0587e", "#8a8f3a"];
+const PALETTE = ["var(--palette-1)", "var(--palette-2)", "var(--palette-3)", "var(--palette-4)", "var(--palette-5)", "var(--palette-6)", "var(--palette-7)", "var(--palette-8)"];
 const carColor = (i: number) => (i === 0 ? RED : `var(--rushhour-${((i - 1) % PALETTE.length) + 1}, ${PALETTE[(i - 1) % PALETTE.length]})`);
 
 const BINDINGS = {

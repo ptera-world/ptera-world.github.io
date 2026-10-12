@@ -1,6 +1,6 @@
 import { featureTests } from "../../core/define";
 import type { Ids } from "../../core/commands";
-import type { Hint, PuzzleDef, Rating } from "../../core/types";
+import type { PuzzleDef, Rating } from "../../core/types";
 import { formats } from "./formats";
 import { generate, params, tierNeeded } from "./generate";
 import { coord, isTree, rotate, turnsBetween, type NetPuzzle } from "./grid";
@@ -114,20 +114,6 @@ function reduce(p: NetPuzzle, s: NetState, a: NetAction): NetState {
   }
 }
 
-/** Last resort when no hint-enabled technique applies: one tile straight from the solution. */
-function hint(p: NetPuzzle, s: NetState): Hint<NetAction> | null {
-  if (isTree(p, s.tiles)) return null;
-  const sol = analyse(p).solution;
-  if (!sol) return { message: "this puzzle has no solution" };
-  const c = s.tiles.findIndex((m, i) => !s.locked[i] && m !== sol[i]);
-  if (c < 0) return null;
-  return {
-    message: `no technique you have hints on finds anything here, so this one's straight from the solution: turn ${coord(p, c)} like this`,
-    focus: { cell: c, cells: [c], mask: sol[c]! } satisfies NetHintFocus,
-    actions: [{ type: "set", cell: c, mask: sol[c]!, lock: true }],
-  };
-}
-
 function rate(p: NetPuzzle): Rating {
   const a = analyse(p);
   const u = a.used;
@@ -181,7 +167,6 @@ export const net: PuzzleDef<NetPuzzle, NetState, NetAction, NetInteraction, type
     const sol = analyse(p).solution;
     return sol ? { board: { tiles: sol.slice(), locked: sol.map(() => 0) } } : null;
   },
-  hint,
   isRetraction: (a) => a.type === "lock" && a.on === false,
   rules: (p) => [
     "you can only turn tiles, never move them. each tile has a fixed piece: a dead end, a straight, a bend, a T or a cross.",

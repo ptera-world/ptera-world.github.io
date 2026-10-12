@@ -2,7 +2,6 @@ import { cellName as cellAt } from "../../lib/grid-kit/names";
 import type { Rng } from "../../core/rng";
 import { defineSchema, type Values } from "../../core/schema";
 import type { Format, GenerateContext, PuzzleDef, Rating } from "../../core/types";
-import { clearFrom } from "./solver";
 
 export const MAX_COLOURS = 9;
 
@@ -308,9 +307,6 @@ export const samegame: PuzzleDef<SamegamePuzzle, SamegameState, SamegameAction, 
   },
   isSolved: (_p, s) => isEmpty(s.grid),
   isLost: (p, s) => isStuck(p, s.grid),
-  hint: (p, s) => (isEmpty(s.grid) || isStuck(p, s.grid) || clearFrom(p, s.grid).path
-    ? null
-    : { message: "the search for a clearing order ran out of time from here, so there's no suggestion. undoing a move or two may help." }),
   rate,
   rules: (p) => [
     "click a group of two or more joined tiles of the same color (joined across edges) to remove it.",

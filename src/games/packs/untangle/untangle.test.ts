@@ -1,10 +1,7 @@
 import { expect, test } from "bun:test";
 import { generate } from "../../core/generate";
-import { Registry } from "../../core/registry";
 import { Session } from "../../core/session";
-import { TechniqueHost } from "../../core/techniques";
 import { circle, cross, crossings, sgtFormat, untangle, type Pt, type UntanglePuzzle } from "./logic";
-import { untangleHint, untangleTechniques } from "./techniques";
 
 const sig = () => new AbortController().signal;
 const gen = (params: Record<string, unknown>, seed: string) => generate(untangle, params, seed, sig()) as Promise<UntanglePuzzle>;
@@ -28,21 +25,20 @@ test("generated graphs have a known untangled layout, start tangled, and are det
   expect(await gen({ points: 12 }, "x")).toEqual(await gen({ points: 12 }, "x"));
 });
 
-test.todo("following hints untangles every board", async () => {
+test("the hint on a tangled board names two lines that cross, with no actions", async () => {
   for (let i = 0; i < 6; i++) {
     const p = await gen({ points: 8 + i * 3 }, `h${i}`);
-    const registry = new Registry();
-    for (const t of untangleTechniques) registry.technique(t);
-    const s = new Session({ ...untangle, hint: untangleHint }, p, { kind: "imported" });
-    new TechniqueHost(registry, s);
-    for (let k = 0; k < 400 && !s.solved; k++) {
-      const h = s.hint();
-      expect(h?.actions?.length).toBeGreaterThan(0);
-      s.batch(() => { for (const a of h!.actions!) s.dispatch(a); });
-    }
-    expect(s.solved).toBe(true);
+    const s = new Session(untangle, p, { kind: "imported" });
+    const h = s.hint();
+    expect(h?.actions?.length ?? 0).toBe(0);
+    const pts = (h!.focus as { points: number[] }).points;
+    expect(pts.length).toBe(4);
+    const [a, b, c, d] = pts as [number, number, number, number];
+    expect(p.edges.some(([x, y]) => x === a && y === b)).toBe(true);
+    expect(p.edges.some(([x, y]) => x === c && y === d)).toBe(true);
+    expect(cross(s.state.pts[a]!, s.state.pts[b]!, s.state.pts[c]!, s.state.pts[d]!)).toBe(true);
   }
-}, 60000);
+});
 
 test("game ids round-trip and parse like the original", async () => {
   const p = await gen({ points: 10 }, "fmt");

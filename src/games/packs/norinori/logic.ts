@@ -199,9 +199,6 @@ export function hint(p: NorinoriPuzzle, s: ShadeState): Hint<ShadeAction> | null
   const c = findConflicts(p, s.marks);
   if (c.regions.length) return { message: `a region has more than two shaded cells`, focus: { cells: c.regions, because: [] } satisfies Focus };
   if (c.clumps.length) return { message: `${cellList(p, c.clumps)} join more than two shaded cells together`, focus: { cells: c.clumps, because: [] } satisfies Focus };
-  const a = analyze(p);
-  if (a.count === 0) return { message: "this puzzle has no solution" };
-  if (a.count === 2) return { message: "this puzzle has more than one solution, so it can need a guess" };
   return { message: "none of the techniques you have hints on applies here" };
 }
 

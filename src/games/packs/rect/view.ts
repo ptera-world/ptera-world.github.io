@@ -1,5 +1,6 @@
 import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
 import { s, style } from "../../core/dom";
+import { secondary } from "../../core/gestures";
 import type { View } from "../../core/types";
 import {
   KIT_CSS, SIZE, cursorRect, drawFocus, focusCells, focusLegend, frame, sample, sampleCell,
@@ -172,11 +173,12 @@ export function rectView(board: BoardPrefs): View<RectPuzzle, RectState, RectAct
           if (session.locked || (ev.pointerType !== "touch" && ev.button !== 0 && ev.button !== 2)) return;
           pointerId = ev.pointerId;
           f.svg.setPointerCapture?.(ev.pointerId);
-          const e = ev.button === 2 ? -1 : edgeAt(ev);
+          const erase = secondary(ev, session.def.id);
+          const e = erase ? -1 : edgeAt(ev);
           if (e >= 0) {
             const from = session.state.walls[e]!;
             drag = { mode: "edge", value: from ? 0 : 1, from, edges: [e] };
-          } else drag = { mode: "box", start: c, end: c, erase: ev.button === 2 };
+          } else drag = { mode: "box", start: c, end: c, erase };
           render();
         }) as EventListener],
         ["pointermove", ((ev: PointerEvent) => {

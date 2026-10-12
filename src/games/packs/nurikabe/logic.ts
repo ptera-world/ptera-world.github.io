@@ -330,9 +330,6 @@ export function hint(p: NurikabePuzzle, s: ShadeState): Hint<ShadeAction> | null
   if (c.islands.length) return { message: `the island on ${cellList(p, c.islands)} breaks a rule`, focus: { cells: c.islands, because: [] } satisfies Focus };
   if (c.clues.length) return { message: `the number on ${cellList(p, c.clues)} can't get an island of its size any more`, focus: { cells: [], because: c.clues } satisfies Focus };
   if (c.sea.length) return { message: `${cellList(p, c.sea)} ${c.sea.length === 1 ? "is" : "are"} cut off from the rest of the sea`, focus: { cells: c.sea, because: [] } satisfies Focus };
-  const a = analyze(p);
-  if (a.count === 0) return { message: "this puzzle has no solution" };
-  if (a.count === 2) return { message: "this puzzle has more than one solution, so it can need a guess" };
   return { message: "none of the techniques you have hints on applies here" };
 }
 

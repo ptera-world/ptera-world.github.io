@@ -105,31 +105,3 @@ export function fullRoute(p: CubePuzzle, s: Core, budget = BUDGET): Route | null
   }
   return null;
 }
-
-export interface Plan {
-  route: Route;
-  /** The first roll sets a blue face down on a plain square. */
-  drops: boolean;
-  /** The route finishes the puzzle (else it only fetches one square). */
-  whole: boolean;
-}
-
-const QUICK = 30_000;
-const plans = new WeakMap<readonly number[], { faces: readonly number[]; square: number; plan: Plan | null }>();
-
-/** A whole route when a quick search finds one, else the nearest safe fetch. Cached per state. */
-export function plan(p: CubePuzzle, s: Core): Plan | null {
-  const hit = plans.get(s.blue);
-  if (hit && hit.faces === s.faces && hit.square === s.square) return hit.plan;
-  let result: Plan | null = null;
-  const whole = fullRoute(p, s, QUICK) ?? (pickUp(p, s) ? null : fullRoute(p, s));
-  const route = whole ?? pickUp(p, s);
-  if (route?.squares.length) {
-    const first = roll(p, s, route.squares[0]!)!;
-    const solid = SOLIDS[p.solid];
-    const drops = !!s.faces[faceOf(solid, first.key)] && !s.blue[route.squares[0]!];
-    result = { route, drops, whole: !!whole };
-  }
-  plans.set(s.blue, { faces: s.faces, square: s.square, plan: result });
-  return result;
-}

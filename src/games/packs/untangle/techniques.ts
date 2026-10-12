@@ -1,5 +1,4 @@
-import { hintFrom } from "../../core/define";
-import type { Hint, Step, Technique } from "../../core/types";
+import type { Step, Technique } from "../../core/types";
 import { untangle, crossings, crossingsAt, type Pt, type UntangleAction, type UntangleFocus, type UntanglePuzzle, type UntangleState } from "./logic";
 
 type UntangleTechnique = Technique<UntanglePuzzle, UntangleState, UntangleAction>;
@@ -15,10 +14,6 @@ function centroid(pts: readonly Pt[], list: readonly number[]): Pt | null {
   for (const i of list) { x += pts[i]![0]; y += pts[i]![1]; }
   return [x / list.length, y / list.length];
 }
-
-/** True for a point already at its place in the known untangled arrangement. */
-const settled = (p: UntanglePuzzle, s: UntangleState, v: number) =>
-  !!p.layout && Math.hypot(s.pts[v]![0] - p.layout[v]![0], s.pts[v]![1] - p.layout[v]![1]) <= 1e-9;
 
 type Move = { v: number; to: Pt; gain: number };
 
@@ -96,28 +91,5 @@ export const bestSpot = technique({
     if (visit(step(m.v, m.to, `the highlighted point's lines cross the least from here: that clears ${plural(m.gain)}`, "one point has a better spot")) === true) return;
   }
 });
-
-/** Steps toward an arrangement known to have no crossings (the one the puzzle was made from), for the hint. */
-function knownLayoutSteps(p: UntanglePuzzle, s: UntangleState, visit: Visit): void {
-  if (!p.layout || !crossings(p, s.pts).length) return;
-  const layout = p.layout;
-  const toLayout = (v: number) => step(v, layout[v]!, "the highlighted point goes here in an arrangement with no crossings", "one point has a place in an untangled arrangement");
-  const moves = movesByGain(p, s, (v) => [layout[v]!]).filter((m) => !settled(p, s, m.v));
-  if (moves.length) {
-    for (const m of moves) if (visit(toLayout(m.v)) === true) return;
-    return;
-  }
-  for (let v = 0; v < p.n; v++) {
-    if (settled(p, s, v)) continue;
-    if (visit(toLayout(v)) === true) return;
-  }
-}
-
-/** The puzzle's hint: the first step toward the known untangled arrangement, else the puzzle's own hint. */
-export function untangleHint(p: UntanglePuzzle, s: UntangleState): Hint<UntangleAction> | null {
-  let hit: Step<UntangleAction> | null = null;
-  knownLayoutSteps(p, s, (st) => { hit = st; return true; });
-  return hit ? (hintFrom(null, hit, 1) as Hint<UntangleAction>) : untangle.hint?.(p, s) ?? null;
-}
 
 export const untangleTechniques: UntangleTechnique[] = [toNeighbours, bestSpot];

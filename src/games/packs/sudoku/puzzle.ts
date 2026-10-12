@@ -3,7 +3,7 @@ import { featureTests } from "../../core/define";
 import type { Rng } from "../../core/rng";
 import type { Schema, Values } from "../../core/schema";
 import type { Feature, GenerateContext, Hint, Preset, PuzzleDef } from "../../core/types";
-import { bit, digits, popcount } from "./engine/bits";
+import { bit, digits } from "./engine/bits";
 import { listOf } from "../../lib/edge-names";
 import { grade, gridFrom, type Grade, type Grid } from "./engine/human";
 import { conflicts, modelOf } from "./engine/model";
@@ -165,16 +165,6 @@ export function boardGrid(p: LatinPuzzle, s: GridState): Grid {
   return gridFrom(modelOf(p), s.values, solutionOf(p) ?? undefined, s.struck);
 }
 
-/**
- * The position the reveal hint reasons about: placed digits plus the candidates the player ruled out.
- * A ruled-out candidate that is actually the solution is ignored.
- */
-export function gridOf(p: LatinPuzzle, s: GridState): Grid {
-  const sol = solutionOf(p) ?? undefined;
-  const struck = sol ? s.struck.map((m, c) => m & ~bit(sol[c]!)) : s.struck;
-  return gridFrom(modelOf(p), s.values, sol, struck);
-}
-
 const featureCache = new WeakMap<LatinPuzzle, Feature[]>();
 
 /** A puzzle with a clue of this constraint type has the feature of the same name. */
@@ -234,7 +224,7 @@ export function rulesOf(p: LatinPuzzle): string[] {
   return out;
 }
 
-// --- hints that aren't techniques ---
+// --- mistake check (used by the hint-mistakes plugin) ---
 
 export function mistakeHint(p: LatinPuzzle, s: GridState): Hint<GridAction> | null {
   const sol = solutionOf(p);
@@ -247,26 +237,6 @@ export function mistakeHint(p: LatinPuzzle, s: GridState): Hint<GridAction> | nu
     message: `${wrong.length === 1 ? "this digit doesn't" : "these digits don't"} belong: ${names}`,
     focus,
     actions: [{ type: "set", cells: wrong, digit: 0 }],
-  };
-}
-
-/** Last resort when no technique (with hints on) applies: give away the most constrained cell. */
-export function revealHint(p: LatinPuzzle, s: GridState): Hint<GridAction> | null {
-  const sol = solutionOf(p);
-  if (!sol) return null;
-  const g = gridOf(p, s);
-  let best = -1;
-  for (let c = 0; c < g.m.size; c++) {
-    if (g.vals[c]) continue;
-    if (best < 0 || popcount(g.masks[c]!) < popcount(g.masks[best]!)) best = c;
-  }
-  if (best < 0) return null;
-  const d = sol[best]!;
-  const focus: HintFocus = { cells: [best], areas: [], place: [[best, d]], eliminate: [], level: 2 };
-  return {
-    message: `no step found with the techniques that give hints; ${cellName(p.n, best)} is ${d}`,
-    focus,
-    actions: [{ type: "set", cells: [best], digit: d }],
   };
 }
 
@@ -326,11 +296,14 @@ export function latinDef<P extends Schema>(cfg: LatinDefConfig<P>): PuzzleDef<La
     isSolved,
     isRetraction,
     describeAction,
+    aims: (_p, step, target) => {
+      const f = step.focus as HintFocus | undefined;
+      return typeof target === "number" && !!f && (f.cells.includes(target) || f.place.some(([c]) => c === target) || f.eliminate.some(([c]) => c === target));
+    },
     solve(p) {
       const sol = solutionOf(p);
       return sol ? { board: { ...initState(p), values: sol.slice() } } : null;
     },
-    hint: (p, s) => mistakeHint(p, s) ?? revealHint(p, s),
     rules: rulesOf,
     features: featuresOf,
     rate(p) {

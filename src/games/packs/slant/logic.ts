@@ -316,9 +316,6 @@ export function hint(p: SlantPuzzle, s: SlantState): Hint<SlantAction> | null {
   const c = findConflicts(p, s.marks);
   if (c.loops.length) return { message: `the lines in ${cellList(p, c.loops)} close a loop`, focus: { cells: c.loops, because: [] } satisfies Focus };
   if (c.clues.length) return { message: `the number at ${pointName(p, c.clues[0]!)} can't be met any more`, focus: { cells: [], because: [pointCell(p, c.clues[0]!)], points: [c.clues[0]!] } satisfies Focus };
-  const a = analyze(p);
-  if (a.count === 0) return { message: "this puzzle has no solution" };
-  if (a.count === 2) return { message: "this puzzle has more than one solution, so it can need a guess" };
   return { message: "none of the techniques you have hints on applies here" };
 }
 

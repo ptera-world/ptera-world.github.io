@@ -1,5 +1,6 @@
 import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
 import { s, style, inputIs } from "../../core/dom";
+import { buttonsSwapped, secondary } from "../../core/gestures";
 import { defineSchema } from "../../core/schema";
 import type { View } from "../../core/types";
 import { twiddle, goalTile, type TwiddleAction, type TwiddleFocus, type TwiddleInteraction, type TwiddlePuzzle, type TwiddleState } from "./logic";
@@ -197,7 +198,7 @@ export const twiddleView: View<TwiddlePuzzle, TwiddleState, TwiddleAction, Twidd
       const timer = e.pointerType === "mouse" ? 0 : window.setTimeout(() => {
         if (!press) return;
         press.held = true;
-        turn(press.cell, true);
+        turn(press.cell, !buttonsSwapped(session.def.id));
         navigator.vibrate?.(15);
       }, 450);
       press = { id: e.pointerId, cell, timer, held: false };
@@ -207,7 +208,7 @@ export const twiddleView: View<TwiddlePuzzle, TwiddleState, TwiddleAction, Twidd
       clearTimeout(press.timer);
       const pr = press;
       press = null;
-      if (!pr.held && e.type === "pointerup") turn(pr.cell, false);
+      if (!pr.held && e.type === "pointerup") turn(pr.cell, secondary(e, session.def.id));
       if (e.pointerType !== "mouse") showHover(-1);
     };
     const onMove = (e: PointerEvent) => { if (e.pointerType === "mouse") showHover(blockAt(e)); };
@@ -251,7 +252,7 @@ export const twiddleView: View<TwiddlePuzzle, TwiddleState, TwiddleAction, Twidd
         "twiddle.cw": () => turn(session.interaction.cursor, true),
         "twiddle.cw-at": (_ctx, e) => {
           if (!(e instanceof MouseEvent)) return false;
-          turn(blockAt(e), true);
+          turn(blockAt(e), secondary(e, session.def.id));
           return true;
         },
       }),

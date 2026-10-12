@@ -238,9 +238,6 @@ export function hint(p: TracksPuzzle, s: TracksState): Hint<TracksAction> | null
   if (c.cells.length) return { message: `the track at ${cellList(p, c.cells)} can't be right: a cell has exactly two ends of track, or none`, focus: { edges: [], cells: [], because: c.cells } satisfies TracksFocus };
   if (c.counts.length) return { message: `${countName(p, c.counts[0]!)} can't get exactly ${target(p, c.counts[0]!)} track cells any more`, focus: { edges: [], cells: [], because: [], counts: c.counts } satisfies TracksFocus };
   if (c.loop.length) return { message: "there's a loop of track: the track has to run from the entrance to the exit", focus: { edges: [], cells: [], because: c.loop } satisfies TracksFocus };
-  const a = analyze(p);
-  if (a.count === 0) return { message: "this puzzle has no solution" };
-  if (a.count === 2) return { message: "this puzzle has more than one solution, so it can need a guess" };
   return { message: "none of the techniques you have hints on applies here" };
 }
 

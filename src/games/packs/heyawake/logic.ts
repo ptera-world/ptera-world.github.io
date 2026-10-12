@@ -300,9 +300,6 @@ export function hint(p: HeyawakePuzzle, s: ShadeState): Hint<ShadeAction> | null
   if (c.rooms.length) return { message: `the room numbered on ${cellList(p, c.rooms)} can't get the right count any more`, focus: { cells: [], because: c.rooms } satisfies Focus };
   if (c.runs.length) return { message: `the unshaded run through ${cellList(p, c.runs)} crosses two walls`, focus: { cells: c.runs, because: [] } satisfies Focus };
   if (c.cut.length) return { message: `${cellList(p, c.cut)} ${c.cut.length === 1 ? "is" : "are"} cut off from the other unshaded cells`, focus: { cells: c.cut, because: [] } satisfies Focus };
-  const a = analyze(p);
-  if (a.count === 0) return { message: "this puzzle has no solution" };
-  if (a.count === 2) return { message: "this puzzle has more than one solution, so it can need a guess" };
   return { message: "none of the techniques you have hints on applies here" };
 }
 

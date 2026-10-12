@@ -75,7 +75,7 @@ function played(p: NurikabePuzzle, auto: string[] = []) {
   return { s, host };
 }
 
-test("following hints solves boards of every difficulty; wrong marks come first", async () => {
+test("a wrong mark is cleared by the hint first; technique steps keep producing actions", async () => {
   for (const difficulty of LEVELS) {
     const p = await gen({ width: 8, height: 8, difficulty }, `h-${difficulty}`);
     const { s } = played(p);
@@ -83,12 +83,13 @@ test("following hints solves boards of every difficulty; wrong marks come first"
     const bad = sol.findIndex((v, c) => v !== SHADED && p.nums[c] === 0);
     s.dispatch({ type: "set", cells: [bad], value: BLACK });
     expect(s.hint()?.actions?.[0]).toEqual({ type: "set", cells: [bad], value: NONE });
-    for (let i = 0; i < 400 && !s.solved; i++) {
-      const hnt = s.hint();
-      expect(hnt?.actions?.length).toBeGreaterThan(0);
-      s.batch(() => { for (const a of hnt!.actions!) s.dispatch(a); });
+    let st = nurikabe.init(p);
+    for (let i = 0; i < 600; i++) {
+      const hit = firstStep(nurikabe, nurikabeTechniques, p, st);
+      if (!hit) break;
+      expect(hit.step.actions.length).toBeGreaterThan(0);
+      st = applyStep(nurikabe, p, st, hit.step);
     }
-    expect(s.solved).toBe(true);
   }
 });
 

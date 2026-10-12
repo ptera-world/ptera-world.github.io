@@ -262,9 +262,6 @@ export function hint(p: SignpostPuzzle, s: SignpostState): Hint<SignpostAction> 
   if (c.numbers.length) return { message: `the numbers on ${cellList(p, c.numbers)} can't all be right`, focus: { links: [], because: c.numbers } satisfies SignpostFocus };
   if (c.stuckOut.length) return { message: `${cellList(p, c.stuckOut)} can't link anywhere any more`, focus: { links: [], because: c.stuckOut } satisfies SignpostFocus };
   if (c.stuckIn.length) return { message: `nothing can link into ${cellList(p, c.stuckIn)} any more`, focus: { links: [], because: c.stuckIn } satisfies SignpostFocus };
-  const a = analyze(p);
-  if (a.count === 0) return { message: "this puzzle has no solution" };
-  if (a.count === 2) return { message: "this puzzle has more than one solution, so it can need a guess" };
   return { message: "none of the techniques you have hints on applies here" };
 }
 

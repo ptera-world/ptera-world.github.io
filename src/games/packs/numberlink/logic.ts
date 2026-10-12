@@ -288,9 +288,6 @@ export function hint(p: NumberlinkPuzzle, s: NumberlinkState): Hint<NumberlinkAc
   if (c.cells.length) return { message: `the line at ${cellList(p, c.cells)} can't be right: a dot has one line and any other cell two (or none)`, focus: { cells: [], because: c.cells } satisfies NumberlinkFocus };
   if (c.mixed.length) return { message: `a line joins two different colors at ${cellList(p, c.mixed)}`, focus: { cells: [], because: c.mixed } satisfies NumberlinkFocus };
   if (c.loop.length) return { message: "there's a closed loop: every line runs from a dot to its partner", focus: { cells: [], because: c.loop } satisfies NumberlinkFocus };
-  const a = analyze(p);
-  if (a.count === 0) return { message: "this puzzle has no solution" };
-  if (a.count === 2) return { message: "this puzzle has more than one solution, so it can need a guess" };
   return { message: "none of the techniques you have hints on applies here" };
 }
 

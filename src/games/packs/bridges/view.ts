@@ -4,6 +4,7 @@ import { bindCommands, bindingsOver, handlersOver, type BindingSchema, type Ids 
 import type { View } from "../../core/types";
 import { colName, rowName, type Side } from "../../core/names";
 import { s, style, inputIs } from "../../core/dom";
+import { buttonsSwapped, secondary } from "../../core/gestures";
 import { getDeco } from "./deco";
 import { DIR_NAMES, graph, type BridgesPuzzle, type BridgesState } from "./graph";
 import { bridges, type BridgesAction, type BridgesInteraction, type Focus } from "./logic";
@@ -81,7 +82,6 @@ const keysOf = (name: Dir) => DIR_KEYS[DIR_NAMES.indexOf(name)]!;
 const toward = (name: Dir) => (name === "down" ? "below" : name === "up" ? "above" : `to the ${name}`);
 
 const BINDINGS = {
-  "bridges.mode": { label: "tap removes", category: "board", keys: ["x"], description: "for touch, where there's no right-click: while on, a tap or drag takes a bridge away, or puts a ✕ (no bridge here) on an empty gap. while off, taps add bridges. with a mouse, right-click does the same without switching" },
   "bridges.add-at": { label: "add a bridge", description: "drag from an island toward a neighbor, or click the gap between them", category: "board", mouse: ["click"], hidden: true },
   "bridges.remove-at": { label: "take away / ✕", description: "drag from an island or click a gap: removes a bridge, or marks an empty gap ✕ (no bridge here)", category: "board", mouse: ["rightclick", "$mod+click"], hidden: true },
   ...bindingsOver("bridges.add-", DIR_NAMES, (name) => ({ label: `add bridge ${name}`, description: `keyboard: add a bridge from the ringed island to its neighbor ${toward(name)}`, category: "keyboard", keys: [`shift+${keysOf(name)[0]}`, `shift+${keysOf(name)[1]}`] })),
@@ -91,16 +91,6 @@ const BINDINGS = {
 
 declare module "../../core/commands" {
   interface CommandNames extends Ids<typeof BINDINGS> {}
-}
-
-/** The keys this view adds to the command context. */
-interface BridgesContext {
-  /** Taps take bridges away instead of adding them. */
-  markMode: boolean;
-}
-
-declare module "../../core/types" {
-  interface CommandContext extends Partial<BridgesContext> {}
 }
 
 type Press =
@@ -159,7 +149,6 @@ export function makeView(look: Look, board: BoardPrefs, holdMs: number): View<Br
       { how: "drag from an island toward a neighbor", what: "add a bridge between them (again for a double bridge)" },
       { how: "click or tap the gap between two islands", what: "add a bridge there too" },
       { how: "right-click, or ctrl+click (⌘ on mac)", what: "take a bridge away. on an empty gap it puts a ✕, your note that no bridge goes there" },
-      { how: "on touch: switch “tap removes” on", what: "taps and drags take away and put ✕ instead of adding" },
     ],
     mount(root, { session, settings }) {
       style("bridges", CSS);
@@ -284,12 +273,11 @@ export function makeView(look: Look, board: BoardPrefs, holdMs: number): View<Br
 
       // --- input ---
 
-      /** Add or take away on an edge; "tap removes" swaps pointer gestures (not keys). Removals are sent as retractions. */
-      const act = (edge: number, remove: boolean, pointerGesture = true) => {
+      /** Add or take away on an edge. Removals are sent as retractions. */
+      const act = (edge: number, remove: boolean) => {
         if (edge < 0) return;
-        const swapped = pointerGesture && session.interaction.mode === "mark";
         const n = session.state.b[edge]!;
-        if (remove === swapped) {
+        if (!remove) {
           if (n < p.maxb) session.dispatch({ type: "set", edge, n: n + 1 });
           else if (settings.wrap) session.dispatch({ type: "set", edge, n: 0 });
         } else if (n > 0) {
@@ -385,7 +373,7 @@ export function makeView(look: Look, board: BoardPrefs, holdMs: number): View<Br
       const onDown = (ev: PointerEvent) => {
         if (ev.pointerType === "mouse") return;
         ev.preventDefault();
-        if (!press && begin(ev.clientX, ev.clientY, false) && press) {
+        if (!press && begin(ev.clientX, ev.clientY, buttonsSwapped(session.def.id)) && press) {
           (press as { touch?: unknown }).touch = { x: ev.clientX, y: ev.clientY, t: performance.now(), far: false };
           clearTimeout(holdTimer);
           holdTimer = window.setTimeout(abandon, Math.max(0, holdMs - HOLD_LEAD_MS));
@@ -399,10 +387,10 @@ export function makeView(look: Look, board: BoardPrefs, holdMs: number): View<Br
       window.addEventListener("pointerup", finish);
       window.addEventListener("pointercancel", finish);
 
-      const pointer = (secondary: boolean) => (_ctx: unknown, ev?: unknown) => {
+      const pointer = () => (_ctx: unknown, ev?: unknown) => {
         const e = ev as MouseEvent | undefined;
         if (!e || !(e.target instanceof Element) || !svg.contains(e.target)) return false;
-        return begin(e.clientX, e.clientY, secondary);
+        return begin(e.clientX, e.clientY, secondary(e, session.def.id) !== (e.shiftKey || e.ctrlKey || e.metaKey));
       };
 
       const move = (dir: number) => () => {
@@ -435,14 +423,11 @@ export function makeView(look: Look, board: BoardPrefs, holdMs: number): View<Br
 
       const dir = (name: Dir) => DIR_NAMES.indexOf(name);
       const commands = bindCommands(BINDINGS, {
-        "bridges.mode": () => session.setInteraction((i) => ({ ...i, mode: i.mode === "mark" ? "bridge" : "mark" })),
-        "bridges.add-at": pointer(false),
-        "bridges.remove-at": pointer(true),
-        ...handlersOver("bridges.add-", DIR_NAMES, (name) => () => act(edgeFrom(dir(name)), false, false)),
-        ...handlersOver("bridges.remove-", DIR_NAMES, (name) => () => act(edgeFrom(dir(name)), true, false)),
+        "bridges.add-at": pointer(),
+        "bridges.remove-at": pointer(),
+        ...handlersOver("bridges.add-", DIR_NAMES, (name) => () => act(edgeFrom(dir(name)), false)),
+        ...handlersOver("bridges.remove-", DIR_NAMES, (name) => () => act(edgeFrom(dir(name)), true)),
         ...handlersOver("bridges.move-", DIR_NAMES, (name) => move(dir(name))),
-      }, {
-        "bridges.mode": { menu: "board", checked: () => session.interaction.mode === "mark" },
       });
 
       const ctm = (x1: number, y1: number, x2: number, y2: number, pad: number): DOMRect => {
@@ -483,7 +468,6 @@ export function makeView(look: Look, board: BoardPrefs, holdMs: number): View<Br
           const a = prev as BridgesState, b = next as BridgesState;
           return g.edges.filter((e) => a.b[e.id] !== b.b[e.id] || a.no[e.id] !== b.no[e.id]).map((e) => edgeRect(e.id));
         },
-        context: (): BridgesContext => ({ markMode: session.interaction.mode === "mark" }),
         destroy() {
           clearTimeout(holdTimer);
           offs.forEach((f) => f());

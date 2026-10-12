@@ -1,8 +1,7 @@
-import { hintFrom } from "../../core/define";
-import type { Hint, Plugin, Step, Technique } from "../../core/types";
+import type { Plugin, Technique } from "../../core/types";
 import { planner } from "../../lib/plan";
 import { mahjong, type MahjongAction, type MahjongFocus, type MahjongInteraction, type MahjongPuzzle, type MahjongState } from "./logic";
-import { boardOf, freeTiles, isFree, eachSafePair, remaining, solve, stuckPair } from "./solver";
+import { boardOf, eachSafePair, remaining, solve, stuckPair } from "./solver";
 import { groupName, matchKey } from "./tiles";
 
 type MahjongTechnique = Technique<MahjongPuzzle, MahjongState, MahjongAction>;
@@ -23,33 +22,6 @@ export const plan = planner<MahjongPuzzle, MahjongState, [number, number]>({
 });
 
 const groupOf = (p: MahjongPuzzle, s: MahjongState, i: number) => remaining(p.tiles, s.gone).get(matchKey(p.tiles[i]!)) ?? [];
-
-/** Tiles that become free once a and b are gone. */
-function freedBy(p: MahjongPuzzle, s: MahjongState, a: number, b: number): number[] {
-  const board = boardOf(p.spots);
-  const before = new Set(freeTiles(board, s.gone));
-  const gone = s.gone.slice();
-  gone[a] = 1;
-  gone[b] = 1;
-  return freeTiles(board, gone).filter((i) => !before.has(i));
-}
-
-const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
-
-function solverStep(p: MahjongPuzzle, s: MahjongState, path: readonly [number, number][], why: string): Step<MahjongAction> {
-  const [a, b] = path[0]!;
-  const rest = path.length - 1;
-  const freed = freedBy(p, s, a, b);
-  const opens = freed.length ? ` taking them frees ${plural(freed.length, "tile", "tiles")}.` : "";
-  const tail = rest ? ` the solver clears the board in ${plural(rest, "more match", "more matches")} from there.` : " that clears the board.";
-  return {
-    message: `match the ${groupName(p.tiles[a]!)} shown: ${why}.${opens}${tail}`,
-    nudge: `look at the ${groupName(p.tiles[a]!)}`,
-    focus: { tiles: [a, b], look: freed } satisfies MahjongFocus,
-    nudgeFocus: { look: groupOf(p, s, a).filter((i) => isFree(boardOf(p.spots), s.gone, i)) } satisfies MahjongFocus,
-    actions: [{ type: "match", a, b }],
-  };
-}
 
 export const safe: MahjongTechnique = {
   id: "mahjong.safe-pair",
@@ -72,23 +44,7 @@ export const safe: MahjongTechnique = {
   },
 };
 
-function freeCount(p: MahjongPuzzle, s: MahjongState, i: number): number {
-  const board = boardOf(p.spots);
-  return groupOf(p, s, i).filter((j) => isFree(board, s.gone, j)).length;
-}
-
 export const mahjongTechniques: MahjongTechnique[] = [safe];
-
-/** The first step of a whole clearing order, explained by how many of its kind are free. */
-function orderStep(p: MahjongPuzzle, s: MahjongState): Step<MahjongAction> | null {
-  const path = plan(p, s).path;
-  if (!path?.length) return null;
-  const [a] = path[0]!;
-  const free = freeCount(p, s, a);
-  if (free === 2) return solverStep(p, s, path, "they are the only free pair of their kind, and a whole clearing order takes them now");
-  if (free >= 3) return solverStep(p, s, path, `${free} are free but ${groupOf(p, s, a).length === free ? "they" : "one more is buried, so"} which two go first matters, and these keep the board clearable`);
-  return null;
-}
 
 /** Runs ahead of technique hints: a board that can't be cleared any more is pointed out first. */
 export const checkClearable: Plugin<MahjongPuzzle, MahjongState, MahjongAction, MahjongInteraction> = {
@@ -112,14 +68,6 @@ export const checkClearable: Plugin<MahjongPuzzle, MahjongState, MahjongAction, 
     }, { owner, priority: 90 });
   },
 };
-
-export function fallbackHint(p: MahjongPuzzle, s: MahjongState): Hint<MahjongAction> | null {
-  const step = orderStep(p, s);
-  if (step) return hintFrom(null, step, 1) as Hint<MahjongAction>;
-  const r = plan(p, s);
-  if (r.path || r.impossible) return null;
-  return { message: "the search for a clearing order ran out of time from here, so there's no suggestion. undoing a match or two may help." };
-}
 
 /** One match per pair of a clearing order from `s`, or null if none is known. */
 export function solveFrom(p: MahjongPuzzle, s: MahjongState): { moves: MahjongAction[] } | null {

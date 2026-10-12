@@ -1,12 +1,8 @@
 import { expect, test } from "bun:test";
 import { generate } from "../../core/generate";
-import { Registry } from "../../core/registry";
 import { Session } from "../../core/session";
-import { TechniqueHost } from "../../core/techniques";
 import { rleFormat, sokoban, xsbFormat, type SokoAction } from "./logic";
-import { checkStuck } from "./plugins";
 import { boxRoute, solvePushes, stuckBoxes, type SokoPuzzle } from "./solver";
-import { hint } from "./techniques";
 
 const sig = () => new AbortController().signal;
 const gen = (params: Record<string, unknown>, seed: string) => generate(sokoban, params, seed, sig()) as Promise<SokoPuzzle>;
@@ -87,33 +83,14 @@ test("stuck boxes: corners and squares", () => {
   expect(stuckBoxes(q, q.boxes).length).toBe(4);
 });
 
-test("hints solve from wherever the player is; stuck boxes come first", async () => {
+test("hint names stuck boxes and says nothing otherwise", async () => {
   const p = await gen({ width: 7, height: 7, boxes: 3 }, "hint");
-  const registry = new Registry();
-  const s = new Session({ ...sokoban, hint }, p, { kind: "imported" });
-  new TechniqueHost(registry, s);
-  checkStuck.setup!({ session: s, settings: {}, owner: "check" });
-  for (let i = 0; i < 200 && !s.solved; i++) {
-    const h = s.hint()!;
-    expect(h.actions?.length).toBeGreaterThan(0);
-    s.batch(() => { for (const a of h.actions!) s.dispatch(a); });
-  }
-  expect(s.solved).toBe(true);
+  const s = new Session(sokoban, p, { kind: "imported" });
+  expect(s.hint()?.actions).toBeUndefined();
   const corner = xsbFormat.parse(["######", "#@ $ #", "#   .#", "######"].join("\n"));
   const c = new Session(sokoban, corner, { kind: "imported" });
-  checkStuck.setup!({ session: c, settings: {}, owner: "check" });
-  c.dispatch({ type: "push", box: 9, dir: 1 });
-  expect(c.hint()?.message).toContain("can't be moved onto a goal");
+  const h = c.hint()!;
+  expect(h.message).toContain("can't be moved onto a goal");
+  expect(h.actions).toBeUndefined();
 });
-
-test("hint steps follow a fewest-pushes plan", async () => {
-  const p = await gen({ width: 8, height: 8, boxes: 3 }, "steps");
-  let st = sokoban.init(p);
-  const total = solvePushes(p, { boxes: st.boxes, player: st.player }).pushes!.length;
-  for (let i = 0; i < 200 && !sokoban.isSolved(p, st); i++) {
-    st = hint(p, st)!.actions!.reduce((t, a) => sokoban.reduce(p, t, a), st);
-  }
-  expect(sokoban.isSolved(p, st)).toBe(true);
-  expect(st.pushes).toBe(total);
-}, 30000);
 

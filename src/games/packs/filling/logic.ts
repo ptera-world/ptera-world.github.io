@@ -341,9 +341,6 @@ export function wrongHint(p: FillingPuzzle, s: FillingState): Hint<FillingAction
 export function hint(p: FillingPuzzle, s: FillingState): Hint<FillingAction> | null {
   const c = findConflicts(p, s.doms);
   if (c.regions.length) return { message: `the numbers on ${cellList(p, c.regions)} don't make a region of the right size`, focus: { cells: c.regions, because: [] } satisfies Focus };
-  const a = analyze(p);
-  if (a.count === 0) return { message: "this puzzle has no solution" };
-  if (a.count === 2) return { message: "this puzzle has more than one solution, so it can need a guess" };
   return { message: "none of the techniques you have hints on applies here" };
 }
 

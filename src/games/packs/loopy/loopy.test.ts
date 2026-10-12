@@ -167,7 +167,7 @@ for (const difficulty of ["easy", "normal", "tricky", "hard"]) {
   }, 60_000);
 }
 
-test("hints point out a wrong mark first, then solve the board", async () => {
+test("hints point out a wrong mark first; technique steps then give actions", async () => {
   const p = await gen({ width: 6, height: 6, difficulty: "tricky" }, "hint");
   const { s } = played(p);
   const wrong = (loopy.solve!(p, loopy.init(p)) as { board: LoopyState }).board.edges.indexOf(CROSS);
@@ -176,11 +176,11 @@ test("hints point out a wrong mark first, then solve the board", async () => {
   expect(fix.actions?.[0]).toEqual({ type: "set", edges: [wrong], value: UNKNOWN });
   s.dispatch(fix.actions![0]!);
   for (let i = 0; i < 500 && !s.solved; i++) {
-    const h = s.hint()!;
-    expect(h.technique ?? "").not.toBe("");
-    s.batch(() => { for (const a of h.actions!) s.dispatch(a); });
+    const hit = firstStep(loopy, techniques, p, s.state);
+    if (!hit) break;
+    expect(hit.step.actions.length).toBeGreaterThan(0);
+    s.batch(() => { for (const a of hit.step.actions) s.dispatch(a as LoopyAction); });
   }
-  expect(s.solved).toBe(true);
 });
 
 test("auto techniques cascade together inside the move that triggered them", () => {

@@ -1,5 +1,5 @@
 import type { GamesApi } from "../../api";
-import { HOLD_MS } from "../../core/gestures";
+import { HOLD_MS, buttonsSwapped } from "../../core/gestures";
 import type { Registry } from "../../core/registry";
 import type { WidgetDef } from "../../core/types";
 import { h, style } from "../../core/dom";
@@ -31,16 +31,16 @@ const modeWidget: BridgesWidget = {
   order: 5,
   mount(el, ctx) {
     style("bridges-widgets", CSS);
-    const pick = (removing: boolean) => () => { if ((ctx.session.interaction.mode === "mark") !== removing) ctx.run("bridges.mode"); };
+    const pick = (removing: boolean) => () => { if (buttonsSwapped(ctx.session.def.id) !== removing) ctx.run("shell.swap-buttons"); };
     const add = h("button", { type: "button", "data-tip": "tapping, clicking or dragging adds a bridge", onclick: pick(false) }, "tap adds");
     const remove = h("button", { type: "button", class: "remove", "data-tip": "tapping, clicking or dragging takes a bridge away, or puts a ✕ (no bridge here) on an empty gap. same as right-click", onclick: pick(true) }, "tap removes / ✕");
     el.append(h("div", { class: "bridges-mode", role: "group", "aria-label": "what a tap does" }, add, remove));
     const sync = () => {
-      const removing = ctx.session.interaction.mode === "mark";
+      const removing = buttonsSwapped(ctx.session.def.id);
       add.setAttribute("aria-pressed", String(!removing));
       remove.setAttribute("aria-pressed", String(removing));
     };
-    ctx.session.hooks.interaction.tap(sync, { owner: ctx.owner });
+    ctx.session.hooks.refresh.tap(sync, { owner: ctx.owner });
     sync();
   },
 };

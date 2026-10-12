@@ -388,9 +388,6 @@ export function hint(p: UnrulyPuzzle, s: UnrulyState): Hint<UnrulyAction> | null
   if (c.runs.length) return { message: `${cellList(p, c.runs)} make three of a color in a row`, focus: { cells: c.runs, because: [] } satisfies Focus };
   if (c.counts.length) return { message: `${cellList(p, c.counts)} give a line more than half of one color`, focus: { cells: c.counts, because: [] } satisfies Focus };
   if (c.repeats.length) return { message: `two lines are the same`, focus: { cells: c.repeats, because: [] } satisfies Focus };
-  const a = analyze(p);
-  if (a.count === 0) return { message: "this puzzle has no solution" };
-  if (a.count === 2) return { message: "this puzzle has more than one solution, so it can need a guess" };
   return { message: "none of the techniques you have hints on applies here" };
 }
 

@@ -76,19 +76,21 @@ function played(p: LightupPuzzle, auto: string[] = []) {
 
 const solution = (p: LightupPuzzle) => analyze(p).solution!;
 
-test("following hints solves boards of every difficulty; wrong marks come first", async () => {
+test("wrong marks are pointed out by the hint; technique steps then apply", async () => {
   for (const difficulty of ["easy", "medium", "hard"]) {
     const p = await gen({ width: 10, height: 10, difficulty }, `h-${difficulty}`);
     const { s } = played(p);
     const bad = p.cells.findIndex((v, c) => v === EMPTY && solution(p)[c] === 0);
     s.dispatch({ type: "set", cells: [bad], value: BULB });
-    expect(s.hint()?.actions?.[0]).toEqual({ type: "set", cells: [bad], value: NONE });
+    const wrong = s.hint()!.actions![0]!;
+    expect(wrong).toEqual({ type: "set", cells: [bad], value: NONE });
+    s.dispatch(wrong);
     for (let i = 0; i < 400 && !s.solved; i++) {
-      const hnt = s.hint();
-      expect(hnt?.actions?.length).toBeGreaterThan(0);
-      s.batch(() => { for (const a of hnt!.actions!) s.dispatch(a); });
+      const hit = firstStep(lightup, lightupTechniques, p, s.state);
+      if (!hit) break;
+      expect(hit.step.actions.length).toBeGreaterThan(0);
+      s.batch(() => { for (const a of hit.step.actions) s.dispatch(a as never); });
     }
-    expect(s.solved).toBe(true);
   }
 });
 

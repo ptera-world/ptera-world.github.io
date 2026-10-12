@@ -2,7 +2,7 @@ import type { Ids } from "../../core/commands";
 import { featureTests } from "../../core/define";
 import type { Rng } from "../../core/rng";
 import { defineSchema, type Values } from "../../core/schema";
-import type { Feature, GenerateContext, Hint, PuzzleDef } from "../../core/types";
+import type { Feature, GenerateContext, PuzzleDef } from "../../core/types";
 import { CROSS, LINE, UNKNOWN, check, type EdgeState } from "./board";
 import { formats, type LoopyPuzzle } from "./formats";
 import { generateClues } from "./generator";
@@ -103,22 +103,6 @@ export function wrongMarks(p: LoopyPuzzle, s: LoopyState): number[] | null {
   return s.edges.flatMap((m, e) => ((m === LINE && sol[e] !== LINE) || (m === CROSS && sol[e] === LINE) ? [e] : []));
 }
 
-/** Fallback when no hint-enabled technique applies: an edge of the solution. */
-function hint(p: LoopyPuzzle, s: LoopyState): Hint<LoopyAction> | null {
-  const sol = analysisOf(p).count === 1 ? analysisOf(p).solution : null;
-  if (!sol) return null;
-  for (let e = 0; e < s.edges.length; e++) {
-    if (s.edges[e] === UNKNOWN && sol[e] === LINE) {
-      return {
-        message: `none of your hint techniques apply here, but ${edgeRef(gridOf(p), e)} is a line`,
-        focus: { edges: [e] } satisfies LoopyFocus,
-        actions: [{ type: "set", edges: [e], value: LINE }],
-      };
-    }
-  }
-  return null;
-}
-
 function centreEdge(g: Grid): number {
   const cx = (g.minX + g.maxX) / 2, cy = (g.minY + g.maxY) / 2;
   let best = 0, bd = Infinity;
@@ -187,7 +171,6 @@ export const loopy: PuzzleDef<LoopyPuzzle, LoopyState, LoopyAction, LoopyInterac
     const sol = analysisOf(p).solution;
     return sol ? { board: { edges: Array.from(sol, (m) => (m === LINE ? LINE : CROSS)) } } : null;
   },
-  hint,
   isRetraction: (a) => a.value === UNKNOWN,
   rules: (p) => [
     "the loop runs along the edges between dots and comes back to where it started. there is exactly one loop.",

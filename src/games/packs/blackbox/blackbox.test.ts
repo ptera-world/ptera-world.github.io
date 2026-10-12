@@ -1,14 +1,11 @@
 import { expect, test } from "bun:test";
 import { generate } from "../../core/generate";
-import { Registry } from "../../core/registry";
 import { createRng } from "../../core/rng";
 import { Session } from "../../core/session";
-import { TechniqueHost } from "../../core/techniques";
 import { entryAt, entryOf, fireAt, hitCode, reflectCode } from "./beam";
-import { blackbox, sgtFormat, type BlackboxPuzzle } from "./logic";
-import { checkMarks } from "./plugins";
+import { blackbox, sgtFormat, type BlackboxAction, type BlackboxPuzzle } from "./logic";
 import { expand, families, familySize } from "./reason";
-import { blackboxHint, blackboxTechniques, evidence } from "./techniques";
+import { blackboxTechniques, evidence } from "./techniques";
 
 const sig = () => new AbortController().signal;
 const gen = (params: Record<string, unknown>, seed: string) => generate(blackbox, params, seed, sig()) as Promise<BlackboxPuzzle>;
@@ -81,22 +78,23 @@ test("checking finds a laser that shows wrong balls, and accepts any layout with
   expect(s.solved).toBe(true);
 });
 
-test("hints only use fired lasers, and lead to a win", async () => {
+test("technique steps only use fired lasers", async () => {
   for (let t = 0; t < 6; t++) {
     const p = await gen({ width: 6, height: 6, minBalls: 3, maxBalls: 3 }, `play${t}`);
-    const registry = new Registry();
-    for (const tq of blackboxTechniques) registry.technique(tq);
-    const s = new Session({ ...blackbox, hint: blackboxHint }, p, { kind: "imported" });
-    new TechniqueHost(registry, s);
-    checkMarks.setup!({ session: s, settings: {}, owner: "check" });
-    for (let i = 0; i < 80 && !s.solved; i++) {
-      const h = s.hint();
-      expect(h?.actions?.length).toBeGreaterThan(0);
-      s.batch(() => { for (const a of h!.actions!) s.dispatch(a); });
+    const s = new Session(blackbox, p, { kind: "imported" });
+    for (const e of [0, 3, 6, 9, 12, 15, 18, 21]) s.dispatch({ type: "fire", entry: e });
+    for (let i = 0; i < 80; i++) {
+      let step: { actions: BlackboxAction[] } | null = null;
+      for (const tq of blackboxTechniques) {
+        tq.instances(p, s.state, (x) => { step = x; return true; });
+        if (step) break;
+      }
+      if (!step) break;
+      const before = s.state;
+      s.batch(() => { for (const a of step!.actions) s.dispatch(a); });
+      if (s.state === before) break;
     }
-    expect(s.solved).toBe(true);
-    expect(s.state.checks).toBe(1);
-    // the hints never peeked: every ball placed by a hint fits every laser fired
+    // every ball placed by a step fits every laser fired
     const ev = evidence(p, s.state);
     const mine = new Set(s.state.guesses.flatMap((g, c) => (g ? [c] : [])));
     for (const [e, r] of ev.shots) expect(fireAt(p.w, p.h, mine, e)).toBe(r);

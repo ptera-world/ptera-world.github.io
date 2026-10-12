@@ -24,7 +24,46 @@ export interface SetField extends FieldBase<readonly string[]> {
   options: readonly { value: string; label: string; description?: string }[];
 }
 
-export type Field = IntField | BoolField | EnumField | StringField | SetField;
+/**
+ * A set of (dx, dy) offsets drawn around a centre, within `radius` (square: Chebyshev distance;
+ * hex: axial distance, offsets are (dq, dr)). The value is the canonical string of `formatCells`.
+ */
+export interface CellsField extends FieldBase<string> { type: "cells"; radius: number; layout: "square" | "hex" }
+
+export type Field = IntField | BoolField | EnumField | StringField | SetField | CellsField;
+
+export type CellOffset = [number, number];
+
+/** Distance of an offset from the centre under a layout. */
+export function cellsDistance(layout: "square" | "hex", dx: number, dy: number): number {
+  return layout === "hex" ? Math.max(Math.abs(dx), Math.abs(dy), Math.abs(dx + dy)) : Math.max(Math.abs(dx), Math.abs(dy));
+}
+
+/**
+ * Parse "dx,dy;dx,dy" (the empty string is the empty set) into sorted, duplicate-free offsets, or
+ * null when it isn't that shape or an offset is further than `within.radius`.
+ */
+export function parseCells(raw: string, within?: { radius: number; layout: "square" | "hex" }): CellOffset[] | null {
+  const seen = new Map<string, CellOffset>();
+  if (raw !== "") {
+    for (const part of raw.split(";")) {
+      const m = /^(-?\d+),(-?\d+)$/.exec(part);
+      if (!m) return null;
+      const dx = Number(m[1]) || 0, dy = Number(m[2]) || 0;
+      if (!Number.isSafeInteger(dx) || !Number.isSafeInteger(dy)) return null;
+      if (within && cellsDistance(within.layout, dx, dy) > within.radius) return null;
+      seen.set(`${dx},${dy}`, [dx, dy]);
+    }
+  }
+  return [...seen.values()].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+}
+
+/** Canonical string of offsets: duplicates removed, sorted by dx then dy, `dx,dy` joined by `;`. */
+export function formatCells(offsets: Iterable<CellOffset>): string {
+  const seen = new Map<string, CellOffset>();
+  for (const [dx, dy] of offsets) seen.set(`${dx},${dy}`, [dx, dy]);
+  return [...seen.values()].sort((a, b) => a[0] - b[0] || a[1] - b[1]).map(([x, y]) => `${x},${y}`).join(";");
+}
 export type Schema = Record<string, Field>;
 
 type FieldValue<F extends Field> =
@@ -72,6 +111,10 @@ export function coerce(field: Field, raw: unknown): unknown {
       // canonical order = option order, so equal sets serialize identically
       const picked = new Set(list.filter((v): v is string => typeof v === "string" && allowed.has(v)));
       return field.options.map((o) => o.value).filter((v) => picked.has(v));
+    }
+    case "cells": {
+      const parsed = typeof raw === "string" ? parseCells(raw, field) : null;
+      return parsed ? formatCells(parsed) : field.default;
     }
   }
 }

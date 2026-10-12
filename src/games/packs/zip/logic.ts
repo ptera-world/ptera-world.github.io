@@ -174,9 +174,6 @@ export function hint(p: ZipPuzzle, s: ZipState): Hint<ZipAction> | null {
     const c = findConflicts(p, s);
     return { message: `${troubleText(p, t)}. undo, or drag back along the path.`, focus: { cells: [], because: [...c.stuck, ...c.dead, ...c.cut] } satisfies ZipFocus };
   }
-  const a = analyze(p);
-  if (a.count === 0) return { message: "this puzzle has no solution" };
-  if (a.count === 2) return { message: "this puzzle has more than one solution, so it can need a guess" };
   return { message: "none of the techniques you have hints on applies here" };
 }
 

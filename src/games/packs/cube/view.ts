@@ -9,7 +9,7 @@ import { add, cross, dot, hull, norm, pose, rotate, signedAngle, sub, type V3 } 
 const UNIT = 10;
 /** Oblique view: a point z above the arena is drawn this much up and to the right. */
 const LIFT_X = 0.18, LIFT_Y = 0.55;
-const BLUE = "var(--cube-blue, #3b6fd6)";
+const BLUE = "var(--cube-blue, var(--palette-1))";
 /** How long one roll takes on screen. */
 const ROLL_MS = 200;
 
@@ -51,8 +51,6 @@ export const cubeView: View<CubePuzzle, CubeState, CubeAction, null> = {
     { sample: swatch(`<rect width="10" height="10" fill="${BLUE}" stroke="var(--border)" stroke-width="0.3"/>`), meaning: "a blue square: land a plain face on it to pick it up" },
     { sample: swatch(`<path d="M2 8L8 8L8 2L2 2Z" fill="${BLUE}" fill-opacity="0.85" stroke="var(--text)" stroke-width="0.35"/>`), meaning: "a blue face of the solid" },
     { sample: swatch(`<path d="M2 8L8 8L8 2L2 2Z" fill="var(--surface)" stroke="var(--text)" stroke-width="0.35"/>`), meaning: "a plain face of the solid" },
-    { sample: swatch(`<rect x="0.6" y="0.6" width="8.8" height="8.8" fill="none" stroke="var(--hint)" stroke-width="0.8"/>`), meaning: "hint: the blue square to fetch" },
-    { sample: swatch(`<rect x="0.6" y="0.6" width="8.8" height="8.8" fill="none" stroke="var(--hint)" stroke-width="0.6" stroke-dasharray="1.4 1"/>`), meaning: "hint: squares on the suggested route" },
   ],
   mount(root, { session }) {
     style("cube", CSS);

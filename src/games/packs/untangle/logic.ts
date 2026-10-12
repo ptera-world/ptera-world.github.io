@@ -1,6 +1,6 @@
 import type { Rng } from "../../core/rng";
 import { defineSchema, type Values } from "../../core/schema";
-import type { Format, PuzzleDef } from "../../core/types";
+import type { Format, Hint, PuzzleDef } from "../../core/types";
 
 export const params = defineSchema({
   points: { type: "int", label: "points", default: 10, min: 4, max: 60 },
@@ -199,6 +199,14 @@ export interface UntangleFocus {
   to?: Pt[];
 }
 
+/** The first crossing pair, as its four endpoints. */
+export function hint(p: UntanglePuzzle, s: UntangleState): Hint<UntangleAction> | null {
+  const first = crossings(p, s.pts)[0];
+  if (!first) return null;
+  const points = first.flatMap((e) => [...p.edges[e]!]);
+  return { message: "these two lines cross", focus: { points } satisfies UntangleFocus };
+}
+
 export const untangle: PuzzleDef<UntanglePuzzle, UntangleState, UntangleAction, UntangleInteraction, typeof params> = {
   id: "untangle",
   name: "untangle",
@@ -223,6 +231,7 @@ export const untangle: PuzzleDef<UntanglePuzzle, UntangleState, UntangleAction, 
     const left = crossings(p, after.pts).length;
     return `move ${a.moves.length === 1 ? "a point" : `${a.moves.length} points`}: ${left === 0 ? "no crossings" : left === 1 ? "1 crossing" : `${left} crossings`} left`;
   },
+  hint,
   isSolved,
   rules: () => [
     "drag the points anywhere you like. the lines stay attached to their points.",

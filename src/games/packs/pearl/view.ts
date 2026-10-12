@@ -1,5 +1,6 @@
 import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
 import { s, style, inputIs } from "../../core/dom";
+import { buttonsSwapped, secondary } from "../../core/gestures";
 import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
 import { DOWN, LEFT, RIGHT, UP, edgeAt, edgeGrid, step } from "../../lib/edges";
@@ -179,7 +180,7 @@ export function pearlView(board: Board): View<PearlPuzzle, PearlState, PearlActi
         return { cell, edge: edgeAt(g, cell, d) };
       };
 
-      let drag: { pointerId: number; from: number; mode: number | null; moved: boolean; edge: number; button: number; touch: boolean; drawn: number } | null = null;
+      let drag: { pointerId: number; from: number; mode: number | null; moved: boolean; edge: number; sec: boolean; touch: boolean; drawn: number } | null = null;
       let pressTimer = 0;
       const cancelPress = () => { clearTimeout(pressTimer); pressTimer = 0; };
       const onContext = (e: Event) => e.preventDefault();
@@ -190,13 +191,13 @@ export function pearlView(board: Board): View<PearlPuzzle, PearlState, PearlActi
         session.setInteraction((i) => ({ ...i, cursor: at.cell }));
         if (session.locked) return;
         svg.setPointerCapture?.(e.pointerId);
-        drag = { pointerId: e.pointerId, from: at.cell, mode: null, moved: false, edge: at.edge, button: e.button, touch: e.pointerType === "touch", drawn: 0 };
+        drag = { pointerId: e.pointerId, from: at.cell, mode: null, moved: false, edge: at.edge, sec: secondary(e, session.def.id), touch: e.pointerType === "touch", drawn: 0 };
         if (drag.touch && at.edge >= 0) {
           pressTimer = window.setTimeout(() => {
             pressTimer = 0;
             if (!drag || drag.moved) return;
             navigator.vibrate?.(15);
-            session.dispatch(toggle(session.state, drag.edge, CROSS));
+            session.dispatch(toggle(session.state, drag.edge, buttonsSwapped(session.def.id) ? LINE : CROSS));
             drag = null;
           }, settings.longPressMs as number);
         }
@@ -210,7 +211,7 @@ export function pearlView(board: Board): View<PearlPuzzle, PearlState, PearlActi
           return;
         }
         const at = pointAt(e);
-        if (at.cell < 0 || at.cell === drag.from || drag.button === 2) return;
+        if (at.cell < 0 || at.cell === drag.from || (drag.sec && !drag.touch)) return;
         let edge = -1;
         for (let d = 0; d < 4; d++) if (step(g, drag.from, d) === at.cell) edge = edgeAt(g, drag.from, d);
         if (edge < 0) return;
@@ -229,7 +230,7 @@ export function pearlView(board: Board): View<PearlPuzzle, PearlState, PearlActi
         cancelPress();
         if (d.moved || d.edge < 0) return;
         if (d.touch && !pending) return;
-        session.dispatch(toggle(session.state, d.edge, d.button === 2 ? CROSS : LINE));
+        session.dispatch(toggle(session.state, d.edge, d.sec ? CROSS : LINE));
       };
       const onCancel = (e: PointerEvent) => {
         if (drag && e.pointerId === drag.pointerId) drag = null;

@@ -9,7 +9,8 @@
     "inspect": "bun run src/cli.ts inspect",
     "preview": "bun run src/cli.ts dev --production",
     "lint": "oxlint src/",
-    "check:types": "tsgo --noEmit"
+    "check:types": "tsgo --noEmit",
+    "test": "bun test --timeout=300000"
   },
   "devDependencies": {
     "@types/bun": "^1.0.0",

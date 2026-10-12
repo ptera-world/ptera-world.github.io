@@ -1,5 +1,6 @@
 import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
 import { defineSchema } from "../../core/schema";
+import { buttonsSwapped, secondary } from "../../core/gestures";
 import type { CommandDef, View } from "../../core/types";
 import { s, style, inputIs } from "../../core/dom";
 import { themedAssets } from "../../lib/assets";
@@ -77,7 +78,6 @@ const BINDINGS = {
   "lightup.light": { label: "light on / off", category: "light up", keys: ["space", "Enter"], description: "put a light on the selected cell, or take it away" },
   "lightup.mark": { label: "no-light mark on / off", category: "light up", keys: ["x", "period"], description: "put a small dot on the selected cell: your note that it can't hold a light. press again to remove it" },
   "lightup.clear": { label: "clear cell", category: "light up", keys: ["Backspace", "Delete"], description: "remove the light or no-light mark from the selected cell" },
-  "lightup.mode": { label: "taps place marks", category: "light up", keys: ["m"], description: "while on, clicking or tapping a cell puts a no-light mark there instead of a light (useful on touch screens). turn it off to place lights again" },
   "lightup.left": { label: "cursor left", category: "light up", keys: ["ArrowLeft", "a"], description: "move the keyboard selection one cell left" },
   "lightup.right": { label: "cursor right", category: "light up", keys: ["ArrowRight", "d"], description: "move the keyboard selection one cell right" },
   "lightup.up": { label: "cursor up", category: "light up", keys: ["ArrowUp", "w"], description: "move the keyboard selection one cell up" },
@@ -86,15 +86,6 @@ const BINDINGS = {
 
 declare module "../../core/commands" {
   interface CommandNames extends Ids<typeof BINDINGS> {}
-}
-
-/** Keys this view adds to the command context. */
-export interface LightupContext {
-  lightupMarkMode: boolean;
-}
-
-declare module "../../core/types" {
-  interface CommandContext extends Partial<LightupContext> {}
 }
 
 /** Inline markup for an asset inside a 10×10 sample. */
@@ -309,6 +300,7 @@ export function lightupView(look: Look, board: Board): View<LightupPuzzle, Light
 
       let pressTimer = 0;
       let pressCell = -1;
+      let pressTapLight = false;
       let pointerId = -1;
       const cancelPress = () => {
         clearTimeout(pressTimer);
@@ -324,20 +316,25 @@ export function lightupView(look: Look, board: Board): View<LightupPuzzle, Light
         if (session.locked) return;
         pointerId = e.pointerId;
         svg.setPointerCapture?.(e.pointerId);
-        const markMode = session.interaction.markMode;
         if (e.pointerType === "touch") {
-          if (markMode) startPaint(c);
-          else {
-            pressCell = c;
-            pressTimer = window.setTimeout(() => {
-              pressTimer = 0;
-              pressCell = -1;
-              navigator.vibrate?.(15);
-              startPaint(c);
-            }, settings.longPressMs);
-          }
-        } else if (e.button === 2 || (e.button === 0 && markMode)) startPaint(c);
-        else if (e.button === 0) toggleLight(c);
+          const swapped = buttonsSwapped(session.def.id);
+          if (swapped) startPaint(c);
+          pressCell = c;
+          pressTimer = window.setTimeout(() => {
+            pressTimer = 0;
+            pressCell = -1;
+            navigator.vibrate?.(15);
+            if (swapped) {
+              paint = null;
+              toggleLight(c);
+              render();
+            } else startPaint(c);
+          }, settings.longPressMs);
+          pressTapLight = !swapped;
+        } else if (e.button === 0 || e.button === 2) {
+          if (secondary(e, session.def.id)) startPaint(c);
+          else toggleLight(c);
+        }
       };
       const onMove = (e: PointerEvent) => {
         const c = cellAt(e);
@@ -363,7 +360,7 @@ export function lightupView(look: Look, board: Board): View<LightupPuzzle, Light
         pointerId = -1;
         if (pressTimer) {
           cancelPress();
-          if (commit && pressCell >= 0) toggleLight(pressCell);
+          if (commit && pressCell >= 0 && pressTapLight) toggleLight(pressCell);
           pressCell = -1;
         }
         if (commit) finishPaint();
@@ -421,20 +418,16 @@ export function lightupView(look: Look, board: Board): View<LightupPuzzle, Light
         "lightup.light": atCursor((c) => session.dispatch(toggleMark(session.state, c, BULB))),
         "lightup.mark": atCursor((c) => session.dispatch(toggleMark(session.state, c, DOT))),
         "lightup.clear": atCursor((c) => session.dispatch({ type: "set", cells: [c], value: NONE })),
-        "lightup.mode": () => session.setInteraction((i) => ({ ...i, markMode: !i.markMode })),
         "lightup.left": move(-1, 0),
         "lightup.right": move(1, 0),
         "lightup.up": move(0, -1),
         "lightup.down": move(0, 1),
-      }, {
-        "lightup.mode": { menu: "board", checked: () => session.interaction.markMode },
       });
       return {
         gestures: { secondaryClick: true, hold: true },
         aspect: vbW / vbH,
         cells: { cols: vbW / SIZE, rows: vbH / SIZE },
         commands,
-        context: (): LightupContext => ({ lightupMarkMode: session.interaction.markMode }),
         preview: (st) => {
           previewing = st as LightupState | null;
           render();

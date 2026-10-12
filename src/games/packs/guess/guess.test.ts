@@ -1,12 +1,11 @@
 import { expect, test } from "bun:test";
 import { generate } from "../../core/generate";
-import { Registry } from "../../core/registry";
 import { createRng } from "../../core/rng";
 import { Session } from "../../core/session";
-import { TechniqueHost, findStep } from "../../core/techniques";
-import { allCodes, bestGuess, candidates, guess, mark, sgtFormat, type GuessPuzzle, type GuessState } from "./logic";
+import { applyStep, findStep, firstStep } from "../../core/techniques";
+import { allCodes, candidates, guess, mark, sgtFormat, type GuessPuzzle, type GuessState } from "./logic";
 import { checkRow } from "./plugins";
-import { guessHint, guessTechniques, knownPeg, lastCode } from "./techniques";
+import { guessTechniques, knownPeg, lastCode } from "./techniques";
 
 const sig = () => new AbortController().signal;
 const gen = (params: Record<string, unknown>, seed: string) => generate(guess, params, seed, sig()) as Promise<GuessPuzzle>;
@@ -62,21 +61,16 @@ test("candidates are exactly the codes consistent with every mark", async () => 
   }
 });
 
-test("following hints always cracks standard mastermind within the guesses", async () => {
+test("technique steps keep a game going without ending it wrongly", async () => {
   for (let t = 0; t < 12; t++) {
     const p = await gen({}, `play${t}`);
-    const registry = new Registry();
-    for (const tq of guessTechniques) registry.technique(tq);
-    const s = new Session({ ...guess, hint: guessHint }, p, { kind: "imported" });
-    new TechniqueHost(registry, s);
-    checkRow.setup!({ session: s, settings: {}, owner: "check" });
-    for (let i = 0; i < 40 && !s.solved && !s.lost; i++) {
-      const h = s.hint();
-      expect(h?.actions?.length).toBeGreaterThan(0);
-      s.batch(() => { for (const a of h!.actions!) s.dispatch(a); });
+    let s = guess.init(p);
+    for (let i = 0; i < 40 && !guess.isSolved(p, s); i++) {
+      const hit = firstStep(guess, guessTechniques, p, s);
+      if (!hit) break;
+      s = applyStep(guess, p, s, hit.step);
     }
-    expect(s.solved).toBe(true);
-    expect(s.state.done.length).toBeLessThanOrEqual(6);
+    expect(s.done.length).toBeLessThanOrEqual(6);
   }
 }, 60000);
 
@@ -112,10 +106,6 @@ test("techniques reason only from the marks", async () => {
     }
   }
   expect(seenKnown).toBeGreaterThan(3);
-  const p: GuessPuzzle = { colours: 3, pegs: 2, guesses: 10, blanks: false, duplicates: true, code: [2, 3] };
-  const best = bestGuess(p, guess.init(p))!;
-  expect(best.left).toBe(9);
-  expect(guessHint(p, guess.init(p))?.actions?.[1]).toEqual({ type: "submit" });
 });
 
 test("game ids round-trip and use the original's hidden form", async () => {

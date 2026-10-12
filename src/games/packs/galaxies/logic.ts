@@ -186,9 +186,6 @@ export function hint(p: GalaxiesPuzzle, s: GalaxiesState): Hint<GalaxiesAction> 
   const c = findConflicts(p, s);
   if (c.asymmetric.length) return { message: `${cellList(p, c.asymmetric)} ${c.asymmetric.length === 1 ? "has" : "have"} no mirror image in ${c.asymmetric.length === 1 ? "its" : "their"} galaxy`, focus: { tiles: [], because: c.asymmetric, dots: [] } satisfies GalaxiesFocus };
   if (c.detached.length) return { message: `${cellList(p, c.detached)} ${c.detached.length === 1 ? "isn't" : "aren't"} joined to ${c.detached.length === 1 ? "its" : "their"} dot`, focus: { tiles: [], because: c.detached, dots: [] } satisfies GalaxiesFocus };
-  const a = analyze(p);
-  if (a.count === 0) return { message: "this puzzle has no solution" };
-  if (a.count === 2) return { message: "this puzzle has more than one solution, so it can need a guess" };
   return { message: "none of the techniques you have hints on applies here" };
 }
 
