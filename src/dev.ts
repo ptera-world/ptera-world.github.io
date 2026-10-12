@@ -163,3 +163,9 @@ const server = Bun.serve({
 });
 
 console.log(`listening on http://localhost:${server.port}`);
+
+const shutdown = () => {
+  server.stop(true);
+  process.exit(0);
+};
+for (const sig of ["SIGTERM", "SIGINT", "SIGHUP"] as const) process.on(sig, shutdown);

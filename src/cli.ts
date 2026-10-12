@@ -212,19 +212,15 @@ switch (command) {
     const proc = Bun.spawn(["bun", "run", "src/inspect-layout.ts"], {
       stdio: ["inherit", "inherit", "inherit"],
     });
+    for (const sig of ["SIGTERM", "SIGINT", "SIGHUP"] as const) process.on(sig, () => proc.kill(sig));
     const exitCode = await proc.exited;
     process.exit(exitCode);
     break;
   }
 
   case "dev": {
-    // Delegate to dev.ts
-    const devArgs = args.slice(1);
-    const proc = Bun.spawn(["bun", "run", "src/dev.ts", ...devArgs], {
-      stdio: ["inherit", "inherit", "inherit"],
-    });
-    const exitCode = await proc.exited;
-    process.exit(exitCode);
+    // dev.ts reads its flags from Bun.argv and runs in this process, so signalling this process stops the server
+    await import("./dev");
     break;
   }
 

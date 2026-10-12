@@ -14,7 +14,11 @@ const base = `http://localhost:${port}/games/`;
 const chrome = process.env.CHROME ?? Bun.which("google-chrome-stable") ?? Bun.which("chromium") ?? Bun.which("chromium-browser");
 if (!chrome) throw new Error("no Chrome found: set CHROME to a Chrome or Chromium binary");
 
-const server = Bun.spawn(["bun", "run", "src/cli.ts", "dev", "--port", String(port)], { stdout: "ignore", stderr: "ignore" });
+// The server runs in its own process group so one signal to the group reaches everything it started.
+const server = Bun.spawn(["bun", "run", "src/cli.ts", "dev", "--port", String(port)], { stdout: "ignore", stderr: "ignore", detached: true });
+const stopServer = () => { try { process.kill(-server.pid, "SIGTERM"); } catch { /* already gone */ } };
+process.on("exit", stopServer);
+for (const sig of ["SIGTERM", "SIGINT", "SIGHUP"] as const) process.on(sig, () => process.exit(1));
 const browser = await chromium.launch({ executablePath: chrome });
 const failures: string[] = [];
 
@@ -310,7 +314,7 @@ try {
   }
 } finally {
   await browser.close();
-  server.kill();
+  stopServer();
 }
 
 for (const f of failures) console.log(f);
