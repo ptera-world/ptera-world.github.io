@@ -254,6 +254,15 @@ export function palisadeView(board: BoardPrefs): View<PalisadePuzzle, PalisadeSt
         "palisade.gap-right": side(1, 0, GAP),
         "palisade.gap-down": side(0, 1, GAP),
         ...cursorHandlers("palisade", p, session),
+      }, {
+        "palisade.wall-up": { menu: "board" },
+        "palisade.wall-left": { menu: "board" },
+        "palisade.wall-right": { menu: "board" },
+        "palisade.wall-down": { menu: "board" },
+        "palisade.gap-up": { menu: "board" },
+        "palisade.gap-left": { menu: "board" },
+        "palisade.gap-right": { menu: "board" },
+        "palisade.gap-down": { menu: "board" },
       });
       return {
         gestures: { secondaryClick: true, hold: true },

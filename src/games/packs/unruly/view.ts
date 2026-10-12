@@ -155,6 +155,8 @@ export function unrulyView(board: BoardPrefs): View<UnrulyPuzzle, UnrulyState, U
         "unruly.clear": set(() => NONE),
         ...cursorHandlers("unruly", p, session),
       }, {
+        "unruly.cycle": { menu: "board" },
+        "unruly.cycle-back": { menu: "board" },
         "unruly.dark": { menu: "board" },
         "unruly.light": { menu: "board" },
         "unruly.clear": { menu: "board" },

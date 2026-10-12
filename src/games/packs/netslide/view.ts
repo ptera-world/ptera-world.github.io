@@ -282,6 +282,11 @@ export const netslideView: View<NetslidePuzzle, NetslideState, NetslideAction, N
         "netslide.row-right": slide("row", 1),
         "netslide.col-up": slide("col", -1),
         "netslide.col-down": slide("col", 1),
+      }, {
+        "netslide.row-left": { menu: "board" },
+        "netslide.row-right": { menu: "board" },
+        "netslide.col-up": { menu: "board" },
+        "netslide.col-down": { menu: "board" },
       }),
       preview: (state) => {
         previewing = state as NetslideState | null;

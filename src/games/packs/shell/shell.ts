@@ -690,6 +690,7 @@ export class Shell {
       this.widgets.push(m);
     }
     this.root.toggleAttribute("data-has-panel", tabs.length > 0);
+    this.els.menuBtn.hidden = !this.hub.all().some((c) => [c.menu].flat().includes("board"));
     this.relayout();
   }
 
@@ -889,10 +890,11 @@ export class Shell {
       "shell.index": () => this.goIndex(),
     }, {
       "shell.palette": { captureInput: true },
-      "shell.zoom-in": { keys: takeover ? ["equal", "$mod+equal", "$mod+shift+equal"] : ["equal"] },
-      "shell.zoom-out": { keys: takeover ? ["minus", "$mod+minus"] : ["minus"] },
-      "shell.zoom-fit": { keys: takeover ? ["$mod+0"] : [] },
-      "shell.zen": { checked: () => this.zen },
+      "shell.zoom-in": { menu: "board", keys: takeover ? ["equal", "$mod+equal", "$mod+shift+equal"] : ["equal"] },
+      "shell.zoom-out": { menu: "board", keys: takeover ? ["minus", "$mod+minus"] : ["minus"] },
+      "shell.zoom-fit": { menu: "board", keys: takeover ? ["$mod+0"] : [] },
+      "shell.zen": { menu: "board", checked: () => this.zen },
+      "shell.labels": { menu: "board" },
     });
     if (!s) return base;
     const def = s.def;
@@ -1223,6 +1225,13 @@ export class Shell {
       boardwrap: h("div", { class: "boardwrap" }),
       scroller: h("div", { class: "board-scroller" }),
       overlay: h("div", { class: "sh-slot sh-slot-overlay" }),
+      menuBtn: h("button", {
+        class: "board-menu-btn", "aria-label": "board menu", "data-tip": "everything you can do on the board", hidden: true,
+        onclick: (e: MouseEvent) => {
+          const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+          this.openBoardMenu(r.left, r.bottom, (e as PointerEvent).pointerType === "touch" ? "touch" : "mouse");
+        },
+      }, "⋯"),
       side: h("div", { class: "sh-slot sh-slot-side" }),
       bottom: h("div", { class: "sh-slot sh-slot-bottom" }),
       panel: h("aside", { class: "panel" }),
@@ -1232,14 +1241,14 @@ export class Shell {
     };
     add(els.header,
       h("a", { href: "/", class: "home", title: "ptera.world" }, "ptera"),
-      h("a", { href: location.pathname, class: "crumb", onclick: (ev: MouseEvent) => { ev.preventDefault(); this.goIndex(); } }, "games"),
+      h("a", { href: location.pathname, class: "crumb", "data-command": command("shell.index"), onclick: (ev: MouseEvent) => { ev.preventDefault(); this.goIndex(); } }, "games"),
       els.title, els.meta, h("span", { class: "spacer" }),
       this.safe ? h("a", { class: "safe-mark", href: location.pathname, title: "safe mode: only the built-in packs are loaded, all switched on. your pack settings are untouched" }, "safe mode · leave") : null,
       els.pauseMark, els.timer,
       h("button", { class: "howto-btn", "data-command": command("shell.howto"), "aria-label": "how to play", onclick: () => this.hub.run(command("shell.howto")) }, "?"),
       h("button", { class: "palette-btn", "data-command": command("shell.palette"), onclick: () => this.hub.openPalette() }, "commands"));
     els.scroller.append(els.boardbox);
-    els.boardwrap.append(els.scroller, els.overlay);
+    els.boardwrap.append(els.scroller, els.overlay, els.menuBtn);
     els.middle.append(els.boardwrap, els.side);
     els.main.append(els.top, els.middle, els.bottom);
     els.panel.append(els.tabs, els.panelBody);
@@ -1420,6 +1429,8 @@ const SHELL_CSS = `
 .boardbox { position: relative; flex: none; display: flex; align-items: center; justify-content: center; }
 .sh-slot-overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 10px; }
 .sh-slot-overlay > .widget { pointer-events: auto; }
+.board-menu-btn { position: absolute; top: 4px; right: 4px; z-index: 2; width: 30px; height: 30px; padding: 0; border-radius: 99px; font-size: 16px; line-height: 1; opacity: 0.8; }
+.board-menu-btn:hover, .board-menu-btn:focus-visible { opacity: 1; }
 [data-lost] .boardbox { box-shadow: 0 0 0 3px var(--danger); border-radius: 10px; }
 [data-solved] .boardbox { box-shadow: 0 0 0 3px var(--accent); border-radius: 10px; }
 .boardbox > .view { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }

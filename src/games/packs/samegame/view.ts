@@ -200,6 +200,8 @@ export const samegameView: View<SamegamePuzzle, SamegameState, SamegameAction, S
         "samegame.up": moveCursor(0, -1),
         "samegame.down": moveCursor(0, 1),
         "samegame.remove": () => remove(session.interaction.cursor),
+      }, {
+        "samegame.remove": { menu: "board" },
       }),
       preview: (state) => {
         previewing = state as SamegameState | null;

@@ -62,7 +62,7 @@ export function untangleView(): View<UntanglePuzzle, UntangleState, UntangleActi
     settings,
     controls: [
       { how: "drag a point", what: "move it; its lines follow" },
-      { how: "point at a point", what: "highlights its lines" },
+      { how: "point at a point, or click or tap it without dragging", what: "highlights its lines; a click or tap keeps them highlighted until the next press on the board, or Esc" },
     ],
     legend: legend(),
     mount(root, { session, settings }) {
@@ -90,15 +90,17 @@ export function untangleView(): View<UntanglePuzzle, UntangleState, UntangleActi
         return t;
       });
 
-      let drag: { point: number; pointerId: number; at: Pt } | null = null;
+      let drag: { point: number; pointerId: number; at: Pt; moved: boolean } | null = null;
       let hover = -1;
+      /** Point whose lines stay highlighted after the pointer leaves; cleared by the next press on the board or Esc. */
+      let pinned = -1;
       let preview: UntangleState | null = null;
 
       const render = () => {
         const pts = session.state.pts.map((pt, i) => (drag?.point === i ? drag.at : pt));
         const crossed = new Set<number>();
         if (settings.crossings) for (const [a, b] of crossings(p, pts)) { crossed.add(a); crossed.add(b); }
-        const active = drag?.point ?? hover;
+        const active = drag?.point ?? (hover >= 0 ? hover : pinned);
         p.edges.forEach(([a, b], i) => {
           const l = lines[i]!;
           l.setAttribute("x1", String(pts[a]![0] * B));
@@ -154,12 +156,12 @@ export function untangleView(): View<UntanglePuzzle, UntangleState, UntangleActi
       };
       const onDown = (e: PointerEvent) => {
         const u = toUnit(e);
-        if (!u || drag || session.locked) return;
+        if (!u || drag) return;
         const v = pointNear(u);
-        if (v < 0) return;
+        if (session.locked || v < 0) { clearPin(); return; }
         e.preventDefault();
         svg.setPointerCapture?.(e.pointerId);
-        drag = { point: v, pointerId: e.pointerId, at: session.state.pts[v]! };
+        drag = { point: v, pointerId: e.pointerId, at: session.state.pts[v]!, moved: false };
         session.setInteraction((i) => ({ ...i, selected: v }));
         render();
       };
@@ -168,6 +170,7 @@ export function untangleView(): View<UntanglePuzzle, UntangleState, UntangleActi
         if (!u) return;
         if (drag && e.pointerId === drag.pointerId) {
           drag.at = u;
+          drag.moved = true;
           render();
           return;
         }
@@ -179,9 +182,17 @@ export function untangleView(): View<UntanglePuzzle, UntangleState, UntangleActi
         if (!drag || e.pointerId !== drag.pointerId) return;
         const d = drag;
         drag = null;
+        pinned = d.moved ? -1 : pinned === d.point ? -1 : d.point;
         if (!session.dispatch({ type: "move", moves: [[d.point, d.at[0], d.at[1]]] })) render();
       };
       const onCancel = () => { drag = null; render(); };
+      const clearPin = () => {
+        if (pinned < 0) return;
+        pinned = -1;
+        render();
+      };
+      const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") clearPin(); };
+      document.addEventListener("keydown", onKey);
       svg.addEventListener("pointerdown", onDown);
       svg.addEventListener("pointermove", onMove);
       svg.addEventListener("pointerup", onUp);
@@ -216,6 +227,11 @@ export function untangleView(): View<UntanglePuzzle, UntangleState, UntangleActi
         "untangle.right": nudge(1, 0),
         "untangle.up": nudge(0, -1),
         "untangle.down": nudge(0, 1),
+      }, {
+        "untangle.left": { menu: "board" },
+        "untangle.right": { menu: "board" },
+        "untangle.up": { menu: "board" },
+        "untangle.down": { menu: "board" },
       });
       return {
         aspect: 1,
@@ -237,6 +253,7 @@ export function untangleView(): View<UntanglePuzzle, UntangleState, UntangleActi
           return y.flatMap((pt, i) => (pt !== x[i] ? [rectAt(pt)] : []));
         },
         destroy() {
+          document.removeEventListener("keydown", onKey);
           offs.forEach((f) => f());
           svg.remove();
         },

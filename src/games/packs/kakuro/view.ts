@@ -1,4 +1,4 @@
-import { bindCommands, bindingsOver, handlersOver, type BindingSchema, type Ids } from "../../core/commands";
+import { bindCommands, bindingsOver, extrasOver, handlersOver, type BindingSchema, type Ids } from "../../core/commands";
 import { s, style } from "../../core/dom";
 import type { CommandDef, View } from "../../core/types";
 import { DIGITS, type Digit } from "../../lib/digits";
@@ -214,6 +214,7 @@ export function kakuroView(board: BoardPrefs): View<KakuroPuzzle, KakuroState, K
       }, {
         "kakuro.clear": { menu: "board" },
         "kakuro.notes": { menu: "board", checked: () => session.interaction.candidates },
+        ...extrasOver("kakuro.d", DIGITS, () => ({ menu: "board" })),
       });
       return {
         aspect: f.aspect,

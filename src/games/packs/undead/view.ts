@@ -126,7 +126,7 @@ export function undeadView(look: Look, board: Board): View<UndeadPuzzle, UndeadS
     controls: [
       { how: "click or tap a cell", what: "cycle it through ghost, vampire, zombie and empty" },
       { how: "right-click a cell", what: "cycle it the other way" },
-      { how: "point at a number on the edge", what: "shows its line of sight" },
+      { how: "point at, click or tap a number on the edge", what: "shows its line of sight; a click or tap keeps it shown until you click elsewhere or press Esc" },
     ],
     get legend() {
       return legend(look);
@@ -188,7 +188,7 @@ export function undeadView(look: Look, board: Board): View<UndeadPuzzle, UndeadS
         band.append(ic, totals[mon] = s("text", { x: x0 + 7, y: bandY, class: "total" }));
       });
 
-      let hoverCell = -1, hoverClue = -1;
+      let hoverCell = -1, hoverClue = -1, pinClue = -1;
       let preview: UndeadState | null = null;
       const drawn: string[] = [];
 
@@ -197,7 +197,8 @@ export function undeadView(look: Look, board: Board): View<UndeadPuzzle, UndeadS
         const conf = session.derived()[CONFLICTS_KEY] as Conflicts | undefined;
         const badClues = new Set(conf?.clues), badTotals = new Set(conf?.totals);
         const sights = sightCountsOf(p, st.monsters);
-        const path = settings.trace && hoverClue >= 0 ? new Set(g.trace[hoverClue]) : null;
+        const lit = pinClue >= 0 ? pinClue : hoverClue;
+        const path = settings.trace && lit >= 0 ? new Set(g.trace[lit]) : null;
         for (let c = 0; c < g.n; c++) {
           tiles[c]!.classList.toggle("path", !!path?.has(c));
           if (p.cells[c] !== EMPTY) continue;
@@ -267,6 +268,9 @@ export function undeadView(look: Look, board: Board): View<UndeadPuzzle, UndeadS
       const onContext = (e: Event) => e.preventDefault();
       const onDown = (e: PointerEvent) => {
         const at = pointAt(e);
+        const pinned = pinClue;
+        pinClue = at.cell < 0 && at.clue >= 0 && at.clue !== pinned ? at.clue : -1;
+        if (pinClue !== pinned) render();
         if (at.cell < 0) return;
         e.preventDefault();
         session.setInteraction((i) => ({ ...i, cursor: at.cell }));
@@ -293,6 +297,12 @@ export function undeadView(look: Look, board: Board): View<UndeadPuzzle, UndeadS
       svg.addEventListener("pointerdown", onDown);
       svg.addEventListener("pointermove", onMove);
       svg.addEventListener("pointerleave", onLeave);
+      const onKey = (e: KeyboardEvent) => {
+        if (e.key !== "Escape" || pinClue < 0) return;
+        pinClue = -1;
+        render();
+      };
+      document.addEventListener("keydown", onKey);
 
       const move = (dx: number, dy: number) => () => session.setInteraction((i) => {
         const x = Math.min(p.w - 1, Math.max(0, (i.cursor % p.w) + dx));
@@ -367,6 +377,7 @@ export function undeadView(look: Look, board: Board): View<UndeadPuzzle, UndeadS
         },
         destroy() {
           offs.forEach((f) => f());
+          document.removeEventListener("keydown", onKey);
           svg.remove();
         },
       };

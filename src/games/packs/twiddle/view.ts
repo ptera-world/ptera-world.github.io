@@ -255,6 +255,9 @@ export const twiddleView: View<TwiddlePuzzle, TwiddleState, TwiddleAction, Twidd
           turn(blockAt(e), secondary(e, session.def.id));
           return true;
         },
+      }, {
+        "twiddle.ccw": { menu: "board" },
+        "twiddle.cw": { menu: "board" },
       }),
       preview: (state) => {
         previewing = state as TwiddleState | null;

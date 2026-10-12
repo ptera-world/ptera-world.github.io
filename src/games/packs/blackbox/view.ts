@@ -77,7 +77,7 @@ export function blackboxView(board: Board): View<BlackboxPuzzle, BlackboxState, 
     puzzle: blackbox,
     controls: [
       { how: "click or tap an edge square", what: "fire a laser in from there" },
-      { how: "point at a fired edge square", what: "highlights the other end of its beam" },
+      { how: "point at a fired edge square, or click or tap it", what: "highlights the other end of its beam; a click or tap keeps it shown until the next click or tap on the board, or Esc" },
       { how: "click or tap a cell inside", what: "put a ball there, or take it away" },
       { how: "right-click a cell (or an edge square), or hold on a touch screen", what: "lock the cell (or its whole row or column) as empty, or unlock it" },
       { how: "click the corner square once you've placed the balls", what: "check them" },
@@ -119,6 +119,8 @@ export function blackboxView(board: Board): View<BlackboxPuzzle, BlackboxState, 
       base.append(check, checkLabel, countLabel);
 
       let hoverEntry = -1, hoverCell = -1;
+      /** Fired edge square whose beam pair stays highlighted after the pointer leaves; cleared by the next press on the board or Esc. */
+      let pinnedEntry = -1;
       let preview: BlackboxState | null = null;
       const L = 2 * (p.w + p.h);
       const ringXY = (e: number) => entryAt(p.w, p.h, e);
@@ -138,9 +140,10 @@ export function blackboxView(board: Board): View<BlackboxPuzzle, BlackboxState, 
         const pvLabels = preview ? beamLabels(p, preview) : null;
         const shotText = (v: number, e: number, lab: Map<number, number>) => (v === hitCode(p.w, p.h) ? "H" : v === reflectCode(p.w, p.h) ? "R" : String(lab.get(e) ?? ""));
         const pair = new Set<number>();
-        if (hoverEntry >= 0 && st.shots[hoverEntry] !== -1) {
-          pair.add(hoverEntry);
-          if (st.shots[hoverEntry]! < hitCode(p.w, p.h)) pair.add(st.shots[hoverEntry]!);
+        const paired = hoverEntry >= 0 && st.shots[hoverEntry] !== -1 ? hoverEntry : pinnedEntry >= 0 && st.shots[pinnedEntry] !== -1 ? pinnedEntry : -1;
+        if (paired >= 0) {
+          pair.add(paired);
+          if (st.shots[paired]! < hitCode(p.w, p.h)) pair.add(st.shots[paired]!);
         }
         const wrong = new Set<number>();
         for (const e of st.wrong) {
@@ -207,7 +210,15 @@ export function blackboxView(board: Board): View<BlackboxPuzzle, BlackboxState, 
         const locked = cells.filter((c) => session.state.locks[c]).length;
         session.dispatch({ type: "lock", cells, value: locked <= cells.length / 2 });
       };
+      const clearPin = () => {
+        if (pinnedEntry < 0) return;
+        pinnedEntry = -1;
+        render();
+      };
       const act = (pos: number, secondary: boolean) => {
+        const was = pinnedEntry;
+        pinnedEntry = -1;
+        if (was >= 0) render();
         const x = pos % W, y = Math.floor(pos / W);
         if (x === 0 && y === 0) {
           if (!secondary) session.dispatch({ type: "check" });
@@ -216,7 +227,10 @@ export function blackboxView(board: Board): View<BlackboxPuzzle, BlackboxState, 
         const e = entryOf(p.w, p.h, x, y);
         if (e >= 0) {
           if (secondary) lockLine(x, y);
-          else session.dispatch({ type: "fire", entry: e });
+          else if (session.state.shots[e] !== -1) {
+            pinnedEntry = was === e ? -1 : e;
+            render();
+          } else session.dispatch({ type: "fire", entry: e });
           return;
         }
         if (x < 1 || y < 1 || x > p.w || y > p.h) return;
@@ -229,10 +243,10 @@ export function blackboxView(board: Board): View<BlackboxPuzzle, BlackboxState, 
       const onContext = (e: Event) => e.preventDefault();
       const onDown = (e: PointerEvent) => {
         const pos = at(e);
-        if (pos < 0) return;
+        if (pos < 0) { clearPin(); return; }
         e.preventDefault();
         session.setInteraction((i) => ({ ...i, cursor: pos }));
-        if (session.locked) return;
+        if (session.locked) { clearPin(); return; }
         if (e.pointerType === "touch") {
           pressPos = pos;
           pressTimer = window.setTimeout(() => {
@@ -270,6 +284,8 @@ export function blackboxView(board: Board): View<BlackboxPuzzle, BlackboxState, 
       svg.addEventListener("pointerup", onUp);
       svg.addEventListener("pointermove", onMove);
       svg.addEventListener("pointerleave", () => { hoverEntry = hoverCell = -1; render(); });
+      const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") clearPin(); };
+      document.addEventListener("keydown", onKey);
 
       const move = (dx: number, dy: number) => () => session.setInteraction((i) => {
         const x = Math.min(W - 1, Math.max(0, (i.cursor % W) + dx));
@@ -299,6 +315,7 @@ export function blackboxView(board: Board): View<BlackboxPuzzle, BlackboxState, 
         "blackbox.up": move(0, -1),
         "blackbox.down": move(0, 1),
       }, {
+        "blackbox.act": { menu: "board" },
         "blackbox.lock": { menu: "board" },
         "blackbox.check": { menu: "board", when: () => canCheck(p, session.state) },
       });
@@ -331,6 +348,7 @@ export function blackboxView(board: Board): View<BlackboxPuzzle, BlackboxState, 
           return out;
         },
         destroy() {
+          document.removeEventListener("keydown", onKey);
           cancelPress();
           offs.forEach((f) => f());
           svg.remove();

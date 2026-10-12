@@ -112,10 +112,16 @@ export function boardCommands(session: LatinSession, cellAt: (e: Event | undefin
   }, {
     ...extrasOver("sudoku.mode-", MODE_IDS, (id) => ({ checked: () => session.interaction.mode === id })),
     "sudoku.clear": board,
+    ...extrasOver("sudoku.d", digits, () => board),
+    ...extrasOver("sudoku.corner-", digits, () => board),
+    ...extrasOver("sudoku.centre-", digits, () => board),
+    ...extrasOver("sudoku.colour-", DIGITS, () => board),
     "sudoku.fill-candidates": board,
     "sudoku.clear-colors": board,
     "sudoku.select-same": board,
     "sudoku.highlight-here": board,
+    "sudoku.highlight-next": board,
+    "sudoku.highlight-prev": board,
     "sudoku.highlight-off": { when: () => !!session.interaction.highlight },
     ...extrasOver("sudoku.highlight-", digits, (d) => ({ checked: () => session.interaction.highlight === d })),
   });

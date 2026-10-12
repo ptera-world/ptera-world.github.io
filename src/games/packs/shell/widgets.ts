@@ -352,9 +352,9 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
 
       const keys = section("keys");
       keys.append(row("keys shortcuts keyboard rebind bindings commands palette", h("div", { class: "w-inline" },
-        h("button", { onclick: () => ctx.run("shell.shortcuts") }, "shortcuts"),
-        h("button", { onclick: () => ctx.run("shell.rebind") }, "rebind keys"),
-        h("button", { onclick: () => ctx.run("shell.palette") }, "all commands"))));
+        h("button", { "data-command": command("shell.shortcuts"), onclick: () => ctx.run("shell.shortcuts") }, "shortcuts"),
+        h("button", { "data-command": command("shell.rebind"), onclick: () => ctx.run("shell.rebind") }, "rebind keys"),
+        h("button", { "data-command": command("shell.palette"), onclick: () => ctx.run("shell.palette") }, "all commands"))));
 
       search.addEventListener("input", () => {
         const q = search.value.trim().toLowerCase();

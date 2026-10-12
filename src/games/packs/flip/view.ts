@@ -160,7 +160,7 @@ export const flipView: View<FlipPuzzle, FlipState, FlipAction, FlipInteraction, 
         "flip.up": move(0, -1),
         "flip.down": move(0, 1),
         "flip.press": () => press(session.interaction.cursor),
-      }),
+      }, { "flip.press": { menu: "board" } }),
     };
   },
 };

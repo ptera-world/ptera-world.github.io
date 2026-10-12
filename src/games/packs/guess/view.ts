@@ -1,5 +1,5 @@
 import { buttonsSwapped, secondary } from "../../core/gestures";
-import { bindCommands, bindingsOver, handlersOver, oneBased, type BindingSchema, type Ids } from "../../core/commands";
+import { bindCommands, bindingsOver, extrasOver, handlersOver, oneBased, type BindingSchema, type Ids } from "../../core/commands";
 import { s, style, inputIs } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
@@ -295,6 +295,7 @@ export function guessView(): View<GuessPuzzle, GuessState, GuessAction, GuessInt
         "guess.left": () => session.setInteraction((i) => ({ ...i, slot: Math.max(0, i.slot - 1) })),
         "guess.right": () => session.setInteraction((i) => ({ ...i, slot: Math.min(p.pegs - 1, i.slot + 1) })),
       }, {
+        "guess.place": { menu: "board" },
         "guess.submit": { menu: "board", when: () => canSubmit(p, session.state.row) && !isOver(p, session.state) },
         "guess.hold": { menu: "board" },
         "guess.clear": { menu: "board" },
@@ -303,7 +304,7 @@ export function guessView(): View<GuessPuzzle, GuessState, GuessAction, GuessInt
         session.setInteraction((x) => ({ ...x, colour: c }));
         place(slot(), c);
         session.setInteraction((x) => ({ ...x, slot: Math.min(p.pegs - 1, x.slot + 1) }));
-      }))];
+      }), extrasOver("guess.colour-", COLOURS, (c) => ({ menu: "board", when: () => c <= p.colours })))];
       return {
         gestures: { secondaryClick: true, hold: true },
         aspect: width / height,

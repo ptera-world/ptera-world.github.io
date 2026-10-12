@@ -164,6 +164,8 @@ export function slantView(board: BoardPrefs): View<SlantPuzzle, SlantState, Slan
         "slant.clear": set(() => NONE),
         ...cursorHandlers("slant", p, session),
       }, {
+        "slant.cycle": { menu: "board" },
+        "slant.cycle-back": { menu: "board" },
         "slant.back": { menu: "board" },
         "slant.fwd": { menu: "board" },
         "slant.clear": { menu: "board" },

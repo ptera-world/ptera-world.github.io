@@ -464,13 +464,13 @@ export function netView({ look = (_id, fallback) => fallback, labelSides = () =>
           "net.lock-at": pointerCell(startPaint),
           "net.source-at": pointerCell(setSource),
         }, {
-          // the board menu (long-press on touch) holds only what acts on the pressed tile
+          // the board menu (long-press on touch): what acts on the pressed tile, and jumble
           "net.rotate-cw": { menu: "board" },
           "net.rotate-ccw": { menu: "board" },
           "net.rotate-half": { menu: "board" },
           "net.lock": { menu: "board" },
           "net.source": { menu: "board" },
-          "net.jumble": { when: playing },
+          "net.jumble": { menu: "board", when: playing },
           "net.tap-cw": tapMenu("cw"),
           "net.tap-ccw": tapMenu("ccw"),
           "net.tap-lock": tapMenu("lock"),

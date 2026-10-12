@@ -284,6 +284,15 @@ export function pearlView(board: Board): View<PearlPuzzle, PearlState, PearlActi
         "pearl.right": move(1, 0),
         "pearl.up": move(0, -1),
         "pearl.down": move(0, 1),
+      }, {
+        "pearl.line-up": { menu: "board" },
+        "pearl.line-right": { menu: "board" },
+        "pearl.line-down": { menu: "board" },
+        "pearl.line-left": { menu: "board" },
+        "pearl.cross-up": { menu: "board" },
+        "pearl.cross-right": { menu: "board" },
+        "pearl.cross-down": { menu: "board" },
+        "pearl.cross-left": { menu: "board" },
       });
       return {
         gestures: { secondaryClick: true, hold: true },

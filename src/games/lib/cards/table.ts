@@ -466,7 +466,7 @@ export function mountTable<Pz, S, A extends Action, I extends { cursor: CardCurs
   const stock = rules.stock;
   const draw = stock === undefined ? [] : bindCommands(DRAW_BINDINGS, {
     "cards.draw": () => { act(rules.tap(p, session.state, stock, topIndex(stock))); },
-  }, rules.drawLabel ? { "cards.draw": { label: rules.drawLabel } } : {});
+  }, { "cards.draw": { menu: "board", ...(rules.drawLabel ? { label: rules.drawLabel } : {}) } });
 
   // --- lifecycle ---
 
@@ -503,7 +503,7 @@ export function mountTable<Pz, S, A extends Action, I extends { cursor: CardCurs
   return {
     aspect: W / H,
     cells: { cols: Math.round(W / 4), rows: Math.round(H / 4) },
-    commands: [...bindCommands(BINDINGS, handlers), ...draw, ...(opts.commands ?? [])],
+    commands: [...bindCommands(BINDINGS, handlers, { "cards.pick": { menu: "board" }, "cards.auto": { menu: "board" } }), ...draw, ...(opts.commands ?? [])],
     target: () => session.interaction.cursor,
     preview: (st) => {
       preview = st as S | null;

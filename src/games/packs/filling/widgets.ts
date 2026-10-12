@@ -29,11 +29,11 @@ export const pad: FillingWidget = {
     style("filling-widgets", CSS);
     const top = geometry(session.puzzle).top;
     const digits = digitsUpTo(top).map((n) =>
-      h("button", { type: "button", "aria-label": String(n), onpointerdown: keep, onclick: () => run(digitCommand(n)) }, String(n)));
-    const notes = h("button", { type: "button", onpointerdown: keep, onclick: () => run("filling.notes"), title: "while on, numbers go in as small notes" }, "notes");
+      h("button", { type: "button", "data-command": digitCommand(n), "aria-label": String(n), onpointerdown: keep, onclick: () => run(digitCommand(n)) }, String(n)));
+    const notes = h("button", { type: "button", "data-command": "filling.notes", onpointerdown: keep, onclick: () => run("filling.notes"), title: "while on, numbers go in as small notes" }, "notes");
     el.append(h("div", { class: "fil-pad" },
       h("div", { class: "fil-digits", style: `--n: ${top}` }, digits),
-      h("div", { class: "fil-row" }, notes, h("button", { type: "button", onpointerdown: keep, onclick: () => run("filling.clear") }, "erase"))));
+      h("div", { class: "fil-row" }, notes, h("button", { type: "button", "data-command": "filling.clear", onpointerdown: keep, onclick: () => run("filling.clear") }, "erase"))));
     const render = () => notes.setAttribute("aria-pressed", String(session.interaction.candidates));
     session.hooks.interaction.tap(render, { owner });
     render();

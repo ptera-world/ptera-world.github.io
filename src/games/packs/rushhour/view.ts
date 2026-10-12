@@ -202,6 +202,7 @@ export const rushView: View<RushPuzzle, RushState, RushAction, RushInteraction> 
       const to = far ? (dir > 0 ? r.max : r.min) : session.state.pos[car]! + dir;
       if (to >= r.min && to <= r.max) session.dispatch({ type: "slide", car, to });
     };
+    const board = { menu: "board" } as const;
     const commands = bindCommands(BINDINGS, {
       "rushhour.next": pick(1),
       "rushhour.prev": pick(-1),
@@ -213,6 +214,15 @@ export const rushView: View<RushPuzzle, RushState, RushAction, RushInteraction> 
       "rushhour.far-down": slide(false, 1, true),
       "rushhour.far-left": slide(true, -1, true),
       "rushhour.far-right": slide(true, 1, true),
+    }, {
+      "rushhour.up": board,
+      "rushhour.down": board,
+      "rushhour.left": board,
+      "rushhour.right": board,
+      "rushhour.far-up": board,
+      "rushhour.far-down": board,
+      "rushhour.far-left": board,
+      "rushhour.far-right": board,
     });
     const carRect = (i: number) => carEls[i]!.getBoundingClientRect();
     return {

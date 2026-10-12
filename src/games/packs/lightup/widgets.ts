@@ -25,8 +25,8 @@ export const markMode: LightupWidget = {
   order: 15,
   mount(el, { session, owner, run }) {
     style("lightup-widgets", CSS);
-    const lightBtn = h("button", { type: "button", title: "tapping a cell puts a light there (or takes it away)", onclick: () => { if (buttonsSwapped(session.def.id)) run("shell.swap-buttons"); } }, "a light");
-    const markBtn = h("button", { type: "button", title: "tapping a cell puts a no-light mark there: a dot noting that it can't hold a light", onclick: () => { if (!buttonsSwapped(session.def.id)) run("shell.swap-buttons"); } }, "a no-light mark");
+    const lightBtn = h("button", { type: "button", "data-command": "shell.swap-buttons", title: "tapping a cell puts a light there (or takes it away)", onclick: () => { if (buttonsSwapped(session.def.id)) run("shell.swap-buttons"); } }, "a light");
+    const markBtn = h("button", { type: "button", "data-command": "shell.swap-buttons", title: "tapping a cell puts a no-light mark there: a dot noting that it can't hold a light", onclick: () => { if (!buttonsSwapped(session.def.id)) run("shell.swap-buttons"); } }, "a no-light mark");
     el.append(h("div", { class: "lightup-switch" },
       h("span", { class: "lightup-switch-label", id: "lightup-switch-label" }, "a tap places"),
       h("div", { class: "lightup-mode", role: "group", "aria-labelledby": "lightup-switch-label" }, lightBtn, markBtn)));

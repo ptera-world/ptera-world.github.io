@@ -344,7 +344,7 @@ export function signpostView(board: Board): View<SignpostPuzzle, SignpostState, 
         "signpost.link-back": { menu: "board" },
         "signpost.cut": { menu: "board" },
         "signpost.cut-chain": { menu: "board" },
-        "signpost.cancel": { when: () => session.interaction.pending !== null },
+        "signpost.cancel": { menu: "board", when: () => session.interaction.pending !== null },
       });
       return {
         gestures: { secondaryClick: true },

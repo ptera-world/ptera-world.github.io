@@ -203,6 +203,9 @@ export const pegsView: View<PegsPuzzle, PegsState, PegsAction, PegsInteraction> 
         "pegs.down": moveCursor(0, 1),
         "pegs.select": () => choose(session.interaction.cursor),
         "pegs.drop": () => setHeld(-1),
+      }, {
+        "pegs.select": { menu: "board" },
+        "pegs.drop": { menu: "board", when: (c) => !!c.pegsHolding },
       }),
       context: (): PegsContext => ({ pegsHolding: session.interaction.held >= 0 }),
       preview: (state) => {

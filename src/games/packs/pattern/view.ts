@@ -214,7 +214,7 @@ export function patternView(look: Look, board: Board, menuHoldMs: number): View<
       { how: "right-click a cell", what: "cross it out (you know it's empty); again to clear it" },
       { how: "drag along a row or column", what: "do the same to the whole stretch; the number in the top-left corner counts the cells" },
       { how: "middle-click a cell", what: "clear it" },
-      { how: "point at or tap a clue number", what: "shade where that block can still go" },
+      { how: "point at or tap a clue number", what: "shade where that block can still go; tap it to keep it shown until your next tap on the board or Esc" },
       { how: "hold a cell (touch)", what: "cross it out instead of filling it (in settings this can open the menu instead)" },
     ],
     /** Read when shown, so the samples use the current theme's graphics. */
@@ -363,6 +363,8 @@ export function patternView(look: Look, board: Board, menuHoldMs: number): View<
 
       let drag: Drag | null = null;
       let hover = -1;
+      /** Clue whose guide stays shown after the pointer leaves; cleared by the next press on the board or Esc. */
+      let pinned: ClueRef | null = null;
       let ghost: PatternState | null = null;
       const lineTarget = (cell: number): PatternTarget => ({ cell, lines: [Math.floor(cell / p.w), p.h + (cell % p.w)] });
       /** Last cell or clue pointed at, or the keyboard cursor after it moves. */
@@ -533,10 +535,24 @@ export function patternView(look: Look, board: Board, menuHoldMs: number): View<
         const ref = clueAt(e);
         if (ref) {
           aim = { lines: [ref.line] };
-          // touch has no hover: a tap toggles the guide for that number
-          if (e.pointerType !== "mouse") pointClue(sameClue(session.interaction.clue, ref) ? null : ref);
+          const shown = session.derived()[BLOCK_RANGE_KEY] as BlockRange | undefined;
+          const sure = shown && sameClue(shown, ref) && shown.sure
+            ? Array.from({ length: shown.sure[1] - shown.sure[0] }, (_, k) => cellOf(ref.line, shown.sure![0] + k)).filter((c) => session.state.cells[c] !== FILLED)
+            : [];
+          if (sure.length) {
+            session.dispatch({ type: "set", cells: sure, value: FILLED });
+            return;
+          }
+          if (sameClue(pinned, ref)) {
+            pinned = null;
+            if (e.pointerType !== "mouse") pointClue(null);
+          } else {
+            pinned = ref;
+            pointClue(ref);
+          }
           return;
         }
+        pinned = null;
         const cell = pointToCell(e, false);
         if (cell < 0) {
           if (session.interaction.clue) pointClue(null);
@@ -577,7 +593,7 @@ export function patternView(look: Look, board: Board, menuHoldMs: number): View<
         }
         if (e.pointerType !== "mouse") return;
         const ref = clueAt(e);
-        pointClue(session.locked ? null : ref);
+        pointClue(session.locked ? null : ref ?? pinned);
         const cell = pointToCell(e, false);
         if (ref) aim = { lines: [ref.line] };
         else if (cell >= 0) aim = lineTarget(cell);
@@ -585,9 +601,15 @@ export function patternView(look: Look, board: Board, menuHoldMs: number): View<
       };
       const onLeave = (e: PointerEvent) => {
         if (e.pointerType !== "mouse") return;
-        if (session.interaction.clue) pointClue(null);
+        pointClue(session.locked ? null : pinned);
         if (hover >= 0) { hover = -1; render(); }
       };
+      const onKey = (e: KeyboardEvent) => {
+        if (e.key !== "Escape" || !pinned) return;
+        pinned = null;
+        pointClue(null);
+      };
+      document.addEventListener("keydown", onKey);
       svg.addEventListener("pointerdown", onDown);
       svg.addEventListener("pointermove", onMove);
       svg.addEventListener("pointerup", (e) => { if (drag && e.pointerId === drag.pointerId) endDrag(true); });
@@ -618,6 +640,7 @@ export function patternView(look: Look, board: Board, menuHoldMs: number): View<
         }, { owner: "view" }),
         session.hooks.refresh.tap(() => {
           if (session.locked && drag) endDrag(false);
+          if (session.locked) pinned = null;
           if (session.locked && session.interaction.clue) pointClue(null);
           render();
         }, { owner: "view" }),
@@ -643,6 +666,14 @@ export function patternView(look: Look, board: Board, menuHoldMs: number): View<
         "pattern.fill": mark("fill"),
         "pattern.cross": mark("cross"),
         "pattern.clear": mark("clear"),
+      }, {
+        "pattern.paint-left": { menu: "board" },
+        "pattern.paint-right": { menu: "board" },
+        "pattern.paint-up": { menu: "board" },
+        "pattern.paint-down": { menu: "board" },
+        "pattern.fill": { menu: "board" },
+        "pattern.cross": { menu: "board" },
+        "pattern.clear": { menu: "board" },
       });
       return {
         aspect: W / H,
@@ -671,6 +702,7 @@ export function patternView(look: Look, board: Board, menuHoldMs: number): View<
         destroy() {
           if (drag) clearTimeout(drag.timer);
           document.removeEventListener("scroll", queueStick, true);
+          document.removeEventListener("keydown", onKey);
           resize.disconnect();
           cancelAnimationFrame(stickFrame);
           offs.forEach((f) => f());

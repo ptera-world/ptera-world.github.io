@@ -244,6 +244,11 @@ export const sixteenView: View<SixteenPuzzle, SixteenState, SixteenAction, Sixte
         "sixteen.row-right": slide("row", 1),
         "sixteen.col-up": slide("col", -1),
         "sixteen.col-down": slide("col", 1),
+      }, {
+        "sixteen.row-left": { menu: "board" },
+        "sixteen.row-right": { menu: "board" },
+        "sixteen.col-up": { menu: "board" },
+        "sixteen.col-down": { menu: "board" },
       }),
       preview: (state) => {
         previewing = state as SixteenState | null;

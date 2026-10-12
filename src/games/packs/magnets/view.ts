@@ -249,6 +249,8 @@ export function magnetsView(board: BoardPrefs): View<MagnetsPuzzle, MagnetsState
         "magnets.clear": atCursor(() => CLEAR),
         ...cursorHandlers("magnets", p, session),
       }, {
+        "magnets.cycle": { menu: "board" },
+        "magnets.cycle-blank": { menu: "board" },
         "magnets.plus": { menu: "board" },
         "magnets.minus": { menu: "board" },
         "magnets.blank": { menu: "board" },

@@ -237,6 +237,8 @@ export const mahjongView: View<MahjongPuzzle, MahjongState, MahjongAction, Mahjo
         "mahjong.up": moveCursor(0, -1),
         "mahjong.down": moveCursor(0, 1),
         "mahjong.pick": () => pick(session.interaction.cursor),
+      }, {
+        "mahjong.pick": { menu: "board" },
       }),
       target: () => session.interaction.cursor,
       preview: (st) => {

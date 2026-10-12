@@ -258,6 +258,12 @@ export function rectView(board: BoardPrefs): View<RectPuzzle, RectState, RectAct
         "rect.right": move(1, 0),
         "rect.up": move(0, -1),
         "rect.down": move(0, 1),
+      }, {
+        "rect.corner": { menu: "board" },
+        "rect.wall-up": { menu: "board" },
+        "rect.wall-left": { menu: "board" },
+        "rect.wall-right": { menu: "board" },
+        "rect.wall-down": { menu: "board" },
       });
       return {
         gestures: { secondaryClick: true },

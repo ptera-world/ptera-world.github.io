@@ -1,6 +1,7 @@
+import type { CommandId } from "../../core/commands";
 import { defineSchema } from "../../core/schema";
 import { defineWidgets } from "../../core/define";
-import { digitsUpTo } from "../../lib/digits";
+import { digitsUpTo, type Digit } from "../../lib/digits";
 import type { WidgetContext } from "../../core/types";
 import { h, style } from "../../core/dom";
 import { modelOf } from "./engine/model";
@@ -59,6 +60,8 @@ function counts(p: LatinPuzzle, s: GridState): number[] {
 
 const keep = (e: PointerEvent) => e.preventDefault();
 
+const padCommand = (mode: string, d: Digit): CommandId => (mode === "color" ? `sudoku.colour-${d}` : `sudoku.d${d}`);
+
 const pad = widget({
   id: "sudoku.pad",
   name: "digit pad",
@@ -78,15 +81,15 @@ const pad = widget({
     const { session, run, settings, slot } = ctx;
     const n = session.puzzle.n;
     const wide = slot === "top" || slot === "bottom";
-    const modeButtons = MODES.map((m) => h("button", { "aria-pressed": "false", onpointerdown: keep, onclick: () => run(`sudoku.mode-${m.id}`) }, m.label));
+    const modeButtons = MODES.map((m) => h("button", { "aria-pressed": "false", "data-command": `sudoku.mode-${m.id}`, onpointerdown: keep, onclick: () => run(`sudoku.mode-${m.id}`) }, m.label));
     // n buttons in every mode (color mode offers the first n colors), so switching modes never resizes the pad
     const digitButtons = digitsUpTo(n).map((d) =>
-      h("button", { "aria-label": String(d), onpointerdown: keep, onclick: () => run(session.interaction.mode === "color" ? `sudoku.colour-${d}` : `sudoku.d${d}`) }));
+      h("button", { "aria-label": String(d), onpointerdown: keep, onclick: () => run(padCommand(session.interaction.mode, d)) }));
     const grid = h("div", { class: "sdk-digits", style: `--cols: ${wide ? n : n <= 4 ? 2 : 3}; --n: ${n}` }, digitButtons);
     el.append(h("div", { class: `sdk-pad${wide ? " row" : ""}` },
       h("div", { class: "sdk-modes", role: "group", "aria-label": "input mode" }, modeButtons),
       grid,
-      h("button", { class: "erase", onpointerdown: keep, onclick: () => run("sudoku.clear") }, "erase")));
+      h("button", { class: "erase", "data-command": "sudoku.clear", onpointerdown: keep, onclick: () => run("sudoku.clear") }, "erase")));
     const render = () => {
       const it = session.interaction;
       modeButtons.forEach((b, i) => b.setAttribute("aria-pressed", String(MODES[i]!.id === it.mode)));
@@ -98,6 +101,7 @@ const pad = widget({
         const k = `${it.mode}|${left}`;
         if (b.dataset.k === k) return;
         b.dataset.k = k;
+        b.dataset.command = padCommand(it.mode, dg as Digit);
         b.className = "";
         if (it.mode === "color") {
           b.replaceChildren(h("span", { class: "swatch", style: `background: ${colorVar(dg)}` }));
@@ -123,8 +127,8 @@ const highlighter = widget({
     style("sudoku-widgets", CSS);
     const { session, run } = ctx;
     const n = session.puzzle.n;
-    const follow = h("button", { title: "follow the selected cell", onpointerdown: keep, onclick: () => run("sudoku.highlight-off") }, "auto");
-    const buttons = digitsUpTo(n).map((d) => h("button", { onpointerdown: keep, onclick: () => run(`sudoku.highlight-${d}`) }, String(d)));
+    const follow = h("button", { title: "follow the selected cell", "data-command": "sudoku.highlight-off", onpointerdown: keep, onclick: () => run("sudoku.highlight-off") }, "auto");
+    const buttons = digitsUpTo(n).map((d) => h("button", { "data-command": `sudoku.highlight-${d}`, onpointerdown: keep, onclick: () => run(`sudoku.highlight-${d}`) }, String(d)));
     el.append(h("div", { class: "sdk-hl", role: "group", "aria-label": "highlight digit" }, h("span", { class: "label" }, "highlight"), follow, buttons));
     const render = () => {
       const hl = session.interaction.highlight ?? 0;

@@ -348,6 +348,14 @@ export function tracksView(board: Board): View<TracksPuzzle, TracksState, Tracks
       }, {
         "tracks.has-track": { menu: "board" },
         "tracks.no-track": { menu: "board" },
+        "tracks.line-up": { menu: "board" },
+        "tracks.line-right": { menu: "board" },
+        "tracks.line-down": { menu: "board" },
+        "tracks.line-left": { menu: "board" },
+        "tracks.cross-up": { menu: "board" },
+        "tracks.cross-right": { menu: "board" },
+        "tracks.cross-down": { menu: "board" },
+        "tracks.cross-left": { menu: "board" },
       });
       return {
         gestures: { secondaryClick: true, hold: true },

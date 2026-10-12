@@ -32,8 +32,8 @@ const modeWidget: BridgesWidget = {
   mount(el, ctx) {
     style("bridges-widgets", CSS);
     const pick = (removing: boolean) => () => { if (buttonsSwapped(ctx.session.def.id) !== removing) ctx.run("shell.swap-buttons"); };
-    const add = h("button", { type: "button", "data-tip": "tapping, clicking or dragging adds a bridge", onclick: pick(false) }, "tap adds");
-    const remove = h("button", { type: "button", class: "remove", "data-tip": "tapping, clicking or dragging takes a bridge away, or puts a ✕ (no bridge here) on an empty gap. same as right-click", onclick: pick(true) }, "tap removes / ✕");
+    const add = h("button", { type: "button", "data-command": "shell.swap-buttons", "data-tip": "tapping, clicking or dragging adds a bridge", onclick: pick(false) }, "tap adds");
+    const remove = h("button", { type: "button", class: "remove", "data-command": "shell.swap-buttons", "data-tip": "tapping, clicking or dragging takes a bridge away, or puts a ✕ (no bridge here) on an empty gap. same as right-click", onclick: pick(true) }, "tap removes / ✕");
     el.append(h("div", { class: "bridges-mode", role: "group", "aria-label": "what a tap does" }, add, remove));
     const sync = () => {
       const removing = buttonsSwapped(ctx.session.def.id);

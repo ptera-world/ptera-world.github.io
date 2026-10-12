@@ -32,7 +32,7 @@ const settings = defineSchema({
 const COLOURS = oneBased(COLOUR_NAMES);
 type Colour = (typeof COLOURS)[number];
 const bindings = (list: readonly Colour[]) => bindingsOver("flood.colour-", list, (n) => (
-  { label: `flood with ${COLOUR_NAMES[n - 1]}`, category: "flood", keys: [String(n % 10)], description: `fill the flooded area with color ${n} (${COLOUR_NAMES[n - 1]})` }
+  { label: `flood with ${COLOUR_NAMES[n - 1]}`, category: "flood", menu: "board", keys: [String(n % 10)], description: `fill the flooded area with color ${n} (${COLOUR_NAMES[n - 1]})` }
 ));
 
 declare module "../../core/commands" {

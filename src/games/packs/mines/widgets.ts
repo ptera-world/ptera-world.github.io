@@ -46,8 +46,8 @@ export const flagMode = widget({
   order: 15,
   mount(el, { session, owner, run }) {
     style("mines-widgets", CSS);
-    const openBtn = h("button", { type: "button", title: "taps open cells", onclick: () => { if (buttonsSwapped(session.def.id)) run("shell.swap-buttons"); } }, "open");
-    const flagBtn = h("button", { type: "button", class: "flag", title: "taps put flags on cells instead of opening them", onclick: () => { if (!buttonsSwapped(session.def.id)) run("shell.swap-buttons"); } }, "flag");
+    const openBtn = h("button", { type: "button", "data-command": "shell.swap-buttons", title: "taps open cells", onclick: () => { if (buttonsSwapped(session.def.id)) run("shell.swap-buttons"); } }, "open");
+    const flagBtn = h("button", { type: "button", class: "flag", "data-command": "shell.swap-buttons", title: "taps put flags on cells instead of opening them", onclick: () => { if (!buttonsSwapped(session.def.id)) run("shell.swap-buttons"); } }, "flag");
     el.append(h("div", { class: "mines-mode", role: "group", "aria-label": "what a tap does" }, openBtn, flagBtn));
     const render = () => {
       openBtn.setAttribute("aria-pressed", String(!buttonsSwapped(session.def.id)));

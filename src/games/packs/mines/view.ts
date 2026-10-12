@@ -396,6 +396,10 @@ export function minesView(look: Look, labelSides: () => ReadonlySet<Side>): View
           else primary(cell);
           return true;
         },
+      }, {
+        "mines.open": { menu: "board" },
+        "mines.flag": { menu: "board" },
+        "mines.chord": { menu: "board" },
       });
       return {
         aspect: vw / vh,

@@ -1,4 +1,4 @@
-import { bindCommands, bindingsOver, handlersOver, type BindingSchema, type Ids } from "../../core/commands";
+import { bindCommands, bindingsOver, extrasOver, handlersOver, type BindingSchema, type Ids } from "../../core/commands";
 import { s, style } from "../../core/dom";
 import type { CommandDef, View } from "../../core/types";
 import { bit, isSingle, valueOf } from "../../lib/grid-kit/csp";
@@ -209,6 +209,7 @@ export function fillingView(board: BoardPrefs): View<FillingPuzzle, FillingState
       }, {
         "filling.clear": { menu: "board" },
         "filling.notes": { menu: "board", checked: () => session.interaction.candidates },
+        ...extrasOver("filling.d", digits, () => ({ menu: "board" })),
       });
       return {
         aspect: f.aspect,

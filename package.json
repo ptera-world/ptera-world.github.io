@@ -10,12 +10,14 @@
     "preview": "bun run src/cli.ts dev --production",
     "lint": "oxlint src/",
     "check:types": "tsgo --noEmit",
-    "test": "bun test --timeout=300000"
+    "test": "bun test --timeout=300000",
+    "check:first-play": "bun run src/games/first-play.check.ts"
   },
   "devDependencies": {
     "@types/bun": "^1.0.0",
     "@typescript/native-preview": "^7.0.0-dev",
-    "oxlint": "^1.0.0"
+    "oxlint": "^1.0.0",
+    "playwright-core": "1.56"
   },
   "dependencies": {
     "keybinds": "github:pterror/keybinds",

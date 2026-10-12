@@ -1,6 +1,6 @@
 import { Event as HookEvent } from "../../core/hooks";
 import { defineSchema } from "../../core/schema";
-import { bindCommands, bindingsOver, handlersOver, type BindingSchema, type Ids } from "../../core/commands";
+import { bindCommands, bindingsOver, extrasOver, handlersOver, type BindingSchema, type Ids } from "../../core/commands";
 import type { View } from "../../core/types";
 import { colName, rowName, type Side } from "../../core/names";
 import { s, style, inputIs } from "../../core/dom";
@@ -428,6 +428,9 @@ export function makeView(look: Look, board: BoardPrefs, holdMs: number): View<Br
         ...handlersOver("bridges.add-", DIR_NAMES, (name) => () => act(edgeFrom(dir(name)), false)),
         ...handlersOver("bridges.remove-", DIR_NAMES, (name) => () => act(edgeFrom(dir(name)), true)),
         ...handlersOver("bridges.move-", DIR_NAMES, (name) => move(dir(name))),
+      }, {
+        ...extrasOver("bridges.add-", DIR_NAMES, () => ({ menu: "board" })),
+        ...extrasOver("bridges.remove-", DIR_NAMES, () => ({ menu: "board" })),
       });
 
       const ctm = (x1: number, y1: number, x2: number, y2: number, pad: number): DOMRect => {

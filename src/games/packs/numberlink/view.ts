@@ -337,7 +337,17 @@ export function numberlinkView(board: BoardPrefs): View<NumberlinkPuzzle, Number
           set(DIRS.map((d) => edgeAt(g, c, d)).filter((e) => e >= 0 && session.state.edges[e] !== NONE), NONE);
         },
         ...cursorHandlers("numberlink", p, session),
-      }, { "numberlink.clear-cell": { menu: "board" } });
+      }, {
+        "numberlink.line-up": { menu: "board" },
+        "numberlink.line-right": { menu: "board" },
+        "numberlink.line-down": { menu: "board" },
+        "numberlink.line-left": { menu: "board" },
+        "numberlink.cross-up": { menu: "board" },
+        "numberlink.cross-right": { menu: "board" },
+        "numberlink.cross-down": { menu: "board" },
+        "numberlink.cross-left": { menu: "board" },
+        "numberlink.clear-cell": { menu: "board" },
+      });
 
       return {
         gestures: { secondaryClick: true, hold: true },

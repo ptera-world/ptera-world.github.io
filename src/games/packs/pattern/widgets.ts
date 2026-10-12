@@ -24,8 +24,8 @@ export const crossMode = widget({
   mount(el, { session, owner, run }) {
     style("pattern-widgets", CSS);
     const id = session.def.id;
-    const fillBtn = h("button", { type: "button", onclick: () => { if (buttonsSwapped(id)) { run("shell.swap-buttons"); render(); } } }, "fill");
-    const crossBtn = h("button", { type: "button", onclick: () => { if (!buttonsSwapped(id)) { run("shell.swap-buttons"); render(); } } }, "cross");
+    const fillBtn = h("button", { type: "button", "data-command": "shell.swap-buttons", onclick: () => { if (buttonsSwapped(id)) { run("shell.swap-buttons"); render(); } } }, "fill");
+    const crossBtn = h("button", { type: "button", "data-command": "shell.swap-buttons", onclick: () => { if (!buttonsSwapped(id)) { run("shell.swap-buttons"); render(); } } }, "cross");
     el.append(h("div", { class: "pattern-mode", role: "group", "aria-label": "what a tap does" }, fillBtn, crossBtn));
     const render = () => {
       fillBtn.setAttribute("aria-pressed", String(!buttonsSwapped(id)));
