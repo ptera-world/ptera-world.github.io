@@ -1,22 +1,27 @@
 import type { View } from "../../core/types";
 import { CARD_H, CARD_W, cardSample } from "../../lib/cards/draw";
 import { mountTable, tableLegend, tableSettings, type Slot } from "../../lib/cards/table";
-import { spider, canLift, moveAction, pileName, tapAction, type SpiderAction, type SpiderInteraction, type SpiderPuzzle, type SpiderState } from "./logic";
+import { baseOf, columnsOf, setsOf, spider, canLift, moveAction, pileName, tapAction, type SpiderAction, type SpiderInteraction, type SpiderPuzzle, type SpiderState } from "./logic";
 import { STOCK } from "./solver";
 
 const GAP = 1.5;
 const TOP = 1.5;
 const ROW = TOP + CARD_H + 3;
 const FAN_ROOM = 60;
-const W = 10 * CARD_W + 11 * GAP;
-const H = ROW + FAN_ROOM + CARD_H + TOP;
 const x = (i: number) => GAP + i * (CARD_W + GAP);
+const width = (p: SpiderPuzzle) => columnsOf(p) * CARD_W + (columnsOf(p) + 1) * GAP;
+const height = ROW + FAN_ROOM + CARD_H + TOP;
 
-const SLOTS: Slot[] = [
-  { x: x(0), y: TOP, fan: "deals", count: 10, name: pileName(STOCK) },
-  ...Array.from({ length: 8 }, (_, i): Slot => ({ x: x(2 + i), y: TOP, fan: "none", name: pileName(1 + i) })),
-  ...Array.from({ length: 10 }, (_, j): Slot => ({ x: x(j), y: ROW, fan: "down", bottom: ROW + FAN_ROOM, name: pileName(9 + j) })),
-];
+/** Finished runs sit in a row to the right of the stock, drawn closer together when there are more than fit. */
+function slotsOf(p: SpiderPuzzle): Slot[] {
+  const sets = setsOf(p), base = baseOf(p);
+  const step = sets > 1 ? Math.min(CARD_W + GAP, (width(p) - GAP - x(2) - CARD_W) / (sets - 1)) : 0;
+  return [
+    { x: x(0), y: TOP, fan: "deals", count: columnsOf(p), name: pileName(p, 0) },
+    ...Array.from({ length: sets }, (_, i): Slot => ({ x: x(2) + i * step, y: TOP, fan: "none", name: pileName(p, 1 + i) })),
+    ...Array.from({ length: columnsOf(p) }, (_, j): Slot => ({ x: x(j), y: ROW, fan: "down", bottom: ROW + FAN_ROOM, name: pileName(p, base + j) })),
+  ];
+}
 
 export const spiderView: View<SpiderPuzzle, SpiderState, SpiderAction, SpiderInteraction, typeof tableSettings> = {
   id: "spider.table",
@@ -35,9 +40,10 @@ export const spiderView: View<SpiderPuzzle, SpiderState, SpiderAction, SpiderInt
   ],
   mount(root, ctx) {
     const p = ctx.session.puzzle;
+    const sl = slotsOf(p);
     return mountTable(root, ctx, {
-      size: () => ({ w: W, h: H }),
-      slots: () => SLOTS,
+      size: () => ({ w: width(p), h: height }),
+      slots: () => sl,
       piles: (s) => s.piles,
       face: (_p, id) => p.deck[id]!,
       canLift,

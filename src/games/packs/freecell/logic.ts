@@ -8,7 +8,8 @@ import { applyMove, BUDGET, isLegal, isWon, moves, runLength, solve, type Move, 
 
 export const params = defineSchema({
   cells: { type: "int", label: "free cells", default: 4, min: 1, max: 4, description: "fewer free cells make it much harder" },
-  winnable: { type: "bool", label: "always winnable", default: true, description: "deal again until the solver finds a win" },
+  deal: { type: "int", label: "deal number (0 = random)", default: 0, min: 0, max: 2147483647, description: "the numbered deals of Microsoft FreeCell, so a number gives the same cards as there; the same number always deals the same game" },
+  winnable: { type: "bool", label: "always winnable", default: true, description: "deal again until the solver finds a win; a numbered deal is dealt as it is" },
 });
 
 export interface FreecellPuzzle {
@@ -72,6 +73,11 @@ function dealCols(deck: readonly number[], cols = COLS): number[][] {
 }
 
 async function generate(v: Values<typeof params>, rng: Rng, ctx: GenerateContext): Promise<FreecellPuzzle> {
+  if (v.deal > 0) {
+    const puzzle: FreecellPuzzle = { cols: dealCols(msDeal(v.deal)), cells: Array(v.cells).fill(-1), found: [0, 0, 0, 0], deal: v.deal };
+    const r = v.winnable ? solve(startPos(puzzle)) : null;
+    return r?.path ? { ...puzzle, solution: r.path } : puzzle;
+  }
   let last: FreecellPuzzle | null = null;
   for (let attempt = 0; attempt < 40; attempt++) {
     const cols = dealCols(shuffledDeck(rng));

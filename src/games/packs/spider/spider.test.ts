@@ -61,3 +61,39 @@ test("deal text round-trips and checks the cards", async () => {
   expect(dealFormat.parse(text)).toEqual(p);
   expect(() => dealFormat.parse(text.replace("KS", "KH"))).toThrow("times");
 });
+
+test("decks scale the columns, the first deal and the stock", async () => {
+  for (const pr of spider.presets!) {
+    const p = await gen({ ...pr.params, winnable: false }, "scale");
+    const decks = Number(pr.params.decks), cols = Number(pr.params.columns), deals = Number(pr.params.deals);
+    expect(p.deck.length).toBe(52 * decks);
+    const s = spider.init(p);
+    expect(s.piles.length).toBe(1 + 4 * decks + cols);
+    expect(s.piles[0]!.c.length).toBe(deals * cols);
+    const lens = s.piles.slice(1 + 4 * decks).map((pl) => pl.c.length);
+    expect(lens.reduce((a, b) => a + b, 0)).toBe(52 * decks - deals * cols);
+    expect(Math.max(...lens) - Math.min(...lens)).toBeLessThanOrEqual(1);
+    const text = dealFormat.serialize!(p);
+    expect(dealFormat.parse(text)).toEqual(p);
+    let dealt = s;
+    for (let i = 0; i < deals; i++) dealt = spider.reduce(p, dealt, { type: "deal" });
+    expect(dealt.piles[0]!.c.length).toBe(0);
+  }
+});
+
+test("too many stock deals for the columns are cut back; saved games without the new fields keep the old table", async () => {
+  const p = await gen({ decks: 1, columns: 16, deals: 10, winnable: false }, "cut");
+  expect(p.deals).toBe(2);
+  const { columns: _c, deals: _d, ...old } = await gen({ winnable: false }, "old");
+  const s = spider.init(old);
+  expect(s.piles.length).toBe(19);
+  expect(s.piles[0]!.c.length).toBe(50);
+});
+
+test("a one-deck one-suit game is winnable and a stored win plays out", async () => {
+  const p = await gen({ decks: 1, suits: "1", columns: 7, deals: 4 }, "w1");
+  expect(p.solution).toBeDefined();
+  let s = spider.init(p);
+  for (const m of p.solution!) s = spider.reduce(p, s, actionOf(m));
+  expect(spider.isSolved(p, s)).toBe(true);
+}, 60000);

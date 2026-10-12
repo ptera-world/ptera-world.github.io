@@ -1,19 +1,24 @@
 import { rankOf, suitOf } from "../../lib/cards/deck";
 
 /**
- * A Spider position for searching. Pile numbers in moves are the game's: 0 stock, 1–8 completed
- * suits, 9–18 columns.
+ * A Spider position for searching. Pile numbers in moves are the game's: 0 stock, then one pile per
+ * suit to complete (`sets`), then the columns.
  */
 export interface Pos {
-  /** Bottom first; each deal takes the last ten, the very last going to the first column. */
+  /** Bottom first; each deal takes the last cards, one per column, the very last going to the first column. */
   stock: number[];
   cols: number[][];
   down: number[];
   /** Completed suits so far, each as its 13 cards ace first. */
   done: number[][];
+  /** How many runs complete the game: four per deck. */
+  sets: number;
 }
 
-export const STOCK = 0, DONE = 1, COLS = 9;
+export const STOCK = 0, DONE = 1;
+
+/** The pile number of the first column. */
+export const colBase = (p: { sets: number }): number => DONE + p.sets;
 
 /** A deal (from STOCK, n 0) or a run moving between columns. */
 export interface Move {
@@ -31,7 +36,7 @@ export interface Search {
 /** Face (suit * 13 + rank − 1) of each card id. */
 export type Faces = readonly number[];
 
-export const clonePos = (p: Pos): Pos => ({ stock: p.stock.slice(), cols: p.cols.map((c) => c.slice()), down: p.down.slice(), done: p.done.map((d) => d.slice()) });
+export const clonePos = (p: Pos): Pos => ({ stock: p.stock.slice(), cols: p.cols.map((c) => c.slice()), down: p.down.slice(), done: p.done.map((d) => d.slice()), sets: p.sets });
 
 const follows = (f: Faces, upper: number, lower: number) => rankOf(f[lower]!) === rankOf(f[upper]!) + 1;
 const sameSuit = (f: Faces, a: number, b: number) => suitOf(f[a]!) === suitOf(f[b]!);
@@ -68,9 +73,9 @@ export function applyMove(f: Faces, p: Pos, m: Move): void {
   if (m.from === STOCK) {
     for (let j = 0; j < p.cols.length && p.stock.length; j++) p.cols[j]!.push(p.stock.pop()!);
   } else {
-    const i = m.from - COLS;
+    const i = m.from - colBase(p);
     const cards = p.cols[i]!.splice(p.cols[i]!.length - m.n, m.n);
-    p.cols[m.to - COLS]!.push(...cards);
+    p.cols[m.to - colBase(p)]!.push(...cards);
     flip(p, i);
   }
   collect(f, p);
@@ -82,7 +87,7 @@ export function canDeal(p: Pos): boolean {
 
 export function isLegal(f: Faces, p: Pos, m: Move): boolean {
   if (m.from === STOCK) return m.to === STOCK && canDeal(p);
-  const i = m.from - COLS, j = m.to - COLS;
+  const i = m.from - colBase(p), j = m.to - colBase(p);
   if (i < 0 || j < 0 || i >= p.cols.length || j >= p.cols.length || i === j || m.n < 1) return false;
   if (m.n > runLength(f, p.cols[i]!, p.down[i]!)) return false;
   const lead = p.cols[i]![p.cols[i]!.length - m.n]!;
@@ -97,6 +102,7 @@ export function isLegal(f: Faces, p: Pos, m: Move): boolean {
 export function moves(f: Faces, p: Pos): Move[] {
   const out: Move[] = [];
   const firstEmpty = p.cols.findIndex((c) => !c.length);
+  const base = colBase(p);
   for (let i = 0; i < p.cols.length; i++) {
     const col = p.cols[i]!;
     const run = runLength(f, col, p.down[i]!);
@@ -111,9 +117,9 @@ export function moves(f: Faces, p: Pos): Move[] {
           if (k < run && !sameSuit(f, lead, top)) continue;
           // a whole run onto another suit is pointless when it already sits on a card one higher
           if (k === run && !sameSuit(f, lead, top) && col.length > k && p.down[i]! < col.length - k && follows(f, lead, col[col.length - k - 1]!)) continue;
-          out.push({ from: COLS + i, to: COLS + j, n: k });
+          out.push({ from: base + i, to: base + j, n: k });
         } else if (j === firstEmpty && k === run && col.length > k) {
-          out.push({ from: COLS + i, to: COLS + j, n: k });
+          out.push({ from: base + i, to: base + j, n: k });
         }
       }
     }
@@ -122,7 +128,7 @@ export function moves(f: Faces, p: Pos): Move[] {
   return out;
 }
 
-export const isWon = (p: Pos): boolean => p.done.length === 8;
+export const isWon = (p: Pos): boolean => p.done.length === p.sets;
 
 function key(f: Faces, p: Pos): string {
   const cols = p.cols.map((c, j) => `${p.down[j]}:${String.fromCharCode(...c.map((x) => f[x]! + 48))}`).sort();
@@ -130,7 +136,7 @@ function key(f: Faces, p: Pos): string {
 }
 
 function score(f: Faces, p: Pos): number {
-  let h = (8 - p.done.length) * 40 + p.stock.length * 2;
+  let h = (p.sets - p.done.length) * 40 + p.stock.length * 2;
   for (let j = 0; j < p.cols.length; j++) {
     const col = p.cols[j]!;
     h += p.down[j]! * 4;

@@ -24,6 +24,8 @@ export interface Slot {
   mark?: string;
   /** "column 3", "free cell 2": for hints and screen readers. */
   name: string;
+  /** Drawn and clickable only while it holds cards: for places in a layout that empty out for good. */
+  bare?: boolean;
 }
 
 /** Where the pointer or keyboard is on the table, and the cards picked up with the keyboard. */
@@ -56,6 +58,8 @@ export interface TableRules<Pz, S, A extends Action> {
   drop(p: Pz, s: S, from: number, index: number, to: number): A | null;
   /** What a click or tap on a card (index -1: the empty pile) does, or null for nothing. */
   tap(p: Pz, s: S, pile: number, index: number): A[] | null;
+  /** Piles whose top card is outlined as chosen (a first pick waiting for its partner). */
+  marked?(s: S): readonly number[];
   /** The stock, for the draw command and the opening deal. */
   stock?: number;
   /** Label for the draw command. */
@@ -160,11 +164,18 @@ export function mountTable<Pz, S, A extends Action, I extends { cursor: CardCurs
   const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, class: `cards-table${settings.fourColor ? " four-color" : ""}`, role: "application", "aria-label": "card table" });
   const slotLayer = s("g"), cardLayer = s("g"), ghostLayer = s("g", { class: "ghost" }), overlay = s("g");
   const cursorEl = s("rect", { width: CARD_W + 0.8, height: CARD_H + 0.8, rx: CARD_R + 0.3, class: "cursor" });
+  const slotEls: SVGElement[][] = [];
   slots.forEach((sl, i) => {
-    slotLayer.append(s("rect", { x: sl.x, y: sl.y, width: CARD_W, height: CARD_H, rx: CARD_R, class: "slot" }));
-    if (sl.mark) slotLayer.append(s("text", { x: sl.x + CARD_W / 2, y: sl.y + CARD_H / 2, class: "slot-mark" }, sl.mark));
-    slotLayer.append(s("rect", { x: sl.x, y: sl.y, width: CARD_W, height: CARD_H, rx: CARD_R, class: "slot-hit", "data-pile": i }));
+    const group: SVGElement[] = [s("rect", { x: sl.x, y: sl.y, width: CARD_W, height: CARD_H, rx: CARD_R, class: "slot" })];
+    if (sl.mark) group.push(s("text", { x: sl.x + CARD_W / 2, y: sl.y + CARD_H / 2, class: "slot-mark" }, sl.mark));
+    group.push(s("rect", { x: sl.x, y: sl.y, width: CARD_W, height: CARD_H, rx: CARD_R, class: "slot-hit", "data-pile": i }));
+    slotLayer.append(...group);
+    slotEls.push(group);
   });
+  const syncBare = () => {
+    const ps = rules.piles(session.state);
+    slots.forEach((sl, i) => { if (sl.bare) for (const el of slotEls[i]!) el.style.display = ps[i]!.c.length ? "" : "none"; });
+  };
   svg.append(slotLayer, cardLayer, ghostLayer, overlay, cursorEl);
   root.append(svg);
 
@@ -293,6 +304,7 @@ export function mountTable<Pz, S, A extends Action, I extends { cursor: CardCurs
     }
     const held = session.interaction.cursor.held;
     if (held) overlay.append(outline(rectOf(held.pile, held.index), "held", 0.5));
+    for (const pile of rules.marked?.(session.state) ?? []) overlay.append(outline(rectOf(pile, rules.piles(session.state)[pile]!.c.length - 1), "held", 0.5));
     ghostLayer.replaceChildren();
     if (preview) {
       const now = layout(slots, rules.piles(session.state));
@@ -474,6 +486,7 @@ export function mountTable<Pz, S, A extends Action, I extends { cursor: CardCurs
     const c = session.interaction.cursor;
     if (c.index > topIndex(c.pile) || (c.index < 0 && topIndex(c.pile) >= 0)) session.setInteraction((i) => ({ ...i, cursor: { ...i.cursor, index: topIndex(i.cursor.pile), held: null } }));
     settle();
+    syncBare();
     drawOverlay();
   };
   const offs = [
@@ -491,6 +504,7 @@ export function mountTable<Pz, S, A extends Action, I extends { cursor: CardCurs
     for (let i = 0; i < maxLen; i++) all.forEach((pl, pi) => { if (pi !== rules.stock && i < pl.c.length) dealt.set(pl.c[i]!, dealt.size); });
     settle({ from: (id) => (dealt.has(id) ? { x: sl.x, y: sl.y, up: false } : undefined), stagger: 14, seq: (id) => dealt.get(id) ?? 0 });
   } else settle();
+  syncBare();
   drawOverlay();
 
   const client = (r: [number, number, number, number]) => {

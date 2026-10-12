@@ -11,11 +11,11 @@ export const plan = planner<SpiderPuzzle, SpiderState, Move>({
   key: stateKey,
   init: (p) => fromPos(dealPos(p), 0),
   step: (p, s, m) => {
-    const pos = toPos(s);
+    const pos = toPos(p, s);
     applyMove(p.deck, pos, m);
     return fromPos(pos, s.moves + 1);
   },
-  search: (p, s) => solve(p.deck, toPos(s), HINT_BUDGET),
+  search: (p, s) => solve(p.deck, toPos(p, s), HINT_BUDGET),
   known: (p) => p.solution,
 });
 

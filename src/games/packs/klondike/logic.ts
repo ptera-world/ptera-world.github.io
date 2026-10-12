@@ -4,6 +4,7 @@ import type { Format, GenerateContext, PuzzleDef, Rating } from "../../core/type
 import { buildsDownAlternating, cardCode, cardName, parseCards, rankOf, shuffledDeck, suitOf, SUIT_GLYPHS } from "../../lib/cards/deck";
 import type { Pile } from "../../lib/cards/piles";
 import type { CardCursor } from "../../lib/cards/table";
+import { VEGAS_STAKE, bankTotal, dealKey, gain, isVegas, money, settle, startScore, timeAdjust, type Scoring } from "./score";
 import { applyMove, click, COLS, FOUND, isWon, moves, solve, STOCK, WASTE, type Move, type Pos, type Rules } from "./solver";
 
 export const params = defineSchema({
@@ -15,6 +16,16 @@ export const params = defineSchema({
     type: "enum", label: "passes through the stock", default: "0",
     options: [{ value: "0", label: "no limit" }, { value: "3", label: "three" }, { value: "1", label: "one" }],
   },
+  scoring: {
+    type: "enum", label: "scoring", default: "standard",
+    options: [
+      { value: "standard", label: "standard", description: "points for what you play; a second pass through the stock costs" },
+      { value: "vegas", label: "vegas", description: "$52 a deal, $5 back for each card home" },
+      { value: "vegas-keep", label: "vegas, running total", description: "vegas, with winnings carried from deal to deal in this browser" },
+      { value: "none", label: "none" },
+    ],
+  },
+  timed: { type: "bool", label: "timed", default: false, description: "standard scoring only: points go off as time passes, and a quick win earns a bonus", when: (v) => v.scoring === "standard" },
   winnable: { type: "bool", label: "always winnable", default: true, description: "deal again until the solver finds a win" },
 });
 
@@ -24,6 +35,9 @@ export interface KlondikePuzzle {
   draw: number;
   /** Passes through the stock allowed; 0 for no limit. */
   passes: number;
+  /** Absent in games saved before scoring: none. */
+  scoring?: Scoring;
+  timed?: boolean;
   /** A win from the start, found when the deal was made. */
   solution?: Move[];
 }
@@ -34,6 +48,8 @@ export interface KlondikeState {
   /** Times the waste has gone back into the stock. */
   recycles: number;
   moves: number;
+  /** Absent in games saved before scoring. */
+  score?: number;
 }
 
 export type KlondikeAction = { type: "draw" } | { type: "move"; from: number; to: number; n: number };
@@ -55,7 +71,7 @@ export function toPos(s: KlondikeState): Pos {
   };
 }
 
-export function fromPos(p: Pos, moveCount: number): KlondikeState {
+export function fromPos(p: Pos, moveCount: number, score = 0): KlondikeState {
   return {
     piles: [
       { c: p.stock.slice(), d: p.stock.length },
@@ -65,6 +81,7 @@ export function fromPos(p: Pos, moveCount: number): KlondikeState {
     ],
     recycles: p.recycles,
     moves: moveCount,
+    score,
   };
 }
 
@@ -114,9 +131,10 @@ const GEN_BUDGET = 30_000;
 
 async function generate(v: Values<typeof params>, rng: Rng, ctx: GenerateContext): Promise<KlondikePuzzle> {
   const draw = Number(v.draw), passes = Number(v.passes);
+  const scoring = v.scoring as Scoring, timed = v.timed && scoring === "standard";
   let last: KlondikePuzzle | null = null;
   for (let attempt = 0; attempt < 40; attempt++) {
-    const puzzle: KlondikePuzzle = { deck: shuffledDeck(rng), draw, passes };
+    const puzzle: KlondikePuzzle = { deck: shuffledDeck(rng), draw, passes, scoring, timed };
     if (!v.winnable) return puzzle;
     const r = solve(dealPos(puzzle.deck), rulesOf(puzzle), GEN_BUDGET);
     if (r.path) return { ...puzzle, solution: r.path };
@@ -128,7 +146,7 @@ async function generate(v: Values<typeof params>, rng: Rng, ctx: GenerateContext
 
 // --- formats ---
 
-const HEAD_RE = /^\s*draw\s*([13])(?:\s*[,;]?\s*passes\s*(\d+))?\s*$/im;
+const HEAD_RE = /^\s*draw\s*([13])(?:\s*[,;]?\s*passes\s*(\d+))?(?:\s*[,;]?\s*scoring\s*(none|standard|vegas|vegas-keep))?(\s*[,;]?\s*timed)?\s*$/im;
 
 /**
  * Plain deal: an optional "draw 3, passes 1" line, then the 52 cards as codes (like TH or 5c) in
@@ -147,9 +165,10 @@ export const dealFormat: Format<KlondikePuzzle> = {
     if (seen.size !== 52) throw new Error(`${cardName(deck.find((c, i) => deck.indexOf(c) !== i)!)} appears twice`);
     const passes = Number(head?.[2] ?? 0);
     if (passes < 0 || passes > 99) throw new Error("passes run from 0 (no limit) to 99");
-    return { deck, draw: Number(head?.[1] ?? 1), passes };
+    const scoring = (head?.[3] ?? "standard") as Scoring;
+    return { deck, draw: Number(head?.[1] ?? 1), passes, scoring, timed: !!head?.[4] && scoring === "standard" };
   },
-  serialize: (p) => `draw ${p.draw}, passes ${p.passes}\n${p.deck.slice(0, 28).map(cardCode).join(" ")}\n${p.deck.slice(28).map(cardCode).join(" ")}`,
+  serialize: (p) => `draw ${p.draw}, passes ${p.passes}, scoring ${p.scoring ?? "none"}${p.timed ? ", timed" : ""}\n${p.deck.slice(0, 28).map(cardCode).join(" ")}\n${p.deck.slice(28).map(cardCode).join(" ")}`,
 };
 
 // --- rules for the table ---
@@ -220,26 +239,32 @@ export const klondike: PuzzleDef<KlondikePuzzle, KlondikeState, KlondikeAction, 
   aliases: ["solitaire", "patience", "klondike solitaire"],
   tags: ["cards", "solitaire", "moves"],
   description: "the classic solitaire: build every suit up from ace to king on the foundations, digging through the seven columns and the stock.",
-  generatorVersion: 1,
+  generatorVersion: 2,
   params,
   presets: [
-    { label: "draw one", params: { draw: "1", passes: "0" } },
-    { label: "draw three", params: { draw: "3", passes: "0" } },
-    { label: "draw three, three passes", params: { draw: "3", passes: "3" } },
+    { label: "draw one", params: { draw: "1", passes: "0", scoring: "standard", timed: false } },
+    { label: "draw three", params: { draw: "3", passes: "0", scoring: "standard", timed: false } },
+    { label: "draw three, three passes", params: { draw: "3", passes: "3", scoring: "standard", timed: false } },
+    { label: "timed, draw one", params: { draw: "1", passes: "0", scoring: "standard", timed: true } },
+    { label: "vegas, draw one", params: { draw: "1", passes: "1", scoring: "vegas" } },
+    { label: "vegas, draw three", params: { draw: "3", passes: "3", scoring: "vegas" } },
+    { label: "vegas running total, draw three", params: { draw: "3", passes: "3", scoring: "vegas-keep" } },
   ],
   generate,
   formats: [dealFormat],
-  init: (p) => fromPos(dealPos(p.deck), 0),
+  init: (p) => fromPos(dealPos(p.deck), 0, startScore(p.scoring ?? "none")),
   initInteraction: () => ({ cursor: { pile: COLS, index: 0, held: null } }),
   reduce(p, s, a) {
     const pos = toPos(s);
+    const before = toPos(s);
+    const mode = p.scoring ?? "none";
     if (a.type === "draw") {
       if (!click(pos, rulesOf(p))) return s;
-      return fromPos(pos, s.moves + 1);
+      return fromPos(pos, s.moves + 1, settle(mode, (s.score ?? 0) + gain(mode, p.draw, before, pos, null)));
     }
     if (a.type !== "move" || !isLegal(pos, a)) return s;
     applyMove(pos, { draws: 0, ...a }, rulesOf(p));
-    return fromPos(pos, s.moves + 1);
+    return fromPos(pos, s.moves + 1, settle(mode, (s.score ?? 0) + gain(mode, p.draw, before, pos, a)));
   },
   isSolved: (_p, s) => isWon(toPos(s)),
   isLost: (p, s) => {
@@ -253,7 +278,38 @@ export const klondike: PuzzleDef<KlondikePuzzle, KlondikeState, KlondikeAction, 
     "any face-up run in a column moves together; when a face-down card is left on top it turns over.",
     `click the stock to turn over ${p.draw === 1 ? "one card" : "three cards"}; only the top card of the waste plays. when the stock runs out, click it to turn the waste back over${p.passes ? ` (${p.passes === 1 ? "no second pass" : `${p.passes} passes in all`})` : ""}.`,
     "cards can come back down from a foundation onto a column.",
+    ...scoreRules(p),
   ],
-  describe: (p) => `draw ${p.draw === 1 ? "one" : "three"}${p.passes ? `, ${p.passes === 1 ? "one pass" : `${p.passes} passes`}` : ""}`,
+  describe: (p) => `draw ${p.draw === 1 ? "one" : "three"}${p.passes ? `, ${p.passes === 1 ? "one pass" : `${p.passes} passes`}` : ""}${p.scoring && p.scoring !== "none" ? `, ${p.scoring === "standard" ? (p.timed ? "timed" : "standard") : "vegas"}` : ""}`,
   describeAction,
 };
+
+function scoreRules(p: KlondikePuzzle): string[] {
+  const mode = p.scoring ?? "none";
+  if (mode === "none") return [];
+  if (mode === "standard") {
+    return [
+      `standard scoring: 10 for a card home, 5 for a waste card onto a column, 5 for turning a card over, -15 for taking a card back from home, ${p.draw === 1 ? "-100 for each further pass through the stock" : "-20 for each pass through the stock after the third"}. it never drops below zero.`,
+      ...(p.timed ? ["timed: 2 points off for every ten seconds, and a win after more than 30 seconds adds 700000 divided by the seconds taken."] : []),
+    ];
+  }
+  return [
+    `vegas scoring: you start $${VEGAS_STAKE} down, win $5 for each card home and give $5 back for each taken off a foundation.`,
+    ...(mode === "vegas-keep" ? ["the running total adds up every deal played in this browser."] : []),
+  ];
+}
+
+/** The line above the board: score (or money) and moves, with the running vegas total when it is kept. */
+export function scoreLine(p: KlondikePuzzle, s: KlondikeState, elapsedMs: number): string {
+  const mode = p.scoring ?? "none";
+  const moves = `${s.moves} ${s.moves === 1 ? "move" : "moves"}`;
+  if (mode === "none") return moves;
+  const base = s.score ?? 0;
+  if (isVegas(mode)) {
+    const here = `${money(base)}`;
+    return mode === "vegas-keep" ? `this deal ${here} · total ${money(bankTotal(dealKey(p.deck, p.draw), base))} · ${moves}` : `${here} · ${moves}`;
+  }
+  const won = isWon(toPos(s));
+  const shown = p.timed ? Math.max(0, base + timeAdjust(elapsedMs, won)) : base;
+  return `score ${shown} · ${moves}`;
+}

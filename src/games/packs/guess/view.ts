@@ -3,7 +3,7 @@ import { bindCommands, bindingsOver, extrasOver, handlersOver, oneBased, type Bi
 import { s, style, inputIs } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
-import { guess, COLOUR_NAMES, canSubmit, isOver, type GuessAction, type GuessFocus, type GuessInteraction, type GuessPuzzle, type GuessState } from "./logic";
+import { guess, COLOUR_NAMES, ELSEWHERE, EXACT, canSubmit, isOver, type GuessAction, type GuessFocus, type GuessInteraction, type GuessPuzzle, type GuessState } from "./logic";
 
 const FILLS = [
   "var(--cell)",
@@ -31,6 +31,7 @@ const CSS = `
 .guess-board .score { stroke: var(--border); stroke-width: 0.25; fill: var(--cell); }
 .guess-board .score.black { fill: var(--text); stroke: var(--text); }
 .guess-board .score.white { fill: var(--bg); stroke: var(--text); stroke-width: 0.4; }
+.guess-board .miss { fill: none; stroke: var(--text); stroke-width: 0.45; stroke-linecap: round; pointer-events: none; }
 .guess-board .submit { fill: transparent; stroke: var(--accent); stroke-width: 0.5; stroke-dasharray: 1 0.8; cursor: pointer; }
 .guess-board .submit.ready { fill: color-mix(in srgb, var(--accent) 25%, transparent); stroke-dasharray: none; }
 .guess-board .hidden { fill: var(--surface-2, var(--border)); }
@@ -78,13 +79,21 @@ declare module "../../core/commands" {
   interface CommandNames extends Ids<typeof DIGIT_BINDINGS> {}
 }
 
-function legend(): { sample: string; meaning: string }[] {
+function legend(p: GuessPuzzle): { sample: string; meaning: string }[] {
   const svg = (body: string, w = 10) => `<svg viewBox="-0.5 -0.5 ${w + 1} 11">${body}</svg>`;
   const peg = (c: number, cx = 5) => `<circle cx="${cx}" cy="5" r="${R}" fill="${FILLS[c]}" stroke="var(--text)" stroke-opacity="0.45" stroke-width="0.35"/>`;
   return [
     { sample: svg(peg(1) + peg(4, 15), 20), meaning: "pegs: the tray on the left holds every color" },
-    { sample: svg(`<circle cx="5" cy="5" r="1.5" fill="var(--text)" stroke="var(--text)"/>`), meaning: "a black mark: one peg is the right color in the right place" },
-    { sample: svg(`<circle cx="5" cy="5" r="1.5" fill="var(--bg)" stroke="var(--text)" stroke-width="0.4"/>`), meaning: "a white mark: one more peg is a right color, but in the wrong place" },
+    ...(p.feedback === "pegs"
+      ? [
+        { sample: svg(peg(2) + `<circle cx="7.3" cy="7.3" r="1.3" fill="var(--text)" stroke="var(--text)"/>`), meaning: "a black dot on a peg: the right color in the right place" },
+        { sample: svg(peg(2) + `<circle cx="7.3" cy="7.3" r="1.3" fill="var(--bg)" stroke="var(--text)" stroke-width="0.4"/>`), meaning: "a white dot on a peg: the code has this color, but somewhere else" },
+        { sample: svg(peg(2) + `<path d="M6.5 6.5L8.1 8.1M8.1 6.5L6.5 8.1" fill="none" stroke="var(--text)" stroke-width="0.45" stroke-linecap="round"/>`), meaning: "a cross on a peg: the code has no more of this color" },
+      ]
+      : [
+        { sample: svg(`<circle cx="5" cy="5" r="1.5" fill="var(--text)" stroke="var(--text)"/>`), meaning: "a black mark: one peg is the right color in the right place" },
+        { sample: svg(`<circle cx="5" cy="5" r="1.5" fill="var(--bg)" stroke="var(--text)" stroke-width="0.4"/>`), meaning: "a white mark: one more peg is a right color, but in the wrong place" },
+      ]),
     { sample: svg(peg(3) + `<circle cx="5" cy="5" r="${R + 1}" fill="none" stroke="var(--text)" stroke-width="0.6" stroke-dasharray="1 0.7"/>`), meaning: "a held peg: it stays for your next guess" },
     { sample: svg(`<rect x="1" y="1" width="8" height="8" rx="2" fill="color-mix(in srgb, var(--accent) 25%, transparent)" stroke="var(--accent)" stroke-width="0.5"/>`), meaning: "mark: click here when your guess is complete" },
     { sample: svg(peg(2) + `<circle cx="5" cy="5" r="${R}" fill="none" stroke="var(--focus)" stroke-width="0.9"/>`), meaning: "the selected color" },
@@ -105,12 +114,13 @@ export function guessView(): View<GuessPuzzle, GuessState, GuessAction, GuessInt
       { how: "right-click a peg in your guess, or hold it on a touch screen", what: "hold it: it stays for your next guess" },
       { how: "click the box at the end of your guess", what: "hand it in to be marked" },
     ],
-    legend: legend(),
+    legend,
     mount(root, { session, settings }) {
       style("guess", CSS);
       const p = session.puzzle;
       const rowsN = Math.max(p.guesses + 1, p.colours);
-      const scoreCols = Math.ceil(p.pegs / 2);
+      const perPeg = p.feedback === "pegs";
+      const scoreCols = perPeg ? 2 : Math.ceil(p.pegs / 2);
       const boardX = TRAY + GAP;
       const scoreX = boardX + p.pegs * P + 2;
       const width = scoreX + scoreCols * 4 + 6;
@@ -157,7 +167,16 @@ export function guessView(): View<GuessPuzzle, GuessState, GuessAction, GuessInt
             pegAt(pegX(i), y + P / 2, shown?.[i] ?? 0, building && preview && preview.row[i] !== st.row[i] ? " preview" : look);
             if (r === cur && !over_ && st.holds[i]) pegsL.append(s("circle", { cx: pegX(i), cy: y + P / 2, r: R + 1, class: "hold" }));
           }
-          if (marked) {
+          if (marked && perPeg) {
+            const at = marked.pegs ?? [];
+            for (let i = 0; i < p.pegs; i++) {
+              const cx = pegX(i) + 2.3, cy = y + P / 2 + 2.3;
+              if (!marked.code[i]) continue;
+              if (at[i] === EXACT) pegsL.append(s("circle", { cx, cy, r: 1.3, class: `score black${look}` }));
+              else if (at[i] === ELSEWHERE) pegsL.append(s("circle", { cx, cy, r: 1.3, class: `score white${look}` }));
+              else pegsL.append(s("path", { d: `M${cx - 1} ${cy - 1}L${cx + 1} ${cy + 1}M${cx + 1} ${cy - 1}L${cx - 1} ${cy + 1}`, class: `miss${look}` }));
+            }
+          } else if (marked) {
             const g = marked;
             for (let k = 0; k < p.pegs; k++) {
               const cls = (k < g.black ? "score black" : k < g.black + g.white ? "score white" : "score") + look;

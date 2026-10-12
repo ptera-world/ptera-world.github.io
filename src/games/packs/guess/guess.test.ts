@@ -3,7 +3,7 @@ import { generate } from "../../core/generate";
 import { createRng } from "../../core/rng";
 import { Session } from "../../core/session";
 import { applyStep, findStep, firstStep } from "../../core/techniques";
-import { allCodes, candidates, guess, mark, sgtFormat, type GuessPuzzle, type GuessState } from "./logic";
+import { allCodes, candidates, ELSEWHERE, EXACT, guess, mark, markPegs, MISS, sgtFormat, type GuessPuzzle, type GuessState } from "./logic";
 import { checkRow } from "./plugins";
 import { guessTechniques, knownPeg, lastCode } from "./techniques";
 
@@ -115,4 +115,47 @@ test("game ids round-trip and use the original's hidden form", async () => {
   expect(text).not.toContain(p.code.map((c) => c.toString(16).padStart(2, "0")).join(""));
   expect(sgtFormat.parse(text)).toEqual(p);
   expect(() => sgtFormat.parse("c6p4g10Bm:00")).toThrow();
+});
+
+test("per-peg marks agree with the counts and say which pegs they belong to", () => {
+  expect(markPegs([1, 2, 3, 4], [1, 2, 3, 4], 6)).toEqual([EXACT, EXACT, EXACT, EXACT]);
+  expect(markPegs([1, 1, 2, 2], [2, 2, 1, 1], 6)).toEqual([ELSEWHERE, ELSEWHERE, ELSEWHERE, ELSEWHERE]);
+  expect(markPegs([1, 1, 1, 1], [1, 2, 3, 4], 6)).toEqual([EXACT, MISS, MISS, MISS]);
+  expect(markPegs([3, 1, 0, 0], [1, 3, 1, 3], 6)).toEqual([ELSEWHERE, ELSEWHERE, MISS, MISS]);
+  const rng = createRng("pp");
+  for (let i = 0; i < 200; i++) {
+    const g = Array.from({ length: 4 }, () => rng.range(0, 5)), c = Array.from({ length: 4 }, () => rng.range(1, 5));
+    const m = mark(g, c, 5), pegs = markPegs(g, c, 5);
+    expect(pegs.filter((v) => v === EXACT).length).toBe(m.black);
+    expect(pegs.filter((v) => v === ELSEWHERE).length).toBe(m.white);
+  }
+});
+
+test("per-peg games store the marks, narrow the candidates by them, and keep techniques sound", async () => {
+  const preset = guess.presets!.find((q) => q.params.feedback === "pegs")!.params;
+  let sawOne = 0;
+  for (let t = 0; t < 12; t++) {
+    const p = await gen(preset, `pp${t}`);
+    expect(p.feedback).toBe("pegs");
+    let s: GuessState = guess.init(p);
+    const rng = createRng(`pp${t}`);
+    for (let k = 0; k < 3 && !guess.isSolved(p, s); k++) {
+      s = guess.reduce(p, s, { type: "row", code: [1, 2, 3, 4].map(() => rng.range(1, p.colours)) });
+      s = guess.reduce(p, s, { type: "submit" });
+      const last = s.done[s.done.length - 1];
+      if (last) expect(last.pegs).toEqual(markPegs(last.code, p.code, p.colours));
+    }
+    const cand = candidates(p, s);
+    expect(cand.some((c) => c.join() === p.code.join())).toBe(true);
+    for (const c of allCodes(p)) {
+      const fitsAll = s.done.every((g) => markPegs(g.code, c, p.colours).join() === g.pegs!.join());
+      expect(cand.some((x) => x.join() === c.join())).toBe(fitsAll);
+    }
+    if (cand.length === 1) sawOne++;
+  }
+  expect(sawOne).toBeGreaterThan(0);
+  const p = await gen({ ...preset, colours: 4 }, "ids");
+  const text = sgtFormat.serialize!(p);
+  expect(text).toContain("Mf:");
+  expect(sgtFormat.parse(text)).toEqual(p);
 });

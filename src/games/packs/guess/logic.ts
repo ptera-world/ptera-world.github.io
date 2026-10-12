@@ -9,6 +9,13 @@ export const params = defineSchema({
   guesses: { type: "int", label: "guesses", default: 10, min: 1, max: 20 },
   blanks: { type: "bool", label: "allow blank pegs in guesses", default: false, description: "a blank never counts, so it can help you learn about the other pegs" },
   duplicates: { type: "bool", label: "allow repeated colors", default: true, description: "the code (and your guesses) may use a color more than once" },
+  feedback: {
+    type: "enum", label: "marks", default: "counts",
+    options: [
+      { value: "counts", label: "counted (black and white pegs)" },
+      { value: "pegs", label: "on each peg" },
+    ],
+  },
 });
 
 export interface GuessPuzzle {
@@ -17,12 +24,21 @@ export interface GuessPuzzle {
   guesses: number;
   blanks: boolean;
   duplicates: boolean;
+  /** How guesses are marked; absent means counted. */
+  feedback?: Feedback;
   /** The hidden code, colors 1..colors. */
   code: number[];
 }
 
+export type Feedback = "counts" | "pegs";
+
+/** Mark of one peg when each peg is marked: not needed, right color elsewhere, right color in the right place. */
+export const MISS = 0, ELSEWHERE = 1, EXACT = 2;
+
 export interface Marked {
   code: number[];
+  /** With per-peg marks: MISS, ELSEWHERE or EXACT for each peg of the guess (blanks are MISS). */
+  pegs?: number[];
   /** Pegs of the right color in the right place. */
   black: number;
   /** Further pegs of a right color in the wrong place. */
@@ -68,6 +84,32 @@ export function mark(guess: readonly number[], code: readonly number[], colours:
   return { black, white };
 }
 
+/** Per-peg marks of a guess against a code; their counts agree with `mark`. */
+export function markPegs(guess: readonly number[], code: readonly number[], colours: number): number[] {
+  const out: number[] = guess.map((g, i) => (g && g === code[i] ? EXACT : MISS));
+  const left = new Int32Array(colours + 1);
+  for (let i = 0; i < code.length; i++) if (out[i] !== EXACT && guess[i]) left[code[i]!]!++;
+  for (let i = 0; i < guess.length; i++) {
+    const g = guess[i]!;
+    if (out[i] === EXACT || !g || !left[g]) continue;
+    left[g]!--;
+    out[i] = ELSEWHERE;
+  }
+  return out;
+}
+
+/** The mark a guess earns against a code under the puzzle's feedback. */
+export function markOf(p: Pick<GuessPuzzle, "colours" | "feedback">, guess: readonly number[], code: readonly number[]): Pick<Marked, "black" | "white" | "pegs"> {
+  const m = mark(guess, code, p.colours);
+  return p.feedback === "pegs" ? { ...m, pegs: markPegs(guess, code, p.colours) } : m;
+}
+
+/** True if `code` would have been marked exactly as `g` was. */
+export function fits(p: Pick<GuessPuzzle, "colours" | "feedback">, g: Marked, code: readonly number[]): boolean {
+  const m = markOf(p, g.code, code);
+  return m.black === g.black && m.white === g.white && (!m.pegs || m.pegs.every((v, i) => v === g.pegs?.[i]));
+}
+
 /** True if the guess may be marked: every peg filled (unless blanks are allowed), no repeats unless allowed, not all blank. */
 export function canSubmit(p: GuessPuzzle, row: readonly number[]): boolean {
   if (row.every((v) => v === 0)) return false;
@@ -103,7 +145,7 @@ export function reduce(p: GuessPuzzle, s: GuessState, a: GuessAction): GuessStat
     }
     case "submit": {
       if (!canSubmit(p, s.row)) return s;
-      const done = [...s.done, { code: s.row.slice(), ...mark(s.row, p.code, p.colours) }];
+      const done = [...s.done, { code: s.row.slice(), ...markOf(p, s.row, p.code) }];
       return { done, row: s.row.map((v, i) => (s.holds[i] ? v : 0)), holds: s.holds };
     }
     default:
@@ -157,23 +199,24 @@ export function candidates(p: GuessPuzzle, s: GuessState): number[][] {
   const hit = candidateCache.get(s);
   if (hit) return hit;
   let list = codes(p);
-  for (const g of s.done) list = list.filter((c) => { const m = mark(g.code, c, p.colours); return m.black === g.black && m.white === g.white; });
+  for (const g of s.done) list = list.filter((c) => fits(p, g, c));
   candidateCache.set(s, list);
   return list;
 }
 
 // --- formats ---
 
-const SGT_RE = /^([cpgbBmM\d]*):([0-9a-fA-F]+)$/;
+const SGT_RE = /^([cpgbBmMfF\d]*):([0-9a-fA-F]+)$/;
 
 function decodeParams(text: string): Omit<GuessPuzzle, "code"> {
-  const out = { colours: 6, pegs: 4, guesses: 10, blanks: false, duplicates: true };
-  for (const [, k, v] of text.matchAll(/([cpgbBmM])(\d*)/g)) {
+  const out: Omit<GuessPuzzle, "code"> = { colours: 6, pegs: 4, guesses: 10, blanks: false, duplicates: true };
+  for (const [, k, v] of text.matchAll(/([cpgbBmMfF])(\d*)/g)) {
     if (k === "c") out.colours = Number(v);
     else if (k === "p") out.pegs = Number(v);
     else if (k === "g") out.guesses = Number(v);
     else if (k === "b" || k === "B") out.blanks = k === "b";
     else if (k === "m" || k === "M") out.duplicates = k === "m";
+    else if (k === "f") out.feedback = "pegs";
   }
   if (!(out.colours >= 2 && out.colours <= 10)) throw new Error("colors must be between 2 and 10");
   if (!(out.pegs >= 2 && out.pegs <= 10)) throw new Error("pegs must be between 2 and 10");
@@ -182,7 +225,7 @@ function decodeParams(text: string): Omit<GuessPuzzle, "code"> {
   return out;
 }
 
-/** Simon Tatham's Guess game id: `c6p4g10Bm:hex`, the code hidden the same way as the original (so ids can be shared without giving it away). */
+/** Simon Tatham's Guess game id: `c6p4g10Bm:hex` (an `f` after the m/M means per-peg marks), the code hidden the same way as the original (so ids can be shared without giving it away). */
 export const sgtFormat: Format<GuessPuzzle> = {
   id: "sgt",
   label: "game id (c6p4g10Bm:…)",
@@ -202,7 +245,7 @@ export const sgtFormat: Format<GuessPuzzle> = {
     const bmp = Uint8Array.from(p.code);
     obfuscateBitmap(bmp, p.pegs * 8, false);
     const hex = Array.from(bmp, (v) => v.toString(16).padStart(2, "0")).join("");
-    return `c${p.colours}p${p.pegs}g${p.guesses}${p.blanks ? "b" : "B"}${p.duplicates ? "m" : "M"}:${hex}`;
+    return `c${p.colours}p${p.pegs}g${p.guesses}${p.blanks ? "b" : "B"}${p.duplicates ? "m" : "M"}${p.feedback === "pegs" ? "f" : ""}:${hex}`;
   },
 };
 
@@ -220,7 +263,7 @@ function generate(v: Values<typeof params>, rng: Rng): GuessPuzzle {
   const colours = !v.duplicates && v.pegs > v.colours ? v.pegs : v.colours;
   const pool = Array.from({ length: colours }, (_, i) => i + 1);
   const code = v.duplicates ? Array.from({ length: v.pegs }, () => rng.pick(pool)) : rng.shuffle(pool).slice(0, v.pegs);
-  return { colours, pegs: v.pegs, guesses: v.guesses, blanks: v.blanks, duplicates: v.duplicates, code };
+  return { colours, pegs: v.pegs, guesses: v.guesses, blanks: v.blanks, duplicates: v.duplicates, ...(v.feedback === "pegs" ? { feedback: "pegs" as const } : {}), code };
 }
 
 export const guess: PuzzleDef<GuessPuzzle, GuessState, GuessAction, GuessInteraction, typeof params> = {
@@ -236,6 +279,8 @@ export const guess: PuzzleDef<GuessPuzzle, GuessState, GuessAction, GuessInterac
     { label: "easy (4 colors, 3 pegs)", params: { colours: 4, pegs: 3, guesses: 8 } },
     { label: "no repeats (8 colors, 4 pegs)", params: { colours: 8, pegs: 4, duplicates: false } },
     { label: "super (8 colors, 5 pegs)", params: { colours: 8, pegs: 5, guesses: 12 } },
+    { label: "marks on each peg (4 colors, 4 pegs, no repeats)", params: { colours: 4, pegs: 4, guesses: 8, duplicates: false, feedback: "pegs" } },
+    { label: "marks on each peg (6 colors, 4 pegs)", params: { feedback: "pegs" } },
   ],
   generate,
   formats: [sgtFormat],
@@ -258,8 +303,12 @@ export const guess: PuzzleDef<GuessPuzzle, GuessState, GuessAction, GuessInterac
   isLost: (p, s) => !isSolved(p, s) && s.done.length >= p.guesses,
   rules: (p) => [
     `a code of ${p.pegs} pegs is hidden, each one of ${p.colours} colors${p.duplicates ? " (colors can repeat)" : " (no color twice)"}.`,
-    `you have ${p.guesses} guesses. each guess is marked with a black peg for every peg of the right color in the right place, and a white peg for every other peg of a color the code has but somewhere else.`,
-    "the marks don't say which pegs they belong to.",
+    ...(p.feedback === "pegs"
+      ? [`you have ${p.guesses} guesses. each peg of a guess is marked: a black dot if it is the right color in the right place, a white dot if the code has that color somewhere else (as many times as the code has it), and a cross if it isn't needed.`]
+      : [
+        `you have ${p.guesses} guesses. each guess is marked with a black peg for every peg of the right color in the right place, and a white peg for every other peg of a color the code has but somewhere else.`,
+        "the marks don't say which pegs they belong to.",
+      ]),
     ...(p.blanks ? ["you can leave pegs blank in a guess; blanks never count."] : []),
     "a held peg keeps its color in your next guess.",
   ],

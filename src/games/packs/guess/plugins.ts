@@ -1,15 +1,12 @@
 import type { Plugin } from "../../core/types";
-import { guess, COLOUR_NAMES, mark, type GuessAction, type GuessFocus, type GuessInteraction, type GuessPuzzle, type GuessState } from "./logic";
+import { guess, COLOUR_NAMES, fits, type GuessAction, type GuessFocus, type GuessInteraction, type GuessPuzzle, type GuessState } from "./logic";
 
 type GuessPlugin = Plugin<GuessPuzzle, GuessState, GuessAction, GuessInteraction>;
 
 /** The first marked guess the row would have been marked differently against, if the row were the code. */
 export function contradiction(p: GuessPuzzle, s: GuessState): number {
   if (s.row.some((v) => v === 0)) return -1;
-  return s.done.findIndex((g) => {
-    const m = mark(g.code, s.row, p.colours);
-    return m.black !== g.black || m.white !== g.white;
-  });
+  return s.done.findIndex((g) => !fits(p, g, s.row));
 }
 
 /** Runs ahead of technique hints (priority 100): a full guess that can't be the code is pointed out first. */
@@ -26,7 +23,7 @@ export const checkRow: GuessPlugin = {
       if (i < 0) return undefined;
       const g = state.done[i]!;
       return {
-        message: `this guess can't be the code: against it, guess ${i + 1} (${g.code.map((c) => COLOUR_NAMES[c]).join(", ")}) would have scored differently than ${g.black} black and ${g.white} white`,
+        message: `this guess can't be the code: against it, guess ${i + 1} (${g.code.map((c) => COLOUR_NAMES[c]).join(", ")}) would have been marked differently`,
         focus: { slots: state.row.map((_, j) => j), rows: [i] } satisfies GuessFocus,
       };
     }, { owner, priority: 90 });

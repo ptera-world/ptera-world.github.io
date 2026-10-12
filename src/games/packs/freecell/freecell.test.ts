@@ -103,3 +103,13 @@ test("board text round-trips and reads Freecell Solver layouts", async () => {
   expect(r.cells.length).toBe(2);
   expect(() => fcSolveFormat.parse("AS AS\nKD\nQD\nJD")).toThrow("twice");
 });
+
+test("a deal number gives Microsoft's cards whatever the seed, with the cells asked for", async () => {
+  const a = await gen({ deal: 617 }, "one");
+  const b = await gen({ deal: 617, cells: 3 }, "two");
+  expect(a.cols).toEqual(msFormat.parse("617").cols);
+  expect(b.cols).toEqual(a.cols);
+  expect(a.deal).toBe(617);
+  expect(b.cells.length).toBe(3);
+  expect(a.solution?.length).toBeGreaterThan(0);
+}, 60000);
