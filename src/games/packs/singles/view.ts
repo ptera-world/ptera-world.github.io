@@ -151,7 +151,7 @@ export function singlesView(board: BoardPrefs): View<SinglesPuzzle, SinglesState
         "singles.clear": { menu: "board" },
       });
       return {
-        gestures: { secondaryClick: true, hold: true },
+        gestures: { secondaryClick: true, hold: true, labels: ["black", "circle"] },
         aspect: f.aspect,
         cells: { cols: p.w, rows: p.h },
         commands,

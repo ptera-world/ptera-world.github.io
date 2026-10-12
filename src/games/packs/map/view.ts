@@ -308,7 +308,7 @@ export function mapView(board: Board): View<MapPuzzle, MapState, MapAction, MapI
         "map.pencil": { menu: "board", checked: () => session.interaction.pencil },
       });
       return {
-        gestures: { secondaryClick: true },
+        gestures: { secondaryClick: true, labels: ["cycle", "cycle back"] },
         aspect: vbW / vbH,
         cells: { cols: p.w, rows: p.h },
         commands,

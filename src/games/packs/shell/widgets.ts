@@ -5,6 +5,7 @@ import { defineSchema, resolve } from "../../core/schema";
 import type { Source, TimelineEntry } from "../../core/session";
 import { defineWidgets } from "../../core/define";
 import { prefs } from "../../core/storage";
+import { HOLD_MS, buttonsSwapped, holdOtherKey, holdSkillKey, type HoldKey } from "../../core/gestures";
 import type { Action, AnyPlugin, AnyWidget, SlotId, Technique, WidgetContext, WidgetDef } from "../../core/types";
 import { HOWTO_TOGGLE, HOWTO_WIDGET, command, techniqueCommand } from "./names";
 import { isDanger, type ConfirmPolicy } from "./commands";
@@ -77,9 +78,12 @@ button.danger:hover:not(:disabled) { border-color: var(--danger); background: va
 .w-howto .legend li { display: flex; align-items: center; gap: 10px; }
 .w-howto .legend .sw { width: 38px; height: 38px; flex: none; display: inline-flex; align-items: center; justify-content: center; }
 .w-howto .legend .sw svg { width: 100%; height: 100%; }
-.w-skills { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
-.w-skills button { font-size: 13px; padding: 5px 10px; }
-.w-skills button.here { border-color: var(--hint); box-shadow: inset 0 0 0 1px var(--hint); }
+.w-strip { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.w-strip .st-tile { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; padding: 5px 10px; }
+.w-strip .st-tile.on { background: var(--accent-soft); border-color: var(--accent); }
+.w-strip .st-tile.here { border-color: var(--hint); box-shadow: inset 0 0 0 1px var(--hint); }
+.w-strip .k { font-size: 11px; color: var(--text-dim); }
+#games[data-casting] .boardbox { cursor: crosshair; box-shadow: 0 0 0 2px var(--hint); border-radius: 10px; }
 .w-note { font-size: 13px; padding: 6px 8px; border-radius: 6px; background: var(--surface-2); }
 `;
 
@@ -114,10 +118,6 @@ function describe(sources: readonly Source[]): { who: string; kind: string } {
 const announced = new Set<string>();
 
 const widget = defineWidgets<any, any>();
-
-const SKILL_SETTINGS = defineSchema({
-  hoverPreview: { type: "bool", label: "preview while pointing at the board", default: false, description: "show what the first technique that applies at the spot you point at would do" },
-});
 
 export function builtinWidgets(shell: Shell): AnyWidget[] {
   style("widgets", CSS);
@@ -351,6 +351,12 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
             .map(([val, lab]) => h("option", { value: val, selected: prefs.get("confirm", "danger") === val }, lab))))));
 
       const keys = section("keys");
+      const holdPick = (label: string, text: string, cur: HoldKey, set: (k: HoldKey) => void) => row(text, h("div", { class: "w-inline" }, h("span", { style: "flex: 1" }, label),
+        h("select", { "aria-label": label, onchange: (e: Event) => { set((e.target as HTMLSelectElement).value as HoldKey); shell.hub.refresh(); } },
+          (["shift", "alt", "ctrl", "none"] as const).map((k) => h("option", { value: k, selected: k === cur }, k)))));
+      keys.append(
+        holdPick("hold for the other mark", "hold key modifier shift alt ctrl other mark secondary right click", holdOtherKey(), (k) => prefs.set("holdOther", k)),
+        holdPick("hold to use a technique", "hold key modifier shift alt ctrl technique skill", holdSkillKey(), (k) => prefs.set("holdSkill", k)));
       keys.append(row("keys shortcuts keyboard rebind bindings commands palette", h("div", { class: "w-inline" },
         h("button", { "data-command": command("shell.shortcuts"), onclick: () => ctx.run("shell.shortcuts") }, "shortcuts"),
         h("button", { "data-command": command("shell.rebind"), onclick: () => ctx.run("shell.rebind") }, "rebind keys"),
@@ -855,42 +861,83 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
     },
   };
 
-  const skills: WidgetDef<any, any, any, any, typeof SKILL_SETTINGS> = {
-    id: "skills", name: "skills", description: "techniques as buttons. point at a spot on the board and the ones that apply there light up; point at a button to preview what it would do, tap to do it", puzzles: "*", defaultSlot: "bottom", order: 36,
-    settings: SKILL_SETTINGS,
+  const strip: WidgetDef = {
+    id: "tools", name: "tools", description: "what your next tap does: the board's marks and its techniques. pick one; hold its key for a moment's use", puzzles: "*", defaultSlot: "bottom", order: 5,
     mount(el, ctx) {
+      const s = ctx.session;
+      const id = s.def.id;
+      const view = ctx.view;
       const th = shell.techniques;
-      if (!th?.list.length) return;
-      const bar = h("div", { class: "w-skills" });
-      const buttons = new Map<string, HTMLElement>();
-      for (const t of th.list) {
-        let held = 0;
-        const b = h("button", {
-          "data-tip": `${t.name}: ${t.description}`,
-          onpointerenter: (e: PointerEvent) => { if (e.pointerType === "mouse") shell.previewSkill(t); },
-          onpointerleave: () => { clearTimeout(held); shell.previewSkill(null); },
-          onfocus: () => shell.previewSkill(t),
-          onblur: () => shell.previewSkill(null),
-          onpointerdown: (e: PointerEvent) => { if (e.pointerType !== "mouse") held = window.setTimeout(() => { held = -1; shell.previewSkill(t); }, 350); },
-          onclick: () => { if (held === -1) { held = 0; shell.previewSkill(null); return; } clearTimeout(held); shell.applySkill(t); },
-        }, t.name);
-        buttons.set(t.id, b);
-        bar.append(b);
-      }
-      const mark = () => {
-        const here = shell.skillsHere();
-        for (const [id, b] of buttons) b.classList.toggle("here", here.some((t) => t.id === id));
-        if (ctx.settings.hoverPreview) shell.previewSkill(here[0] ?? null);
+      const keyName = (k: HoldKey) => (k === "ctrl" ? "ctrl" : k === "none" ? "" : k);
+      const tile = (label: string, opts: { on?: boolean; badge?: string; tip: string; cmd?: string; onclick: () => void; extra?: Record<string, unknown> }) =>
+        h("button", { class: `st-tile${opts.on ? " on" : ""}`, "aria-pressed": opts.on === undefined ? undefined : String(opts.on), "data-tip": opts.tip, "data-command": opts.cmd, onclick: opts.onclick, ...opts.extra },
+          h("span", null, label), opts.badge ? h("span", { class: "k" }, opts.badge) : null);
+      let open = false;
+      const render = () => {
+        clear(el);
+        const row = h("div", { class: "w-strip", role: "toolbar", "aria-label": "what a tap does" });
+        if (!open) {
+          const tools = view?.tools;
+          const labels = view?.gestures?.labels;
+          if (tools) {
+            for (const it of tools.items) row.append(tile(it.label, { on: tools.current() === it.id, cmd: it.command, badge: it.command ? shell.hub.keysFor(it.command)[0] : undefined, tip: `tap does: ${it.label}`, onclick: () => { tools.pick(it.id); render(); } }));
+          } else if (labels && view?.gestures?.secondaryClick) {
+            const swapped = buttonsSwapped(id);
+            const other = keyName(holdOtherKey());
+            labels.forEach((label, i) => {
+              const isTap = (i === 1) === swapped;
+              row.append(tile(label, {
+                on: isTap, badge: isTap ? undefined : [other, "right / hold"].filter(Boolean).join(" · "),
+                tip: isTap ? `a tap or click does: ${label}` : `a hold or right click${other ? `, or ${other} + click,` : ""} does: ${label}. pick it to make it the tap`,
+                cmd: command("shell.swap-buttons"),
+                onclick: () => { if (!isTap) ctx.run("shell.swap-buttons"); },
+              }));
+            });
+          }
+          if (th?.list.length) {
+            const skillKey = keyName(holdSkillKey());
+            row.append(tile(shell.armed ? `skill: ${shell.armed.t.name}` : "skills ▸", {
+              on: !!shell.armed, badge: [skillKey, "k"].filter(Boolean).join(" · "),
+              tip: `pick a technique, then tap where you spotted it${skillKey ? `. or hold ${skillKey} and point` : ""}`,
+              onclick: () => { open = true; render(); },
+            }));
+          }
+        } else {
+          row.append(tile("‹", { tip: "back to the marks", extra: { "aria-label": "back" }, onclick: () => { open = false; render(); } }));
+          const here = new Set(shell.skillsHere().map((t) => t.id));
+          for (const t of th?.list ?? []) {
+            let pressed = 0;
+            const b = tile(t.name, {
+              on: shell.armed?.t.id === t.id, badge: shell.armed?.t.id === t.id && shell.armed.sticky ? "kept" : undefined,
+              tip: `${t.name}: ${t.description} tap it, then tap where it applies. hold it (or double-click) to keep it picked`,
+              onclick: () => {
+                if (pressed === -1) { pressed = 0; return; }
+                shell.arm(t);
+                open = false;
+                render();
+              },
+              extra: {
+                ondblclick: () => { shell.arm(t, true); open = false; render(); },
+                onpointerdown: (e: PointerEvent) => { if (e.pointerType !== "mouse") pressed = window.setTimeout(() => { pressed = -1; shell.arm(t, true); open = false; render(); }, HOLD_MS); },
+                onpointerup: () => { if (pressed > 0) clearTimeout(pressed); },
+                onpointerenter: (e: PointerEvent) => { if (e.pointerType === "mouse") shell.previewSkill(t); },
+                onpointerleave: () => { if (!shell.activeSkill()) shell.previewSkill(null); },
+              },
+            });
+            b.classList.toggle("here", here.has(t.id));
+            row.append(b);
+          }
+        }
+        if (row.childElementCount) el.append(row);
       };
-      el.append(bar);
-      mark();
-      ctx.session.hooks.change.tap(mark, { owner: ctx.owner });
-      const off = shell.hooks.aim.tap(mark);
-      return () => { off(); shell.previewSkill(null); };
+      render();
+      s.hooks.refresh.tap(render, { owner: ctx.owner });
+      const offs = [shell.hooks.armed.tap(render), shell.hooks.aim.tap(() => { if (open) render(); })];
+      return () => { for (const f of offs) f(); };
     },
   };
 
-  return [status, toolbar, game, settings, techniques, historyW, practice, share, packs, results, opened, howto, zoomW, actions, skills];
+  return [status, toolbar, game, settings, techniques, historyW, practice, share, packs, results, opened, howto, zoomW, actions, strip];
 }
 
 /** Assisted rating used by packs/mods: hardest technique still left for the player given their auto techniques. */

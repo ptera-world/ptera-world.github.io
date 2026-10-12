@@ -23,6 +23,7 @@ export function norinoriView(board: BoardPrefs) {
     puzzle: norinori,
     prefix: "norinori",
     shadeWord: "shade",
+    labels: ["shade", "dot"],
     glyph: "fill",
     fixed: () => false,
     regions: (p) => p.regions,

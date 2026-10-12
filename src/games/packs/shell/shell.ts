@@ -35,7 +35,7 @@ import { SAVE_PREFIX, INDEX_KEY, finished, findSession, listSessions, loadSessio
 export const zoomTakeover = (): boolean => prefs.get("zoomTakeover", false);
 
 export { HOLD_MS } from "../../core/gestures";
-import { HOLD_MS, buttonsSwapped, setButtonsSwapped } from "../../core/gestures";
+import { HOLD_MS, buttonsSwapped, held, holdSkillKey, setButtonsSwapped } from "../../core/gestures";
 import { onModifierHold } from "keybinds";
 
 /** Serialized text, or null if the format can't write or throws on this puzzle. */
@@ -94,6 +94,8 @@ export class Shell {
     sessions: new HookEvent<void>("sessions"),
     /** What the player points at on the board changed (see `aim`). */
     aim: new HookEvent<{ target: unknown }>("aim"),
+    /** The technique picked to cast changed (null: none). */
+    armed: new HookEvent<{ technique: Technique | null }>("armed"),
   };
 
   session: Session<any, any, any, any> | null = null;
@@ -188,6 +190,7 @@ export class Shell {
     this.rearmHold();
     this.installZoom();
     this.installLongPress();
+    this.installCasting(signal);
     let aimRaf = 0;
     this.els.boardbox.addEventListener("pointermove", () => {
       cancelAnimationFrame(aimRaf);
@@ -453,6 +456,7 @@ export class Shell {
     this.session = session;
     this.openId = id;
     this.aim = undefined;
+    this.armed = null;
     this.techniques = new TechniqueHostCtor(this.registry, session);
     const o = session.origin;
     const practiced = o.kind === "practice" ? this.registry.techniquesFor(session.def).find((t) => t.id === o.technique) : undefined;
@@ -503,6 +507,8 @@ export class Shell {
         session.hooks.fx.call({ kind: "locked" });
         return null;
       }, { owner: "shell", priority: -100 }),
+      // while a technique is being cast, presses on the board aim it instead of marking
+      session.hooks.action.tap((a, { source }) => (a && source.kind === "player" && this.castPress ? null : a), { owner: "shell", priority: -90 }),
     );
     this.unlocked = false;
     this.wasLost = session.lost;
@@ -918,6 +924,15 @@ export class Shell {
           this.saveNow();
         },
         "shell.pause": () => this.togglePause(),
+        "shell.skill-next": () => {
+          this.updateAim();
+          const here = this.skillsHere();
+          if (!here.length) { this.setStatus("no technique applies here"); return; }
+          const i = here.findIndex((t) => t.id === this.armed?.t.id);
+          this.arm(here[(i + 1) % here.length]!);
+        },
+        "shell.skill-cast": () => this.castAt(false),
+        "shell.skill-drop": () => this.arm(null),
         "shell.swap-buttons": () => { setButtonsSwapped(def.id, !buttonsSwapped(def.id)); s.hooks.refresh.call(); },
         "shell.new": () => this.newGameSame(),
       }, {
@@ -932,6 +947,9 @@ export class Shell {
         "shell.apply-hint": { when: (c) => !c.finished },
         "shell.reveal": { danger: true, when: (c) => !c.finished && !!def.solve, confirm: () => "show the whole solution?" },
         "shell.pause": { when: (c) => !c.finished, checked: () => s.paused },
+        "shell.skill-next": { when: () => !!this.techniques?.list.length },
+        "shell.skill-cast": { when: () => !!this.activeSkill() },
+        "shell.skill-drop": { when: () => !!this.armed },
         "shell.swap-buttons": { menu: "board", when: () => !!this.view?.handle.gestures?.secondaryClick, checked: () => buttonsSwapped(def.id) },
         "shell.new": { danger: progress, confirm: confirmNew },
       }),
@@ -962,14 +980,97 @@ export class Shell {
     this.hooks.aim.call({ target: t });
   }
 
-  /** The step a technique would make, aimed at what the player points at when it can be. */
+  /** The step a technique would make: where the player points when it can be aimed, else anywhere. */
   skillStep(t: Technique): { step: Step; aimed: boolean } | null {
     const s = this.session;
     if (!s) return null;
-    const at = findStepAt(s.def, t, s.puzzle, s.state, this.aim);
-    if (at) return { step: at, aimed: true };
+    if (aimable(s.def, t)) {
+      const at = findStepAt(s.def, t, s.puzzle, s.state, this.aim);
+      return at ? { step: at, aimed: true } : null;
+    }
     const any = this.techniques?.find(t);
     return any ? { step: any, aimed: false } : null;
+  }
+
+  /** The technique the player picked on the strip to cast; `sticky` keeps it after a cast. */
+  armed: { t: Technique; sticky: boolean } | null = null;
+  /** The "technique" key is held: point to preview what applies there; `cycle` steps through them. */
+  private skillHeld = { on: false, cycle: 0 };
+  /** The board press in progress began while a technique was being cast: its marks are not made. */
+  private castPress = false;
+  /** Touch: the spot the last tap previewed, so a second tap there casts. */
+  private touchAim: string | null = null;
+
+  /** The technique a click / tap on the board casts right now, if any. */
+  activeSkill(): Technique | null {
+    if (this.armed) return this.armed.t;
+    if (!this.skillHeld.on) return null;
+    const here = this.skillsHere();
+    return here.length ? here[this.skillHeld.cycle % here.length]! : null;
+  }
+
+  /** Pick (or drop, if it is the armed one) a technique to cast with the next click / tap. */
+  arm(t: Technique | null, sticky = false): void {
+    this.armed = t && !(this.armed?.t.id === t.id && this.armed.sticky === sticky) ? { t, sticky } : null;
+    this.touchAim = null;
+    this.hooks.armed.call({ technique: this.armed?.t ?? null });
+    this.refreshCast();
+  }
+
+  /** Keep the preview in step with what a click would cast at the aim. */
+  private refreshCast(): void {
+    const t = this.activeSkill();
+    if (t) this.previewSkill(t);
+    else if (this.previewing) this.previewSkill(null);
+    this.root.toggleAttribute("data-casting", !!t || !!this.armed);
+  }
+
+  /** A press on the board while casting: mouse casts at once; touch previews, then casts on a second tap at the same spot. */
+  private castAt(touch: boolean): void {
+    const t = this.activeSkill();
+    if (!t) { this.setStatus("no technique applies here"); return; }
+    this.updateAim();
+    const key = JSON.stringify(this.aim);
+    if (touch && this.touchAim !== key) {
+      this.touchAim = key;
+      this.refreshCast();
+      return;
+    }
+    this.touchAim = null;
+    if (!this.skillStep(t)) { this.setStatus(`no ${t.name} here`); return; }
+    this.applySkill(t);
+    if (this.armed && !this.armed.sticky) this.arm(null);
+    else this.refreshCast();
+  }
+
+  /** Mouse, keyboard and touch wiring for casting; bound to the shell's lifetime. */
+  private installCasting(signal: AbortSignal): void {
+    const box = this.els.boardbox;
+    box.addEventListener("pointerdown", (e) => { this.castPress = !!this.armed || held(e, holdSkillKey()); }, { capture: true, signal });
+    window.addEventListener("pointerup", () => { setTimeout(() => { this.castPress = false; }, 0); }, { capture: true, signal });
+    window.addEventListener("pointercancel", () => { this.castPress = false; }, { capture: true, signal });
+    box.addEventListener("pointerup", (e) => {
+      if (!this.castPress || e.button !== 0) return;
+      this.castAt(e.pointerType === "touch");
+    }, { capture: true, signal });
+    const sync = (e: KeyboardEvent | MouseEvent) => {
+      const on = held(e, holdSkillKey());
+      if (on === this.skillHeld.on) return;
+      this.skillHeld = { on, cycle: 0 };
+      this.refreshCast();
+    };
+    document.addEventListener("keydown", (e) => {
+      if (this.skillHeld.on && e.key === "Shift") { this.skillHeld.cycle++; this.refreshCast(); }
+      sync(e);
+      if (this.skillHeld.on && e.key === "Alt") e.preventDefault();
+    }, { signal });
+    document.addEventListener("keyup", (e) => {
+      if (e.key === "Alt" && this.activeSkill()) e.preventDefault();
+      sync(e);
+    }, { signal });
+    box.addEventListener("pointermove", sync, { signal });
+    window.addEventListener("blur", () => { this.skillHeld = { on: false, cycle: 0 }; this.refreshCast(); }, { signal });
+    this.hooks.aim.tap(() => { if (this.activeSkill()) this.refreshCast(); });
   }
 
   /** Show what a technique would do without doing it; null clears. */

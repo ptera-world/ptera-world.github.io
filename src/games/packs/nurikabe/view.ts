@@ -24,6 +24,7 @@ export function nurikabeView(board: BoardPrefs) {
     puzzle: nurikabe,
     prefix: "nurikabe",
     shadeWord: "shade",
+    labels: ["shade", "dot"],
     glyph: "fill",
     fixed: (p, c) => p.nums[c]! > 0,
     text: (p, c) => (p.nums[c]! > 0 ? { text: String(p.nums[c]), corner: false } : null),

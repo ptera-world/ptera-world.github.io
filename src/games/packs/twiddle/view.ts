@@ -242,7 +242,7 @@ export const twiddleView: View<TwiddlePuzzle, TwiddleState, TwiddleAction, Twidd
     return {
       aspect: (W + 1) / (H + 1),
       cells: { cols: p.w, rows: p.h },
-      gestures: { secondaryClick: true, hold: true },
+      gestures: { secondaryClick: true, hold: true, labels: ["turn ↺", "turn ↻"] },
       commands: bindCommands(BINDINGS, {
         "twiddle.left": moveCursor(-1, 0),
         "twiddle.right": moveCursor(1, 0),

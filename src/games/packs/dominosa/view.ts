@@ -326,7 +326,7 @@ export function dominosaView(board: Board): View<DominosaPuzzle, DominosaState, 
         "dominosa.highlight": { menu: "board" },
       }), ...bindCommands(DIGIT_BINDINGS, handlersOver("dominosa.number-", NUMBER_KEYS, (d) => () => { if (d <= p.n) toggleHighlight(d); }))];
       return {
-        gestures: { secondaryClick: true, hold: true },
+        gestures: { secondaryClick: true, hold: true, labels: ["domino", "line"] },
         aspect: vbW / vbH,
         cells: { cols: p.w, rows: p.h },
         commands,

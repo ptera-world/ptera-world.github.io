@@ -145,7 +145,7 @@ export function rangeView(board: BoardPrefs): View<RangePuzzle, RangeState, Rang
         "range.clear": { menu: "board" },
       });
       return {
-        gestures: { secondaryClick: true, hold: true },
+        gestures: { secondaryClick: true, hold: true, labels: ["black", "dot"] },
         aspect: f.aspect,
         cells: { cols: p.w, rows: p.h },
         commands,

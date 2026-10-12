@@ -350,7 +350,7 @@ export function numberlinkView(board: BoardPrefs): View<NumberlinkPuzzle, Number
       });
 
       return {
-        gestures: { secondaryClick: true, hold: true },
+        gestures: { secondaryClick: true, hold: true, labels: ["line", "cross"] },
         aspect: f.aspect,
         cells: { cols: p.w, rows: p.h },
         commands,

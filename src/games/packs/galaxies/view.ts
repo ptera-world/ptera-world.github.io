@@ -283,7 +283,7 @@ export function galaxiesView(board: Board): View<GalaxiesPuzzle, GalaxiesState, 
         "galaxies.clear": { menu: "board" },
       });
       return {
-        gestures: { secondaryClick: true },
+        gestures: { secondaryClick: true, labels: ["paint", "take out"] },
         aspect: vbW / vbH,
         cells: { cols: p.w, rows: p.h },
         commands,

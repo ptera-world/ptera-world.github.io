@@ -171,7 +171,7 @@ export function slantView(board: BoardPrefs): View<SlantPuzzle, SlantState, Slan
         "slant.clear": { menu: "board" },
       });
       return {
-        gestures: { secondaryClick: true, hold: true },
+        gestures: { secondaryClick: true, hold: true, labels: ["cycle", "cycle back"] },
         aspect: f.aspect,
         cells: { cols: p.w + 1, rows: p.h + 1 },
         commands,

@@ -265,7 +265,7 @@ export function palisadeView(board: BoardPrefs): View<PalisadePuzzle, PalisadeSt
         "palisade.gap-down": { menu: "board" },
       });
       return {
-        gestures: { secondaryClick: true, hold: true },
+        gestures: { secondaryClick: true, hold: true, labels: ["wall", "gap"] },
         aspect: f.aspect,
         cells: { cols: p.w, rows: p.h },
         commands,

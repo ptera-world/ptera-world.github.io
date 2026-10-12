@@ -337,7 +337,22 @@ export interface ViewHandle {
    * Gestures the board uses itself. The shell then never opens its board menu on them (touch
    * hold is otherwise the menu), and tells players to use the commands list instead.
    */
-  gestures?: { secondaryClick?: boolean; hold?: boolean };
+  gestures?: {
+    secondaryClick?: boolean;
+    hold?: boolean;
+    /** What a plain click / tap and a right click / hold do, a word or two each (e.g. ["fill", "cross"]), unswapped. */
+    labels?: readonly [string, string];
+  };
+  /**
+   * What a tap places, when the board offers more than two choices (colours, a tap mode): the
+   * tools strip shows `items` and picking one makes it what a tap does.
+   */
+  tools?: {
+    /** `command`: the command that picks this item (its key is shown on the strip), if there is one. */
+    items: readonly { id: string; label: string; command?: string }[];
+    current(): string;
+    pick(id: string): void;
+  };
   /** Extra keys merged into the command context for `when` conditions. */
   context?(): Partial<CommandContext>;
   /** Screen rects (client coordinates) of the elements a focus refers to. Lets game-agnostic effects target the board. */

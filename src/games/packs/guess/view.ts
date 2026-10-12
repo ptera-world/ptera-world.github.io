@@ -306,7 +306,12 @@ export function guessView(): View<GuessPuzzle, GuessState, GuessAction, GuessInt
         session.setInteraction((x) => ({ ...x, slot: Math.min(p.pegs - 1, x.slot + 1) }));
       }), extrasOver("guess.colour-", COLOURS, (c) => ({ menu: "board", when: () => c <= p.colours })))];
       return {
-        gestures: { secondaryClick: true, hold: true },
+        gestures: { secondaryClick: true, hold: true, labels: ["place", "hold"] },
+        tools: {
+          items: Array.from({ length: p.colours }, (_, c) => ({ id: String(c + 1), label: COLOUR_NAMES[c + 1]! })),
+          current: () => String(session.interaction.colour),
+          pick: (id) => session.setInteraction((i) => ({ ...i, colour: Number(id) })),
+        },
         aspect: width / height,
         cells: { cols: Math.ceil(width / P), rows: rowsN },
         commands,

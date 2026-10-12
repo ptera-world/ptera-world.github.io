@@ -353,7 +353,7 @@ export function undeadView(look: Look, board: Board): View<UndeadPuzzle, UndeadS
         "undead.pencil-zombie": { menu: "board" },
       });
       return {
-        gestures: { secondaryClick: true },
+        gestures: { secondaryClick: true, labels: ["cycle", "cycle back"] },
         aspect: vbW / vbH,
         cells: { cols: p.w + 2, rows: p.h + 3 },
         commands,

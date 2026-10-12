@@ -1,6 +1,6 @@
 import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
-import { HOLD_MS, buttonsSwapped } from "../../core/gestures";
+import { HOLD_MS, secondary } from "../../core/gestures";
 import { bindCommands, type BindingSchema, type CommandHandler, type Ids } from "../../core/commands";
 import { colName, rowName } from "../../core/names";
 import { s, style, inputIs } from "../../core/dom";
@@ -67,9 +67,9 @@ const settings = defineSchema({
 
 /** Acting on "the tile": the cursor, which a pointer press also moves, so these work from the board menu too. */
 const bindings = {
-  "net.tap-at": { label: "click a tile", category: "net", mouse: ["click"], description: "do what the tap buttons say: turn the tile clockwise (the default), counterclockwise, or lock it" },
+  "net.tap-at": { label: "click a tile", category: "net", mouse: ["click", "shift+click", "alt+click"], description: "do what the tap tool under the board says: turn the tile clockwise (the default), counterclockwise, or lock it" },
   "net.rotate-ccw-at": { label: "turn counterclockwise (pointer)", category: "net", mouse: ["rightclick"], description: "turn the clicked tile counterclockwise" },
-  "net.lock-at": { label: "lock / unlock (pointer)", category: "net", mouse: ["middleclick", "shift+click"], description: "lock or unlock the clicked tile; keep the button down and drag to lock or unlock several" },
+  "net.lock-at": { label: "lock / unlock (pointer)", category: "net", mouse: ["middleclick"], description: "lock or unlock the clicked tile; keep the button down and drag to lock or unlock several" },
   "net.source-at": { label: "move the source (pointer)", category: "net", mouse: ["$mod+click"], description: "make the clicked tile the source: pipes joined to it light up" },
   "net.left": { label: "cursor left", category: "net", keys: ["arrowleft"], description: "move the keyboard cursor one tile left" },
   "net.right": { label: "cursor right", category: "net", keys: ["arrowright"], description: "move the keyboard cursor one tile right" },
@@ -121,7 +121,7 @@ const legend = [
 ];
 
 const controls = [
-  { how: "tap a tile", what: "turn it clockwise. the tap buttons under the board switch this to counterclockwise or to locking" },
+  { how: "tap a tile", what: "turn it clockwise. pick the mark under the board to turn counterclockwise or lock instead" },
   { how: "right-click a tile", what: "turn it counterclockwise" },
   { how: "with tap set to lock, drag across tiles", what: "lock (or unlock) every tile you pass over" },
   { how: "touch and hold a tile", what: "a menu of everything you can do to that tile" },
@@ -459,8 +459,8 @@ export function netView({ look = (_id, fallback) => fallback, labelSides = () =>
           "net.tap-cw": setTap("cw"),
           "net.tap-ccw": setTap("ccw"),
           "net.tap-lock": setTap("lock"),
-          "net.tap-at": pointerCell((c) => (buttonsSwapped(session.def.id) ? rotate(c, -1) : tap(c))),
-          "net.rotate-ccw-at": pointerCell((c) => (buttonsSwapped(session.def.id) ? tap(c) : rotate(c, -1))),
+          "net.tap-at": (ctx, e) => pointerCell((c) => (e && secondary(e as MouseEvent, session.def.id) ? rotate(c, -1) : tap(c)))(ctx, e),
+          "net.rotate-ccw-at": (ctx, e) => pointerCell((c) => (e && secondary(e as MouseEvent, session.def.id) ? rotate(c, -1) : tap(c)))(ctx, e),
           "net.lock-at": pointerCell(startPaint),
           "net.source-at": pointerCell(setSource),
         }, {
@@ -494,7 +494,12 @@ export function netView({ look = (_id, fallback) => fallback, labelSides = () =>
       return {
         aspect: vbW / vbH,
         cells: { cols: vbW / SIZE, rows: vbH / SIZE },
-        gestures: { secondaryClick: true },
+        gestures: { secondaryClick: true, labels: ["turn ↻", "turn ↺"] },
+        tools: {
+          items: [{ id: "cw", label: "turn ↻", command: "net.tap-cw" }, { id: "ccw", label: "turn ↺", command: "net.tap-ccw" }, { id: "lock", label: "lock", command: "net.tap-lock" }],
+          current: tapMode,
+          pick: (id) => setTap(id as TapMode)(),
+        },
         preview(state) {
           previewing = state as NetState | null;
           render();

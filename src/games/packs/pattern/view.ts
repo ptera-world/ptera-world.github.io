@@ -685,7 +685,7 @@ export function patternView(look: Look, board: Board, menuHoldMs: number): View<
           render();
         },
         // right-click crosses; a touch hold crosses unless hold-to-cross is off, then it is the shell menu
-        gestures: { secondaryClick: true, hold: (settings.longPressMs) > 0 },
+        gestures: { secondaryClick: true, hold: (settings.longPressMs) > 0, labels: ["fill", "cross"] },
         commands,
         locate: (f) => {
           const focus = f as PatternFocus | undefined;

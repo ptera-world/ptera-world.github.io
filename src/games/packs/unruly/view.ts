@@ -162,7 +162,7 @@ export function unrulyView(board: BoardPrefs): View<UnrulyPuzzle, UnrulyState, U
         "unruly.clear": { menu: "board" },
       });
       return {
-        gestures: { secondaryClick: true, hold: true },
+        gestures: { secondaryClick: true, hold: true, labels: ["cycle", "cycle back"] },
         aspect: f.aspect,
         cells: { cols: p.w, rows: p.h },
         commands,

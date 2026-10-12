@@ -358,7 +358,7 @@ export function tracksView(board: Board): View<TracksPuzzle, TracksState, Tracks
         "tracks.cross-left": { menu: "board" },
       });
       return {
-        gestures: { secondaryClick: true, hold: true },
+        gestures: { secondaryClick: true, hold: true, labels: ["track", "cross"] },
         aspect: vbW / vbH,
         cells: { cols: p.w + 1, rows: p.h + 1 },
         commands,

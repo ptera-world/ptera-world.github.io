@@ -167,7 +167,7 @@ export function tentsView(board: BoardPrefs): View<TentsPuzzle, TentsState, Tent
         "tents.clear": { menu: "board" },
       });
       return {
-        gestures: { secondaryClick: true, hold: true },
+        gestures: { secondaryClick: true, hold: true, labels: ["tent", "grass"] },
         aspect: f.aspect,
         cells: { cols: p.w + 1, rows: p.h + 1 },
         commands,

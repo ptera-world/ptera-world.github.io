@@ -23,6 +23,7 @@ export function starbattleView(board: BoardPrefs) {
     puzzle: starbattle,
     prefix: "starbattle",
     shadeWord: "star",
+    labels: ["star", "dot"],
     glyph: "star",
     fixed: () => false,
     regions: (p) => p.regions,

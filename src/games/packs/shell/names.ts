@@ -26,6 +26,9 @@ export const GAME_BINDINGS = {
   "shell.apply-hint": { label: "apply hint", category: "game", keys: ["shift+h"] },
   "shell.reveal": { label: "reveal solution", category: "game" },
   "shell.pause": { label: "pause", category: "game", keys: ["p"] },
+  "shell.skill-next": { label: "next technique here", category: "techniques", keys: ["k"], description: "pick the next technique that applies where you point and preview it" },
+  "shell.skill-cast": { label: "use the technique here", category: "techniques", keys: ["shift+k"], description: "carry out the picked technique where you point" },
+  "shell.skill-drop": { label: "put the technique down", category: "techniques", keys: ["Escape"], description: "go back to marking" },
   "shell.swap-buttons": { label: "swap left and right click", category: "game", description: "the board's two opposite actions trade buttons (and tap / hold on touch), for this puzzle" },
   "shell.new": { label: "new game", category: "game", keys: ["$mod+Enter"] },
 } satisfies BindingSchema;

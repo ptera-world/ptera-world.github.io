@@ -1,5 +1,5 @@
 import type { GamesApi } from "../../api";
-import { HOLD_MS, buttonsSwapped } from "../../core/gestures";
+import { HOLD_MS } from "../../core/gestures";
 import type { Registry } from "../../core/registry";
 import type { WidgetDef } from "../../core/types";
 import { h, style } from "../../core/dom";
@@ -12,38 +12,9 @@ import { makeView, type BoardPrefs, type Look } from "./view";
 type BridgesWidget = WidgetDef<BridgesPuzzle, BridgesState, BridgesAction, BridgesInteraction>;
 
 const CSS = `
-.bridges-mode { display: inline-flex; }
-.bridges-mode button { border-radius: 0; }
-.bridges-mode button:first-child { border-radius: 6px 0 0 6px; }
-.bridges-mode button:last-child { border-radius: 0 6px 6px 0; margin-left: -1px; }
-.bridges-mode button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); position: relative; }
-.bridges-mode button.remove[aria-pressed="true"] { background: var(--danger-soft); border-color: var(--danger); }
 .bridges-progress { display: flex; white-space: nowrap; gap: 14px; justify-content: center; font-size: 13px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
 .bridges-progress b { display: inline-block; min-width: 3ch; text-align: right; color: var(--text); font-weight: 600; }
 `;
-
-const modeWidget: BridgesWidget = {
-  id: "bridges.mode",
-  name: "what a tap does",
-  description: "choose whether tapping (or clicking) the board adds bridges or takes them away and puts ✕. mostly for touch, where there's no right-click",
-  puzzles: [bridges],
-  defaultSlot: "bottom",
-  order: 5,
-  mount(el, ctx) {
-    style("bridges-widgets", CSS);
-    const pick = (removing: boolean) => () => { if (buttonsSwapped(ctx.session.def.id) !== removing) ctx.run("shell.swap-buttons"); };
-    const add = h("button", { type: "button", "data-command": "shell.swap-buttons", "data-tip": "tapping, clicking or dragging adds a bridge", onclick: pick(false) }, "tap adds");
-    const remove = h("button", { type: "button", class: "remove", "data-command": "shell.swap-buttons", "data-tip": "tapping, clicking or dragging takes a bridge away, or puts a ✕ (no bridge here) on an empty gap. same as right-click", onclick: pick(true) }, "tap removes / ✕");
-    el.append(h("div", { class: "bridges-mode", role: "group", "aria-label": "what a tap does" }, add, remove));
-    const sync = () => {
-      const removing = buttonsSwapped(ctx.session.def.id);
-      add.setAttribute("aria-pressed", String(!removing));
-      remove.setAttribute("aria-pressed", String(removing));
-    };
-    ctx.session.hooks.refresh.tap(sync, { owner: ctx.owner });
-    sync();
-  },
-};
 
 const progressWidget: BridgesWidget = {
   id: "bridges.progress",
@@ -78,7 +49,6 @@ export function register(registry: Registry, look: Look = plainLook, board: Boar
   registry.puzzle(bridges);
   registry.view(makeView(look, board, holdMs));
   for (const p of plugins) registry.plugin(p);
-  registry.widget(modeWidget);
   registry.widget(progressWidget);
 }
 

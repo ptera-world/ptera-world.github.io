@@ -347,7 +347,7 @@ export function signpostView(board: Board): View<SignpostPuzzle, SignpostState, 
         "signpost.cancel": { menu: "board", when: () => session.interaction.pending !== null },
       });
       return {
-        gestures: { secondaryClick: true },
+        gestures: { secondaryClick: true, labels: ["link", "link back"] },
         aspect: vbW / vbH,
         cells: { cols: p.w, rows: p.h },
         commands,

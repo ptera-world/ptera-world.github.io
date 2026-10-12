@@ -428,7 +428,7 @@ export function lightupView(look: Look, board: Board): View<LightupPuzzle, Light
         "lightup.clear": { menu: "board" },
       });
       return {
-        gestures: { secondaryClick: true, hold: true },
+        gestures: { secondaryClick: true, hold: true, labels: ["light", "no light"] },
         aspect: vbW / vbH,
         cells: { cols: vbW / SIZE, rows: vbH / SIZE },
         commands,

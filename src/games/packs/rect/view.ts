@@ -266,7 +266,7 @@ export function rectView(board: BoardPrefs): View<RectPuzzle, RectState, RectAct
         "rect.wall-down": { menu: "board" },
       });
       return {
-        gestures: { secondaryClick: true },
+        gestures: { secondaryClick: true, labels: ["draw", "erase"] },
         aspect: f.aspect,
         cells: { cols: p.w, rows: p.h },
         commands,

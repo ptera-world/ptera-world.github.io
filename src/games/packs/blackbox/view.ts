@@ -320,7 +320,7 @@ export function blackboxView(board: Board): View<BlackboxPuzzle, BlackboxState, 
         "blackbox.check": { menu: "board", when: () => canCheck(p, session.state) },
       });
       return {
-        gestures: { secondaryClick: true, hold: true },
+        gestures: { secondaryClick: true, hold: true, labels: ["place", "lock"] },
         aspect: vbW / vbH,
         cells: { cols: W, rows: H },
         commands,

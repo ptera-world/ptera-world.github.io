@@ -409,7 +409,7 @@ export function minesView(look: Look, labelSides: () => ReadonlySet<Side>): View
           ghost = state as MinesState | null;
           render();
         },
-        gestures: { secondaryClick: true, hold: true },
+        gestures: { secondaryClick: true, hold: true, labels: ["open", "flag"] },
         commands,
         context: (): MinesContext => ({ minesLost: session.state.dead >= 0 }),
         locate: (focus) => {

@@ -1,4 +1,4 @@
-import { HOLD_MS, buttonsSwapped } from "../../core/gestures";
+import { HOLD_MS, secondary } from "../../core/gestures";
 import { defineSchema } from "../../core/schema";
 import type { CommandDef, View } from "../../core/types";
 import { colName, rowName, type Side } from "../../core/names";
@@ -448,8 +448,7 @@ export function makeLoopyView(look: Look = plainLook, labels: Labels = noLabels,
       const markCmd = (mode: Mode) => (_ctx: Record<string, unknown>, ev?: Event) => {
         if (ev instanceof MouseEvent) {
           if (!(ev.target instanceof Node) || !svg.contains(ev.target) || gesture || mousePointer < 0) return false;
-          const flip = buttonsSwapped(session.def.id) ? { line: "cross", cross: "line", erase: "erase" } as const : null;
-          begin(ev, mousePointer, flip ? flip[mode] : mode, false);
+          begin(ev, mousePointer, mode === "erase" ? mode : secondary(ev, session.def.id) ? "cross" : "line", false);
           return true;
         }
         toggle(session.interaction.cursor, mode);
@@ -562,13 +561,13 @@ export function makeLoopyView(look: Look = plainLook, labels: Labels = noLabels,
       const commands: CommandDef[] = [
         {
           id: "loopy.line", label: "draw line", category: "slitherlink", menu: "board",
-          keys: ["space", "Enter"], mouse: ["click"],
+          keys: ["space", "Enter"], mouse: ["click", "shift+click", "alt+click", "$mod+click"],
           description: "puts a line on an edge, or takes it away if there is one. press an edge, or hold the button and drag from dot to dot to draw several; a drag that starts on a line rubs lines out",
           run: markCmd("line"),
         },
         {
           id: "loopy.cross", label: "cross out", category: "slitherlink", menu: "board",
-          keys: ["x"], mouse: ["rightclick", "shift+click", "$mod+click"],
+          keys: ["x"], mouse: ["rightclick"],
           description: "marks an edge as not part of the loop (a note for yourself), or removes the cross. press an edge, or drag across several",
           run: markCmd("cross"),
         },
@@ -591,7 +590,7 @@ export function makeLoopyView(look: Look = plainLook, labels: Labels = noLabels,
       ];
       render();
       return {
-        gestures: { secondaryClick: true },
+        gestures: { secondaryClick: true, labels: ["line", "cross"] },
         aspect: vbW / vbH,
         cells: { cols: vbW / u, rows: vbH / u },
         preview: (state) => {

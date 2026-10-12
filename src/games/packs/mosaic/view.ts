@@ -154,7 +154,7 @@ export function mosaicView(board: BoardPrefs): View<MosaicPuzzle, MosaicState, M
         "mosaic.clear": { menu: "board" },
       });
       return {
-        gestures: { secondaryClick: true, hold: true },
+        gestures: { secondaryClick: true, hold: true, labels: ["black", "dot"] },
         aspect: f.aspect,
         cells: { cols: p.w, rows: p.h },
         commands,

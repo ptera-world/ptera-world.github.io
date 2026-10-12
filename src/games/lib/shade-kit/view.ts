@@ -34,6 +34,8 @@ export interface ShadeViewSpec<Pz extends { w: number; h: number }, P extends st
   /** Text naming a BLACK mark in commands and controls ("shade", "star", "queen"). */
   shadeWord: string;
   glyph: Glyph;
+  /** What a plain click / tap and a right click / hold do, a word or two each, shown on the tools strip. */
+  labels: readonly [string, string];
   /** Cells that never take marks (e.g. numbered cells). */
   fixed(p: Pz, c: number): boolean;
   /** Region per cell; thick borders are drawn between different regions. */
@@ -200,7 +202,7 @@ export function shadeView<Pz extends { w: number; h: number }, P extends string>
         [`${id}.clear`]: { menu: "board" },
       });
       return {
-        gestures: { secondaryClick: true, hold: true },
+        gestures: { secondaryClick: true, hold: true, labels: spec.labels },
         aspect: f.aspect,
         cells: { cols: p.w, rows: p.h },
         commands,

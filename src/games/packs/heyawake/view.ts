@@ -25,6 +25,7 @@ export function heyawakeView(board: BoardPrefs) {
     puzzle: heyawake,
     prefix: "heyawake",
     shadeWord: "shade",
+    labels: ["shade", "dot"],
     glyph: "fill",
     fixed: () => false,
     regions: (p) => p.rooms,

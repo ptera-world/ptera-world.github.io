@@ -83,7 +83,7 @@ const toward = (name: Dir) => (name === "down" ? "below" : name === "up" ? "abov
 
 const BINDINGS = {
   "bridges.add-at": { label: "add a bridge", description: "drag from an island toward a neighbor, or click the gap between them", category: "board", mouse: ["click"], hidden: true },
-  "bridges.remove-at": { label: "take away / ✕", description: "drag from an island or click a gap: removes a bridge, or marks an empty gap ✕ (no bridge here)", category: "board", mouse: ["rightclick", "$mod+click"], hidden: true },
+  "bridges.remove-at": { label: "take away / ✕", description: "drag from an island or click a gap: removes a bridge, or marks an empty gap ✕ (no bridge here)", category: "board", mouse: ["rightclick"], hidden: true },
   ...bindingsOver("bridges.add-", DIR_NAMES, (name) => ({ label: `add bridge ${name}`, description: `keyboard: add a bridge from the ringed island to its neighbor ${toward(name)}`, category: "keyboard", keys: [`shift+${keysOf(name)[0]}`, `shift+${keysOf(name)[1]}`] })),
   ...bindingsOver("bridges.remove-", DIR_NAMES, (name) => ({ label: `take away / ✕ ${name}`, description: `keyboard: take a bridge away ${name === "down" || name === "up" ? toward(name) : `to the ${name} of`} the ringed island, or mark that gap ✕ (no bridge here)`, category: "keyboard", keys: [`$mod+${keysOf(name)[0]}`] })),
   ...bindingsOver("bridges.move-", DIR_NAMES, (name) => ({ label: `ring ${name}`, description: `keyboard: move the ring (the keyboard cursor) to the next island ${toward(name)}`, category: "keyboard", keys: [...keysOf(name)] })),
@@ -148,7 +148,7 @@ export function makeView(look: Look, board: BoardPrefs, holdMs: number): View<Br
     controls: [
       { how: "drag from an island toward a neighbor", what: "add a bridge between them (again for a double bridge)" },
       { how: "click or tap the gap between two islands", what: "add a bridge there too" },
-      { how: "right-click, or ctrl+click (⌘ on mac)", what: "take a bridge away. on an empty gap it puts a ✕, your note that no bridge goes there" },
+      { how: "right-click", what: "take a bridge away. on an empty gap it puts a ✕, your note that no bridge goes there" },
     ],
     mount(root, { session, settings }) {
       style("bridges", CSS);
@@ -390,7 +390,7 @@ export function makeView(look: Look, board: BoardPrefs, holdMs: number): View<Br
       const pointer = () => (_ctx: unknown, ev?: unknown) => {
         const e = ev as MouseEvent | undefined;
         if (!e || !(e.target instanceof Element) || !svg.contains(e.target)) return false;
-        return begin(e.clientX, e.clientY, secondary(e, session.def.id) !== (e.shiftKey || e.ctrlKey || e.metaKey));
+        return begin(e.clientX, e.clientY, secondary(e, session.def.id));
       };
 
       const move = (dir: number) => () => {
@@ -479,7 +479,7 @@ export function makeView(look: Look, board: BoardPrefs, holdMs: number): View<Br
           window.removeEventListener("pointercancel", finish);
           svg.remove();
         },
-        gestures: { secondaryClick: true },
+        gestures: { secondaryClick: true, labels: ["add", "take away"] },
         commands,
         hooks,
       };

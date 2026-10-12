@@ -43,7 +43,9 @@ async function check(page: Page, id: string, name: string): Promise<void> {
 
   if (!(await visible(page, ".boardbox .view svg, .boardbox .view canvas, .boardbox .view [class]"))) fail("no board on screen");
   if (!(await visible(page, ".w-howto"))) fail("nothing on screen says how to play on first open");
-  await page.keyboard.press("Escape");
+  const play = page.locator(".w-howto button", { hasText: /^play$/ }).first();
+  if (await play.isVisible()) await play.click();
+  else fail("the how-to card has no visible way to start playing");
   for (const [cmd, what] of [["shell.hint", "hint"], ["shell.undo", "undo"], ["shell.new", "new game"]] as const) {
     if (!(await visible(page, `[data-command="${cmd}"]`))) fail(`no visible ${what} button`);
   }
@@ -70,7 +72,38 @@ async function check(page: Page, id: string, name: string): Promise<void> {
   for (const m of missing) fail(`only reachable by key or palette: ${m}`);
 
   const techniques: number = await page.evaluate(() => (globalThis as any).pteraGames.shell.techniques?.list.length ?? 0);
-  if (techniques && !(await visible(page, ".w-skills button"))) fail("has techniques but none is on screen to use");
+  if (techniques) await castOnce(page, fail);
+}
+
+/**
+ * Uses a technique the way the strip offers it: open "skills", pick one that has an instance,
+ * click where its step points, and expect the board to change.
+ */
+async function castOnce(page: Page, fail: (what: string) => void): Promise<void> {
+  const skills = page.locator(".w-strip .st-tile", { hasText: "skills" }).first();
+  if (!(await skills.isVisible())) { fail("has techniques but nothing on screen leads to them"); return; }
+  const spot: { name: string; x: number; y: number } | null = await page.evaluate(() => {
+    const g = (globalThis as any).pteraGames, sh = g.shell, s = sh.session;
+    for (const t of sh.techniques.list) {
+      if (!g.techniques.aimable(s.def, t)) continue;
+      const step = g.techniques.findStep(s.def, t, s.puzzle, s.state);
+      const r = step && sh.view?.handle.locate?.(step.focus)?.[0];
+      if (r) return { name: t.name, x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    }
+    return null;
+  });
+  if (!spot) return;
+  await skills.click();
+  const tile = page.locator(".w-strip .st-tile", { hasText: spot.name }).first();
+  if (!(await tile.isVisible())) { fail(`technique "${spot.name}" isn't on the strip`); return; }
+  await tile.click();
+  const before = await page.evaluate(() => JSON.stringify((globalThis as any).pteraGames.shell.session.state));
+  await page.mouse.move(spot.x, spot.y);
+  await page.mouse.move(spot.x + 1, spot.y);
+  await page.mouse.click(spot.x, spot.y);
+  await page.waitForTimeout(150);
+  const after = await page.evaluate(() => JSON.stringify((globalThis as any).pteraGames.shell.session.state));
+  if (before === after) fail(`picking "${spot.name}" and clicking where it applies changed nothing`);
 }
 
 try {

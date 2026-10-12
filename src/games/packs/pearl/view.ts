@@ -295,7 +295,7 @@ export function pearlView(board: Board): View<PearlPuzzle, PearlState, PearlActi
         "pearl.cross-left": { menu: "board" },
       });
       return {
-        gestures: { secondaryClick: true, hold: true },
+        gestures: { secondaryClick: true, hold: true, labels: ["line", "cross"] },
         aspect: vbW / vbH,
         cells: { cols: p.w, rows: p.h },
         commands,
