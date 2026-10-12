@@ -36,6 +36,11 @@ function shouldConfirm(c: CommandDef): string | null {
   return policy === "always" || isDanger(c) ? q : null;
 }
 
+const MOUSE_BUTTONS: Record<string, number> = {
+  click: 0, leftclick: 0, left: 0, middleclick: 1, middle: 1, rightclick: 2, right: 2,
+  backclick: 3, back: 3, forwardclick: 4, forward: 4,
+};
+
 type Schema = BindingSchema;
 export { bindCommands };
 
@@ -196,6 +201,27 @@ export class CommandHub {
   /** Keys currently bound to a command, as shown to people (e.g. "Ctrl+Z"). */
   keysFor(id: string): string[] {
     return (this.live.find((c) => c.id === id)?.keys ?? []).map((k) => formatKeyParts(k).map(prettyKey).join("+"));
+  }
+
+  /** True if a press is one of the command's mouse press bindings (button and modifiers exactly). */
+  mouseMatches(id: string, e: MouseEvent): boolean {
+    const mac = /Mac|iPhone|iPad/.test(navigator.platform);
+    return (this.live.find((c) => c.id === id)?.mouse ?? []).some((b) => {
+      const parts = b.toLowerCase().split("+").map((p) => p.trim());
+      const btn = parts.pop()!;
+      if (btn.endsWith(":up")) return false;
+      const button = MOUSE_BUTTONS[btn];
+      if (button === undefined || button !== e.button) return false;
+      const want = { ctrl: false, alt: false, shift: false, meta: false };
+      for (const p of parts) {
+        if (p === "$mod") want[mac ? "meta" : "ctrl"] = true;
+        else if (p === "ctrl" || p === "control") want.ctrl = true;
+        else if (p === "alt" || p === "option") want.alt = true;
+        else if (p === "shift") want.shift = true;
+        else if (p === "meta" || p === "cmd" || p === "super") want.meta = true;
+      }
+      return want.ctrl === e.ctrlKey && want.alt === e.altKey && want.shift === e.shiftKey && want.meta === e.metaKey;
+    });
   }
 
   /** Mouse bindings as shown to people (e.g. "Right click"). */

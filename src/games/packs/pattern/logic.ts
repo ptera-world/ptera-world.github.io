@@ -47,10 +47,11 @@ export interface PatternInteraction {
   clue?: ClueRef | null;
 }
 
-/** What the player points at, for aimed techniques: a cell (its row and column) or one clue's line. */
+/** What the player points at, for aimed techniques: a cell (its row and column) or one clue number (its line). */
 export interface PatternTarget {
   lines: number[];
   cell?: number;
+  clue?: ClueRef;
 }
 
 /** One clue number: block `block` of line `line`. */

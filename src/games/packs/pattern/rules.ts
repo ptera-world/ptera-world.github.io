@@ -172,6 +172,17 @@ export const LINE_RULES: readonly { id: LineRuleId; find(line: Line): LineFind }
   { id: "every", find: every },
 ];
 
+/** Cells decided by any rule easier than the one at `idx`. */
+function easierCells(idx: number, line: Line): Set<number> {
+  const easier = new Set<number>();
+  for (let i = 0; i < idx; i++) {
+    const f = LINE_RULES[i]!.find(line);
+    for (const c of f.fill) easier.add(c);
+    for (const c of f.empty) easier.add(c);
+  }
+  return easier;
+}
+
 /**
  * What rule `id` adds on this line beyond every easier rule, or null if nothing. Fill and empty
  * are disjoint from what the easier rules decide, so the result shows exactly this rule at work.
@@ -180,12 +191,7 @@ export function ruleOnLine(id: LineRuleId, line: Line): LineFind | null {
   const idx = LINE_RULES.findIndex((r) => r.id === id);
   const own = LINE_RULES[idx]!.find(line);
   if (!own.fill.length && !own.empty.length) return null;
-  const easier = new Set<number>();
-  for (let i = 0; i < idx; i++) {
-    const f = LINE_RULES[i]!.find(line);
-    for (const c of f.fill) easier.add(c);
-    for (const c of f.empty) easier.add(c);
-  }
+  const easier = easierCells(idx, line);
   const fill = own.fill.filter((c) => !easier.has(c));
   const empty = own.empty.filter((c) => !easier.has(c));
   if (!fill.length && !empty.length) return null;
@@ -197,6 +203,50 @@ export function ruleOnLine(id: LineRuleId, line: Line): LineFind | null {
     return !l || !r || range(r.from, l.to).some((c) => keep.has(c));
   };
   return { ...own, fill, empty, blocks: own.blocks.filter(productive) };
+}
+
+/** One instance of a rule on a line: what a single block or run decides, and the positions it covers. */
+export interface LineUnit {
+  find: LineFind;
+  /** Positions [from, to) within the line that belong to the unit. */
+  zone: [number, number];
+}
+
+/**
+ * The parts of `ruleOnLine` that each stand on one block (overlap, slide) or one run (capped);
+ * a rule that reasons about the whole line at once gives that one find with the whole line as its zone.
+ * A unit decides only blank cells that no easier rule decides.
+ */
+export function unitsOnLine(id: LineRuleId, line: Line): LineUnit[] {
+  const whole = ruleOnLine(id, line);
+  if (!whole) return [];
+  const n = line.vals.length;
+  if (id === "overlap" || id === "slide") {
+    const out: LineUnit[] = [];
+    for (const j of whole.blocks) {
+      const l = whole.spans.find((x) => x.block === j && x.kind === "left");
+      const r = whole.spans.find((x) => x.block === j && x.kind === "right");
+      if (!l || !r) continue;
+      const zone: [number, number] = [r.from, l.to];
+      const fill = whole.fill.filter((c) => c >= zone[0] && c < zone[1]);
+      if (fill.length) out.push({ zone, find: { ...whole, fill, empty: [], blocks: [j], spans: whole.spans.filter((x) => x.block === j) } });
+    }
+    return out;
+  }
+  if (id === "capped") {
+    const ext = extremes(line.clue, line.vals);
+    if (!ext) return [];
+    const easier = easierCells(LINE_RULES.findIndex((r) => r.id === id), line);
+    const out: LineUnit[] = [];
+    for (const [s, e] of runSpans(line.vals)) {
+      const own = owners(line.clue, ext, s, e);
+      if (!own.length || own.some((j) => line.clue[j] !== e - s)) continue;
+      const ends = unknowns(line.vals, [s - 1, e].filter((i) => i >= 0 && i < n)).filter((c) => !easier.has(c));
+      if (ends.length) out.push({ zone: [Math.max(0, s - 1), Math.min(n, e + 1)], find: { ...none(), empty: ends, sources: range(s, e), blocks: own } });
+    }
+    return out;
+  }
+  return [{ find: whole, zone: [0, n] }];
 }
 
 export { EMPTY, FILLED, UNKNOWN };

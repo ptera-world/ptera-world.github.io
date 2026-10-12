@@ -1,13 +1,14 @@
 import { expect, test } from "bun:test";
+import type { AnyPuzzleDef, Step, Technique } from "../../core/types";
 import { generate } from "../../core/generate";
 import { Registry } from "../../core/registry";
 import { createRng } from "../../core/rng";
 import { Session } from "../../core/session";
-import { TechniqueHost, applyStep, findPracticePosition, findStep, firstStep, rateByTechniques } from "../../core/techniques";
+import { TechniqueHost, applyStep, findPracticePosition, findStep, findStepAt, firstStep, rateByTechniques, stepsAt } from "../../core/techniques";
 import { edgeGrid } from "../../lib/edges";
 import { CROSS, EMPTY, LINE, NONE, TRACK, cellName, sgtFormat, tracks, type TracksAction, type TracksFocus } from "./logic";
 import { checkMarks } from "./plugins";
-import { analyze, countSolutions, freshKnowledge, logicSolve, trackEdges, type Level, type TracksPuzzle } from "./solver";
+import { analyze, countCells, countSolutions, freshKnowledge, logicSolve, trackEdges, type Level, type TracksPuzzle } from "./solver";
 import { tracksTechniques } from "./techniques";
 
 const sig = () => new AbortController().signal;
@@ -177,3 +178,78 @@ test("solve() reaches a solved state", async () => {
   expect("board" in ans && tracks.isSolved(p, ans.board)).toBe(true);
   expect(tracks.isSolved(p, tracks.init(p))).toBe(false);
 });
+
+test("an aimed step at a cell changes nothing outside the line or cell it reasons about", async () => {
+  const lineTechniques = ["tracks.count-full", "tracks.count-needs"];
+  let aimed = 0;
+  for (const difficulty of ["easy", "medium"]) {
+    const p = await gen({ width: 7, height: 7, difficulty }, `aimed-${difficulty}`);
+    let st = tracks.init(p);
+    for (let i = 0; i < 600; i++) {
+      for (const t of tracksTechniques) {
+        for (let c = 0; c < p.w * p.h; c++) {
+          const step = findStepAt(tracks, t, p, st, { cell: c });
+          if (!step) continue;
+          aimed++;
+          const f = step.focus as TracksFocus;
+          const unit = new Set(f.counts?.length ? countCells(p, f.counts[0]!) : f.because);
+          const cells = (step.actions as TracksAction[]).flatMap((a) => (a.type === "cell" ? a.cells : []));
+          for (const x of cells) expect(unit.has(x)).toBe(true);
+          if (!lineTechniques.includes(t.id) || !unit.has(c)) continue;
+          if (f.counts![0]! < p.w) {
+            const rowHolds = (r: { actions: unknown[]; focus?: unknown }) =>
+              (r.focus as TracksFocus).counts![0]! >= p.w && (r.actions as TracksAction[]).some((a) => a.type === "cell" && a.cells.includes(c));
+            let row = false;
+            t.instances(p, st, (r) => { row ||= rowHolds(r); });
+            expect(row).toBe(false);
+          }
+        }
+      }
+      const hit = firstStep(tracks, tracksTechniques, p, st);
+      if (!hit) break;
+      st = applyStep(tracks, p, st, hit.step);
+    }
+  }
+  expect(aimed).toBeGreaterThan(30);
+});
+
+/** Leaf values that differ from `a` in `b`, keyed by JSON path. */
+function leafDiff(a: unknown, b: unknown, path = "", out = new Map<string, string>()): Map<string, string> {
+  if (Object.is(a, b)) return out;
+  if (a && b && typeof a === "object" && typeof b === "object") {
+    for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) leafDiff((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k], `${path}/${k}`, out);
+    return out;
+  }
+  const v = JSON.stringify(b);
+  if (JSON.stringify(a) !== v) out.set(path, v ?? "undefined");
+  return out;
+}
+
+/** findAt is instancesAt's first step, every instance at a target changes the board, and cellAt changes part of what one of them does. */
+function checkAimed(def: AnyPuzzleDef, list: readonly Technique[], p: unknown, s: unknown, targets: readonly unknown[]): void {
+  for (const t of list) {
+    if (!t.findAt && !t.cellAt) continue;
+    for (const target of targets) {
+      const all: Step[] = [];
+      if (t.instancesAt) t.instancesAt(p, s, target, (st) => { all.push(st); });
+      else all.push(...stepsAt(def, t, p, s, target));
+      if (t.findAt) expect(t.findAt(p, s, target)).toEqual(all[0] ?? null);
+      const diffs = all.map((st) => leafDiff(s, applyStep(def, p, s, st)));
+      for (const d of diffs) expect(d.size).toBeGreaterThan(0);
+      const cell = t.cellAt?.(p, s, target);
+      if (!cell) continue;
+      const d = leafDiff(s, applyStep(def, p, s, cell));
+      expect(d.size > 0 && diffs.some((x) => [...d].every(([k, v]) => x.get(k) === v))).toBe(true);
+    }
+  }
+}
+
+test("aimed finds: findAt is instancesAt's first, each instance changes the board, cellAt is part of one", async () => {
+  for (const t of tracksTechniques) {
+    if (t.practice === false) continue;
+    const pos = await findPracticePosition(tracks, tracksTechniques, t, "aim", new AbortController().signal);
+    if (!pos) continue;
+    const p = pos.puzzle as any, s = pos.state as any;
+    checkAimed(tracks, tracksTechniques, p, s, Array.from({ length: p.w * p.h }, (_, i) => ({ cell: i })));
+  }
+}, 300000);

@@ -1,9 +1,10 @@
 import { expect, test } from "bun:test";
+import type { AnyPuzzleDef, Step, Technique } from "../../core/types";
 import { generate } from "../../core/generate";
 import { Registry } from "../../core/registry";
 import { createRng } from "../../core/rng";
 import { Session } from "../../core/session";
-import { TechniqueHost, applyStep, findPracticePosition, findStep, firstStep, rateByTechniques } from "../../core/techniques";
+import { TechniqueHost, applyStep, findPracticePosition, findStep, firstStep, rateByTechniques, stepsAt } from "../../core/techniques";
 import { geometry, type DominosaPuzzle } from "./grid";
 import { DOMINO, LINE, NONE, cellName, dominosa, gridFormat, sgtFormat, type DominosaAction, type DominosaFocus } from "./logic";
 import { checkMarks } from "./plugins";
@@ -206,3 +207,44 @@ test("solve() reaches a solved state", async () => {
   expect("board" in ans && dominosa.isSolved(p, ans.board)).toBe(true);
   expect(dominosa.isSolved(p, dominosa.init(p))).toBe(false);
 });
+
+/** Leaf values that differ from `a` in `b`, keyed by JSON path. */
+function leafDiff(a: unknown, b: unknown, path = "", out = new Map<string, string>()): Map<string, string> {
+  if (Object.is(a, b)) return out;
+  if (a && b && typeof a === "object" && typeof b === "object") {
+    for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) leafDiff((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k], `${path}/${k}`, out);
+    return out;
+  }
+  const v = JSON.stringify(b);
+  if (JSON.stringify(a) !== v) out.set(path, v ?? "undefined");
+  return out;
+}
+
+/** findAt is instancesAt's first step, every instance at a target changes the board, and cellAt changes part of what one of them does. */
+function checkAimed(def: AnyPuzzleDef, list: readonly Technique[], p: unknown, s: unknown, targets: readonly unknown[]): void {
+  for (const t of list) {
+    if (!t.findAt && !t.cellAt) continue;
+    for (const target of targets) {
+      const all: Step[] = [];
+      if (t.instancesAt) t.instancesAt(p, s, target, (st) => { all.push(st); });
+      else all.push(...stepsAt(def, t, p, s, target));
+      if (t.findAt) expect(t.findAt(p, s, target)).toEqual(all[0] ?? null);
+      const diffs = all.map((st) => leafDiff(s, applyStep(def, p, s, st)));
+      for (const d of diffs) expect(d.size).toBeGreaterThan(0);
+      const cell = t.cellAt?.(p, s, target);
+      if (!cell) continue;
+      const d = leafDiff(s, applyStep(def, p, s, cell));
+      expect(d.size > 0 && diffs.some((x) => [...d].every(([k, v]) => x.get(k) === v))).toBe(true);
+    }
+  }
+}
+
+test("aimed finds: findAt is instancesAt's first, each instance changes the board, cellAt is part of one", async () => {
+  for (const t of dominosaTechniques) {
+    if (t.practice === false) continue;
+    const pos = await findPracticePosition(dominosa, dominosaTechniques, t, "aim", new AbortController().signal);
+    if (!pos) continue;
+    const p = pos.puzzle as any, s = pos.state as any;
+    checkAimed(dominosa, dominosaTechniques, p, s, [...Array.from({ length: p.w * p.h }, (_, i) => ({ cell: i })), ...Array.from({ length: geometry(p).np }, (_, i) => ({ placement: i }))]);
+  }
+}, 300000);

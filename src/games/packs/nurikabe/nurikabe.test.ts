@@ -203,3 +203,21 @@ test("solve() reaches a solved state", async () => {
   expect("board" in ans && isSolved(p, ans.board)).toBe(true);
   expect(isSolved(p, nurikabe.init(p))).toBe(false);
 });
+
+test("an aimed step changes only the unit at the pointed spot", () => {
+  // the 1 reaches nothing past itself: every other open cell is out of reach, one unit each
+  const p: NurikabePuzzle = { w: 5, h: 1, nums: [1, 0, 0, 0, 0] };
+  const st = nurikabe.init(p);
+  const unreachable = nurikabeTechniques.find((t) => t.id === "nurikabe.unreachable")!;
+  let whole: number[] = [];
+  unreachable.instances(p, st, (step) => {
+    whole = step.actions.flatMap((a) => (a as { cells: number[] }).cells);
+    return true;
+  });
+  expect(whole.length).toBeGreaterThan(1);
+  for (const c of whole) {
+    const step = unreachable.findAt!(p, st, c)!;
+    expect(step.actions.flatMap((a) => (a as { cells: number[] }).cells)).toEqual([c]);
+    expect((step.focus as Focus).cells).toEqual([c]);
+  }
+});

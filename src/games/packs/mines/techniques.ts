@@ -43,9 +43,29 @@ function outcome(d: Deduction): string {
   return parts.join(" and ");
 }
 
-/** The deduction reasons from, or decides, cell `t` (a cell index). */
-const touches = (d: Deduction, t: unknown): boolean =>
-  typeof t === "number" && (d.sources.includes(t) || d.safe.includes(t) || d.mines.includes(t));
+/** The deduction decides cell `t` (a cell index). */
+const decides = (d: Deduction, t: unknown): t is number => typeof t === "number" && (d.safe.includes(t) || d.mines.includes(t));
+
+/** The deductions that reason from or decide cell `t`: those deciding it first, each group in order. */
+function at(ds: readonly Deduction[], t: unknown): Deduction[] {
+  if (typeof t !== "number") return [];
+  return [...ds.filter((d) => decides(d, t)), ...ds.filter((d) => !decides(d, t) && d.sources.includes(t))];
+}
+
+/** The first deduction deciding cell `t`, narrowed to that cell. */
+function cellOf(ds: readonly Deduction[], t: unknown): Deduction | undefined {
+  const d = ds.find((x) => decides(x, t));
+  return d && { ...d, safe: d.safe.filter((c) => c === t), mines: d.mines.filter((c) => c === t) };
+}
+
+/** findAt, instancesAt and cellAt over the deductions `all` gives, each built into a step by `build`. */
+function aimed(all: (p: MinesPuzzle, s: MinesState) => Deduction[], build: (p: MinesPuzzle, d: Deduction | undefined) => Step<MinesAction> | null): Pick<MinesTechnique, "findAt" | "instancesAt" | "cellAt"> {
+  return {
+    findAt: (p, s, t) => build(p, at(all(p, s), t)[0]),
+    instancesAt: (p, s, t, visit) => visitEach(at(all(p, s), t), (d) => build(p, d), visit),
+    cellAt: (p, s, t) => build(p, cellOf(all(p, s), t)),
+  };
+}
 
 const focusOf = (d: Deduction): MinesFocus => ({ cells: [...d.safe, ...d.mines], sources: d.sources });
 
@@ -89,7 +109,7 @@ export const forcedFlags: MinesTechnique = {
   level: 1,
   description: "a number that has exactly as many hidden neighbors as mines it still needs: every one of those hidden neighbors is a mine. flag them.",
   instances: (p, s, visit) => visitEach(singles(p, s, "mines"), (d) => forcedStep(p, d), visit),
-  findAt: (p, s, t) => forcedStep(p, singles(p, s, "mines").find((d) => touches(d, t))),
+  ...aimed((p, s) => singles(p, s, "mines"), forcedStep),
 };
 
 function forcedStep(p: MinesPuzzle, d: Deduction | undefined): Step<MinesAction> | null {
@@ -114,7 +134,7 @@ export const satisfied: MinesTechnique = {
   level: 2,
   description: "a number already touching as many flags as it shows has all its mines, so its other hidden neighbors are safe. opening them all at once is what clicking an open number (chording) does.",
   instances: (p, s, visit) => visitEach(singles(p, s, "safe"), (d) => satisfiedStep(p, d), visit),
-  findAt: (p, s, t) => satisfiedStep(p, singles(p, s, "safe").find((d) => touches(d, t))),
+  ...aimed((p, s) => singles(p, s, "safe"), satisfiedStep),
 };
 
 function satisfiedStep(p: MinesPuzzle, d: Deduction | undefined): Step<MinesAction> | null {
@@ -161,7 +181,7 @@ export const overlap: MinesTechnique = {
   level: 4,
   description: "two nearby numbers that share some hidden neighbors. the shared cells can hold only so many of either number's mines, which settles the cells only one of them touches (the classic 1-1 and 1-2 patterns).",
   instances: (p, s, visit) => visitEach(pairDeductions(p, s), (d) => overlapStep(p, d), visit),
-  findAt: (p, s, t) => overlapStep(p, pairDeductions(p, s).find((d) => touches(d, t))),
+  ...aimed(pairDeductions, overlapStep),
   practice: { params: { difficulty: "normal" } },
 };
 

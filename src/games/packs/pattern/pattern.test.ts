@@ -5,13 +5,13 @@ import { createRng } from "../../core/rng";
 import { Session } from "../../core/session";
 import { info, pattern, type PatternAction, type PatternPuzzle } from "./logic";
 import { Registry } from "../../core/registry";
-import { TechniqueHost, applyStep, findPracticePosition, firstStep } from "../../core/techniques";
+import { TechniqueHost, applyStep, findPracticePosition, findStepAt, firstStep } from "../../core/techniques";
 import { doneNumbers, patternPlugins } from "./plugins";
 import { LINE_RULES, ruleOnLine } from "./rules";
 import {
   CAN_EMPTY, CAN_FILL, EMPTY, FILLED, UNKNOWN, analyze, cluesOf, countArrangements, countSolutions, extremes, randomPicture, solveLine,
 } from "./solver";
-import { finishedLine, patternTechniques } from "./techniques";
+import { cappedRun, finishedLine, overlap, patternTechniques, sliding } from "./techniques";
 
 const sig = () => new AbortController().signal;
 
@@ -239,3 +239,60 @@ test("every technique can be practiced", async () => {
     }
   }
 }, 60000);
+
+function changedBy(puzzle: PatternPuzzle, state: ReturnType<typeof pattern.init>, step: { actions: unknown[] }): number[] {
+  const next = applyStep(pattern, puzzle, state, step as never);
+  return next.cells.flatMap((v, c) => (v !== state.cells[c] ? [c] : []));
+}
+
+test("aimed line steps change nothing outside the block or run they were aimed at", () => {
+  const row = oneRow([7, 3]);
+  const empty = pattern.init(row);
+  const unaimed: number[] = [];
+  overlap.instances(row, empty, (st) => { unaimed.push(...changedBy(row, empty, st)); return true; });
+  expect(unaimed).toEqual([1, 2, 3, 4, 5, 6, 9, 10]);
+  for (const [cell, range] of [[3, [1, 2, 3, 4, 5, 6]], [10, [9, 10]]] as const) {
+    expect(changedBy(row, empty, overlap.findAt!(row, empty, { lines: [0], cell })!)).toEqual([...range]);
+  }
+  expect(changedBy(row, empty, overlap.findAt!(row, empty, { lines: [0], clue: { line: 0, block: 1 } })!)).toEqual([9, 10]);
+  expect(changedBy(row, empty, overlap.findAt!(row, empty, { lines: [0], clue: { line: 0, block: 0 } })!)).toEqual([1, 2, 3, 4, 5, 6]);
+  const slid = oneRow([3, 4]);
+  const pinned = { cells: [...pattern.init(slid).cells] };
+  pinned.cells[0] = FILLED;
+  pinned.cells[11] = FILLED;
+  expect(changedBy(slid, pinned, sliding.findAt!(slid, pinned, { lines: [0], cell: 1 })!)).toEqual([1, 2]);
+  expect(changedBy(slid, pinned, sliding.findAt!(slid, pinned, { lines: [0], cell: 9 })!)).toEqual([8, 9, 10]);
+  expect(changedBy(slid, pinned, sliding.findAt!(slid, pinned, { lines: [0], clue: { line: 0, block: 1 } })!)).toEqual([8, 9, 10]);
+  const runs = oneRow([2, 2, 1]);
+  const marked = { cells: [...pattern.init(runs).cells] };
+  for (const c of [0, 1, 5, 6]) marked.cells[c] = FILLED;
+  expect(changedBy(runs, marked, cappedRun.findAt!(runs, marked, { lines: [0], cell: 1 })!)).toEqual([2]);
+  expect(changedBy(runs, marked, cappedRun.findAt!(runs, marked, { lines: [0], cell: 6 })!)).toEqual([4, 7]);
+});
+
+function oneRow(clue: number[]): PatternPuzzle {
+  return { w: 12, h: 1, rows: [clue], cols: Array.from({ length: 12 }, () => [1]) };
+}
+
+test("an aimed find with no block at the pointed spot finds nothing; narrowed to the spot it decides only that cell", () => {
+  const row = oneRow([7, 3]);
+  const empty = pattern.init(row);
+  expect(overlap.findAt!(row, empty, { lines: [0], cell: 8 })).toBeNull();
+  expect(changedBy(row, empty, overlap.cellAt!(row, empty, { lines: [0], cell: 3 })!)).toEqual([3]);
+  expect(overlap.cellAt!(row, empty, { lines: [0], clue: { line: 0, block: 0 } })).toBeNull();
+  const all: number[][] = [];
+  overlap.instancesAt!(row, empty, { lines: [0], cell: 3 }, (st) => { all.push(changedBy(row, empty, st)); });
+  expect(all).toEqual([[1, 2, 3, 4, 5, 6]]);
+});
+
+test("a cell where a row and a column both apply: one at a time, both at once, or only that cell", () => {
+  const ones = Array.from({ length: 10 }, () => [1]);
+  const p: PatternPuzzle = { w: 10, h: 10, rows: ones.map((c, i) => (i === 2 ? [8] : c)), cols: ones.map((c, i) => (i === 2 ? [8] : c)) };
+  const s = pattern.init(p);
+  const target = { cell: 22, lines: [2, 12] };
+  const one = changedBy(p, s, findStepAt(pattern, overlap, p, s, target, "one")!);
+  expect(one).toHaveLength(6);
+  expect(one).toContain(22);
+  expect(changedBy(p, s, findStepAt(pattern, overlap, p, s, target, "all")!)).toHaveLength(11);
+  expect(changedBy(p, s, findStepAt(pattern, overlap, p, s, target, "cell")!)).toEqual([22]);
+});

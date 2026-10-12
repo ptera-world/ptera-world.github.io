@@ -4,6 +4,7 @@ import type { WidgetContext } from "../../core/types";
 import { colorOf } from "./engine";
 import { explainer } from "./explainer";
 import { techniqueCommand } from "./names";
+import { noteProgress } from "./skill-prefs";
 import type { Shell } from "./shell";
 
 
@@ -117,6 +118,8 @@ export function guideWidget(shell: Shell, el: HTMLElement, ctx: WidgetContext): 
         const ex = explainer(def, t, techniques, view!.def, shell.viewSettings(view!.def));
         disposers.push(() => ex.dispose());
         ex.style.setProperty("--ex-color", colorOf(t, techniques));
+        noteProgress(t, (p) => ({ ...p, watched: true }));
+        shell.hooks.palette.call();
         return [
           `the easiest one is ${t.name}. press play to watch it on a small board:`,
           ex,

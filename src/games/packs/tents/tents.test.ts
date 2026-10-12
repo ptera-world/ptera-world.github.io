@@ -11,7 +11,7 @@ import {
   type Level, type TentsAction, type TentsPuzzle,
 } from "./logic";
 import { checkMarks } from "./plugins";
-import { tentsTechniques } from "./techniques";
+import { noTree, tentsTechniques } from "./techniques";
 
 const sig = () => new AbortController().signal;
 const gen = (params: Record<string, unknown>, seed: string) => generate(tents, params, seed, sig()) as Promise<TentsPuzzle>;
@@ -194,4 +194,20 @@ test("solve() reaches a solved state", async () => {
   const ans = tents.solve!(p, tents.init(p))!;
   expect("board" in ans && isSolved(p, ans.board)).toBe(true);
   expect(isSolved(p, tents.init(p))).toBe(false);
+});
+
+test("no-tree aimed at a cell changes only that cell", async () => {
+  const p = await gen({ width: 8, height: 8, difficulty: "easy" }, "aim-unit");
+  const st = tents.init(p);
+  let whole = 0;
+  noTree.instances(p, st, (step) => { whole = Math.max(whole, step.actions.flatMap((a) => (a as { cells: number[] }).cells).length); });
+  expect(whole).toBeGreaterThan(1);
+  let aimed = 0;
+  for (let c = 0; c < p.w * p.h; c++) {
+    const step = noTree.findAt!(p, st, c);
+    if (!step) continue;
+    expect(step.actions.flatMap((a) => (a as { cells: number[] }).cells)).toEqual([c]);
+    aimed++;
+  }
+  expect(aimed).toBeGreaterThan(1);
 });

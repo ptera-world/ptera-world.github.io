@@ -1,7 +1,7 @@
 import type { Step, Technique } from "../../core/types";
 import { cellName as cellAt, plural } from "../../lib/grid-kit/names";
 import { pattern, info, type PatternAction, type PatternFocus, type PatternPuzzle, type PatternState, type PatternTarget, type GuideSpan } from "./logic";
-import { ruleOnLine, type LineFind, type LineRuleId } from "./rules";
+import { ruleOnLine, unitsOnLine, type LineFind, type LineRuleId } from "./rules";
 import { EMPTY, FILLED, UNKNOWN, lineClue, lineName, probes, type ProbeDeduction } from "./solver";
 
 type PatternTechnique = Technique<PatternPuzzle, PatternState, PatternAction>;
@@ -47,14 +47,23 @@ export function ruleHits(p: PatternPuzzle, K: ArrayLike<number>, id: LineRuleId,
   return out;
 }
 
-const gain = (h: LineHit) => h.find.fill.length + h.find.empty.length;
-
-/** The line with the most to gain; ties go to the first line (rows, then columns). */
-function best(hits: LineHit[]): LineHit | null {
-  let b: LineHit | null = null;
-  for (const x of hits) if (!b || gain(x) > gain(b)) b = x;
-  return b;
+/** Every block or run of rule `id` that adds something on the lines `lines`, each as a hit of its own, with the positions it covers. */
+function unitHits(p: PatternPuzzle, s: PatternState, id: LineRuleId, lines: readonly number[]): (LineHit & { zone: [number, number] })[] {
+  const L = info(p).lines;
+  const out: (LineHit & { zone: [number, number] })[] = [];
+  for (const l of lines) {
+    const cells = L.cells[l]!;
+    const vals = Array.from(cells, (c) => s.cells[c]!);
+    for (const u of unitsOnLine(id, { clue: lineClue(p, l), vals })) {
+      const blank = (i: number) => s.cells[cells[i]!] === UNKNOWN;
+      const find = { ...u.find, fill: u.find.fill.filter(blank), empty: u.find.empty.filter(blank) };
+      if (find.fill.length || find.empty.length) out.push({ line: l, cells, find, zone: u.zone });
+    }
+  }
+  return out;
 }
+
+const gain = (h: LineHit) => h.find.fill.length + h.find.empty.length;
 
 function actionsOf(fill: number[], empty: number[]): PatternAction[] {
   const out: PatternAction[] = [];
@@ -91,7 +100,13 @@ function legend(row: boolean, id: LineRuleId, f: LineFind): string {
 const targetOf = (t: unknown): PatternTarget | null =>
   t && typeof t === "object" && Array.isArray((t as PatternTarget).lines) ? t as PatternTarget : null;
 
-/** A line rule as a technique: one line per step, most cells decided first (among the target's lines when aimed). */
+/**
+ * A line rule as a technique: one line per step, most cells decided first. Aimed at a pointed cell
+ * or clue number, a rule that works block by block (or run by run) gives only the steps for the
+ * block (or run) covering the pointed spot, and a rule about whole lines only the steps for the
+ * pointed lines: those deciding the pointed cell first, then most cells decided. Nothing is found
+ * when no unit covers the pointed spot.
+ */
 function lineTechnique(
   id: LineRuleId,
   def: Omit<PatternTechnique, "instances" | "puzzles"> & { explain(p: PatternPuzzle, line: number, f: LineFind): string },
@@ -122,11 +137,41 @@ function lineTechnique(
       for (const hit of ruleHits(p, boardMarks(s), id, s).sort((a, b) => gain(b) - gain(a))) if (visit(stepOf(p, hit)!)) return;
     },
     findAt(p, s, t) {
+      return stepOf(p, pointedAt(p, s, t)[0] ?? null);
+    },
+    instancesAt(p, s, t, visit) {
+      for (const hit of pointedAt(p, s, t)) if (visit(stepOf(p, hit)!)) return;
+    },
+    cellAt(p, s, t) {
       const target = targetOf(t);
-      if (!target) return null;
-      return stepOf(p, best(ruleHits(p, boardMarks(s), id, s).filter((h) => target.lines.includes(h.line))));
+      if (!target || target.cell === undefined || target.clue) return null;
+      const cell = target.cell;
+      const hit = pointedAt(p, s, t).find((h) => decides(h, cell));
+      if (!hit) return null;
+      const i = hit.cells.indexOf(cell);
+      return stepOf(p, { ...hit, find: { ...hit.find, fill: hit.find.fill.filter((x) => x === i), empty: hit.find.empty.filter((x) => x === i) } });
     },
   };
+
+  /** True if `hit` decides `cell`. */
+  function decides(hit: LineHit, cell: number): boolean {
+    const i = hit.cells.indexOf(cell);
+    return i >= 0 && (hit.find.fill.includes(i) || hit.find.empty.includes(i));
+  }
+
+  /** The units covering the pointed spot: those deciding the pointed cell first, then by most cells decided. */
+  function pointedAt(p: PatternPuzzle, s: PatternState, t: unknown): (LineHit & { zone: [number, number] })[] {
+    const target = targetOf(t);
+    if (!target) return [];
+    const pointed = unitHits(p, s, id, target.lines).filter((h) => {
+      if (target.clue) return h.line === target.clue.line && h.find.blocks.includes(target.clue.block);
+      const at = target.cell === undefined ? -1 : h.cells.indexOf(target.cell);
+      return at >= h.zone[0] && at < h.zone[1];
+    });
+    const cell = target.clue ? undefined : target.cell;
+    const rank = (h: LineHit) => (cell !== undefined && decides(h, cell) ? 1 : 0);
+    return pointed.sort((a, b) => rank(b) - rank(a) || gain(b) - gain(a));
+  }
 }
 
 export const finishedLine = lineTechnique("finished", {

@@ -82,15 +82,38 @@ function outcome(p: UndeadPuzzle, s: UndeadState, raw: SolverStep, cells: readon
 
 type Make = (p: UndeadPuzzle, s: UndeadState, hit: Hit) => Step<UndeadAction>;
 
-function technique(def: Omit<UndeadTechnique, "instances" | "findAt" | "puzzles">, kinds: readonly StepKind[], make: Make): UndeadTechnique {
+const asTarget = (t: unknown): UndeadTarget | null =>
+  t && typeof t === "object" && (typeof (t as { cell?: unknown }).cell === "number" || typeof (t as { clue?: unknown }).clue === "number") ? t as UndeadTarget : null;
+
+/** Hits at `target`, those changing the pointed cell first, each group in scan order. */
+function hitsAt(p: UndeadPuzzle, s: UndeadState, kinds: readonly StepKind[], target: UndeadTarget): Hit[] {
+  const first: Hit[] = [], later: Hit[] = [];
+  each(p, s, kinds, (hit) => { ("cell" in target && hit.cells.includes(target.cell) ? first : later).push(hit); }, target);
+  return [...first, ...later];
+}
+
+function technique(def: Omit<UndeadTechnique, "instances" | "findAt" | "instancesAt" | "cellAt" | "puzzles">, kinds: readonly StepKind[], make: Make): UndeadTechnique {
   return {
     ...def,
     puzzles: [undead],
     instances: (p, s, visit) => each(p, s, kinds, (hit) => visit(make(p, s, hit)) === true),
     findAt: (p, s, t) => {
-      let found: Step<UndeadAction> | null = null;
-      each(p, s, kinds, (hit) => { found = make(p, s, hit); return true; }, t as UndeadTarget);
-      return found;
+      const target = asTarget(t);
+      const hit = target && hitsAt(p, s, kinds, target)[0];
+      return hit ? make(p, s, hit) : null;
+    },
+    instancesAt: (p, s, t, visit) => {
+      const target = asTarget(t);
+      if (target) for (const hit of hitsAt(p, s, kinds, target)) if (visit(make(p, s, hit)) === true) return;
+    },
+    cellAt: (p, s, t) => {
+      const target = asTarget(t);
+      if (!target || !("cell" in target)) return null;
+      const c = target.cell;
+      const hit = hitsAt(p, s, kinds, target).find((h) => h.cells.includes(c));
+      if (!hit) return null;
+      const i = hit.raw.cells.indexOf(c);
+      return make(p, s, { raw: hit.raw, ...changes(p, s, { ...hit.raw, cells: [c], remove: [hit.raw.remove[i]!] }) });
     },
   };
 }

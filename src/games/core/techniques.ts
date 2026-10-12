@@ -69,9 +69,67 @@ export function colorOf(t: Technique, list: readonly Technique[]): string {
 /** True if `t` can be aimed at a target: through its own findAt, or the puzzle's aims. */
 export const aimable = (def: AnyPuzzleDef, t: Technique): boolean => !!t.findAt || !!def.aims;
 
-/** Safe targeted find: the technique's findAt, else its first instance the puzzle's aims accepts; null when it can't be aimed. */
-export function findStepAt<Pz, S>(def: AnyPuzzleDef, t: Technique, puzzle: Pz, state: S, target: unknown): Step | null {
+/**
+ * How much of what a technique says about the pointed spot a cast carries out: one instance at
+ * the spot, every instance at it as one step, or only the pointed spot itself.
+ */
+export type AimScope = "one" | "all" | "cell";
+
+/** A step that changes the state, or null; a throwing technique gives null. */
+function checked<Pz, S>(def: AnyPuzzleDef, t: Technique, puzzle: Pz, state: S, find: () => Step | null): Step | null {
+  try {
+    const step = find();
+    if (!step || step.actions.length === 0) return null;
+    return Object.is(applyStep(def, puzzle, state, step), state) ? null : step;
+  } catch (e) {
+    console.error(`[games] technique ${t.id} aimed find threw`, e);
+    return null;
+  }
+}
+
+/** Every instance of `t` at `target` that changes the state, in the technique's order for that target. */
+export function stepsAt<Pz, S>(def: AnyPuzzleDef, t: Technique, puzzle: Pz, state: S, target: unknown): Step[] {
+  if (target === undefined || target === null || !aimable(def, t)) return [];
+  const out: Step[] = [];
+  const keep = (step: Step) => { if (checked(def, t, puzzle, state, () => step)) out.push(step); };
+  if (t.instancesAt) {
+    try {
+      t.instancesAt(puzzle, state, target, (step) => { keep(step); });
+    } catch (e) {
+      console.error(`[games] technique ${t.id} instancesAt threw`, e);
+    }
+    return out;
+  }
+  if (t.findAt) {
+    const one = findStepAt(def, t, puzzle, state, target);
+    return one ? [one] : [];
+  }
+  validInstances(def, t, puzzle, state, (step) => { if (def.aims!(puzzle, step, target)) out.push(step); });
+  return out;
+}
+
+/**
+ * Safe targeted find at `scope` (default "one"): the technique's own aimed find, else its first
+ * instance the puzzle's aims accepts; null when it can't be aimed or nothing applies at the target.
+ * "all" joins every instance at the target into one step (the first one's message and focus);
+ * "cell" is the technique's cellAt, or "one" where the technique can't narrow an instance.
+ */
+export function findStepAt<Pz, S>(def: AnyPuzzleDef, t: Technique, puzzle: Pz, state: S, target: unknown, scope: AimScope = "one"): Step | null {
   if (target === undefined || target === null || !aimable(def, t)) return null;
+  if (scope === "cell" && t.cellAt) return checked(def, t, puzzle, state, () => t.cellAt!(puzzle, state, target));
+  if (scope === "all") {
+    const all = stepsAt(def, t, puzzle, state, target);
+    if (all.length < 2) return all[0] ?? null;
+    let s = state;
+    const actions: Action[] = [];
+    for (const st of all) {
+      const next = applyStep(def, puzzle, s, st);
+      if (Object.is(next, s)) continue;
+      actions.push(...st.actions);
+      s = next;
+    }
+    return { ...all[0]!, actions };
+  }
   if (!t.findAt) {
     let hit: Step | null = null;
     validInstances(def, t, puzzle, state, (step) => {

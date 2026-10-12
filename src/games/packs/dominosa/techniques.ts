@@ -81,15 +81,43 @@ const HARD = { max: 5, difficulty: "hard" };
 
 type Make = (p: DominosaPuzzle, hit: Hit) => Step<DominosaAction>;
 
-function technique(def: Omit<DominosaTechnique, "instances" | "findAt" | "puzzles">, kinds: readonly StepKind[], make: Make): DominosaTechnique {
+/** True if the hit changes what `target` points at: that placement, or a placement covering that cell. */
+function changes(p: DominosaPuzzle, hit: Hit, target: DominosaTarget): boolean {
+  const g = geometry(p);
+  if ("placement" in target) return hit.placements.includes(target.placement);
+  return hit.placements.some((q) => g.pa[q] === target.cell || g.pb[q] === target.cell);
+}
+
+const asTarget = (t: unknown): DominosaTarget | null =>
+  t && typeof t === "object" && (typeof (t as { placement?: unknown }).placement === "number" || typeof (t as { cell?: unknown }).cell === "number") ? t as DominosaTarget : null;
+
+/** Hits at `target`, those changing what it points at first, each group in scan order. */
+function hitsAt(p: DominosaPuzzle, s: DominosaState, kinds: readonly StepKind[], target: DominosaTarget): Hit[] {
+  const first: Hit[] = [], later: Hit[] = [];
+  each(p, s, kinds, (hit) => { (changes(p, hit, target) ? first : later).push(hit); }, target);
+  return [...first, ...later];
+}
+
+function technique(def: Omit<DominosaTechnique, "instances" | "findAt" | "instancesAt" | "cellAt" | "puzzles">, kinds: readonly StepKind[], make: Make): DominosaTechnique {
   return {
     ...def,
     puzzles: [dominosa],
     instances: (p, s, visit) => each(p, s, kinds, (hit) => visit(make(p, hit)) === true),
-    findAt: (p, s, target) => {
-      let found: Step<DominosaAction> | null = null;
-      each(p, s, kinds, (hit) => { found = make(p, hit); return true; }, target as DominosaTarget);
-      return found;
+    findAt: (p, s, t) => {
+      const target = asTarget(t);
+      const hit = target && hitsAt(p, s, kinds, target)[0];
+      return hit ? make(p, hit) : null;
+    },
+    instancesAt: (p, s, t, visit) => {
+      const target = asTarget(t);
+      if (target) for (const hit of hitsAt(p, s, kinds, target)) if (visit(make(p, hit)) === true) return;
+    },
+    cellAt: (p, s, t) => {
+      const target = asTarget(t);
+      if (!target || !("placement" in target)) return null;
+      const q = target.placement;
+      const hit = hitsAt(p, s, kinds, target).find((h) => h.placements.includes(q));
+      return hit ? make(p, { ...hit, placements: [q] }) : null;
     },
   };
 }

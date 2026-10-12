@@ -104,6 +104,17 @@ export interface Technique<Pz = any, S = any, A extends Action = any> {
    * through PuzzleDef.aims.
    */
   findAt?(puzzle: Pz, state: S, target: unknown): Step<A> | null;
+  /**
+   * Every instance at the given target, the one findAt gives first, stopping as soon as `visit`
+   * returns true. Each follows from `state` alone. Without it, the instances PuzzleDef.aims
+   * accepts for that target, or findAt's one.
+   */
+  instancesAt?(puzzle: Pz, state: S, target: unknown, visit: (step: Step<A>) => boolean | void): void;
+  /**
+   * The part of an instance at the target that decides only the spot the target points at, or
+   * null if no instance decides that spot. Without it, a cast cannot be narrowed below one instance.
+   */
+  cellAt?(puzzle: Pz, state: S, target: unknown): Step<A> | null;
   defaults?: { hints?: boolean; auto?: boolean };
   /** false: no practice boards for this technique (e.g. it needs a game history to arise). */
   practice?: false | {
@@ -345,7 +356,7 @@ export interface ViewHandle {
   };
   /**
    * What a tap places, when the board offers more than two choices (colours, a tap mode): the
-   * tools strip shows `items` and picking one makes it what a tap does.
+   * palette shows `items` and picking one makes it what a tap does.
    */
   tools?: {
     /** `command`: the command that picks this item (its key is shown on the strip), if there is one. */

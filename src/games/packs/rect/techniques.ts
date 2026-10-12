@@ -45,29 +45,39 @@ function fixpoint(l: Layout, a: Alive, kinds: readonly Kind[]): boolean {
   }
 }
 
-/** The first finding of `kind` that rules out a live box (and is about `target`, if given). */
-function one(l: Layout, a: Alive, kind: Kind, target: number | undefined): Kill | null {
-  let found: Kill | null = null;
+/** The findings of `kind` that rule out a live box (and are about `target`, if given), in rule order, stopping after `limit`. */
+function kills(l: Layout, a: Alive, kind: Kind, target: number | undefined, limit = Infinity): Kill[] {
+  const found: Kill[] = [];
   const accept = (k: Kill) => {
     if (k.kind !== kind || !k.boxes.some(([ci, bi]) => a[ci]![bi])) return false;
     if (target !== undefined && !k.cells.includes(target) && l.clues[k.clue] !== target) return false;
-    found = k;
-    return true;
+    found.push(k);
+    return found.length >= limit;
   };
   if (kind === "trial") trialRule(l, a.map((x) => x.slice()), accept);
   else easyRules(l, a.map((x) => x.slice()), accept, [kind]);
   return found;
 }
 
-function find(p: RectPuzzle, s: RectState, kind: Kind, target?: number): Step<RectAction> | null {
-  const l = puzzleLayout(p), g = geometry(p);
+/** The board's live boxes once every easier kind has run, or null if they contradict. */
+function settled(p: RectPuzzle, s: RectState, kind: Kind): Alive | null {
   const a = readBoard(p, s);
+  return fixpoint(puzzleLayout(p), a, ORDER.slice(0, ORDER.indexOf(kind))) ? a : null;
+}
+
+/**
+ * The step that starts from `start` (else from the first finding of `kind`): findings are applied
+ * until new walls follow, and the step explains the first one.
+ */
+function run(p: RectPuzzle, s: RectState, kind: Kind, start: Kill | null): Step<RectAction> | null {
+  const l = puzzleLayout(p), g = geometry(p);
+  const a = settled(p, s, kind);
+  if (!a) return null;
   const easier = ORDER.slice(0, ORDER.indexOf(kind));
-  if (!fixpoint(l, a, easier)) return null;
   const base = wallFacts(p, a);
   let last: Kill | null = null;
   for (let guard = 0; guard < 1000; guard++) {
-    const k = one(l, a, kind, guard === 0 ? target : undefined);
+    const k = guard === 0 && start ? start : kills(l, a, kind, undefined, 1)[0];
     if (!k) return null;
     kill(a, k.boxes);
     last ??= k;
@@ -77,6 +87,24 @@ function find(p: RectPuzzle, s: RectState, kind: Kind, target?: number): Step<Re
     if (fresh.length) return explain(p, kind, last, fresh);
   }
   return null;
+}
+
+/** True if `step` puts a wall on a side of cell `c`. */
+function walls(p: RectPuzzle, step: Step<RectAction>, c: number): boolean {
+  const g = geometry(p);
+  return step.actions.some((x) => x.on.some((e) => g.edges[e]![0] === c || g.edges[e]![1] === c));
+}
+
+/** Steps starting from each finding about cell `target`, those walling the cell first, each group in rule order. */
+function stepsAt(p: RectPuzzle, s: RectState, kind: Kind, target: number): Step<RectAction>[] {
+  const a = settled(p, s, kind);
+  if (!a) return [];
+  const steps = kills(puzzleLayout(p), a, kind, target).flatMap((k) => run(p, s, kind, k) ?? []);
+  return [...steps.filter((st) => walls(p, st, target)), ...steps.filter((st) => !walls(p, st, target))];
+}
+
+function find(p: RectPuzzle, s: RectState, kind: Kind, target?: number): Step<RectAction> | null {
+  return target === undefined ? run(p, s, kind, null) : stepsAt(p, s, kind, target)[0] ?? null;
 }
 
 function explain(p: RectPuzzle, kind: Kind, k: Kill, walls: number[]): Step<RectAction> {
@@ -132,6 +160,10 @@ export const edge: RectTechnique = {
     if (st) visit(st);
   },
   findAt: (p, s, target) => (typeof target === "number" ? uncrossable(p, s, target) : null),
+  instancesAt: (p, s, target, visit) => {
+    const st = typeof target === "number" ? uncrossable(p, s, target) : null;
+    if (st) visit(st);
+  },
   practice: { params: { width: 7, height: 7, difficulty: "normal" } },
 };
 
@@ -146,6 +178,9 @@ const make = (kind: Kind, id: string, name: string, level: number, description: 
     if (st) visit(st);
   },
   findAt: (p, s, target) => (typeof target === "number" ? find(p, s, kind, target) : null),
+  instancesAt: (p, s, target, visit) => {
+    if (typeof target === "number") for (const st of stepsAt(p, s, kind, target)) if (visit(st) === true) return;
+  },
   practice: { params },
 });
 

@@ -534,7 +534,7 @@ export function patternView(look: Look, board: Board, menuHoldMs: number): View<
         if (drag || e.button > 2 || session.locked) return;
         const ref = clueAt(e);
         if (ref) {
-          aim = { lines: [ref.line] };
+          aim = { lines: [ref.line], clue: ref };
           const shown = session.derived()[BLOCK_RANGE_KEY] as BlockRange | undefined;
           const sure = shown && sameClue(shown, ref) && shown.sure
             ? Array.from({ length: shown.sure[1] - shown.sure[0] }, (_, k) => cellOf(ref.line, shown.sure![0] + k)).filter((c) => session.state.cells[c] !== FILLED)
@@ -595,7 +595,7 @@ export function patternView(look: Look, board: Board, menuHoldMs: number): View<
         const ref = clueAt(e);
         pointClue(session.locked ? null : ref ?? pinned);
         const cell = pointToCell(e, false);
-        if (ref) aim = { lines: [ref.line] };
+        if (ref) aim = { lines: [ref.line], clue: ref };
         else if (cell >= 0) aim = lineTarget(cell);
         if (cell !== hover) { hover = cell; render(); }
       };

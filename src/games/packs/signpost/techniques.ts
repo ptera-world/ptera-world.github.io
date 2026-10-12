@@ -54,15 +54,22 @@ function step(st: SolverStep, message: string, nudge: string, nudgeFocus: Signpo
 
 type Make = (p: SignpostPuzzle, s: SignpostState, st: SolverStep) => Step<SignpostAction>;
 
-function technique(def: Omit<SignpostTechnique, "instances" | "findAt" | "puzzles">, kinds: readonly StepKind[], make: Make): SignpostTechnique {
+const asTarget = (t: unknown): SignpostTarget | null => (t && typeof (t as SignpostTarget).cell === "number" ? t as SignpostTarget : null);
+
+function technique(def: Omit<SignpostTechnique, "instances" | "findAt" | "instancesAt" | "puzzles">, kinds: readonly StepKind[], make: Make): SignpostTechnique {
   return {
     ...def,
     puzzles: [signpost],
     instances: (p, s, visit) => each(p, s, kinds, (st) => visit(make(p, s, st)) === true),
     findAt: (p, s, t) => {
+      const target = asTarget(t);
       let found: Step<SignpostAction> | null = null;
-      each(p, s, kinds, (st) => { found = make(p, s, st); return true; }, t as SignpostTarget);
+      if (target) each(p, s, kinds, (st) => { found = make(p, s, st); return true; }, target);
       return found;
+    },
+    instancesAt: (p, s, t, visit) => {
+      const target = asTarget(t);
+      if (target) each(p, s, kinds, (st) => visit(make(p, s, st)) === true, target);
     },
   };
 }

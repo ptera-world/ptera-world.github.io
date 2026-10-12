@@ -1,6 +1,6 @@
 import type { Step, Technique } from "../../core/types";
 import { isSingle, valueOf, valuesOf, type Deduction } from "../../lib/grid-kit/csp";
-import { cellList, cellName, technique, type Focus, type Reading } from "../../lib/grid-kit/names";
+import { cellList, cellName, technique, type Focus, type Reading, type TechniqueSpec } from "../../lib/grid-kit/names";
 import {
   DIGIT_MASK, geometry, kakuro, model, readMasks, runName,
   type KakuroAction, type KakuroPuzzle, type KakuroState,
@@ -47,11 +47,42 @@ function step(p: KakuroPuzzle, s: KakuroState, d: Deduction, vars: number[], why
 }
 
 const runOf = (p: KakuroPuzzle, d: Deduction) => geometry(p).runs[(d.data as { run: number }).run]!;
+/** A cell target restricted to the across runs. */
+interface AcrossTarget { across: number }
+
+const comesFrom = (d: Deduction, c: number, vars: number[]) => vars.includes(c) || d.because.includes(c);
+
+/**
+ * A technique whose aimed find at a white cell in two runs is the across run's step when the
+ * across run has one, else the first step either run gives.
+ */
+function aimed(spec: TechniqueSpec<KakuroPuzzle, KakuroState, KakuroAction>): KakuroTechnique {
+  const t = technique<KakuroPuzzle, KakuroState, KakuroAction>({
+    ...spec,
+    aim(p, d, vars, target) {
+      if (typeof target === "number") return comesFrom(d, target, vars);
+      const { across } = target as AcrossTarget;
+      const run = (d.data as { run?: number } | undefined)?.run;
+      return comesFrom(d, across, vars) && (run === undefined || geometry(p).runs[run]!.dir === "across");
+    },
+  });
+  return {
+    ...t,
+    findAt(p, s, target) {
+      if (typeof target === "number" && p.white[target] && geometry(p).runsOf[target]!.length > 1) {
+        const row = t.findAt!(p, s, { across: target } satisfies AcrossTarget);
+        if (row) return row;
+      }
+      return t.findAt!(p, s, target);
+    },
+  };
+}
+
 const base = { puzzle: kakuro, read, changes };
 const EASY = { width: 6, height: 6, difficulty: "easy" };
 const MEDIUM = { width: 6, height: 6, difficulty: "medium" };
 
-export const lastCell: KakuroTechnique = technique<KakuroPuzzle, KakuroState, KakuroAction>({
+export const lastCell: KakuroTechnique = aimed({
   ...base,
   id: "kakuro.last-cell",
   name: "last cell",
@@ -65,7 +96,7 @@ export const lastCell: KakuroTechnique = technique<KakuroPuzzle, KakuroState, Ka
   practice: { params: EASY },
 });
 
-export const noRepeat: KakuroTechnique = technique<KakuroPuzzle, KakuroState, KakuroAction>({
+export const noRepeat: KakuroTechnique = aimed({
   ...base,
   id: "kakuro.no-repeat",
   name: "no repeats",
@@ -80,7 +111,7 @@ export const noRepeat: KakuroTechnique = technique<KakuroPuzzle, KakuroState, Ka
   practice: { params: EASY },
 });
 
-export const combos: KakuroTechnique = technique<KakuroPuzzle, KakuroState, KakuroAction>({
+export const combos: KakuroTechnique = aimed({
   ...base,
   id: "kakuro.combos",
   name: "sum combinations",
@@ -96,7 +127,7 @@ export const combos: KakuroTechnique = technique<KakuroPuzzle, KakuroState, Kaku
   practice: { params: EASY },
 });
 
-export const fit: KakuroTechnique = technique<KakuroPuzzle, KakuroState, KakuroAction>({
+export const fit: KakuroTechnique = aimed({
   ...base,
   id: "kakuro.fit",
   name: "fitting the digits in",
@@ -112,7 +143,7 @@ export const fit: KakuroTechnique = technique<KakuroPuzzle, KakuroState, KakuroA
   practice: { params: MEDIUM },
 });
 
-export const trial: KakuroTechnique = technique<KakuroPuzzle, KakuroState, KakuroAction>({
+export const trial: KakuroTechnique = aimed({
   ...base,
   id: "kakuro.trial",
   name: "try it both ways",

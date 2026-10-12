@@ -71,15 +71,33 @@ function build(s: NumberlinkState, st: SolverStep, message: string, nudge: strin
 
 type Make = (p: NumberlinkPuzzle, s: NumberlinkState, hit: Hit) => Step<NumberlinkAction>;
 
-function technique(def: Omit<NumberlinkTechnique, "instances" | "findAt" | "puzzles">, kinds: readonly StepKind[], make: Make): NumberlinkTechnique {
+const asTarget = (t: unknown): NumberlinkTarget | null => (t && typeof (t as NumberlinkTarget).cell === "number" ? t as NumberlinkTarget : null);
+
+/** Hits at `target`, those changing an edge of the pointed cell first, each group in scan order. */
+function hitsAt(p: NumberlinkPuzzle, s: NumberlinkState, kinds: readonly StepKind[], target: NumberlinkTarget): Hit[] {
+  const g = edgeGrid(p.w, p.h);
+  const at = (e: number) => g.ea[e] === target.cell || g.eb[e] === target.cell;
+  const first: Hit[] = [], later: Hit[] = [];
+  each(p, s, kinds, (hit) => {
+    const own = hit.st.lines.some((e) => at(e) && s.edges[e] !== LINE) || hit.st.nos.some((e) => at(e) && s.edges[e] !== CROSS);
+    (own ? first : later).push(hit);
+  }, target);
+  return [...first, ...later];
+}
+
+function technique(def: Omit<NumberlinkTechnique, "instances" | "findAt" | "instancesAt" | "puzzles">, kinds: readonly StepKind[], make: Make): NumberlinkTechnique {
   return {
     ...def,
     puzzles: [numberlink],
     instances: (p, s, visit) => each(p, s, kinds, (hit) => visit(make(p, s, hit)) === true),
     findAt: (p, s, t) => {
-      let found: Step<NumberlinkAction> | null = null;
-      each(p, s, kinds, (hit) => { found = make(p, s, hit); return true; }, t as NumberlinkTarget);
-      return found;
+      const target = asTarget(t);
+      const hit = target && hitsAt(p, s, kinds, target)[0];
+      return hit ? make(p, s, hit) : null;
+    },
+    instancesAt: (p, s, t, visit) => {
+      const target = asTarget(t);
+      if (target) for (const hit of hitsAt(p, s, kinds, target)) if (visit(make(p, s, hit)) === true) return;
     },
   };
 }

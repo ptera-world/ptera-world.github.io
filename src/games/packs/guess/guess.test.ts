@@ -1,8 +1,9 @@
 import { expect, test } from "bun:test";
+import type { AnyPuzzleDef, Step, Technique } from "../../core/types";
 import { generate } from "../../core/generate";
 import { createRng } from "../../core/rng";
 import { Session } from "../../core/session";
-import { applyStep, findStep, firstStep } from "../../core/techniques";
+import { applyStep, findStep, firstStep, stepsAt } from "../../core/techniques";
 import { allCodes, candidates, ELSEWHERE, EXACT, guess, mark, markPegs, MISS, sgtFormat, type GuessPuzzle, type GuessState } from "./logic";
 import { checkRow } from "./plugins";
 import { guessTechniques, knownPeg, lastCode } from "./techniques";
@@ -159,3 +160,47 @@ test("per-peg games store the marks, narrow the candidates by them, and keep tec
   expect(text).toContain("Mf:");
   expect(sgtFormat.parse(text)).toEqual(p);
 });
+
+/** Leaf values that differ from `a` in `b`, keyed by JSON path. */
+function leafDiff(a: unknown, b: unknown, path = "", out = new Map<string, string>()): Map<string, string> {
+  if (Object.is(a, b)) return out;
+  if (a && b && typeof a === "object" && typeof b === "object") {
+    for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) leafDiff((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k], `${path}/${k}`, out);
+    return out;
+  }
+  const v = JSON.stringify(b);
+  if (JSON.stringify(a) !== v) out.set(path, v ?? "undefined");
+  return out;
+}
+
+/** findAt is instancesAt's first step, every instance at a target changes the board, and cellAt changes part of what one of them does. */
+function checkAimed(def: AnyPuzzleDef, list: readonly Technique[], p: unknown, s: unknown, targets: readonly unknown[]): void {
+  for (const t of list) {
+    if (!t.findAt && !t.cellAt) continue;
+    for (const target of targets) {
+      const all: Step[] = [];
+      if (t.instancesAt) t.instancesAt(p, s, target, (st) => { all.push(st); });
+      else all.push(...stepsAt(def, t, p, s, target));
+      if (t.findAt) expect(t.findAt(p, s, target)).toEqual(all[0] ?? null);
+      const diffs = all.map((st) => leafDiff(s, applyStep(def, p, s, st)));
+      for (const d of diffs) expect(d.size).toBeGreaterThan(0);
+      const cell = t.cellAt?.(p, s, target);
+      if (!cell) continue;
+      const d = leafDiff(s, applyStep(def, p, s, cell));
+      expect(d.size > 0 && diffs.some((x) => [...d].every(([k, v]) => x.get(k) === v))).toBe(true);
+    }
+  }
+}
+
+test("aimed finds: findAt is instancesAt's first, each instance changes the board, cellAt is part of one", async () => {
+  for (let t = 0; t < 12; t++) {
+    const p = await gen({ colours: 4, pegs: 3 }, `aim${t}`);
+    const rng = createRng(`aim${t}`);
+    let s = guess.init(p);
+    for (let k = 0; k < 4 && !guess.isSolved(p, s); k++) {
+      checkAimed(guess, guessTechniques, p, s, Array.from({ length: p.pegs }, (_, i) => ({ slot: i })));
+      s = guess.reduce(p, s, { type: "row", code: Array.from({ length: 3 }, () => rng.range(1, 4)) });
+      s = guess.reduce(p, s, { type: "submit" });
+    }
+  }
+}, 300000);

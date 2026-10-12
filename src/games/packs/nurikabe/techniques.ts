@@ -61,6 +61,7 @@ export const unreachable: NurikabeTechnique = technique<NurikabePuzzle, ShadeSta
   name: "out of reach",
   level: 3,
   kinds: ["unreachable"],
+  unit: (_p, _d, vars, target) => (typeof target === "number" && vars.includes(target) ? [target] : vars),
   description: "a cell that no number's island can reach, with the cells that island has left, is sea.",
   explain: (p, _s, d, vars) => step(p, d, vars, `no island can grow far enough to reach ${vars.length === 1 ? "it" : "them"}`, "which cells are too far from every number?", { cells: [], because: [] }),
   practice: { params: EASY },

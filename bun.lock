@@ -117,7 +117,7 @@
 
     "is-plain-obj": ["is-plain-obj@4.1.0", "", {}, "sha512-+Pgi+vMuUNkJyExiMBt5IlFoMyKnr5zhJ4Uspz58WOhBF5QoIZkFyNHIbBAtHwzVAgk5RtndVNsDRN61/mmDqg=="],
 
-    "keybinds": ["keybinds@github:pterror/keybinds#17a3783", {}, "pterror-keybinds-17a3783"],
+    "keybinds": ["keybinds@github:pterror/keybinds#c42fa03", {}, "pterror-keybinds-c42fa03"],
 
     "longest-streak": ["longest-streak@3.1.0", "", {}, "sha512-9Ri+o0JYgehTaVBBDoMqIl8GXtbWg711O3srftcHhZ0dqnETqLaoIK0x17fUw9rFSlK/0NlsKe0Ahhyl5pXE2g=="],
 

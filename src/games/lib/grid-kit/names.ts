@@ -49,6 +49,13 @@ export interface TechniqueSpec<Pz, S, A extends Action> {
   explain(p: Pz, s: S, d: Deduction, vars: number[], k: Doms): Step<A>;
   /** True if `d` is about `target` (a view target). Default: it changes or comes from that cell. */
   aim?(p: Pz, d: Deduction, vars: number[], target: unknown): boolean;
+  /**
+   * Aimed finds only: the part of `vars` inside the unit `target` points at, non-empty (an empty
+   * result keeps all of `vars`). Default: all of `vars`.
+   */
+  unit?(p: Pz, d: Deduction, vars: number[], target: unknown): number[];
+  /** The variable `target` points at, if any. Default: the target itself when it is a number. */
+  spot?(p: Pz, target: unknown): number | null;
   requires?: Technique["requires"];
   defaults?: Technique["defaults"];
   practice?: Technique["practice"];
@@ -57,18 +64,41 @@ export interface TechniqueSpec<Pz, S, A extends Action> {
 const defaultAim = (_p: unknown, d: Deduction, vars: number[], target: unknown): boolean =>
   typeof target === "number" && (vars.includes(target) || d.because.includes(target));
 
-/** A technique whose instances are the deductions of its kinds that change the board, in scan order. */
+const defaultSpot = (_p: unknown, target: unknown): number | null => (typeof target === "number" ? target : null);
+
+/**
+ * A technique whose instances are the deductions of its kinds that change the board, in scan order.
+ * Aimed at a target, deductions that change the pointed variable come before those that only
+ * come from it.
+ */
 export function technique<Pz, S, A extends { type: string }>(spec: TechniqueSpec<Pz, S, A>): Technique<Pz, S, A> {
-  const each = (p: Pz, s: S, target: unknown, visit: (step: Step<A>) => boolean | void): void => {
+  const each = (p: Pz, s: S, visit: (x: Deduction, vars: number[], k: Doms) => boolean | void): void => {
     const r = spec.read(p, s);
     if (!r) return;
-    const aim = spec.aim ?? defaultAim;
     scan(r.model, r.k, (x) => {
       if (!spec.kinds.includes(x.kind)) return false;
       const vars = spec.changes(p, s, x);
-      if (!vars.length || (target !== undefined && !aim(p, x, vars, target))) return false;
-      return visit(spec.explain(p, s, x, vars, r.k)) === true;
+      return vars.length > 0 && visit(x, vars, r.k) === true;
     }, spec.kinds);
+  };
+  const aim = spec.aim ?? defaultAim;
+  const spotOf = spec.spot ?? defaultSpot;
+  /** Deductions at `target`, those changing the pointed variable first; stops when `visit` returns true. */
+  const at = (p: Pz, s: S, target: unknown, visit: (x: Deduction, vars: number[], k: Doms) => boolean | void): void => {
+    const spot = spotOf(p, target);
+    const later: [Deduction, number[], Doms][] = [];
+    let done = false;
+    each(p, s, (x, vars, k) => {
+      if (!aim(p, x, vars, target)) return false;
+      if (spot !== null && !vars.includes(spot)) { later.push([x, vars, k]); return false; }
+      done = visit(x, vars, k) === true;
+      return done;
+    });
+    for (const [x, vars, k] of later) if (done || visit(x, vars, k) === true) return;
+  };
+  const aimed = (p: Pz, s: S, target: unknown, x: Deduction, vars: number[], k: Doms): Step<A> => {
+    const own = spec.unit ? spec.unit(p, x, vars, target) : vars;
+    return spec.explain(p, s, x, own.length ? own : vars, k);
   };
   return {
     id: spec.id,
@@ -76,10 +106,22 @@ export function technique<Pz, S, A extends { type: string }>(spec: TechniqueSpec
     puzzles: [spec.puzzle],
     level: spec.level,
     description: spec.description,
-    instances: (p, s, visit) => each(p, s, undefined, visit),
+    instances: (p, s, visit) => each(p, s, (x, vars, k) => visit(spec.explain(p, s, x, vars, k))),
     findAt: (p, s, target) => {
       let hit: Step<A> | null = null;
-      each(p, s, target, (step) => { hit = step; return true; });
+      at(p, s, target, (x, vars, k) => { hit = aimed(p, s, target, x, vars, k); return true; });
+      return hit;
+    },
+    instancesAt: (p, s, target, visit) => at(p, s, target, (x, vars, k) => visit(aimed(p, s, target, x, vars, k))),
+    cellAt: (p, s, target) => {
+      const spot = spotOf(p, target);
+      if (spot === null) return null;
+      let hit: Step<A> | null = null;
+      at(p, s, target, (x, vars, k) => {
+        if (!vars.includes(spot)) return false;
+        hit = spec.explain(p, s, x, [spot], k);
+        return true;
+      });
       return hit;
     },
     ...(spec.requires ? { requires: spec.requires } : {}),

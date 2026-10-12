@@ -40,15 +40,33 @@ function build(raw: SolverStep, tiles: number[], message: string, nudge: string,
 
 type Make = (p: GalaxiesPuzzle, hit: Hit) => Step<GalaxiesAction>;
 
-function technique(def: Omit<GalaxiesTechnique, "instances" | "findAt" | "puzzles">, kinds: readonly StepKind[], make: Make): GalaxiesTechnique {
+const asTarget = (t: unknown): GalaxiesTarget | null => (t && typeof (t as GalaxiesTarget).tile === "number" ? t as GalaxiesTarget : null);
+
+/** Hits at `target`, those painting the pointed tile first, each group in scan order. */
+function hitsAt(p: GalaxiesPuzzle, s: GalaxiesState, kinds: readonly StepKind[], target: GalaxiesTarget): Hit[] {
+  const first: Hit[] = [], later: Hit[] = [];
+  each(p, s, kinds, (hit) => { (hit.tiles.includes(target.tile) ? first : later).push(hit); }, target);
+  return [...first, ...later];
+}
+
+function technique(def: Omit<GalaxiesTechnique, "instances" | "findAt" | "instancesAt" | "cellAt" | "puzzles">, kinds: readonly StepKind[], make: Make): GalaxiesTechnique {
   return {
     ...def,
     puzzles: [galaxies],
     instances: (p, s, visit) => each(p, s, kinds, (hit) => visit(make(p, hit)) === true),
     findAt: (p, s, t) => {
-      let found: Step<GalaxiesAction> | null = null;
-      each(p, s, kinds, (hit) => { found = make(p, hit); return true; }, t as GalaxiesTarget);
-      return found;
+      const target = asTarget(t);
+      const hit = target && hitsAt(p, s, kinds, target)[0];
+      return hit ? make(p, hit) : null;
+    },
+    instancesAt: (p, s, t, visit) => {
+      const target = asTarget(t);
+      if (target) for (const hit of hitsAt(p, s, kinds, target)) if (visit(make(p, hit)) === true) return;
+    },
+    cellAt: (p, s, t) => {
+      const target = asTarget(t);
+      const hit = target && hitsAt(p, s, kinds, target).find((h) => h.tiles.includes(target.tile));
+      return hit && target ? make(p, { ...hit, tiles: [target.tile] }) : null;
     },
   };
 }

@@ -31,6 +31,15 @@ async function waitForServer(): Promise<void> {
 /** True if an element matching `sel` is on screen and not hidden. */
 const visible = (page: Page, sel: string) => page.locator(sel).first().isVisible().catch(() => false);
 
+/** True if an element matching `sel` is visible and overlaps the board. */
+const covers = (page: Page, sel: string) => page.evaluate((s) => {
+  const el = document.querySelector<HTMLElement>(s);
+  const board = document.querySelector<HTMLElement>(".boardwrap");
+  if (!el || !board || el.offsetParent === null) return false;
+  const a = el.getBoundingClientRect(), b = board.getBoundingClientRect();
+  return a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+}, sel);
+
 async function check(page: Page, id: string, name: string): Promise<void> {
   const fail = (what: string) => failures.push(`${id}: ${what}`);
   await page.goto(base);
@@ -43,6 +52,7 @@ async function check(page: Page, id: string, name: string): Promise<void> {
 
   if (!(await visible(page, ".boardbox .view svg, .boardbox .view canvas, .boardbox .view [class]"))) fail("no board on screen");
   if (!(await visible(page, ".w-howto"))) fail("nothing on screen says how to play on first open");
+  if (await covers(page, ".w-howto")) fail("the how-to card covers the board");
   const play = page.locator(".w-howto button", { hasText: /^play$/ }).first();
   if (await play.isVisible()) await play.click();
   else fail("the how-to card has no visible way to start playing");
@@ -75,35 +85,133 @@ async function check(page: Page, id: string, name: string): Promise<void> {
   if (techniques) await castOnce(page, fail);
 }
 
-/**
- * Uses a technique the way the strip offers it: open "skills", pick one that has an instance,
- * click where its step points, and expect the board to change.
- */
-async function castOnce(page: Page, fail: (what: string) => void): Promise<void> {
-  const skills = page.locator(".w-strip .st-tile", { hasText: "skills" }).first();
-  if (!(await skills.isVisible())) { fail("has techniques but nothing on screen leads to them"); return; }
-  const spot: { name: string; x: number; y: number } | null = await page.evaluate(() => {
+/** Center of the first screen rect of the step `name`'s technique would make now (aimable ones only), or of any aimable technique's. */
+async function spotOf(page: Page, name: string | null): Promise<{ name: string; x: number; y: number } | null> {
+  return page.evaluate((want) => {
     const g = (globalThis as any).pteraGames, sh = g.shell, s = sh.session;
     for (const t of sh.techniques.list) {
+      if (want !== null && t.name !== want) continue;
       if (!g.techniques.aimable(s.def, t)) continue;
       const step = g.techniques.findStep(s.def, t, s.puzzle, s.state);
       const r = step && sh.view?.handle.locate?.(step.focus)?.[0];
       if (r) return { name: t.name, x: r.left + r.width / 2, y: r.top + r.height / 2 };
     }
     return null;
-  });
-  if (!spot) return;
-  await skills.click();
-  const tile = page.locator(".w-strip .st-tile", { hasText: spot.name }).first();
-  if (!(await tile.isVisible())) { fail(`technique "${spot.name}" isn't on the strip`); return; }
-  await tile.click();
-  const before = await page.evaluate(() => JSON.stringify((globalThis as any).pteraGames.shell.session.state));
-  await page.mouse.move(spot.x, spot.y);
-  await page.mouse.move(spot.x + 1, spot.y);
-  await page.mouse.click(spot.x, spot.y);
+  }, name);
+}
+
+const stateOf = (page: Page) => page.evaluate(() => JSON.stringify((globalThis as any).pteraGames.shell.session.state));
+const armedOf = (page: Page) => page.evaluate(() => (globalThis as any).pteraGames.shell.cast.armed?.name ?? null);
+
+async function clickAt(page: Page, p: { x: number; y: number }, button: "left" | "middle" = "left"): Promise<void> {
+  await page.mouse.move(p.x, p.y);
+  await page.mouse.move(p.x + 1, p.y);
+  await page.mouse.click(p.x, p.y, { button });
   await page.waitForTimeout(150);
-  const after = await page.evaluate(() => JSON.stringify((globalThis as any).pteraGames.shell.session.state));
-  if (before === after) fail(`picking "${spot.name}" and clicking where it applies changed nothing`);
+}
+
+/**
+ * Uses techniques the way the palette offers them: every technique tile the same size and
+ * without hover text; pick one that has an instance, click where its step points, expect the board
+ * to change, and a second instance to take one more click. Then switch techniques with the pointer
+ * on the board: by key, by the picker (key held, pointer moved toward an entry, key let go), and
+ * one-handed with the picker on the middle button, back to a mark included.
+ */
+async function castOnce(page: Page, fail: (what: string) => void): Promise<void> {
+  const tiles = page.locator(".w-strip .st-tile.skill");
+  if (!(await tiles.first().isVisible())) { fail("has techniques but the palette shows none"); return; }
+  const sizes: string[] = await page.evaluate(() => [...new Set([...document.querySelectorAll<HTMLElement>(".w-strip .st-tile")].map((b) => `${Math.round(b.getBoundingClientRect().height)}`))]);
+  if (sizes.length !== 1) fail(`palette tiles have different heights: ${sizes.join(", ")}`);
+  const colors: number = await page.evaluate(() => new Set([...document.querySelectorAll<HTMLElement>(".w-strip .st-tile.skill")].map((b) => getComputedStyle(b).borderLeftColor)).size);
+  const count = await tiles.count();
+  if (count > 1 && colors < count) fail(`${count} technique tiles share ${colors} colors`);
+  await tiles.first().hover();
+  await page.waitForTimeout(700);
+  if (await visible(page, ".tip.on")) fail("hovering a palette tile shows hover text");
+
+  const spot = await spotOf(page, null);
+  if (!spot) return;
+  const tile = page.locator(".w-strip .st-tile.skill", { hasText: spot.name }).first();
+  if (!(await tile.isVisible())) { fail(`technique "${spot.name}" isn't in the palette`); return; }
+  await tile.click();
+  await page.waitForTimeout(150);
+  if (await covers(page, ".w-watch")) fail("the technique demo covers the board");
+  const before = await stateOf(page);
+  await clickAt(page, spot);
+  const after = await stateOf(page);
+  if (before === after) { fail(`picking "${spot.name}" and clicking where it applies changed nothing`); return; }
+  const next = await spotOf(page, spot.name);
+  if (next) {
+    await clickAt(page, next);
+    if ((await stateOf(page)) === after) fail(`a second "${spot.name}" took more than one click`);
+  }
+
+  // switching with the pointer staying on the board
+  const board = await page.locator(".boardbox").boundingBox();
+  if (!board) return;
+  const mid = { x: board.x + board.width / 2, y: board.y + board.height / 2 };
+  await page.mouse.move(mid.x, mid.y);
+  const keyed: { key: string; name: string } | null = await page.evaluate(() => {
+    const sh = (globalThis as any).pteraGames.shell;
+    for (const t of sh.cast.palette()) {
+      if (t.id === sh.cast.armed?.id) continue;
+      const k = sh.hub.keysFor(`technique.pick.${t.id}`)[0];
+      if (k) return { key: k, name: t.name };
+    }
+    return null;
+  });
+  if (keyed) {
+    await page.keyboard.press(keyed.key);
+    await page.waitForTimeout(80);
+    if ((await armedOf(page)) !== keyed.name) fail(`pressing ${keyed.key} with the pointer on the board didn't pick "${keyed.name}"`);
+  }
+  const pickerKey: string | null = await page.evaluate(() => (globalThis as any).pteraGames.shell.hub.keysFor("shell.skill-picker")[0] ?? null);
+  if (!pickerKey) { fail("the technique picker has no key"); return; }
+  /** Opens the picker with `down`, moves toward the entry named `name` and lets go with `up`; returns what is picked after. */
+  const flick = async (down: () => Promise<void>, up: () => Promise<void>, name: string): Promise<void> => {
+    await page.mouse.move(mid.x, mid.y);
+    await down();
+    await page.waitForTimeout(300);
+    const to = await page.evaluate((n) => {
+      const b = [...document.querySelectorAll<HTMLElement>(".pk-item")].find((x) => x.textContent?.replace(/^\d/, "").trim() === n);
+      const r = b?.getBoundingClientRect();
+      return r ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : null;
+    }, name);
+    if (!to) { fail(`the picker has no "${name}"`); await page.keyboard.press("Escape"); return; }
+    await page.mouse.move(to.x, to.y, { steps: 4 });
+    await up();
+    await page.waitForTimeout(80);
+  };
+  const other: string | null = await page.evaluate(() => {
+    const sh = (globalThis as any).pteraGames.shell;
+    return sh.cast.palette().find((t: any) => t.id !== sh.cast.armed?.id)?.name ?? null;
+  });
+  if (other) {
+    await flick(() => page.keyboard.down(pickerKey), () => page.keyboard.up(pickerKey), other);
+    if ((await armedOf(page)) !== other) fail(`holding ${pickerKey}, moving toward "${other}" and letting go didn't pick it`);
+  }
+
+  // one-handed: the picker on the middle button, a mark picked from it too
+  await page.evaluate(() => {
+    const store = (globalThis as any).pteraGames.shell.hub.settings.store;
+    store.save({ ...store.getOverrides(), "shell.skill-picker": { mouse: ["middle", "middle:up"] } });
+  });
+  await page.waitForTimeout(100);
+  const target: string | null = await page.evaluate(() => {
+    const sh = (globalThis as any).pteraGames.shell;
+    return sh.cast.palette().find((t: any) => t.id !== sh.cast.armed?.id)?.name ?? null;
+  });
+  const beforeMiddle = await stateOf(page);
+  if (target) {
+    await flick(() => page.mouse.down({ button: "middle" }), () => page.mouse.up({ button: "middle" }), target);
+    if ((await armedOf(page)) !== target) fail(`middle-button picker didn't pick "${target}"`);
+    if ((await stateOf(page)) !== beforeMiddle) fail("opening the picker with the middle button also changed the board");
+  }
+  const mark: string | null = await page.evaluate(() => (globalThis as any).pteraGames.shell.cast.marks()[0]?.label ?? null);
+  if (mark) {
+    await flick(() => page.mouse.down({ button: "middle" }), () => page.mouse.up({ button: "middle" }), mark);
+    if ((await armedOf(page)) !== null) fail(`middle-button picker didn't go back to the "${mark}" mark`);
+  }
 }
 
 try {

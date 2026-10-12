@@ -1,4 +1,6 @@
 import { expect, test } from "bun:test";
+import type { AnyPuzzleDef, Step, Technique } from "../../core/types";
+import { applyStep, firstStep, stepsAt } from "../../core/techniques";
 import { generate } from "../../core/generate";
 import { createRng } from "../../core/rng";
 import { Session } from "../../core/session";
@@ -108,3 +110,48 @@ test("game ids round-trip and use the original's hidden form", async () => {
   expect(sgtFormat.parse(text)).toEqual(p);
   expect(() => sgtFormat.parse("w8h8m5M5:00")).toThrow();
 });
+
+/** Leaf values that differ from `a` in `b`, keyed by JSON path. */
+function leafDiff(a: unknown, b: unknown, path = "", out = new Map<string, string>()): Map<string, string> {
+  if (Object.is(a, b)) return out;
+  if (a && b && typeof a === "object" && typeof b === "object") {
+    for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) leafDiff((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k], `${path}/${k}`, out);
+    return out;
+  }
+  const v = JSON.stringify(b);
+  if (JSON.stringify(a) !== v) out.set(path, v ?? "undefined");
+  return out;
+}
+
+/** findAt is instancesAt's first step, every instance at a target changes the board, and cellAt changes part of what one of them does. */
+function checkAimed(def: AnyPuzzleDef, list: readonly Technique[], p: unknown, s: unknown, targets: readonly unknown[]): void {
+  for (const t of list) {
+    if (!t.findAt && !t.cellAt) continue;
+    for (const target of targets) {
+      const all: Step[] = [];
+      if (t.instancesAt) t.instancesAt(p, s, target, (st) => { all.push(st); });
+      else all.push(...stepsAt(def, t, p, s, target));
+      if (t.findAt) expect(t.findAt(p, s, target)).toEqual(all[0] ?? null);
+      const diffs = all.map((st) => leafDiff(s, applyStep(def, p, s, st)));
+      for (const d of diffs) expect(d.size).toBeGreaterThan(0);
+      const cell = t.cellAt?.(p, s, target);
+      if (!cell) continue;
+      const d = leafDiff(s, applyStep(def, p, s, cell));
+      expect(d.size > 0 && diffs.some((x) => [...d].every(([k, v]) => x.get(k) === v))).toBe(true);
+    }
+  }
+}
+
+test("aimed finds: findAt is instancesAt's first, each instance changes the board, cellAt is part of one", async () => {
+  for (let t = 0; t < 4; t++) {
+    const p = await gen({ width: 6, height: 6, minBalls: 3, maxBalls: 3 }, `aim${t}`);
+    let s = blackbox.init(p);
+    for (const e of [0, 3, 6, 9, 12, 15, 18, 21]) s = blackbox.reduce(p, s, { type: "fire", entry: e });
+    for (let k = 0; k < 6; k++) {
+      checkAimed(blackbox, blackboxTechniques, p, s, Array.from({ length: p.w * p.h }, (_, i) => ({ cell: i })));
+      const hit = firstStep(blackbox, blackboxTechniques, p, s);
+      if (!hit) break;
+      s = applyStep(blackbox, p, s, hit.step);
+    }
+  }
+}, 300000);

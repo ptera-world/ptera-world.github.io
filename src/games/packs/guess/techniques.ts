@@ -11,6 +11,7 @@ const colourName = (c: number) => COLOUR_NAMES[c] ?? `color ${c}`;
 const describeCode = (code: readonly number[]) => code.map(colourName).join(", ");
 const reasoning = (p: GuessPuzzle, s: GuessState) => !isOver(p, s) && codeCount(p) <= REASON_LIMIT;
 const allRows = (s: GuessState) => s.done.map((_, i) => i);
+const slotOf = (t: unknown): number | null => (t && typeof (t as { slot?: unknown }).slot === "number" ? (t as { slot: number }).slot : null);
 
 export const knownPeg: GuessTechnique = {
   id: "guess.known-peg",
@@ -22,7 +23,9 @@ export const knownPeg: GuessTechnique = {
     const step = knownPegStep(p, s);
     if (step) visit(step);
   },
-  findAt: (p, s, target) => knownPegStep(p, s, (target as { slot: number }).slot),
+  findAt: (p, s, t) => { const slot = slotOf(t); return slot === null ? null : knownPegStep(p, s, slot); },
+  instancesAt: (p, s, t, visit) => { const slot = slotOf(t); const step = slot === null ? null : knownPegStep(p, s, slot); if (step) visit(step); },
+  cellAt: (p, s, t) => { const slot = slotOf(t); return slot === null ? null : knownPegStep(p, s, slot); },
 };
 
 function knownPegStep(p: GuessPuzzle, s: GuessState, only?: number): Step<GuessAction> | null {

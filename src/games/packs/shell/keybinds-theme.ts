@@ -59,5 +59,9 @@ export const KEYBINDS_CSS = `
   font: 12px var(--font); color: var(--text); background: var(--surface-2); border: 1px solid var(--border); border-radius: 5px; padding: 2px 8px; cursor: pointer;
 }
 .keybind-settings::part(binding-remove) { padding: 0 6px; color: var(--text-dim); }
+.keybind-settings::part(recording-release), .keybind-settings::part(binding-release) {
+  font: 11px var(--font); color: var(--text-dim); background: var(--surface-2); border: 1px solid var(--border); border-radius: 5px; padding: 1px 6px; cursor: pointer;
+}
+.keybind-settings::part(recording-release-on), .keybind-settings::part(binding-release-on) { color: var(--text); background: var(--accent-soft); border-color: var(--accent); }
 .keybind-settings::part(conflict) { flex-basis: 100%; display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--warn); }
 `;

@@ -4,7 +4,7 @@ import { generate } from "../../core/generate";
 import { createRng } from "../../core/rng";
 import { Registry } from "../../core/registry";
 import { Session } from "../../core/session";
-import { TechniqueHost, applyStep, findPracticePosition, firstStep, findStep, rateByTechniques } from "../../core/techniques";
+import { TechniqueHost, applyStep, findPracticePosition, firstStep, findStep, findStepAt, rateByTechniques } from "../../core/techniques";
 import { bit, countSolutions, solveLevel } from "../../lib/grid-kit/csp";
 import { cellName, type Focus } from "../../lib/grid-kit/names";
 import {
@@ -240,3 +240,41 @@ test("solve() reaches a solved state", async () => {
   expect("board" in ans && isSolved(p, ans.board)).toBe(true);
   expect(isSolved(p, kakuro.init(p))).toBe(false);
 });
+
+test("an aimed step at a cell changes only cells of one run holding it, the across run's when it has one", async () => {
+  let seen = 0, across = 0;
+  for (const difficulty of LEVELS) {
+    const p = await gen({ width: 6, height: 6, difficulty }, `aimed-${difficulty}`);
+    const g = geometry(p);
+    let st = kakuro.init(p);
+    for (let i = 0; i < 40; i++) {
+      for (const c of g.whites) {
+        const holding = g.runsOf[c]!.map((r) => new Set(g.runs[r]!.cells));
+        for (const t of kakuroTechniques) {
+          const step = findStepAt(kakuro, t, p, st, c);
+          if (!step) continue;
+          const cells = (step.actions as KakuroAction[]).flatMap((a) => (a.type === "narrow" ? a.cells : []));
+          expect(cells.length).toBeGreaterThan(0);
+          expect(holding.some((run) => cells.every((x) => run.has(x))) || cells.every((x) => x === c)).toBe(true);
+          if (!/across|down/.test(step.message)) continue;
+          let rowHas = false;
+          t.instances(p, st, (s) => {
+            const f = s.focus as Focus;
+            const mine = (s.actions as KakuroAction[]).some((a) => a.type === "narrow" && a.cells.includes(c)) || f.because.includes(c);
+            if (mine && /the across/.test(s.message)) rowHas = true;
+          });
+          if (rowHas) {
+            expect(step.message).toContain("the across");
+            across++;
+          }
+          seen++;
+        }
+      }
+      const hit = firstStep(kakuro, kakuroTechniques, p, st);
+      if (!hit) break;
+      st = applyStep(kakuro, p, st, hit.step);
+    }
+  }
+  expect(seen).toBeGreaterThan(50);
+  expect(across).toBeGreaterThan(0);
+}, 60000);

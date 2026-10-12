@@ -7,7 +7,14 @@ import { modelOf } from "./engine/model";
 import { constraintTypes } from "./engine/registry";
 import type { ConstraintType } from "./engine/types";
 import { latinDefs } from "./defs";
-import { boardGrid, constraintFeature, type GridAction, type GridState, type HintFocus, type LatinPuzzle } from "./puzzle";
+import { boardGrid, constraintFeature, reduce, type GridAction, type GridState, type HintFocus, type LatinPuzzle } from "./puzzle";
+
+/** True if `step` changes the board. */
+function changes(p: LatinPuzzle, s: GridState, step: CoreStep<GridAction>): boolean {
+  let next = s;
+  for (const a of step.actions) next = reduce(p, next, a);
+  return !Object.is(next, s);
+}
 
 export type LatinTechnique = Technique<LatinPuzzle, GridState, GridAction>;
 
@@ -46,6 +53,18 @@ export function latinTechnique(spec: LatinTechniqueSpec): LatinTechnique {
     description: spec.description,
     instances(p, s, visit) {
       spec.instances(boardGrid(p, s), p, (es) => visit(toStep(es)));
+    },
+    cellAt(p, s, t) {
+      if (typeof t !== "number") return null;
+      let hit: CoreStep<GridAction> | null = null;
+      spec.instances(boardGrid(p, s), p, (es) => {
+        const place = es.place.filter(([c]) => c === t), eliminate = es.eliminate.filter(([c]) => c === t);
+        if (!place.length && !eliminate.length) return false;
+        const step = toStep({ ...es, place, eliminate });
+        if (changes(p, s, step)) hit = step;
+        return hit !== null;
+      });
+      return hit;
     },
     practice: spec.practice ? { params: spec.practice } : undefined,
   };

@@ -47,16 +47,26 @@ const plural = (n: number) => `${n} crossing${n === 1 ? "" : "s"}`;
 type Visit = (step: Step<UntangleAction>) => boolean | void;
 type Finder = (p: UntanglePuzzle, s: UntangleState, visit: Visit, only?: number) => void;
 
-function technique(def: Omit<UntangleTechnique, "instances" | "findAt" | "puzzles">, find: Finder): UntangleTechnique {
+const pointOf = (t: unknown): number | null => (t && typeof (t as UntangleTarget).point === "number" ? (t as UntangleTarget).point : null);
+
+/** Aimed at a point, every instance moves that point, so one instance is already only that spot. */
+function technique(def: Omit<UntangleTechnique, "instances" | "findAt" | "instancesAt" | "cellAt" | "puzzles">, find: Finder): UntangleTechnique {
+  const first = (p: UntanglePuzzle, s: UntangleState, t: unknown): Step<UntangleAction> | null => {
+    const v = pointOf(t);
+    let hit: Step<UntangleAction> | null = null;
+    if (v !== null) find(p, s, (step) => { hit = step; return true; }, v);
+    return hit;
+  };
   return {
     ...def,
     puzzles: [untangle],
     instances: (p, s, visit) => find(p, s, visit),
-    findAt(p, s, t) {
-      let hit: Step<UntangleAction> | null = null;
-      find(p, s, (step) => { hit = step; return true; }, (t as UntangleTarget).point);
-      return hit;
+    findAt: first,
+    instancesAt: (p, s, t, visit) => {
+      const v = pointOf(t);
+      if (v !== null) find(p, s, visit, v);
     },
+    cellAt: first,
   };
 }
 

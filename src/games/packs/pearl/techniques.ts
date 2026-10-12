@@ -72,15 +72,32 @@ function outcome(p: PearlPuzzle, lines: readonly number[], crosses: readonly num
 
 type Make = (p: PearlPuzzle, hit: Hit) => Step<PearlAction>;
 
-function technique(def: Omit<PearlTechnique, "instances" | "findAt" | "puzzles">, kinds: readonly StepKind[], make: Make): PearlTechnique {
+const asTarget = (t: unknown): PearlTarget | null => (t && typeof (t as PearlTarget).cell === "number" ? t as PearlTarget : null);
+
+/** Hits at `target`, those changing an edge of the pointed cell first, each group in scan order. */
+function hitsAt(p: PearlPuzzle, s: PearlState, kinds: readonly StepKind[], target: PearlTarget): Hit[] {
+  const g = edgeGrid(p.w, p.h);
+  const first: Hit[] = [], later: Hit[] = [];
+  each(p, s, kinds, (hit) => {
+    const own = [...hit.lines, ...hit.crosses].some((e) => g.ea[e] === target.cell || g.eb[e] === target.cell);
+    (own ? first : later).push(hit);
+  }, target);
+  return [...first, ...later];
+}
+
+function technique(def: Omit<PearlTechnique, "instances" | "findAt" | "instancesAt" | "puzzles">, kinds: readonly StepKind[], make: Make): PearlTechnique {
   return {
     ...def,
     puzzles: [pearl],
     instances: (p, s, visit) => each(p, s, kinds, (hit) => visit(make(p, hit)) === true),
     findAt: (p, s, t) => {
-      let found: Step<PearlAction> | null = null;
-      each(p, s, kinds, (hit) => { found = make(p, hit); return true; }, t as PearlTarget);
-      return found;
+      const target = asTarget(t);
+      const hit = target && hitsAt(p, s, kinds, target)[0];
+      return hit ? make(p, hit) : null;
+    },
+    instancesAt: (p, s, t, visit) => {
+      const target = asTarget(t);
+      if (target) for (const hit of hitsAt(p, s, kinds, target)) if (visit(make(p, hit)) === true) return;
     },
   };
 }

@@ -11,7 +11,7 @@ declare module "./storage" {
     [k: `swapButtons:${string}`]: boolean;
     /** Held while clicking: the board's other action (the hold / right-click one). */
     holdOther: HoldKey;
-    /** Held while pointing: a technique instead of a mark (see the tools strip). */
+    /** Held while clicking: the picked (or last picked) technique is cast instead of a mark. */
     holdSkill: HoldKey;
   }
 }

@@ -1,7 +1,7 @@
 import type { Step, Technique } from "../../core/types";
 import { LINE, NO, UNK, edgeGrid } from "../../lib/edges";
 import { tracks, CROSS, EMPTY, NONE, TRACK, cellList, cellName, countName, edgeList, type TracksAction, type TracksFocus, type TracksPuzzle, type TracksState } from "./logic";
-import { closeObvious, freshKnowledge, scanSteps, sides, target, type Knowledge, type Step as SolverStep, type StepKind } from "./solver";
+import { closeObvious, countCells, freshKnowledge, scanSteps, sides, target, type Knowledge, type Step as SolverStep, type StepKind } from "./solver";
 
 type TracksTechnique = Technique<TracksPuzzle, TracksState, TracksAction>;
 
@@ -55,6 +55,15 @@ const size = (ch: Changes) => ch.lines.length + ch.crosses.length + ch.tracks.le
 
 type Hit = { raw: SolverStep; ch: Changes };
 
+const lineKinds: readonly StepKind[] = ["count-full", "count-needs", "neighbours"];
+
+/** The count (a column below w, else a row) a line-based step reasons about, if `c` is in that line. */
+function lineOf(p: TracksPuzzle, st: SolverStep, c: number): number | null {
+  if (!lineKinds.includes(st.kind) || st.count === undefined) return null;
+  return countCells(p, st.count).includes(c) ? st.count : null;
+}
+
+/** The hits in scan order, stopping when `visit` returns true; with a target, only hits that reason from or touch the target's cell. */
 function each(p: TracksPuzzle, s: TracksState, kinds: readonly StepKind[], visit: (hit: Hit) => boolean | void, target?: TracksTarget): void {
   const k = knowledge(p, s);
   if (!k) return;
@@ -66,6 +75,28 @@ function each(p: TracksPuzzle, s: TracksState, kinds: readonly StepKind[], visit
     const ch = changes(p, s, raw);
     return size(ch) > 0 && visit({ raw, ch }) === true;
   });
+}
+
+const asTarget = (t: unknown): TracksTarget | null => (t && typeof (t as TracksTarget).cell === "number" ? t as TracksTarget : null);
+
+/**
+ * Hits at `target`: those changing the pointed cell or one of its edges first, then the rest, each
+ * group in scan order except that when the group opens with a column's hit holding the cell, the
+ * first row's hit holding it moves ahead of it.
+ */
+function hitsAt(p: TracksPuzzle, s: TracksState, kinds: readonly StepKind[], target: TracksTarget): Hit[] {
+  const g = edgeGrid(p.w, p.h);
+  const c = target.cell;
+  const own = (h: Hit) => h.ch.tracks.includes(c) || h.ch.empties.includes(c) || [...h.ch.lines, ...h.ch.crosses].some((e) => g.ea[e] === c || g.eb[e] === c);
+  const first: Hit[] = [], later: Hit[] = [];
+  each(p, s, kinds, (hit) => { (own(hit) ? first : later).push(hit); }, target);
+  const rowsFirst = (group: Hit[]): Hit[] => {
+    const lead = group[0] && lineOf(p, group[0].raw, c);
+    if (lead === null || lead === undefined || lead >= p.w) return group;
+    const row = group.findIndex((h) => { const l = lineOf(p, h.raw, c); return l !== null && l >= p.w; });
+    return row < 0 ? group : [group[row]!, ...group.filter((_, i) => i !== row)];
+  };
+  return [...rowsFirst(first), ...rowsFirst(later)];
 }
 
 function outcome(p: TracksPuzzle, ch: Changes): string {
@@ -91,15 +122,19 @@ function build(raw: SolverStep, ch: Changes, message: string, nudge: string, nud
 
 type Make = (p: TracksPuzzle, hit: Hit) => Step<TracksAction>;
 
-function technique(def: Omit<TracksTechnique, "instances" | "findAt" | "puzzles">, kinds: readonly StepKind[], make: Make): TracksTechnique {
+function technique(def: Omit<TracksTechnique, "instances" | "findAt" | "instancesAt" | "puzzles">, kinds: readonly StepKind[], make: Make): TracksTechnique {
   return {
     ...def,
     puzzles: [tracks],
     instances: (p, s, visit) => each(p, s, kinds, (hit) => visit(make(p, hit)) === true),
     findAt: (p, s, t) => {
-      let found: Step<TracksAction> | null = null;
-      each(p, s, kinds, (hit) => { found = make(p, hit); return true; }, t as TracksTarget);
-      return found;
+      const target = asTarget(t);
+      const hit = target && hitsAt(p, s, kinds, target)[0];
+      return hit ? make(p, hit) : null;
+    },
+    instancesAt: (p, s, t, visit) => {
+      const target = asTarget(t);
+      if (target) for (const hit of hitsAt(p, s, kinds, target)) if (visit(make(p, hit)) === true) return;
     },
   };
 }

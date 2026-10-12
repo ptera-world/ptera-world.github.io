@@ -1,10 +1,11 @@
 import { expect, test } from "bun:test";
+import type { AnyPuzzleDef, Step, Technique } from "../../core/types";
 import { generate } from "../../core/generate";
 import { Registry } from "../../core/registry";
 import { createRng } from "../../core/rng";
 import { resolve } from "../../core/schema";
 import { Session } from "../../core/session";
-import { TechniqueHost, applyStep, findPracticePosition, findStep, firstStep, isPartOfStep } from "../../core/techniques";
+import { TechniqueHost, applyStep, findPracticePosition, findStep, firstStep, isPartOfStep, stepsAt } from "../../core/techniques";
 import { keen, sudoku, towers, unequal } from "./defs";
 import { bit, digits } from "./engine/bits";
 import { grade, gridFrom, logicalSolve } from "./engine/human";
@@ -296,3 +297,46 @@ test("every cell a hint names is highlighted, at both hint levels", async () => 
     }
   }
 }, 60_000);
+
+/** Leaf values that differ from `a` in `b`, keyed by JSON path. */
+function leafDiff(a: unknown, b: unknown, path = "", out = new Map<string, string>()): Map<string, string> {
+  if (Object.is(a, b)) return out;
+  if (a && b && typeof a === "object" && typeof b === "object") {
+    for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) leafDiff((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k], `${path}/${k}`, out);
+    return out;
+  }
+  const v = JSON.stringify(b);
+  if (JSON.stringify(a) !== v) out.set(path, v ?? "undefined");
+  return out;
+}
+
+/** findAt is instancesAt's first step, every instance at a target changes the board, and cellAt changes part of what one of them does. */
+function checkAimed(def: AnyPuzzleDef, list: readonly Technique[], p: unknown, s: unknown, targets: readonly unknown[]): void {
+  for (const t of list) {
+    if (!t.findAt && !t.cellAt) continue;
+    for (const target of targets) {
+      const all: Step[] = [];
+      if (t.instancesAt) t.instancesAt(p, s, target, (st) => { all.push(st); });
+      else all.push(...stepsAt(def, t, p, s, target));
+      if (t.findAt) expect(t.findAt(p, s, target)).toEqual(all[0] ?? null);
+      const diffs = all.map((st) => leafDiff(s, applyStep(def, p, s, st)));
+      for (const d of diffs) expect(d.size).toBeGreaterThan(0);
+      const cell = t.cellAt?.(p, s, target);
+      if (!cell) continue;
+      const d = leafDiff(s, applyStep(def, p, s, cell));
+      expect(d.size > 0 && diffs.some((x) => [...d].every(([k, v]) => x.get(k) === v))).toBe(true);
+    }
+  }
+}
+
+test("aimed finds: cellAt changes part of what an instance at that cell does", async () => {
+  const p = await generate(sudoku, { difficulty: "expert" }, "aim", sig()) as LatinPuzzle;
+  const list = latinTechniques().filter((t) => t.puzzles.some((r) => r.id === sudoku.id) && (t.requires ?? []).every((r) => featuresOf(p).includes(r))).sort((a, b) => a.level - b.level);
+  let s = initState(p);
+  for (let guard = 0; guard < 500 && !sudoku.isSolved(p, s); guard++) {
+    if (guard % 10 === 0) checkAimed(sudoku, list, p, s, Array.from({ length: s.values.length }, (_, i) => i).filter((c) => c % 4 === guard % 4));
+    const hit = firstStep(sudoku, list, p, s);
+    if (!hit) break;
+    s = applyStep(sudoku, p, s, hit.step);
+  }
+}, 300000);

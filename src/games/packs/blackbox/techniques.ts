@@ -1,4 +1,4 @@
-import type { Technique } from "../../core/types";
+import type { Step, Technique } from "../../core/types";
 import { blackbox, cellList, type BlackboxAction, type BlackboxFocus, type BlackboxPuzzle, type BlackboxState } from "./logic";
 import { families, type Evidence, type Families } from "./reason";
 
@@ -55,6 +55,18 @@ const fired = (s: BlackboxState) => s.shots.flatMap((v, e) => (v !== -1 ? [e] : 
 
 type CellTarget = { cell: number };
 
+const cellOf = (t: unknown): number | null => (t && typeof (t as CellTarget).cell === "number" ? (t as CellTarget).cell : null);
+
+/** Aimed finds for a technique that decides cells one at a time: the pointed cell's step, its only instance there. */
+function aimed(at: (p: BlackboxPuzzle, s: BlackboxState, only: number) => Step<BlackboxAction> | null): Pick<BlackboxTechnique, "findAt" | "instancesAt" | "cellAt"> {
+  const find = (p: BlackboxPuzzle, s: BlackboxState, t: unknown) => { const c = cellOf(t); return c === null ? null : at(p, s, c); };
+  return {
+    findAt: find,
+    instancesAt: (p, s, t, visit) => { const step = find(p, s, t); if (step) visit(step); },
+    cellAt: find,
+  };
+}
+
 export const certainBall: BlackboxTechnique = {
   id: "blackbox.certain-ball",
   name: "ball for sure",
@@ -65,7 +77,7 @@ export const certainBall: BlackboxTechnique = {
     const step = certainBallAt(p, s);
     if (step) visit(step);
   },
-  findAt: (p, s, t) => certainBallAt(p, s, (t as CellTarget).cell),
+  ...aimed(certainBallAt),
 };
 
 function certainBallAt(p: BlackboxPuzzle, s: BlackboxState, only?: number) {
@@ -92,7 +104,7 @@ export const certainEmpty: BlackboxTechnique = {
     const step = certainEmptyAt(p, s);
     if (step) visit(step);
   },
-  findAt: (p, s, t) => certainEmptyAt(p, s, (t as CellTarget).cell),
+  ...aimed(certainEmptyAt),
 };
 
 function certainEmptyAt(p: BlackboxPuzzle, s: BlackboxState, only?: number) {

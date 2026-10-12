@@ -5,7 +5,7 @@ import type { Registry } from "../../core/registry";
 import { randomSeed } from "../../core/rng";
 import { canonical, fromQuery, resolve, toQuery, type Schema, type Values } from "../../core/schema";
 import type { Origin, Session, SharedHistory, Snapshot } from "../../core/session";
-import { PluginHostCtor, SessionCtor, TechniqueHostCtor, aimable, applyStep, colorOf, findStepAt, rememberPosition, cycleLabels, findPracticePosition, generate, hintFrom, isPartOfStep, stepsLeft, stepsOf, loadPluginConfig, onBoardPrefsChange, onThemeChange } from "./engine";
+import { PluginHostCtor, SessionCtor, TechniqueHostCtor, aimable, colorOf, rememberPosition, cycleLabels, findPracticePosition, generate, hintFrom, isPartOfStep, stepsLeft, stepsOf, loadPluginConfig, onBoardPrefsChange, onThemeChange } from "./engine";
 import { packJson, unpackJson, type Patch } from "../../core/patch";
 
 /** What a share link carries beyond the puzzle itself. */
@@ -16,7 +16,7 @@ interface Shared {
   history?: SharedHistory;
 }
 import { namespace, prefs } from "../../core/storage";
-import { GAME_BINDINGS, HERE_BINDINGS, HOWTO_TOGGLE, HOWTO_WIDGET, SHELL_BINDINGS, command, pluginToggle, presetCommand, techniqueCommand, widgetToggle, type ShellContext } from "./names";
+import { GAME_BINDINGS, HERE_BINDINGS, HOWTO_TOGGLE, HOWTO_WIDGET, SHELL_BINDINGS, SKILL_BINDINGS, WATCH_WIDGET, command, pluginToggle, presetCommand, techniqueCommand, widgetToggle, type ShellContext } from "./names";
 import { bindCommands } from "../../core/commands";
 import type { TechniqueHost } from "../../core/techniques";
 import type { Step, AnyPuzzleDef, CommandContext, AnyView, AnyWidget, CommandDef, Format, Hint, Technique, ViewHandle, SlotId } from "../../core/types";
@@ -35,7 +35,9 @@ import { SAVE_PREFIX, INDEX_KEY, finished, findSession, listSessions, loadSessio
 export const zoomTakeover = (): boolean => prefs.get("zoomTakeover", false);
 
 export { HOLD_MS } from "../../core/gestures";
-import { HOLD_MS, buttonsSwapped, held, holdSkillKey, setButtonsSwapped } from "../../core/gestures";
+import { HOLD_MS, buttonsSwapped, setButtonsSwapped } from "../../core/gestures";
+import { Casting } from "./casting";
+import { inPalette, noteProgress, skillPrefs } from "./skill-prefs";
 import { onModifierHold } from "keybinds";
 
 /** Serialized text, or null if the format can't write or throws on this puzzle. */
@@ -96,6 +98,10 @@ export class Shell {
     aim: new HookEvent<{ target: unknown }>("aim"),
     /** The technique picked to cast changed (null: none). */
     armed: new HookEvent<{ technique: Technique | null }>("armed"),
+    /** Which techniques the palette shows, or their progress or pins, may have changed. */
+    palette: new HookEvent<void>("palette"),
+    /** The technique whose demo plays beside the board changed (null: none). */
+    watch: new HookEvent<{ technique: Technique | null }>("watch"),
   };
 
   session: Session<any, any, any, any> | null = null;
@@ -111,6 +117,11 @@ export class Shell {
   private reloading = false;
   host: PluginHost | null = null;
   techniques: TechniqueHost | null = null;
+  readonly cast: Casting;
+  /** The element the board view mounts in. */
+  get boardEl(): HTMLElement {
+    return this.els.boardbox;
+  }
   readonly hub: CommandHub;
   view: { def: AnyView; handle: ViewHandle } | null = null;
   private sessionCleanup: (() => void)[] = [];
@@ -132,6 +143,7 @@ export class Shell {
   constructor(readonly root: HTMLElement, readonly registry: Registry, readonly modResults: ModLoadResult[], readonly packs: LoadedPack[] = [], readonly safe = false) {
     this.els = this.buildDom();
     this.hub = new CommandHub(root);
+    this.cast = new Casting(this);
     this.hub.addContext(() => this.context());
     for (const w of builtinWidgets(this)) registry.widget(w);
   }
@@ -190,7 +202,10 @@ export class Shell {
     this.rearmHold();
     this.installZoom();
     this.installLongPress();
-    this.installCasting(signal);
+    this.cast.install(signal);
+    this.hooks.palette.tap(() => this.hub.refresh());
+    this.hooks.zoom.tap(() => this.cast.kept.schedule());
+    this.els.scroller.addEventListener("scroll", () => this.cast.kept.schedule(), { passive: true, signal });
     let aimRaf = 0;
     this.els.boardbox.addEventListener("pointermove", () => {
       cancelAnimationFrame(aimRaf);
@@ -456,8 +471,9 @@ export class Shell {
     this.session = session;
     this.openId = id;
     this.aim = undefined;
-    this.armed = null;
+    this.watching = null;
     this.techniques = new TechniqueHostCtor(this.registry, session);
+    this.cast.reset();
     const o = session.origin;
     const practiced = o.kind === "practice" ? this.registry.techniquesFor(session.def).find((t) => t.id === o.technique) : undefined;
     this.lesson = o.kind === "practice" && practiced ? stepsOf(session.def, practiced, session.puzzle, o.start) : [];
@@ -492,6 +508,12 @@ export class Shell {
         this.syncSolvedStatus();
         this.hub.syncContext();
         this.checkPractice(ctx);
+        this.cast.kept.schedule();
+      }, { owner: "shell" }),
+      session.hooks.fx.tap((e) => {
+        if (e.kind !== "practice" || !e.done || session.origin.kind !== "practice") return;
+        const t = this.techniques?.list.find((x) => x.id === (session.origin as { technique: string }).technique);
+        if (t) { noteProgress(t, (p) => ({ ...p, practiced: true })); this.hooks.palette.call(); }
       }, { owner: "shell" }),
       session.hooks.solved.tap(() => {
         this.syncSolvedStatus();
@@ -508,7 +530,7 @@ export class Shell {
         return null;
       }, { owner: "shell", priority: -100 }),
       // while a technique is being cast, presses on the board aim it instead of marking
-      session.hooks.action.tap((a, { source }) => (a && source.kind === "player" && this.castPress ? null : a), { owner: "shell", priority: -90 }),
+      session.hooks.action.tap((a, { source }) => (a && source.kind === "player" && this.cast.blockPress ? null : a), { owner: "shell", priority: -90 }),
     );
     this.unlocked = false;
     this.wasLost = session.lost;
@@ -735,7 +757,7 @@ export class Shell {
   showHowTo(): void {
     const w = this.widgets.find((m) => m.def.id === HOWTO_WIDGET);
     if (w) w.el.dispatchEvent(new CustomEvent(HOWTO_TOGGLE));
-    else this.setPlacement(HOWTO_WIDGET, "overlay");
+    else this.setPlacement(HOWTO_WIDGET, "side");
   }
 
   openTab(id: string): void {
@@ -790,6 +812,7 @@ export class Shell {
     e.boardbox.style.width = `${Math.round(fitW * scale)}px`;
     e.boardbox.style.height = `${Math.round(fitH * scale)}px`;
     e.boardwrap.toggleAttribute("data-zoomed", scale > 1.001);
+    this.cast.kept.schedule();
   }
 
   /** Board-tagged commands, as any surface shows them. */
@@ -924,15 +947,6 @@ export class Shell {
           this.saveNow();
         },
         "shell.pause": () => this.togglePause(),
-        "shell.skill-next": () => {
-          this.updateAim();
-          const here = this.skillsHere();
-          if (!here.length) { this.setStatus("no technique applies here"); return; }
-          const i = here.findIndex((t) => t.id === this.armed?.t.id);
-          this.arm(here[(i + 1) % here.length]!);
-        },
-        "shell.skill-cast": () => this.castAt(false),
-        "shell.skill-drop": () => this.arm(null),
         "shell.swap-buttons": () => { setButtonsSwapped(def.id, !buttonsSwapped(def.id)); s.hooks.refresh.call(); },
         "shell.new": () => this.newGameSame(),
       }, {
@@ -947,9 +961,6 @@ export class Shell {
         "shell.apply-hint": { when: (c) => !c.finished },
         "shell.reveal": { danger: true, when: (c) => !c.finished && !!def.solve, confirm: () => "show the whole solution?" },
         "shell.pause": { when: (c) => !c.finished, checked: () => s.paused },
-        "shell.skill-next": { when: () => !!this.techniques?.list.length },
-        "shell.skill-cast": { when: () => !!this.activeSkill() },
-        "shell.skill-drop": { when: () => !!this.armed },
         "shell.swap-buttons": { menu: "board", when: () => !!this.view?.handle.gestures?.secondaryClick, checked: () => buttonsSwapped(def.id) },
         "shell.new": { danger: progress, confirm: confirmNew },
       }),
@@ -980,164 +991,109 @@ export class Shell {
     this.hooks.aim.call({ target: t });
   }
 
-  /** The step a technique would make: where the player points when it can be aimed, else anywhere. */
-  skillStep(t: Technique): { step: Step; aimed: boolean } | null {
-    const s = this.session;
-    if (!s) return null;
-    if (aimable(s.def, t)) {
-      const at = findStepAt(s.def, t, s.puzzle, s.state, this.aim);
-      return at ? { step: at, aimed: true } : null;
+
+  /** The technique whose demo plays beside the board, if any. */
+  watching: Technique | null = null;
+
+  /** Play `t`'s demo beside the board (null: stop), placing the demo widget if it is hidden. */
+  watch(t: Technique | null): void {
+    this.watching = t;
+    if (t) {
+      const shown = inPalette(t);
+      noteProgress(t, (p) => ({ ...p, watched: true }));
+      if (inPalette(t) !== shown) this.hooks.palette.call();
+      if ((this.layout[WATCH_WIDGET]?.slot ?? "off") === "off") this.setPlacement(WATCH_WIDGET, "side");
     }
-    const any = this.techniques?.find(t);
-    return any ? { step: any, aimed: false } : null;
+    this.hooks.watch.call({ technique: t });
   }
 
-  /** The technique the player picked on the strip to cast; `sticky` keeps it after a cast. */
-  armed: { t: Technique; sticky: boolean } | null = null;
-  /** The "technique" key is held: point to preview what applies there; `cycle` steps through them. */
-  private skillHeld = { on: false, cycle: 0 };
-  /** The board press in progress began while a technique was being cast: its marks are not made. */
-  private castPress = false;
-  /** Touch: the spot the last tap previewed, so a second tap there casts. */
-  private touchAim: string | null = null;
-
-  /** The technique a click / tap on the board casts right now, if any. */
-  activeSkill(): Technique | null {
-    if (this.armed) return this.armed.t;
-    if (!this.skillHeld.on) return null;
-    const here = this.skillsHere();
-    return here.length ? here[this.skillHeld.cycle % here.length]! : null;
+  /** Keys the open game's own commands and the shell's fixed ones use, lowercased. */
+  private takenKeys(): Set<string> {
+    const out = new Set<string>();
+    const add = (keys: readonly string[] | undefined) => { for (const k of keys ?? []) out.add(k.toLowerCase()); };
+    for (const b of [...Object.values(SHELL_BINDINGS), ...Object.values(GAME_BINDINGS)] as { keys?: readonly string[] }[]) add(b.keys);
+    for (const c of this.view?.handle.commands ?? []) add(c.keys);
+    for (const c of this.host?.commands() ?? []) add(c.keys);
+    return out;
   }
 
-  /** Pick (or drop, if it is the armed one) a technique to cast with the next click / tap. */
-  arm(t: Technique | null, sticky = false): void {
-    this.armed = t && !(this.armed?.t.id === t.id && this.armed.sticky === sticky) ? { t, sticky } : null;
-    this.touchAim = null;
-    this.hooks.armed.call({ technique: this.armed?.t ?? null });
-    this.refreshCast();
-  }
-
-  /** Keep the preview in step with what a click would cast at the aim. */
-  private refreshCast(): void {
-    const t = this.activeSkill();
-    if (t) this.previewSkill(t);
-    else if (this.previewing) this.previewSkill(null);
-    this.root.toggleAttribute("data-casting", !!t || !!this.armed);
-  }
-
-  /** A press on the board while casting: mouse casts at once; touch previews, then casts on a second tap at the same spot. */
-  private castAt(touch: boolean): void {
-    const t = this.activeSkill();
-    if (!t) { this.setStatus("no technique applies here"); return; }
-    this.updateAim();
-    const key = JSON.stringify(this.aim);
-    if (touch && this.touchAim !== key) {
-      this.touchAim = key;
-      this.refreshCast();
-      return;
-    }
-    this.touchAim = null;
-    if (!this.skillStep(t)) { this.setStatus(`no ${t.name} here`); return; }
-    this.applySkill(t);
-    if (this.armed && !this.armed.sticky) this.arm(null);
-    else this.refreshCast();
-  }
-
-  /** Mouse, keyboard and touch wiring for casting; bound to the shell's lifetime. */
-  private installCasting(signal: AbortSignal): void {
-    const box = this.els.boardbox;
-    box.addEventListener("pointerdown", (e) => { this.castPress = !!this.armed || held(e, holdSkillKey()); }, { capture: true, signal });
-    window.addEventListener("pointerup", () => { setTimeout(() => { this.castPress = false; }, 0); }, { capture: true, signal });
-    window.addEventListener("pointercancel", () => { this.castPress = false; }, { capture: true, signal });
-    box.addEventListener("pointerup", (e) => {
-      if (!this.castPress || e.button !== 0) return;
-      this.castAt(e.pointerType === "touch");
-    }, { capture: true, signal });
-    const sync = (e: KeyboardEvent | MouseEvent) => {
-      const on = held(e, holdSkillKey());
-      if (on === this.skillHeld.on) return;
-      this.skillHeld = { on, cycle: 0 };
-      this.refreshCast();
-    };
-    document.addEventListener("keydown", (e) => {
-      if (this.skillHeld.on && e.key === "Shift") { this.skillHeld.cycle++; this.refreshCast(); }
-      sync(e);
-      if (this.skillHeld.on && e.key === "Alt") e.preventDefault();
-    }, { signal });
-    document.addEventListener("keyup", (e) => {
-      if (e.key === "Alt" && this.activeSkill()) e.preventDefault();
-      sync(e);
-    }, { signal });
-    box.addEventListener("pointermove", sync, { signal });
-    window.addEventListener("blur", () => { this.skillHeld = { on: false, cycle: 0 }; this.refreshCast(); }, { signal });
-    this.hooks.aim.tap(() => { if (this.activeSkill()) this.refreshCast(); });
-  }
-
-  /** Show what a technique would do without doing it; null clears. */
-  previewSkill(t: Technique | null): void {
-    const s = this.session;
-    if (!s) return;
-    const hit = t ? this.skillStep(t) : null;
-    if (!t || !hit) {
-      if (this.previewing) s.showHint(null);
-      this.previewing = false;
-      this.view?.handle.preview?.(null);
-      if (t) this.setStatus(`no ${t.name} ${this.aim !== undefined && aimable(s.def, t) ? "here" : "right now"}`);
-      return;
-    }
-    const hint = hintFrom(t, hit.step, 2);
-    this.previewing = true;
-    s.showHint(hint as Hint<any>);
-    this.view?.handle.preview?.(applyStep(s.def, s.puzzle, s.state, hit.step));
-    this.setStatus(hint.message);
-  }
-
-  private previewing = false;
-
-  /** Apply a technique where the player points (or anywhere it applies) as one undo step. */
-  applySkill(t: Technique): void {
-    const s = this.session;
-    const hit = t && this.skillStep(t);
-    this.previewSkill(null);
-    if (!s || !hit) { this.setStatus(`no ${t.name} right now`); return; }
-    const source = { kind: "technique" as const, technique: t.id, name: t.name, step: hit.step, auto: false };
-    s.batch(() => { for (const a of hit.step.actions) s.dispatch(a, { source }); });
-  }
-
-  /** Aimable techniques that have a step at what the player points at right now. */
-  skillsHere(): Technique[] {
-    const s = this.session;
-    const target = this.aim;
-    if (!s || target === undefined || target === null) return [];
-    return (this.techniques?.list ?? []).filter((t) => findStepAt(s.def, t, s.puzzle, s.state, target));
+  /** The first of `candidates` no other command of this game uses, as a one-key default (or none). */
+  private freeKey(candidates: readonly string[], taken: Set<string>): string[] {
+    const k = candidates.find((c) => !taken.has(c));
+    if (!k) return [];
+    taken.add(k);
+    return [k];
   }
 
   private techniqueCommands(): CommandDef[] {
     const th = this.techniques;
     const s = this.session;
     if (!th || !s) return [];
+    const cast = this.cast;
+    const taken = this.takenKeys();
     const anyAimable = th.list.some((t) => aimable(s.def, t));
-    const here: CommandDef[] = anyAimable ? bindCommands(HERE_BINDINGS, {
+    const pickerKey = this.freeKey(["e", "f", "semicolon"], taken);
+    const skills = bindCommands(SKILL_BINDINGS, {
+      "shell.skill-next": () => cast.pickNextHere(),
+      "shell.skill-cast": () => {
+        const t = cast.active() ?? cast.armed;
+        if (!t) { this.setStatus("no technique picked yet"); return; }
+        this.updateAim();
+        cast.apply(t);
+      },
+      "shell.skill-drop": () => cast.pick(null),
+      "shell.skill-step-next": () => cast.step(1),
+      "shell.skill-step-prev": () => cast.step(-1),
+      "shell.skill-swap": () => cast.swap(),
+      "shell.skill-picker": (_ctx, ev) => {
+        const e = ev as Event | undefined;
+        if (e && (e.type === "keyup" || e.type === "mouseup")) { cast.releasePicker(); return; }
+        if (e && "repeat" in e && (e as KeyboardEvent).repeat) return;
+        const m = e instanceof MouseEvent ? { x: e.clientX, y: e.clientY } : undefined;
+        cast.openPicker(m);
+      },
+      "shell.skill-watch": () => {
+        const t = cast.armed;
+        if (!t) { this.setStatus("no technique picked yet"); return; }
+        this.watch(this.watching?.id === t.id ? null : t);
+      },
+    }, {
+      "shell.skill-next": { when: () => !!th.list.length },
+      "shell.skill-cast": { menu: "board", when: () => !!th.list.length },
+      "shell.skill-drop": { when: () => !!cast.armed },
+      "shell.skill-step-next": { keys: this.freeKey(["bracketright", "period"], taken) },
+      "shell.skill-step-prev": { keys: this.freeKey(["bracketleft", "comma"], taken) },
+      "shell.skill-swap": { menu: "board", keys: this.freeKey(["q", "backquote"], taken) },
+      "shell.skill-picker": { menu: "board", keys: pickerKey.flatMap((k) => [k, `${k}:up`]), mouse: [] },
+      "shell.skill-watch": { menu: "board", keys: this.freeKey(["i", "quote"], taken) },
+    });
+    const digits = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"].filter((d) => !taken.has(d));
+    const palette = cast.palette();
+    const here: CommandDef[] = anyAimable && skillPrefs.herePopup() ? bindCommands(HERE_BINDINGS, {
       "technique.here": (_ctx, ev) => {
-        const list = this.skillsHere();
+        const list = cast.here();
         if (!list.length) { this.setStatus("no technique applies here right now"); return; }
         const pe = ev as MouseEvent | undefined;
         const x = pe?.clientX ?? innerWidth / 2, y = pe?.clientY ?? innerHeight / 2;
-        const items = list.map((t) => ({ cmd: { id: techniqueCommand("here", t), label: t.name, description: t.description, run: () => this.applySkill(t) } as CommandDef, enabled: true, keys: [] as string[], preview: (on: boolean) => this.previewSkill(on ? t : null) }));
-        void popup("tiles", x, y, items, (id) => { const t = list.find((x) => techniqueCommand("here", x) === id); if (t) this.applySkill(t); });
+        const items = list.map((t) => ({ cmd: { id: techniqueCommand("here", t), label: t.name, description: t.description, run: () => cast.apply(t) } as CommandDef, enabled: true, keys: [] as string[], preview: (on: boolean) => cast.preview(on ? t : null) }));
+        void popup("tiles", x, y, items, (id) => { const t = list.find((x) => techniqueCommand("here", x) === id); if (t) cast.apply(t); });
       },
     }, { "technique.here": { menu: "board" } }) : [];
-    return [...here, ...th.list.flatMap((t): CommandDef[] => [
-      ...(aimable(s.def, t) ? [{ id: techniqueCommand("here", t), label: `${t.name} here`, category: "techniques", description: `apply ${t.name} to what you are pointing at`, run: () => this.applySkill(t) } satisfies CommandDef] : []),
-      { id: techniqueCommand("find", t), label: `find ${t.name}`, category: "techniques", description: t.description, run: () => this.findTechnique(t) },
-      { id: techniqueCommand("apply", t), label: `apply ${t.name}`, category: "techniques", run: () => { if (!th.apply(t)) this.setStatus(`no ${t.name} right now`); } },
-      {
-        id: techniqueCommand("auto", t), label: `auto-apply ${t.name}`, category: "techniques",
-        checked: () => th.config(t).auto,
-        run: () => { th.setConfig(t, { ...th.config(t), auto: !th.config(t).auto }); this.hub.refresh(); },
-      },
-      ...(t.practice === false ? [] : [{ id: techniqueCommand("practice", t), label: `practice ${t.name}`, category: "practice", run: () => void this.startPractice(s.def, t, randomSeed()) } satisfies CommandDef]),
-    ])];
+    return [...skills, ...here, ...th.list.flatMap((t): CommandDef[] => {
+      const slot = palette.findIndex((x) => x.id === t.id);
+      return [
+        { id: techniqueCommand("pick", t), label: `pick ${t.name}`, category: "techniques", keys: slot >= 0 && digits[slot] ? [digits[slot]!] : [], run: () => { if (cast.armed?.id !== t.id) cast.pick(t); } },
+        ...(aimable(s.def, t) ? [{ id: techniqueCommand("here", t), label: `${t.name} here`, category: "techniques", description: `apply ${t.name} to what you are pointing at`, run: () => { this.updateAim(); cast.apply(t); } } satisfies CommandDef] : []),
+        { id: techniqueCommand("find", t), label: `find ${t.name}`, category: "techniques", description: t.description, run: () => this.findTechnique(t) },
+        { id: techniqueCommand("apply", t), label: `apply ${t.name}`, category: "techniques", run: () => { if (!th.apply(t)) this.setStatus(`no ${t.name} right now`); } },
+        {
+          id: techniqueCommand("auto", t), label: `auto-apply ${t.name}`, category: "techniques",
+          checked: () => th.config(t).auto,
+          run: () => { th.setConfig(t, { ...th.config(t), auto: !th.config(t).auto }); this.hub.refresh(); },
+        },
+        ...(t.practice === false ? [] : [{ id: techniqueCommand("practice", t), label: `practice ${t.name}`, category: "practice", run: () => void this.startPractice(s.def, t, randomSeed()) } satisfies CommandDef]),
+      ];
+    })];
   }
 
   private widgetCommands(): CommandDef[] {

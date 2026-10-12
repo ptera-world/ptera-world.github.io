@@ -21,7 +21,7 @@ export function setTipDelay(ms: number): void {
 
 /**
  * Tooltips for anything with data-command (label, what it does, its current keys) or data-tip
- * (free text). Native title tooltips on those elements are suppressed so there is one system.
+ * (free text), except inside [data-no-tip]. Native title tooltips on those elements are suppressed so there is one system.
  * Everything it adds goes away when `signal` aborts.
  */
 export function installTooltips(hub: CommandHub, signal: AbortSignal): void {
@@ -62,7 +62,8 @@ export function installTooltips(hub: CommandHub, signal: AbortSignal): void {
   };
 
   document.addEventListener("pointerover", (e) => {
-    const el = (e.target as Element | null)?.closest?.<HTMLElement>("[data-command],[data-tip]");
+    const found = (e.target as Element | null)?.closest?.<HTMLElement>("[data-command],[data-tip]");
+    const el = found?.closest("[data-no-tip]") ? null : found;
     if (el === target) return;
     hide();
     if (!el || e.pointerType === "touch") return;

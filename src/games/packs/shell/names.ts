@@ -26,11 +26,20 @@ export const GAME_BINDINGS = {
   "shell.apply-hint": { label: "apply hint", category: "game", keys: ["shift+h"] },
   "shell.reveal": { label: "reveal solution", category: "game" },
   "shell.pause": { label: "pause", category: "game", keys: ["p"] },
-  "shell.skill-next": { label: "next technique here", category: "techniques", keys: ["k"], description: "pick the next technique that applies where you point and preview it" },
-  "shell.skill-cast": { label: "use the technique here", category: "techniques", keys: ["shift+k"], description: "carry out the picked technique where you point" },
-  "shell.skill-drop": { label: "put the technique down", category: "techniques", keys: ["Escape"], description: "go back to marking" },
   "shell.swap-buttons": { label: "swap left and right click", category: "game", description: "the board's two opposite actions trade buttons (and tap / hold on touch), for this puzzle" },
   "shell.new": { label: "new game", category: "game", keys: ["$mod+Enter"] },
+} satisfies BindingSchema;
+
+/** Commands for using techniques on the board, while the open game has techniques. */
+export const SKILL_BINDINGS = {
+  "shell.skill-next": { label: "next technique that fits here", category: "techniques", description: "pick the next technique that applies where you point" },
+  "shell.skill-cast": { label: "use the technique here", category: "techniques", description: "carry out the picked technique where you point" },
+  "shell.skill-drop": { label: "back to marking", category: "techniques", keys: ["Escape"], description: "put the picked technique down" },
+  "shell.skill-step-next": { label: "pick the next technique", category: "techniques", description: "the one after the picked technique in the palette" },
+  "shell.skill-step-prev": { label: "pick the previous technique", category: "techniques", description: "the one before the picked technique in the palette" },
+  "shell.skill-swap": { label: "pick the technique before", category: "techniques", description: "swap between the last two techniques you picked" },
+  "shell.skill-picker": { label: "technique picker", category: "techniques", description: "opens the palette at the pointer. hold, move toward one and let go to pick it; or tap, then click one or press its number" },
+  "shell.skill-watch": { label: "watch the picked technique", category: "techniques", description: "show the picked technique on a small board beside this one" },
 } satisfies BindingSchema;
 
 /** Exists while some technique of the open game can be aimed. */
@@ -39,12 +48,13 @@ export const HERE_BINDINGS = {
 } satisfies BindingSchema;
 
 declare module "../../core/commands" {
-  interface CommandNames extends Ids<typeof SHELL_BINDINGS>, Ids<typeof GAME_BINDINGS>, Ids<typeof HERE_BINDINGS> {}
+  interface CommandNames extends Ids<typeof SHELL_BINDINGS>, Ids<typeof GAME_BINDINGS>, Ids<typeof SKILL_BINDINGS>, Ids<typeof HERE_BINDINGS> {}
 }
 
-export type TechniqueCommand = "apply" | "auto" | "find" | "here" | "practice";
+export type TechniqueCommand = "apply" | "auto" | "find" | "here" | "pick" | "practice";
 const techniqueFamilies = {
   apply: commandFamily("technique.apply.", (t: { id: string }) => t.id),
+  pick: commandFamily("technique.pick.", (t: { id: string }) => t.id),
   auto: commandFamily("technique.auto.", (t: { id: string }) => t.id),
   find: commandFamily("technique.find.", (t: { id: string }) => t.id),
   here: commandFamily("technique.here.", (t: { id: string }) => t.id),
@@ -83,6 +93,8 @@ declare module "../../core/storage" {
 /** The how-to-play widget, and the event that opens or closes it. */
 export const HOWTO_WIDGET = "howto";
 export const HOWTO_TOGGLE = "howto-toggle";
+/** The widget that plays a technique's demo beside the board. */
+export const WATCH_WIDGET = "watch";
 
 /** A command id written in code, checked against the declared ids. */
 export const command = <K extends CommandId>(id: K): K => id;

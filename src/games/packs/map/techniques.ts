@@ -76,15 +76,34 @@ function each(p: MapPuzzle, s: MapState, kinds: readonly StepKind[], visit: (hit
 
 type Make = (p: MapPuzzle, s: MapState, hit: Hit) => Step<MapAction>;
 
-function technique(def: Omit<MapTechnique, "instances" | "findAt" | "puzzles">, kinds: readonly StepKind[], make: Make): MapTechnique {
+const asTarget = (t: unknown): MapTarget | null => (t && typeof (t as MapTarget).region === "number" ? t as MapTarget : null);
+
+/** Hits at `target`, those changing the pointed region first, each group in scan order. */
+function hitsAt(p: MapPuzzle, s: MapState, kinds: readonly StepKind[], target: MapTarget): Hit[] {
+  const first: Hit[] = [], later: Hit[] = [];
+  each(p, s, kinds, (hit) => { (hit.regions.includes(target.region) ? first : later).push(hit); }, target);
+  return [...first, ...later];
+}
+
+function technique(def: Omit<MapTechnique, "instances" | "findAt" | "instancesAt" | "cellAt" | "puzzles">, kinds: readonly StepKind[], make: Make): MapTechnique {
   return {
     ...def,
     puzzles: [map],
     instances: (p, s, visit) => each(p, s, kinds, (hit) => visit(make(p, s, hit)) === true),
     findAt: (p, s, t) => {
-      let found: Step<MapAction> | null = null;
-      each(p, s, kinds, (hit) => { found = make(p, s, hit); return true; }, t as MapTarget);
-      return found;
+      const target = asTarget(t);
+      const hit = target && hitsAt(p, s, kinds, target)[0];
+      return hit ? make(p, s, hit) : null;
+    },
+    instancesAt: (p, s, t, visit) => {
+      const target = asTarget(t);
+      if (target) for (const hit of hitsAt(p, s, kinds, target)) if (visit(make(p, s, hit)) === true) return;
+    },
+    cellAt: (p, s, t) => {
+      const target = asTarget(t);
+      const hit = target && hitsAt(p, s, kinds, target).find((h) => h.regions.includes(target.region));
+      if (!hit || !target) return null;
+      return make(p, s, { raw: hit.raw, ...changes(p, s, { ...hit.raw, regions: [target.region] }) });
     },
   };
 }

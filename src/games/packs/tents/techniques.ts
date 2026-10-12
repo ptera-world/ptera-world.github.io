@@ -45,6 +45,7 @@ export const noTree: TentsTechnique = technique<TentsPuzzle, TentsState, TentsAc
   level: 1,
   kinds: ["no-tree"],
   description: "a tent always sits right next to its tree, so a cell with no tree above, below, left or right of it can't hold one.",
+  unit: (_p, _d, vars, target) => (typeof target === "number" && vars.includes(target) ? [target] : vars),
   explain: (p, _s, d, vars) => step(p, d, vars, `${vars.length === 1 ? `${cellName(p, vars[0]!)} has` : `${cellList(p, vars)} have`} no tree beside ${vars.length === 1 ? "it" : "them"}`, `which cells have no tree beside them?`, { cells: [], because: [] }),
   practice: { params: EASY },
 });
