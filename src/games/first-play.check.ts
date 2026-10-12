@@ -90,16 +90,23 @@ async function check(page: Page, id: string, name: string): Promise<void> {
   if (EDGE_GAMES.has(id)) await edgeCast(page, id, false, fail);
 }
 
-/** Center of the first screen rect of the step `name`'s technique would make now (aimable ones only), or of any aimable technique's. */
-async function spotOf(page: Page, name: string | null): Promise<{ name: string; x: number; y: number } | null> {
+/**
+ * Spots to point at for the step `name`'s technique would make now (aimable ones only), or any
+ * aimable technique's: the step's focus, then what it changes. Callers use the first one where
+ * the picked technique finds something.
+ */
+async function spotOf(page: Page, name: string | null): Promise<{ name: string; x: number; y: number; more: { x: number; y: number }[] } | null> {
   return page.evaluate((want) => {
     const g = (globalThis as any).pteraGames, sh = g.shell, s = sh.session;
     for (const t of sh.techniques.list) {
       if (want !== null && t.name !== want) continue;
       if (!g.techniques.aimable(s.def, t)) continue;
       const step = g.techniques.findStep(s.def, t, s.puzzle, s.state);
-      const r = step && sh.view?.handle.locate?.(step.focus)?.[0];
-      if (r) return { name: t.name, x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      if (!step) continue;
+      const h = sh.view?.handle;
+      const rects: DOMRect[] = [...(h?.locate?.(step.focus) ?? []), ...(h?.locateChange?.(s.state, g.techniques.applyStep(s.def, s.puzzle, s.state, step)) ?? [])];
+      const pts = rects.map((r) => ({ x: r.left + r.width / 2, y: r.top + r.height / 2 }));
+      if (pts.length) return { name: t.name, ...pts[0]!, more: pts.slice(1, 12) };
     }
     return null;
   }, name);
@@ -108,20 +115,26 @@ async function spotOf(page: Page, name: string | null): Promise<{ name: string; 
 const stateOf = (page: Page) => page.evaluate(() => JSON.stringify((globalThis as any).pteraGames.shell.session.state));
 const armedOf = (page: Page) => page.evaluate(() => (globalThis as any).pteraGames.shell.cast.armed?.name ?? null);
 
-/** Casts the picked technique at `p`: a click, or a drag along the row where more than one line fits there. */
-async function castAt(page: Page, p: { x: number; y: number }): Promise<void> {
-  await page.mouse.move(p.x, p.y);
-  await page.mouse.move(p.x + 1, p.y);
-  await page.waitForTimeout(60);
+/** Casts the picked technique at the first of `p` and `p.more` where it finds something: a click, or a drag along the row where more than one line fits there. */
+async function castAt(page: Page, p: { x: number; y: number; more?: { x: number; y: number }[] }): Promise<void> {
+  let at = p;
+  for (const q of [p, ...(p.more ?? [])]) {
+    await page.mouse.move(q.x, q.y);
+    await page.mouse.move(q.x + 1, q.y);
+    await page.waitForTimeout(40);
+    const found = await page.evaluate(() => { const sh = (globalThis as any).pteraGames.shell; const t = sh.cast.active(); return !!(t && sh.cast.stepOf(t)); });
+    if (found) { at = q; break; }
+  }
   const several = await page.evaluate(() => {
     const sh = (globalThis as any).pteraGames.shell;
     const t = sh.cast.active();
     const hit = t && sh.cast.stepOf(t);
     return !!hit && "choices" in hit;
   });
-  if (!several) { await page.mouse.click(p.x, p.y); await page.waitForTimeout(150); return; }
+  if (!several) { await page.mouse.click(at.x, at.y); await page.waitForTimeout(150); return; }
+  await page.mouse.move(at.x, at.y);
   await page.mouse.down();
-  await page.mouse.move(p.x + 30, p.y, { steps: 5 });
+  await page.mouse.move(at.x + 30, at.y, { steps: 5 });
   await page.mouse.up();
   await page.waitForTimeout(150);
 }

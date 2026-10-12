@@ -516,6 +516,8 @@ export class Shell {
           if (ctx.source?.kind === "player") this.cast.recognize(ctx.prev, ctx.state);
         }
         this.cast.kept.schedule();
+        // a preview shows what a cast would do to the board as it is now, never to an older one
+        this.cast.refresh();
       }, { owner: "shell" }),
       session.hooks.fx.tap((e) => {
         if (e.kind !== "practice" || !e.done || session.origin.kind !== "practice") return;
@@ -1078,7 +1080,7 @@ export class Shell {
       "shell.skill-move-earlier": { when: () => !!cast.armed, keys: this.freeKey(["shift+bracketleft", "shift+comma"], taken) },
       "shell.skill-move-later": { when: () => !!cast.armed, keys: this.freeKey(["shift+bracketright", "shift+period"], taken) },
     });
-    const hotbar = skillPrefs.hotbar() ? cast.hotbar() : [];
+    const hotbar = cast.hotbar();
     const here: CommandDef[] = anyAimable && skillPrefs.herePopup() ? bindCommands(HERE_BINDINGS, {
       "technique.here": (_ctx, ev) => {
         const list = cast.here();

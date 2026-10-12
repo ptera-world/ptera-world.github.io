@@ -76,7 +76,8 @@ const effects: AnyPlugin[] = [
       const list = games.registry.techniquesFor(api.session.def, api.session.puzzle);
       const tech = list.find((x) => x.id === e.technique);
       const color = tech ? games.techniques.colorOf(tech, list) : "var(--hint)";
-      fx.flash(rects.length ? rects : rectsOf(api.view, e.focus), { ms: s.ms, label: s.label ? (e.name as string) : undefined, color });
+      if (tech && !games.techniques.loadTechniqueConfig(tech).highlight) return;
+      fx.flash(rects.length ? rects : rectsOf(api.view, e.focus), { ms: s.ms, label: s.label ? (e.name as string) : undefined, color, group: "step" });
     }),
   effect("pop", "placement pop", "a quick ring where your move landed", true, undefined, (e, api) => {
     if (e.kind === "change" && (e.source as { kind: string }).kind === "player") fx.pop(rectsOf(api.view, undefined, e.prev, e.state));

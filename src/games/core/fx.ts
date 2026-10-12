@@ -38,17 +38,19 @@ function place(el: HTMLElement, r: DOMRect): HTMLElement {
 }
 
 export const fx = {
-  flash(rects: DOMRect[], opts: { ms?: number; color?: string; label?: string } = {}): void {
+  /** `group`: any flash still showing from the same group is removed first, so only the latest is up. */
+  flash(rects: DOMRect[], opts: { ms?: number; color?: string; label?: string; group?: string } = {}): void {
+    if (opts.group) for (const old of layer().querySelectorAll(`[data-fx-group="${globalThis.CSS.escape(opts.group)}"]`)) old.remove();
     const ms = opts.ms ?? 900;
     for (const r of rects) {
-      const el = place(h("div", { class: "fx-flash" }), r);
+      const el = place(h("div", { class: "fx-flash", "data-fx-group": opts.group }), r);
       el.style.setProperty("--fx-ms", `${ms}ms`);
       if (opts.color) el.style.setProperty("--fx-color", opts.color);
       spawn(el, ms);
     }
     const first = rects[0];
     if (opts.label && first) {
-      const lab = h("div", { class: "fx-label" }, opts.label);
+      const lab = h("div", { class: "fx-label", "data-fx-group": opts.group }, opts.label);
       Object.assign(lab.style, { left: `${first.left + first.width / 2}px`, top: `${first.top}px` });
       lab.style.setProperty("--fx-ms", `${ms + 300}ms`);
       if (opts.color) lab.style.setProperty("--fx-color", opts.color);

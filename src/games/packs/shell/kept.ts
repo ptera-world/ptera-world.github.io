@@ -38,6 +38,8 @@ export interface KeptSource {
   mode: KeptMode;
   /** How long a color stays before it has faded, in "fade" mode. */
   fadeMs: number;
+  /** False for techniques whose colors stay off the board. */
+  shows(t: Technique): boolean;
   /** How many of the newest steps keep their colors, in "recent" mode. */
   recent: number;
 }
@@ -129,11 +131,11 @@ export class KeptLayer {
     for (const [i, entry] of past.entries()) {
       const at = entry.after && typeof entry.after === "object" ? this.times.get(entry.after) : undefined;
       const hand = entry.after && typeof entry.after === "object" ? this.recognized.get(entry.after) : undefined;
-      if (hand && entry.sources[0]?.kind === "player") add(hand, entry.before, entry.after, at, i);
+      if (hand && g.shows(hand) && entry.sources[0]?.kind === "player") add(hand, entry.before, entry.after, at, i);
       for (const src of entry.sources) {
         if (src.kind !== "technique") continue;
         const t = list.find((x) => x.id === src.technique);
-        if (t) add(t, entry.before, applyStep(session.def, session.puzzle, entry.before, src.step), at, i);
+        if (t && g.shows(t)) add(t, entry.before, applyStep(session.def, session.puzzle, entry.before, src.step), at, i);
       }
     }
     const base = this.host.getBoundingClientRect();

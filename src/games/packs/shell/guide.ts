@@ -114,7 +114,7 @@ export function guideWidget(shell: Shell, el: HTMLElement, ctx: WidgetContext): 
         const t = lessons[0]!;
         shell.watch(t);
         return [
-          `the easiest one is ${t.name}.`,
+          "the easiest one is ", h("strong", { class: "w-tname", style: `--tc: ${shell.cast.color(t)}` }, t.name), ".",
           act(
             h("button", { class: "primary", onclick: () => ctx.run(techniqueCommand("practice", t)) }, "try it myself"),
             h("button", { onclick: () => goTab("techniques", `[data-technique="${t.id}"]`) }, `all ${techniques.length} techniques`)),

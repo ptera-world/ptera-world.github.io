@@ -15,6 +15,8 @@ export interface TechniqueConfig {
   hints: boolean;
   /** Applied automatically after every move (and when switched on). */
   auto: boolean;
+  /** Its steps flash on the board and its colors stay on the cells it decided. */
+  highlight: boolean;
 }
 
 export function loadTechniqueConfig(t: Technique): TechniqueConfig {
@@ -22,6 +24,7 @@ export function loadTechniqueConfig(t: Technique): TechniqueConfig {
   return {
     hints: raw.hints ?? t.defaults?.hints ?? true,
     auto: raw.auto ?? t.defaults?.auto ?? false,
+    highlight: raw.highlight ?? true,
   };
 }
 
@@ -219,6 +222,8 @@ export class TechniqueHost {
       const hit = firstStep(def, usable, puzzle, state);
       return hit ? hintFrom(hit.technique, hit.step, 1) : undefined;
     }, { owner: AUTO_OWNER, priority: 100 });
+    // paced auto steps start from the opening position too, not only after the first move
+    if (loadPace() > 0 && this.autoList().length) this.kick();
   }
 
   /**

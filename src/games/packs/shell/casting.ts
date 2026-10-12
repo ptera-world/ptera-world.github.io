@@ -57,7 +57,7 @@ export class Casting {
   constructor(private shell: Shell) {
     this.kept = new KeptLayer(shell.boardEl, () => {
       const s = shell.session;
-      return s ? { session: s, view: shell.view?.handle ?? null, list: this.list(), mode: skillPrefs.kept(), fadeMs: skillPrefs.keptFadeMs(), recent: skillPrefs.keptRecent() } : null;
+      return s ? { session: s, view: shell.view?.handle ?? null, list: this.list(), mode: skillPrefs.kept(), fadeMs: skillPrefs.keptFadeMs(), recent: skillPrefs.keptRecent(), shows: (t) => shell.techniques?.config(t).highlight ?? true } : null;
     });
   }
 

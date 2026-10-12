@@ -42,6 +42,7 @@ button.danger:hover:not(:disabled) { border-color: var(--danger); background: va
 .w-inline { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
 .w-inline select, .w-inline input[type="number"] { width: auto; }
 .w-tech .buttons button { padding: 3px 9px; font-size: 13px; }
+.w-tname { border-left: 4px solid var(--tc); padding-left: 8px; }
 .w-tech .applies { color: var(--accent); font-size: 12px; }
 .w-tech details summary { cursor: pointer; color: var(--text-dim); font-size: 12px; }
 .w-tech details p { font-size: 13px; margin-top: 4px; line-height: 1.45; }
@@ -53,7 +54,7 @@ button.danger:hover:not(:disabled) { border-color: var(--danger); background: va
 .w-history .n { color: var(--text-dim); font-family: var(--mono); min-width: 2.5em; }
 .w-history .what { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .w-history .who { color: var(--text-dim); font-size: 12px; white-space: nowrap; }
-.w-history .who-technique { color: var(--hint); }
+.w-history .who-technique { color: var(--tc, var(--hint)); }
 .w-practice { display: flex; flex-direction: column; gap: 6px; align-items: center; text-align: center; max-width: 60ch; }
 .w-practice p { color: var(--text-dim); font-size: 13px; }
 .w-search { position: sticky; top: -12px; background: var(--bg); padding: 4px 0 8px; z-index: 1; }
@@ -491,14 +492,14 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
         type: "number", min: 0, max: 5000, step: 50, value: loadPace(), "aria-label": "milliseconds between automatic steps",
         onchange: (e: Event) => th.setPace(Number((e.target as HTMLInputElement).value) || 0),
       });
-      const boxes: { t: Technique; hints: HTMLInputElement; auto: HTMLInputElement }[] = [];
+      const boxes: { t: Technique; hints: HTMLInputElement; auto: HTMLInputElement; light: HTMLInputElement }[] = [];
       /** Opens (or closes) the technique's demo beside the board. */
       const watchSlot = (t: Technique) => {
         if (t.practice === false || !shell.view) return null;
         return h("button", { onclick: () => shell.watch(shell.watching?.id === t.id ? null : t) }, "watch it");
       };
       ctx.session.hooks.refresh.tap(() => {
-        for (const b of boxes) { const c = th.config(b.t); b.hints.checked = c.hints; b.auto.checked = c.auto; }
+        for (const b of boxes) { const c = th.config(b.t); b.hints.checked = c.hints; b.auto.checked = c.auto; b.light.checked = c.highlight; }
       }, { owner: ctx.owner });
       const lessons = th.list.filter((t) => t.practice !== false);
       if (lessons.length) el.append(h("button", { class: "primary", title: "practice every technique in order, easiest first", onclick: () => void shell.startPractice(s.def, lessons[0]!, randomSeed()) }, "start the tutorial"));
@@ -512,17 +513,19 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
         const cfg = th.config(t);
         const hintsBox = h("input", { type: "checkbox", checked: cfg.hints, onchange: (e: Event) => th.setConfig(t, { ...th.config(t), hints: (e.target as HTMLInputElement).checked }) });
         const autoBox = h("input", { type: "checkbox", checked: cfg.auto, onchange: (e: Event) => { th.setConfig(t, { ...th.config(t), auto: (e.target as HTMLInputElement).checked }); assisted(); shell.hub.refresh(); } });
-        boxes.push({ t, hints: hintsBox, auto: autoBox });
+        const lightBox = h("input", { type: "checkbox", checked: cfg.highlight, onchange: (e: Event) => { th.setConfig(t, { ...th.config(t), highlight: (e.target as HTMLInputElement).checked }); shell.cast.kept.schedule(); } });
+        boxes.push({ t, hints: hintsBox, auto: autoBox, light: lightBox });
         list.append(h("div", { class: "w-row w-tech" },
-          h("div", { class: "head" }, h("strong", { class: "name" }, t.name), mark),
+          h("div", { class: "head" }, h("strong", { class: "name w-tname", style: `--tc: ${shell.cast.color(t)}` }, t.name), mark),
           h("details", null, h("summary", null, "how it works"), h("p", null, t.description)),
-          watchSlot(t),
           h("div", { class: "w-inline buttons" },
+            watchSlot(t),
             h("button", { onclick: () => shell.findTechnique(t), title: "show one on the board" }, "find"),
             h("button", { onclick: () => ctx.run(techniqueCommand("apply", t)), title: "carry one out" }, "apply"),
             t.practice === false ? null : h("button", { onclick: () => ctx.run(techniqueCommand("practice", t)), title: "a board where this is the next step" }, "practice"),
             h("label", { class: "w-inline", title: "offer as a hint" }, hintsBox, "hints"),
             h("label", { class: "w-inline", title: "apply automatically" }, autoBox, "auto"),
+            h("label", { class: "w-inline", title: "flash on the board and color the cells it decides" }, lightBox, "highlight"),
             h("label", { class: "w-inline" }, "palette",
               h("select", {
                 "aria-label": `${t.name} in the palette`,
@@ -533,6 +536,13 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
       assisted();
       return undefined;
     },
+  };
+
+  /** The color of the technique that made a step, as a style, if a technique did. */
+  const techColor = (sources: readonly Source[]): string | undefined => {
+    const src = sources.find((x) => x.kind === "technique");
+    const t = src?.kind === "technique" ? shell.techniques?.list.find((x) => x.id === src.technique) : undefined;
+    return t ? `--tc: ${shell.cast.color(t)}` : undefined;
   };
 
   const historyW: WidgetDef = {
@@ -584,7 +594,7 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
             },
               h("span", { class: "n" }, String(i)),
               h("span", { class: "what" }, what(e) || "—"),
-              h("span", { class: `who who-${d.kind}` }, d.who)));
+              h("span", { class: `who who-${d.kind}`, style: techColor(e.sources) }, d.who)));
         };
         list.append(h("li", { class: past.length === 0 ? "current" : "" }, h("button", { onclick: () => { stopReplay(); s.jumpTo(0); } }, h("span", { class: "n" }, "0"), h("span", { class: "what" }, "start"))));
         past.forEach((e, i) => list.append(row(e, i + 1, false)));
@@ -627,13 +637,13 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
       const t: Technique | undefined = all[idx];
       if (!t) return;
       const next = all[idx + 1];
-      const nextBtn = next ? h("button", { class: "primary", style: "visibility: hidden", onclick: () => void shell.startPractice(s.def, next, randomSeed()) }, `next: ${next.name}`) : null;
+      const nextBtn = next ? h("button", { class: "primary w-tname", style: `visibility: hidden; --tc: ${shell.cast.color(next)}`, onclick: () => void shell.startPractice(s.def, next, randomSeed()) }, `next: ${next.name}`) : null;
       s.hooks.fx.tap((e) => {
         if (e.kind === "practice" && e.done && nextBtn) nextBtn.style.visibility = "visible";
       }, { owner: ctx.owner });
       el.append(h("div", { class: "w-practice" },
         h("span", { class: "w-dim" }, `lesson ${idx + 1} of ${all.length}`),
-        h("strong", null, `practice: ${t.name}`),
+        h("strong", { class: "w-tname", style: `--tc: ${shell.cast.color(t)}` }, `practice: ${t.name}`),
         h("p", null, t.description),
         h("div", { class: "w-inline" },
           h("button", {
