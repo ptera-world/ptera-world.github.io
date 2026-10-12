@@ -83,6 +83,7 @@ async function check(page: Page, id: string, name: string): Promise<void> {
 
   const techniques: number = await page.evaluate(() => (globalThis as any).pteraGames.shell.techniques?.list.length ?? 0);
   if (techniques) await castOnce(page, fail);
+  if (EDGE_GAMES.has(id)) await edgeCast(page, id, false, fail);
 }
 
 /** Center of the first screen rect of the step `name`'s technique would make now (aimable ones only), or of any aimable technique's. */
@@ -225,6 +226,59 @@ async function castOnce(page: Page, fail: (what: string) => void): Promise<void>
   }
 }
 
+
+/** Games whose boards have edges a technique can be aimed at. */
+const EDGE_GAMES = new Set(["tracks", "pearl", "numberlink", "dominosa"]);
+
+/**
+ * Casts a technique at an edge, the way a player would: picks the game's "try it", finds a spot on
+ * the board that the view reads as an edge (or a domino position) where some use of it applies,
+ * then clicks there (mouse) or taps it twice (touch: the first tap previews, the second casts),
+ * and expects the board to become exactly what that edge's use gives.
+ */
+async function edgeCast(page: Page, id: string, touch: boolean, fail: (what: string) => void): Promise<void> {
+  const how = touch ? "a tap" : "a click";
+  const picked = await page.evaluate(() => {
+    const sh = (globalThis as any).pteraGames.shell;
+    const t = sh.techniques.list.find((x: any) => /\.(trial|probe)$/.test(x.id));
+    if (!t) return null;
+    if (sh.cast.armed?.id !== t.id) sh.cast.pick(t);
+    sh.watch(null);
+    return t.name;
+  });
+  if (!picked) { fail("has no per-edge technique to cast at an edge"); return; }
+  await page.evaluate(() => scrollTo(0, 0));
+  await page.waitForTimeout(200);
+  const b = await page.locator(".boardbox .view svg").first().boundingBox();
+  if (!b) { fail("no board to point at"); return; }
+  let spot: { x: number; y: number; expected: string } | null = null;
+  const N = 28;
+  for (let i = 1; i < N && !spot; i++) {
+    for (let j = 1; j < N && !spot; j++) {
+      const x = b.x + (b.width * i) / N, y = b.y + (b.height * j) / N;
+      await page.mouse.move(x, y);
+      spot = await page.evaluate(({ x, y }) => {
+        const g = (globalThis as any).pteraGames, sh = g.shell, s = sh.session;
+        const target = sh.view.handle.target();
+        if (!target || typeof target !== "object" || !("edge" in target || "placement" in target)) return null;
+        const step = g.techniques.findStepAt(s.def, sh.cast.armed, s.puzzle, s.state, target, "one");
+        return step ? { x, y, expected: JSON.stringify(g.techniques.applyStep(s.def, s.puzzle, s.state, step)) } : null;
+      }, { x, y });
+    }
+  }
+  if (!spot) { fail(`no edge on the board where "${picked}" applies`); return; }
+  if (touch) {
+    await page.touchscreen.tap(spot.x, spot.y);
+    await page.waitForTimeout(150);
+    await page.touchscreen.tap(spot.x, spot.y);
+  } else {
+    await page.mouse.move(spot.x + 0.5, spot.y);
+    await page.mouse.click(spot.x, spot.y);
+  }
+  await page.waitForTimeout(200);
+  const after = await page.evaluate(() => JSON.stringify((globalThis as any).pteraGames.shell.session.state));
+  if (after !== spot.expected) fail(`${how} on an edge where "${picked}" applies didn't cast that edge's use`);
+}
 try {
   await waitForServer();
   const page = await (await browser.newContext()).newPage();
@@ -240,6 +294,19 @@ try {
       failures.push(`${p.id}: ${e instanceof Error ? e.message : e}`);
     }
     await fresh.context().close();
+    if (EDGE_GAMES.has(p.id)) {
+      const phone = await (await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true })).newPage();
+      try {
+        await phone.goto(`${base}?p=${encodeURIComponent(p.id)}`);
+        await phone.waitForFunction((pid) => (globalThis as any).pteraGames?.shell?.session?.def.id === pid, p.id, { timeout: 90_000 });
+        await phone.waitForTimeout(400);
+        await phone.evaluate(() => [...document.querySelectorAll<HTMLElement>(".w-howto button")].find((b) => b.textContent === "play")?.click());
+        await edgeCast(phone, p.id, true, (what) => failures.push(`${p.id} (phone): ${what}`));
+      } catch (e) {
+        failures.push(`${p.id} (phone): ${e instanceof Error ? e.message : e}`);
+      }
+      await phone.context().close();
+    }
   }
 } finally {
   await browser.close();
