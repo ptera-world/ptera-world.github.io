@@ -85,7 +85,7 @@ function hitsAt(p: PearlPuzzle, s: PearlState, kinds: readonly StepKind[], targe
   return [...first, ...later];
 }
 
-function technique(def: Omit<PearlTechnique, "instances" | "findAt" | "instancesAt" | "puzzles">, kinds: readonly StepKind[], make: Make): PearlTechnique {
+function technique(def: Omit<PearlTechnique, "instances" | "findAt" | "instancesAt" | "cellAt" | "puzzles">, kinds: readonly StepKind[], make: Make): PearlTechnique {
   return {
     ...def,
     puzzles: [pearl],
@@ -98,6 +98,15 @@ function technique(def: Omit<PearlTechnique, "instances" | "findAt" | "instances
     instancesAt: (p, s, t, visit) => {
       const target = asTarget(t);
       if (target) for (const hit of hitsAt(p, s, kinds, target)) if (visit(make(p, hit)) === true) return;
+    },
+    cellAt: (p, s, t) => {
+      const target = asTarget(t);
+      const hit = target && hitsAt(p, s, kinds, target)[0];
+      if (!hit || !target) return null;
+      const g = edgeGrid(p.w, p.h);
+      const at = (e: number) => g.ea[e] === target.cell || g.eb[e] === target.cell;
+      const lines = hit.lines.filter(at), crosses = hit.crosses.filter(at);
+      return lines.length || crosses.length ? make(p, { ...hit, lines, crosses }) : null;
     },
   };
 }

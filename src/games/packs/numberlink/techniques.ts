@@ -85,7 +85,7 @@ function hitsAt(p: NumberlinkPuzzle, s: NumberlinkState, kinds: readonly StepKin
   return [...first, ...later];
 }
 
-function technique(def: Omit<NumberlinkTechnique, "instances" | "findAt" | "instancesAt" | "puzzles">, kinds: readonly StepKind[], make: Make): NumberlinkTechnique {
+function technique(def: Omit<NumberlinkTechnique, "instances" | "findAt" | "instancesAt" | "cellAt" | "puzzles">, kinds: readonly StepKind[], make: Make): NumberlinkTechnique {
   return {
     ...def,
     puzzles: [numberlink],
@@ -98,6 +98,16 @@ function technique(def: Omit<NumberlinkTechnique, "instances" | "findAt" | "inst
     instancesAt: (p, s, t, visit) => {
       const target = asTarget(t);
       if (target) for (const hit of hitsAt(p, s, kinds, target)) if (visit(make(p, s, hit)) === true) return;
+    },
+    cellAt: (p, s, t) => {
+      const target = asTarget(t);
+      const hit = target && hitsAt(p, s, kinds, target)[0];
+      if (!hit || !target) return null;
+      const g = edgeGrid(p.w, p.h);
+      const at = (e: number) => g.ea[e] === target.cell || g.eb[e] === target.cell;
+      const lines = hit.st.lines.filter((e) => at(e) && s.edges[e] !== LINE);
+      const nos = hit.st.nos.filter((e) => at(e) && s.edges[e] !== CROSS);
+      return lines.length || nos.length ? make(p, s, { ...hit, st: { ...hit.st, lines, nos } }) : null;
     },
   };
 }

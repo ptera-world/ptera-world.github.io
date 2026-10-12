@@ -56,7 +56,7 @@ type Make = (p: SignpostPuzzle, s: SignpostState, st: SolverStep) => Step<Signpo
 
 const asTarget = (t: unknown): SignpostTarget | null => (t && typeof (t as SignpostTarget).cell === "number" ? t as SignpostTarget : null);
 
-function technique(def: Omit<SignpostTechnique, "instances" | "findAt" | "instancesAt" | "puzzles">, kinds: readonly StepKind[], make: Make): SignpostTechnique {
+function technique(def: Omit<SignpostTechnique, "instances" | "findAt" | "instancesAt" | "cellAt" | "puzzles">, kinds: readonly StepKind[], make: Make): SignpostTechnique {
   return {
     ...def,
     puzzles: [signpost],
@@ -70,6 +70,12 @@ function technique(def: Omit<SignpostTechnique, "instances" | "findAt" | "instan
     instancesAt: (p, s, t, visit) => {
       const target = asTarget(t);
       if (target) each(p, s, kinds, (st) => visit(make(p, s, st)) === true, target);
+    },
+    cellAt: (p, s, t) => {
+      const target = asTarget(t);
+      let found: Step<SignpostAction> | null = null;
+      if (target) each(p, s, kinds, (st) => { found = make(p, s, st); return true; }, target);
+      return found;
     },
   };
 }

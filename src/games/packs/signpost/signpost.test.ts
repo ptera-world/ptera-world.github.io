@@ -215,8 +215,12 @@ function leafDiff(a: unknown, b: unknown, path = "", out = new Map<string, strin
   return out;
 }
 
-/** findAt is instancesAt's first step, every instance at a target changes the board, and cellAt changes part of what one of them does. */
-function checkAimed(def: AnyPuzzleDef, list: readonly Technique[], p: unknown, s: unknown, targets: readonly unknown[]): void {
+/**
+ * findAt is instancesAt's first step, every instance at a target changes the board, and cellAt
+ * changes part of what one of them does. Returns how many targets cellAt found something at.
+ */
+function checkAimed(def: AnyPuzzleDef, list: readonly Technique[], p: unknown, s: unknown, targets: readonly unknown[]): number {
+  let cells = 0;
   for (const t of list) {
     if (!t.findAt && !t.cellAt) continue;
     for (const target of targets) {
@@ -230,16 +234,20 @@ function checkAimed(def: AnyPuzzleDef, list: readonly Technique[], p: unknown, s
       if (!cell) continue;
       const d = leafDiff(s, applyStep(def, p, s, cell));
       expect(d.size > 0 && diffs.some((x) => [...d].every(([k, v]) => x.get(k) === v))).toBe(true);
+      cells++;
     }
   }
+  return cells;
 }
 
 test("aimed finds: findAt is instancesAt's first, each instance changes the board, cellAt is part of one", async () => {
+  let cells = 0;
   for (const t of signpostTechniques) {
     if (t.practice === false) continue;
     const pos = await findPracticePosition(signpost, signpostTechniques, t, "aim", new AbortController().signal);
     if (!pos) continue;
     const p = pos.puzzle as any, s = pos.state as any;
-    checkAimed(signpost, signpostTechniques, p, s, Array.from({ length: p.w * p.h }, (_, i) => ({ cell: i })));
+    cells += checkAimed(signpost, signpostTechniques, p, s, Array.from({ length: p.w * p.h }, (_, i) => ({ cell: i })));
   }
+  expect(cells).toBeGreaterThan(0);
 }, 300000);

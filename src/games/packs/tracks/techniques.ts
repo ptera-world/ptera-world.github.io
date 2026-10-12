@@ -122,7 +122,7 @@ function build(raw: SolverStep, ch: Changes, message: string, nudge: string, nud
 
 type Make = (p: TracksPuzzle, hit: Hit) => Step<TracksAction>;
 
-function technique(def: Omit<TracksTechnique, "instances" | "findAt" | "instancesAt" | "puzzles">, kinds: readonly StepKind[], make: Make): TracksTechnique {
+function technique(def: Omit<TracksTechnique, "instances" | "findAt" | "instancesAt" | "cellAt" | "puzzles">, kinds: readonly StepKind[], make: Make): TracksTechnique {
   return {
     ...def,
     puzzles: [tracks],
@@ -135,6 +135,16 @@ function technique(def: Omit<TracksTechnique, "instances" | "findAt" | "instance
     instancesAt: (p, s, t, visit) => {
       const target = asTarget(t);
       if (target) for (const hit of hitsAt(p, s, kinds, target)) if (visit(make(p, hit)) === true) return;
+    },
+    cellAt: (p, s, t) => {
+      const target = asTarget(t);
+      const hit = target && hitsAt(p, s, kinds, target)[0];
+      if (!hit || !target) return null;
+      const g = edgeGrid(p.w, p.h);
+      const c = target.cell;
+      const at = (e: number) => g.ea[e] === c || g.eb[e] === c;
+      const ch = { lines: hit.ch.lines.filter(at), crosses: hit.ch.crosses.filter(at), tracks: hit.ch.tracks.filter((x) => x === c), empties: hit.ch.empties.filter((x) => x === c) };
+      return size(ch) ? make(p, { ...hit, ch }) : null;
     },
   };
 }

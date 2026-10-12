@@ -66,10 +66,16 @@ function settled(p: RectPuzzle, s: RectState, kind: Kind): Alive | null {
 }
 
 /**
- * The step that starts from `start` (else from the first finding of `kind`): findings are applied
- * until new walls follow, and the step explains the first one.
+ * Without `start`: findings of `kind` are applied until new walls follow, and the step explains
+ * the first one. With `start`: the walls that finding alone leads to, or null if it leads to none.
  */
 function run(p: RectPuzzle, s: RectState, kind: Kind, start: Kill | null): Step<RectAction> | null {
+  const r = walled(p, s, kind, start);
+  return r && explain(p, kind, r.k, r.walls);
+}
+
+/** What `run` explains: the finding the step is about and the walls that follow. */
+function walled(p: RectPuzzle, s: RectState, kind: Kind, start: Kill | null): { k: Kill; walls: number[] } | null {
   const l = puzzleLayout(p), g = geometry(p);
   const a = settled(p, s, kind);
   if (!a) return null;
@@ -77,30 +83,42 @@ function run(p: RectPuzzle, s: RectState, kind: Kind, start: Kill | null): Step<
   const base = wallFacts(p, a);
   let last: Kill | null = null;
   for (let guard = 0; guard < 1000; guard++) {
-    const k = guard === 0 && start ? start : kills(l, a, kind, undefined, 1)[0];
+    if (guard > 0 && start) return null;
+    const k = start ?? kills(l, a, kind, undefined, 1)[0];
     if (!k) return null;
     kill(a, k.boxes);
     last ??= k;
     if (!fixpoint(l, a, easier)) return null;
     const facts = wallFacts(p, a);
     const fresh = g.edges.flatMap((_, e) => (facts[e] && !base[e] && !s.walls[e] ? [e] : []));
-    if (fresh.length) return explain(p, kind, last, fresh);
+    if (fresh.length) return { k: last, walls: fresh };
   }
   return null;
 }
 
-/** True if `step` puts a wall on a side of cell `c`. */
-function walls(p: RectPuzzle, step: Step<RectAction>, c: number): boolean {
+/** The walls among `walls` on a side of cell `c`. */
+function wallsAt(p: RectPuzzle, walls: readonly number[], c: number): number[] {
   const g = geometry(p);
-  return step.actions.some((x) => x.on.some((e) => g.edges[e]![0] === c || g.edges[e]![1] === c));
+  return walls.filter((e) => g.edges[e]![0] === c || g.edges[e]![1] === c);
 }
 
-/** Steps starting from each finding about cell `target`, those walling the cell first, each group in rule order. */
-function stepsAt(p: RectPuzzle, s: RectState, kind: Kind, target: number): Step<RectAction>[] {
+/** What each finding about cell `target` leads to on its own, those walling the cell first, each group in rule order. */
+function walledAt(p: RectPuzzle, s: RectState, kind: Kind, target: number): { k: Kill; walls: number[] }[] {
   const a = settled(p, s, kind);
   if (!a) return [];
-  const steps = kills(puzzleLayout(p), a, kind, target).flatMap((k) => run(p, s, kind, k) ?? []);
-  return [...steps.filter((st) => walls(p, st, target)), ...steps.filter((st) => !walls(p, st, target))];
+  const all = kills(puzzleLayout(p), a, kind, target).flatMap((k) => walled(p, s, kind, k) ?? []);
+  const own = (r: { walls: number[] }) => wallsAt(p, r.walls, target).length > 0;
+  return [...all.filter(own), ...all.filter((r) => !own(r))];
+}
+
+const stepsAt = (p: RectPuzzle, s: RectState, kind: Kind, target: number): Step<RectAction>[] =>
+  walledAt(p, s, kind, target).map((r) => explain(p, kind, r.k, r.walls));
+
+/** The first aimed step at cell `target`, keeping only the walls on its sides; null if it has none there. */
+function cellStep(p: RectPuzzle, s: RectState, kind: Kind, target: number): Step<RectAction> | null {
+  const r = walledAt(p, s, kind, target)[0];
+  const walls = r ? wallsAt(p, r.walls, target) : [];
+  return r && walls.length ? explain(p, kind, r.k, walls) : null;
 }
 
 function find(p: RectPuzzle, s: RectState, kind: Kind, target?: number): Step<RectAction> | null {
@@ -164,6 +182,7 @@ export const edge: RectTechnique = {
     const st = typeof target === "number" ? uncrossable(p, s, target) : null;
     if (st) visit(st);
   },
+  cellAt: (p, s, target) => (typeof target === "number" ? uncrossable(p, s, target) : null),
   practice: { params: { width: 7, height: 7, difficulty: "normal" } },
 };
 
@@ -181,6 +200,7 @@ const make = (kind: Kind, id: string, name: string, level: number, description: 
   instancesAt: (p, s, target, visit) => {
     if (typeof target === "number") for (const st of stepsAt(p, s, kind, target)) if (visit(st) === true) return;
   },
+  cellAt: (p, s, target) => (typeof target === "number" ? cellStep(p, s, kind, target) : null),
   practice: { params },
 });
 

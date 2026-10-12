@@ -114,10 +114,13 @@ function technique(def: Omit<DominosaTechnique, "instances" | "findAt" | "instan
     },
     cellAt: (p, s, t) => {
       const target = asTarget(t);
-      if (!target || !("placement" in target)) return null;
-      const q = target.placement;
-      const hit = hitsAt(p, s, kinds, target).find((h) => h.placements.includes(q));
-      return hit ? make(p, { ...hit, placements: [q] }) : null;
+      const hit = target && hitsAt(p, s, kinds, target)[0];
+      if (!hit || !target) return null;
+      const g = geometry(p);
+      const placements = "placement" in target
+        ? hit.placements.filter((q) => q === target.placement)
+        : hit.placements.filter((q) => g.pa[q] === target.cell || g.pb[q] === target.cell);
+      return placements.length ? make(p, { ...hit, placements }) : null;
     },
   };
 }
