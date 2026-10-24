@@ -1,10 +1,6 @@
 import {
-  BindingsStore,
-  formatKeyParts,
-  formatMouseParts,
+  CommandHub as KeybindsHub,
   fuzzyMatcher,
-  keybinds,
-  validateCommands,
   type Command,
   type CommandPalette,
   type ContextMenu,
@@ -12,16 +8,11 @@ import {
   type KeybindSettings,
 } from "keybinds";
 import { KEYBINDS_CSS } from "./keybinds-theme";
-import { keybindElement } from "../../../keybind-elements";
 import type { CommandContext, CommandDef } from "../../core/types";
-import { bindCommands, type BindingSchema } from "../../core/commands";
+import { bindCommands } from "../../core/commands";
 import { confirmDialog } from "./dialog";
 import { style } from "../../core/dom";
 import { prefs } from "../../core/storage";
-
-
-const KEY_GLYPHS: Record<string, string> = { SLASH: "/", COMMA: ",", PERIOD: ".", MINUS: "-", EQUAL: "=", SEMICOLON: ";", QUOTE: "'", BACKQUOTE: "`", BRACKETLEFT: "[", BRACKETRIGHT: "]", BACKSLASH: "\\" };
-const prettyKey = (p: string): string => KEY_GLYPHS[p.toUpperCase()] ?? p;
 
 export type ConfirmPolicy = "danger" | "always" | "never";
 
@@ -36,201 +27,48 @@ function shouldConfirm(c: CommandDef): string | null {
   return policy === "always" || isDanger(c) ? q : null;
 }
 
-const MOUSE_BUTTONS: Record<string, number> = {
-  click: 0, leftclick: 0, left: 0, middleclick: 1, middle: 1, rightclick: 2, right: 2,
-  backclick: 3, back: 3, forwardclick: 4, forward: 4,
-};
-
-type Schema = BindingSchema;
 export { bindCommands };
 
 /**
- * Every command on the page, from every source, with one rebindable binding store per scope.
- * Sources are functions so they're re-read on refresh() (commands can depend on live state).
- * Earlier sources win on id clashes.
+ * A games command as keybinds runs it. Every trigger (key, palette, menu, button) goes through
+ * here, so confirmation is uniform; a run() returning false (with no confirmation pending) lets
+ * the key/mouse event through.
  */
-export class CommandHub {
-  private sources: { owner: string; get: () => CommandDef[] }[] = [];
-  private unbind: (() => void) | null = null;
-  private store: BindingsStore<Schema> | null = null;
-  private storeListener = () => this.refresh();
-  private defs = new Map<string, CommandDef>();
-  private live: Command[] = [];
-  private contextSources: (() => Partial<CommandContext>)[] = [];
-  readonly palette: CommandPalette;
-  readonly cheatsheet: KeybindCheatsheet;
-  readonly settings: KeybindSettings;
-  readonly menu: ContextMenu;
-  private scope = "global";
+function toCommand(c: CommandDef): Command {
+  return {
+    id: c.id,
+    label: c.checked ? `${c.checked() ? "☑" : "☐"} ${c.label}` : c.label,
+    description: c.description,
+    category: c.category,
+    keys: c.keys,
+    mouse: c.mouse,
+    when: c.when as Command["when"],
+    hidden: c.hidden,
+    captureInput: c.captureInput,
+    menu: c.menu,
+    execute: (ctx, ev) => {
+      const q = shouldConfirm(c);
+      if (!q) return c.run(ctx as CommandContext, ev);
+      void confirmDialog(q, c.label, isDanger(c)).then((ok) => ok && c.run(ctx as CommandContext, ev));
+      return undefined;
+    },
+  };
+}
+
+/**
+ * Every command on the page, from every source, with one rebindable binding store per scope
+ * (e.g. per puzzle, so the same key can mean different things per puzzle). keybinds' CommandHub,
+ * with games commands' confirmation, danger and toggles.
+ */
+export class CommandHub extends KeybindsHub<CommandDef, CommandContext> {
+  declare readonly palette: CommandPalette;
+  declare readonly cheatsheet: KeybindCheatsheet;
+  declare readonly settings: KeybindSettings;
+  declare readonly menu: ContextMenu;
 
   constructor(host: HTMLElement) {
     style("keybinds", KEYBINDS_CSS);
-    this.palette = keybindElement("command-palette");
+    super({ storageKey: "games:keys", host, adapt: toCommand });
     this.palette.matcher = fuzzyMatcher as CommandPalette["matcher"];
-    this.cheatsheet = keybindElement("keybind-cheatsheet");
-    this.settings = keybindElement("keybind-settings");
-    this.menu = keybindElement("context-menu");
-    host.append(this.palette, this.cheatsheet, this.settings, this.menu);
-  }
-
-  /** Replace all sources owned by `owner`. */
-  setSource(owner: string, get: (() => CommandDef[]) | null): void {
-    this.sources = this.sources.filter((s) => s.owner !== owner);
-    if (get) this.sources.push({ owner, get });
-  }
-
-  addContext(get: () => Partial<CommandContext>): () => void {
-    this.contextSources.push(get);
-    return () => {
-      this.contextSources = this.contextSources.filter((g) => g !== get);
-    };
-  }
-
-  context(): CommandContext {
-    return Object.assign({}, ...this.contextSources.map((g) => g()));
-  }
-
-  /** Bindings are stored per scope (e.g. per puzzle), so the same key can mean different things per puzzle. */
-  setScope(scope: string): void {
-    this.scope = scope;
-  }
-
-  all(): CommandDef[] {
-    return [...this.defs.values()];
-  }
-
-  get(id: string): CommandDef | undefined {
-    return this.defs.get(id);
-  }
-
-  run(id: string, event?: Event): boolean {
-    const cmd = this.defs.get(id);
-    if (!cmd) return false;
-    const ctx = this.context();
-    if (cmd.when && !cmd.when(ctx)) return false;
-    void this.execute(cmd, ctx, event);
-    return true;
-  }
-
-  /** Every trigger (key, palette, menu, button) goes through here, so confirmation is uniform. */
-  private async execute(cmd: CommandDef, ctx: CommandContext, event?: Event): Promise<void> {
-    const q = shouldConfirm(cmd);
-    if (q && !(await confirmDialog(q, cmd.label, isDanger(cmd)))) return;
-    cmd.run(ctx, event);
-  }
-
-  /** Re-read sources, rebuild bindings and re-attach dispatch. Call when sources change. */
-  refresh(): void {
-    this.defs.clear();
-    for (const src of this.sources) {
-      let list: CommandDef[] = [];
-      try {
-        list = src.get();
-      } catch (e) {
-        console.error(`[games] command source ${src.owner} threw`, e);
-      }
-      for (const c of list) if (!this.defs.has(c.id)) this.defs.set(c.id, c);
-    }
-
-    const schema: Schema = {};
-    for (const c of this.defs.values()) {
-      schema[c.id] = { label: c.label, category: c.category, description: c.description, keys: c.keys ?? [], mouse: c.mouse, hidden: c.hidden };
-    }
-    this.store?.removeEventListener("change", this.storeListener);
-    this.store = new BindingsStore(schema, `games:keys:${this.scope}`);
-    this.store.addEventListener("change", this.storeListener);
-    const bound = this.store.get();
-
-    this.live = [...this.defs.values()].flatMap((c): Command[] => {
-      const b = bound[c.id]!;
-      const cmd: Command = {
-        id: c.id, label: c.checked ? `${c.checked() ? "☑" : "☐"} ${c.label}` : c.label,
-        description: c.description, category: c.category, keys: b.keys, mouse: b.mouse,
-        when: c.when, hidden: c.hidden, captureInput: c.captureInput, menu: c.menu,
-        // a run() returning false (with no confirmation pending) lets the key/mouse event through
-        execute: (ctx, ev) => {
-          if (!shouldConfirm(c)) return c.run(ctx, ev);
-          void this.execute(c, ctx, ev);
-          return undefined;
-        },
-      };
-      try {
-        validateCommands([cmd]);
-        return [cmd];
-      } catch (e) {
-        console.error(`[games] dropping bindings of "${c.id}"`, e);
-        return [{ ...cmd, keys: [], mouse: [] }];
-      }
-    });
-
-    this.unbind?.();
-    this.unbind = keybinds(this.live.filter((c) => c.keys?.length || c.mouse?.length), () => this.libContext());
-    const visible = this.live.filter((c) => !c.hidden);
-    this.palette.commands = visible;
-    this.cheatsheet.commands = visible;
-    this.menu.commands = this.live;
-    this.settings.store = this.store;
-    this.syncContext();
-  }
-
-  /** The keybinds package takes the context as a plain record and hands it back to `when`/`run`. */
-  private libContext(): Record<string, unknown> {
-    return this.context() as Record<string, unknown>;
-  }
-
-  /** Push current context into components so `when` greys out unavailable commands. */
-  syncContext(): void {
-    const ctx = this.libContext();
-    this.palette.context = ctx;
-    this.cheatsheet.context = ctx;
-    this.menu.context = ctx;
-  }
-
-  openPalette(): void {
-    this.refresh();
-    this.palette.open = true;
-  }
-
-  openMenu(tag: string, x: number, y: number): void {
-    this.syncContext();
-    this.menu.menu = tag;
-    this.menu.position = { x, y };
-    this.menu.open = true;
-  }
-
-  /** Keys currently bound to a command, as shown to people (e.g. "Ctrl+Z"). */
-  keysFor(id: string): string[] {
-    return (this.live.find((c) => c.id === id)?.keys ?? []).map((k) => formatKeyParts(k).map(prettyKey).join("+"));
-  }
-
-  /** True if a press is one of the command's mouse press bindings (button and modifiers exactly). */
-  mouseMatches(id: string, e: MouseEvent): boolean {
-    const mac = /Mac|iPhone|iPad/.test(navigator.platform);
-    return (this.live.find((c) => c.id === id)?.mouse ?? []).some((b) => {
-      const parts = b.toLowerCase().split("+").map((p) => p.trim());
-      const btn = parts.pop()!;
-      if (btn.endsWith(":up")) return false;
-      const button = MOUSE_BUTTONS[btn];
-      if (button === undefined || button !== e.button) return false;
-      const want = { ctrl: false, alt: false, shift: false, meta: false };
-      for (const p of parts) {
-        if (p === "$mod") want[mac ? "meta" : "ctrl"] = true;
-        else if (p === "ctrl" || p === "control") want.ctrl = true;
-        else if (p === "alt" || p === "option") want.alt = true;
-        else if (p === "shift") want.shift = true;
-        else if (p === "meta" || p === "cmd" || p === "super") want.meta = true;
-      }
-      return want.ctrl === e.ctrlKey && want.alt === e.altKey && want.shift === e.shiftKey && want.meta === e.metaKey;
-    });
-  }
-
-  /** Mouse bindings as shown to people (e.g. "Right click"). */
-  mouseFor(id: string): string[] {
-    return (this.live.find((c) => c.id === id)?.mouse ?? []).map((m) => formatMouseParts(m).join("+"));
-  }
-
-  destroy(): void {
-    this.unbind?.();
-    this.store?.removeEventListener("change", this.storeListener);
   }
 }

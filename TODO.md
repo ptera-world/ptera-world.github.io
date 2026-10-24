@@ -142,3 +142,5 @@ Primitives (see `src/games/core/types.ts`): Technique, CommandDef, WidgetDef, Th
 - [ ] **loopy: verify SGT ids for non-triangle tilings and pzprv3 import against real files** — only triangles checked against SGT's examples
 - [ ] bridges: islands without a number, dead-end assist
 - [ ] nonogram: keyboard way into the clue "where can this block go" hover
+
+- [ ] **keybinds lockfile** — the games shell and site palette now use keybinds' `CommandHub`, `createComponent` and `data-keybinds` selectors (keybinds 464ae6d and earlier). Once keybinds is pushed, run `bun update keybinds` so `bun.lock` points at that commit; until then only a local `node_modules/keybinds` link to `~/git/keybinds` has them.

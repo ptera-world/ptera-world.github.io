@@ -8,8 +8,7 @@ import { isPanelOpen, closePanel, openPanel } from "./panel";
 import { siteConfig, getActiveCollection, siteUrl } from "./site-config";
 import { getSettings } from "./settings";
 import { signal, onFrame } from "./life";
-import { keybinds, defineSchema, fromBindings, fuzzyMatcher } from "keybinds";
-import { keybindElement } from "./keybind-elements";
+import { keybinds, defineSchema, fromBindings, fuzzyMatcher, createComponent } from "keybinds";
 import type { Command } from "keybinds";
 
 export interface InputCallbacks {
@@ -458,7 +457,7 @@ export function setupInput(
     bodyIndex.set(node.label, node.description);
   }
 
-  const palette = keybindElement("command-palette");
+  const palette = createComponent("command-palette");
   paletteEl = palette;
   palette.setAttribute("auto-trigger", "");
   palette.setAttribute("placeholder", "Search nodes, essays, commands\u2026");
@@ -520,7 +519,7 @@ export function setupInput(
     if (palette.hasAttribute("open")) loadHeadings();
   }).observe(palette, { attributes: true, attributeFilter: ["open"] });
 
-  const cheatsheet = keybindElement("keybind-cheatsheet");
+  const cheatsheet = createComponent("cheatsheet");
   cheatsheet.setAttribute("auto-trigger", "");
   cheatsheet.commands = commands;
   cheatsheet.context = {};
@@ -550,7 +549,7 @@ export function setupInput(
   ];
   allCommands.push(...contextMenuCommands);
 
-  const ctxMenu = keybindElement("context-menu");
+  const ctxMenu = createComponent("context-menu");
   ctxMenu.setAttribute("auto-trigger", "");
   ctxMenu.setAttribute("target", "#viewport");
   ctxMenu.menu = "node";
