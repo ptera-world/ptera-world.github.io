@@ -1,9 +1,33 @@
-import { coerce, formatCells, parseCells, type CellOffset, type CellsField, type Field, type Schema } from "../../core/schema";
+import { coerce, defaultOf, formatCells, isDependent, optionsOf, parseCells, type CellOffset, type CellsField, type Field, type Schema } from "../../core/schema";
 import { h, style } from "../../core/dom";
 
 /**
+ * The values after one field changes: fields declared after it whose default or choices depend on
+ * it are re-coerced, and those still at their old default follow to the new one (picking another
+ * dataset brings that dataset's defaults with it, while a choice the player made stays if valid).
+ */
+export function applyEdit(schema: Schema, values: Record<string, unknown>, key: string, raw: unknown): Record<string, unknown> {
+  const keys = Object.keys(schema);
+  const at = keys.indexOf(key);
+  const before: Record<string, unknown> = {};
+  const next: Record<string, unknown> = {};
+  keys.forEach((k, i) => {
+    const f = schema[k]!;
+    if (i < at) next[k] = values[k];
+    else if (i === at) next[k] = coerce(f, raw, next);
+    else {
+      const wasDefault = JSON.stringify(values[k]) === JSON.stringify(defaultOf(f, before));
+      next[k] = wasDefault ? defaultOf(f, next) : coerce(f, values[k], next);
+    }
+    before[k] = values[k];
+  });
+  return next;
+}
+
+/**
  * Form for a schema. Calls onChange with the full updated values on every edit and re-evaluates
- * `when` visibility in place.
+ * `when` visibility in place. A schema with dependent fields is redrawn after each edit, so their
+ * choices follow.
  */
 export function schemaForm(
   schema: Schema,
@@ -11,88 +35,95 @@ export function schemaForm(
   onChange: (values: Record<string, unknown>) => void,
 ): HTMLElement {
   let current = { ...values };
-  const rows: { key: string; field: Field; row: HTMLElement }[] = [];
   const form = h("div", { class: "form" });
+  const dependent = isDependent(schema);
+  let rows: { key: string; field: Field; row: HTMLElement }[] = [];
 
   const refreshVisibility = () => {
     for (const r of rows) r.row.hidden = r.field.when ? !r.field.when(current) : false;
   };
   const set = (key: string, raw: unknown) => {
-    current = { ...current, [key]: coerce(schema[key]!, raw) };
-    refreshVisibility();
+    current = applyEdit(schema, current, key, raw);
+    if (dependent) build();
+    else refreshVisibility();
     onChange(current);
   };
 
-  for (const [key, field] of Object.entries(schema)) {
-    const id = `f-${Math.random().toString(36).slice(2)}`;
-    const v = current[key];
-    let control: HTMLElement;
-    switch (field.type) {
-      case "bool":
-        control = h("input", {
-          id, type: "checkbox", checked: Boolean(v),
-          onchange: (e: Event) => set(key, (e.target as HTMLInputElement).checked),
-        });
-        break;
-      case "int":
-        control = h("input", {
-          id, type: "number", value: v, min: field.min, max: field.max, step: field.step ?? 1,
-          onchange: (e: Event) => {
-            const input = e.target as HTMLInputElement;
-            set(key, input.value);
-            input.value = String(current[key]);
-          },
-        });
-        break;
-      case "enum":
-        control = h("select", {
-          id, onchange: (e: Event) => set(key, (e.target as HTMLSelectElement).value),
-        }, field.options.map((o) => h("option", { value: o.value, selected: o.value === v, title: o.description }, o.label)));
-        break;
-      case "string": {
-        const input = h("input", {
-          id, type: "text", value: v, placeholder: field.placeholder, spellcheck: "false",
-          onchange: (e: Event) => set(key, (e.target as HTMLInputElement).value),
-        });
-        if (field.check) {
-          const check = field.check;
-          const note = h("small", { class: "check", "aria-live": "polite" });
-          const update = () => {
-            try { note.textContent = check(input.value); } catch (e) { note.textContent = e instanceof Error ? e.message : String(e); }
-          };
-          input.addEventListener("input", update);
-          update();
-          control = h("div", { class: "checked" }, input, note);
-        } else control = input;
-        break;
+  const build = () => {
+    form.replaceChildren();
+    rows = [];
+    for (const [key, field] of Object.entries(schema)) {
+      const id = `f-${Math.random().toString(36).slice(2)}`;
+      const v = current[key];
+      let control: HTMLElement;
+      switch (field.type) {
+        case "bool":
+          control = h("input", {
+            id, type: "checkbox", checked: Boolean(v),
+            onchange: (e: Event) => set(key, (e.target as HTMLInputElement).checked),
+          });
+          break;
+        case "int":
+          control = h("input", {
+            id, type: "number", value: v, min: field.min, max: field.max, step: field.step ?? 1,
+            onchange: (e: Event) => {
+              const input = e.target as HTMLInputElement;
+              set(key, input.value);
+              input.value = String(current[key]);
+            },
+          });
+          break;
+        case "enum":
+          control = h("select", {
+            id, onchange: (e: Event) => set(key, (e.target as HTMLSelectElement).value),
+          }, optionsOf(field, current).map((o) => h("option", { value: o.value, selected: o.value === v, title: o.description }, o.label)));
+          break;
+        case "string": {
+          const input = h("input", {
+            id, type: "text", value: v, placeholder: field.placeholder, spellcheck: "false",
+            onchange: (e: Event) => set(key, (e.target as HTMLInputElement).value),
+          });
+          if (field.check) {
+            const check = field.check;
+            const note = h("small", { class: "check", "aria-live": "polite" });
+            const update = () => {
+              try { note.textContent = check(input.value, current); } catch (e) { note.textContent = e instanceof Error ? e.message : String(e); }
+            };
+            input.addEventListener("input", update);
+            update();
+            control = h("div", { class: "checked" }, input, note);
+          } else control = input;
+          break;
+        }
+        case "cells":
+          control = cellsControl(id, field, v, (value) => set(key, value));
+          break;
+        case "set": {
+          const chosen = new Set(v as readonly string[]);
+          control = h("div", { class: "set", id }, optionsOf(field, current).map((o) =>
+            h("label", { title: o.description },
+              h("input", {
+                type: "checkbox", checked: chosen.has(o.value),
+                onchange: (e: Event) => {
+                  if ((e.target as HTMLInputElement).checked) chosen.add(o.value);
+                  else chosen.delete(o.value);
+                  set(key, [...chosen]);
+                },
+              }),
+              o.label)));
+          break;
+        }
       }
-      case "cells":
-        control = cellsControl(id, field, v, (value) => set(key, value));
-        break;
-      case "set": {
-        const chosen = new Set(v as readonly string[]);
-        control = h("div", { class: "set", id }, field.options.map((o) =>
-          h("label", { title: o.description },
-            h("input", {
-              type: "checkbox", checked: chosen.has(o.value),
-              onchange: (e: Event) => {
-                if ((e.target as HTMLInputElement).checked) chosen.add(o.value);
-                else chosen.delete(o.value);
-                set(key, [...chosen]);
-              },
-            }),
-            o.label)));
-        break;
-      }
+      const row = h("div", { class: `row row-${field.type}` },
+        h("label", { for: id, title: field.description }, field.label),
+        control,
+        field.description ? h("small", null, field.description) : null);
+      rows.push({ key, field, row });
+      form.append(row);
     }
-    const row = h("div", { class: `row row-${field.type}` },
-      h("label", { for: id, title: field.description }, field.label),
-      control,
-      field.description ? h("small", null, field.description) : null);
-    rows.push({ key, field, row });
-    form.append(row);
-  }
-  refreshVisibility();
+    refreshVisibility();
+  };
+  build();
   return form;
 }
 

@@ -280,6 +280,11 @@ export interface PuzzleDef<Pz = unknown, S = unknown, A extends Action = Action,
   /** Ids of the datasets this puzzle is built on; while one isn't loaded the puzzle can't be played. */
   datasets?: readonly string[];
   /**
+   * For games played on a dataset the player picks: the datasets this particular puzzle is built
+   * on, so a dataset's own plugins (e.g. its offline media) apply to it.
+   */
+  datasetsOf?(puzzle: Pz): readonly string[];
+  /**
    * Offered as a puzzle of the day: everyone gets the same one for a date, with these params
    * (missing keys: defaults), and nobody can know it before that date starts anywhere.
    */
@@ -530,6 +535,12 @@ export interface Dataset<Item extends DataItem = DataItem> {
   /** Where the data comes from and under what terms, for players. */
   credits: string;
   attributes: readonly DataAttribute[];
+  /** What one item is called, and more than one (e.g. pokémon / pokémon, word / words). */
+  noun?: { one: string; many: string };
+  /** The attributes that best tell items apart, in the order to show them: what games compare on unless told otherwise. */
+  featured?: readonly string[];
+  /** Pools people ask for, as filter queries (see lib/dataset/query); the first is the default. */
+  pools?: readonly { label: string; query: string }[];
   /** Every item. May be built on first call; the same array every call after. */
   items(): readonly Item[];
   /**

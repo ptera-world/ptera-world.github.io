@@ -2,18 +2,18 @@ import { add, clear, formatTime, h, style } from "../../core/dom";
 import { packJson, unpackJson } from "../../core/patch";
 import type { Session } from "../../core/session";
 import type { AnyPuzzleDef, AnyWidget, WidgetDef } from "../../core/types";
-import { canonical, defaults, fromQuery, resolve, type Field } from "../../core/schema";
+import { canonical, defaultOf, fromQuery, optionsOf, resolve, type Field } from "../../core/schema";
 import { confirmDialog } from "./dialog";
 import { addDays, today } from "./engine";
 import type { Shell } from "./shell";
 import { dailyReminderIcs, results, setupOf, setups, summarize } from "./stats";
 
 /** A field's value in words, for setup labels. */
-function describe(field: Field, v: unknown): string {
+function describe(field: Field, v: unknown, values: Record<string, unknown>): string {
   switch (field.type) {
     case "bool": return v ? "on" : "off";
-    case "enum": return field.options.find((o) => o.value === v)?.label ?? String(v);
-    case "set": return (v as readonly string[]).map((x) => field.options.find((o) => o.value === x)?.label ?? x).join(", ") || "none";
+    case "enum": return optionsOf(field, values).find((o) => o.value === v)?.label ?? String(v);
+    case "set": return (v as readonly string[]).map((x) => optionsOf(field, values).find((o) => o.value === x)?.label ?? x).join(", ") || "none";
     default: return String(v);
   }
 }
@@ -29,10 +29,11 @@ export function setupLabel(def: AnyPuzzleDef, setup: string): string {
   const key = canonical(def.params, values);
   const preset = def.presets?.find((p) => canonical(def.params, resolve(def.params, p.params)) === key);
   if (preset) return preset.label;
-  const base = defaults(def.params) as Record<string, unknown>;
+  // each field against its default given the fields before it (a dataset's own default pool isn't a difference)
+  const vals = values as Record<string, unknown>;
   const differs = Object.entries(def.params as Record<string, Field>).filter(([k, f]) =>
-    canonical({ [k]: f }, { [k]: (values as Record<string, unknown>)[k] } as never) !== canonical({ [k]: f }, { [k]: base[k] } as never));
-  return differs.length ? differs.map(([k, f]) => `${f.label}: ${describe(f, (values as Record<string, unknown>)[k])}`).join(" · ") : "default settings";
+    canonical({ [k]: f }, { [k]: vals[k] } as never) !== canonical({ [k]: f }, { [k]: defaultOf(f, vals) } as never));
+  return differs.length ? differs.map(([k, f]) => `${f.label}: ${describe(f, vals[k], vals)}`).join(" · ") : "default settings";
 }
 
 /** The setup of the open game. */

@@ -105,10 +105,22 @@ export class Registry {
     return requires.every((r) => features.includes(r));
   }
 
-  /** True if the puzzle is built on one of `datasets` (always true when none are given). */
-  private builtOn(ref: PuzzleRef, datasets: readonly string[] | undefined): boolean {
+  /**
+   * True if the puzzle is built on one of `datasets` (always true when none are given). A game on
+   * a dataset the player picks counts as built on any dataset until a puzzle says which.
+   */
+  private builtOn(ref: PuzzleRef, datasets: readonly string[] | undefined, puzzle?: unknown): boolean {
     if (!datasets) return true;
-    const uses = this.puzzles.get(ref.id)?.datasets ?? [];
+    const def = this.puzzles.get(ref.id);
+    const uses = [...(def?.datasets ?? [])];
+    if (def?.datasetsOf) {
+      if (puzzle === undefined) return true;
+      try {
+        uses.push(...def.datasetsOf(puzzle));
+      } catch (e) {
+        console.error(`[games] ${ref.id}.datasetsOf threw`, e);
+      }
+    }
     return datasets.some((d) => uses.includes(d));
   }
 
@@ -137,7 +149,7 @@ export class Registry {
 
   pluginsFor(ref: PuzzleRef, puzzle?: unknown): AnyPlugin[] {
     return [...this.plugins.values()]
-      .filter((p) => covers(p.appliesTo, ref) && this.has(ref, puzzle, p.requires) && this.builtOn(ref, p.datasets))
+      .filter((p) => covers(p.appliesTo, ref) && this.has(ref, puzzle, p.requires) && this.builtOn(ref, p.datasets, puzzle))
       .map((p) => this.hooks.resolvePlugin.call(p));
   }
 
