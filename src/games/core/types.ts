@@ -539,6 +539,11 @@ export interface Dataset<Item extends DataItem = DataItem> {
   featured?: readonly string[];
   /** Pools people ask for, as filter queries (see lib/dataset/query); the first is the default. */
   pools?: readonly { label: string; query: string }[];
+  /**
+   * How an item is spelled out, symbol by symbol, for games that compare spellings the way Wordle
+   * compares letters. Without it: the letters of its name (see lib/dataset/spelling).
+   */
+  spelling?: Spelling<Item>;
   /** Every item. May be built on first call; the same array every call after. */
   items(): readonly Item[];
   /**
@@ -548,6 +553,20 @@ export interface Dataset<Item extends DataItem = DataItem> {
   media?: Readonly<Record<string, (item: Item) => string | null>>;
   /** Dataset-specific tables beyond per-item attributes (e.g. a type chart). */
   tables?: Readonly<Record<string, unknown>>;
+}
+
+/** See Dataset.spelling. */
+export interface Spelling<Item extends DataItem = DataItem> {
+  /** What the symbols are, e.g. "letters", "moves". */
+  label: string;
+  /** The spelling is what the items are (words, move orders), so games compare it unless told otherwise. */
+  primary?: boolean;
+  /** An item's symbols, or null if it can't be spelled. Default: the letters of its name. */
+  of?(item: Item): readonly string[] | null;
+  /** Why a sequence that isn't any item's spelling can't be a guess, or null if it can (e.g. any legal line of moves). */
+  valid?(seq: readonly string[]): string | null;
+  /** The symbols that may follow `prefix`, for an input that offers only those (e.g. the legal moves). */
+  next?(prefix: readonly string[]): readonly string[];
 }
 
 /**

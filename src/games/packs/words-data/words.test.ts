@@ -41,18 +41,18 @@ test("every attribute value is one the attribute declares", () => {
 
 test("pools: every one compiles, the first is the default answer pool, the last is every word", () => {
   const pools = data.pools!;
-  const counts = Object.fromEntries(pools.map((p) => [p.label, pool(p.query).length]));
-  // a five-letter answer pool about the size of wordle's (about 2,300 answers)
-  expect(counts["common five-letter words"]).toBeGreaterThan(1500);
-  expect(counts["common five-letter words"]).toBeLessThan(5000);
-  for (const p of pools.slice(0, -1)) expect(pool(p.query).length).toBeGreaterThan(500);
+  for (const p of pools) expect(pool(p.query).length).toBeGreaterThan(500);
+  // five-letter answers about as many as wordle's (about 2,300); lengths are the game's setting, not the pool's
+  const five = pool(`length:5 ${pools[0]!.query}`).length;
+  expect(five).toBeGreaterThan(1500);
+  expect(five).toBeLessThan(5000);
   // guesses: far more five-letter words are accepted than are answers
-  expect(counts["five-letter words"]).toBeGreaterThan(counts["common five-letter words"]! * 2);
+  expect(pool("length:5").length).toBeGreaterThan(five * 2);
   expect(pools.at(-1)!.query).toBe("");
-  expect(counts["every word"]).toBe(items.length);
+  expect(pool(pools.at(-1)!.query).length).toBe(items.length);
   // answers are a subset of guesses
   const guesses = new Set(pool("length:5").map((i) => i.id));
-  expect(pool(pools[0]!.query).every((i) => guesses.has(i.id))).toBe(true);
+  expect(pool(`length:5 ${pools[0]!.query}`).every((i) => guesses.has(i.id))).toBe(true);
 });
 
 test("pools leave out regional spellings and offensive words", () => {

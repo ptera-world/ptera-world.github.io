@@ -27,14 +27,12 @@ export default function pack(games: GamesApi): void {
     credits: file.credits,
     attributes: file.attributes,
     noun: { one: "word", many: "words" },
+    spelling: { label: "letters", primary: true },
     featured: ["length", "common"],
+    // lengths are a game's own setting, so pools don't fix one
     pools: [
-      { label: "common five-letter words", query: `length:5 ${ANSWER}` },
-      { label: "common four-letter words", query: `length:4 ${ANSWER}` },
-      { label: "common six-letter words", query: `length:6 ${ANSWER}` },
-      { label: "common seven-letter words", query: `length:7 ${ANSWER}` },
-      { label: "common words, 4 to 8 letters", query: `length:4-8 ${ANSWER}` },
-      { label: "five-letter words", query: "length:5" },
+      { label: "common words", query: ANSWER },
+      { label: "the most common words", query: "common<=20 spelling:us spelling:gb !offensive" },
       { label: "every word", query: "" },
     ],
     items: () => (items ??= decode(file)),
