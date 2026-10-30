@@ -11,6 +11,9 @@ dist/
 # direnv
 .direnv/
 
+# Downloads for generated datasets (src/cli.ts data)
+.cache/
+
 # Nix
 result
 

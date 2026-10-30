@@ -1,5 +1,5 @@
 import { Event, Waterfall } from "./hooks";
-import type { AnyPlugin, AnyPuzzleDef, AnyView, AnyWidget, Frontend, PuzzleRef, Technique, Theme } from "./types";
+import type { AnyPlugin, AnyPuzzleDef, AnyView, AnyWidget, Dataset, Datasets, Frontend, PuzzleRef, Technique, Theme } from "./types";
 
 /**
  * Global catalogue of puzzles, plugins and views. Registering an existing id replaces it,
@@ -14,6 +14,7 @@ export class Registry {
   private widgets = new Map<string, AnyWidget>();
   private themes = new Map<string, Theme>();
   private frontends = new Map<string, Frontend>();
+  private datasets = new Map<string, Dataset<any>>();
 
   readonly hooks = {
     resolvePuzzle: new Waterfall<AnyPuzzleDef, void>("resolvePuzzle"),
@@ -22,7 +23,7 @@ export class Registry {
     resolveTechnique: new Waterfall<Technique, void>("resolveTechnique"),
     resolveWidget: new Waterfall<AnyWidget, void>("resolveWidget"),
     /** Fired after any registration change. */
-    changed: new Event<{ kind: "puzzle" | "plugin" | "view" | "technique" | "widget" | "theme" | "frontend"; id: string }>("changed"),
+    changed: new Event<{ kind: "puzzle" | "plugin" | "view" | "technique" | "widget" | "theme" | "frontend" | "dataset"; id: string }>("changed"),
   };
 
   puzzle(def: AnyPuzzleDef): void {
@@ -63,6 +64,27 @@ export class Registry {
 
   listThemes(): Theme[] {
     return [...this.themes.values()];
+  }
+
+  /** Provide a dataset; registering an id again replaces it (a newer or modded copy). */
+  dataset(d: Dataset<any>): void {
+    this.datasets.set(d.id, d);
+    this.hooks.changed.call({ kind: "dataset", id: d.id });
+  }
+
+  getDataset<K extends keyof Datasets & string>(id: K): Datasets[K] | undefined;
+  getDataset(id: string): Dataset | undefined;
+  getDataset(id: string): Dataset | undefined {
+    return this.datasets.get(id);
+  }
+
+  listDatasets(): Dataset[] {
+    return [...this.datasets.values()];
+  }
+
+  /** Datasets `def` is built on that no loaded pack provides. */
+  missingDatasets(def: AnyPuzzleDef): string[] {
+    return (def.datasets ?? []).filter((id) => !this.datasets.has(id));
   }
 
   widget(w: AnyWidget): void {

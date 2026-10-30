@@ -207,6 +207,23 @@ switch (command) {
     break;
   }
 
+  case "data": {
+    const which = args[1];
+    const flag = (name: string): string | undefined => {
+      const i = args.indexOf(name);
+      return i === -1 ? undefined : args[i + 1];
+    };
+    if (which !== "pokemon") {
+      console.error("Usage: bun run src/cli.ts data pokemon [--cache <dir>] [--refresh]");
+      process.exit(1);
+    }
+    const { buildPokemonData } = await import("./games/packs/pokemon-data/build");
+    const out = resolve(import.meta.dir, "games/packs/pokemon-data/data.json");
+    const file = await buildPokemonData({ cache: resolve(flag("--cache") ?? join(import.meta.dir, "..", ".cache", "pokemon")), out, refresh: args.includes("--refresh") });
+    console.log(`pokemon data ${file.version}: ${file.cols.id.length} pokémon, ${file.attributes.length} attributes → ${out}`);
+    break;
+  }
+
   case "inspect": {
     // Delegate to inspect-layout.ts (it reads generated-graph.ts)
     const proc = Bun.spawn(["bun", "run", "src/inspect-layout.ts"], {

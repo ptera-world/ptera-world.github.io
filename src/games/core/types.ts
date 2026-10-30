@@ -277,6 +277,23 @@ export interface PuzzleDef<Pz = unknown, S = unknown, A extends Action = Action,
   describeAction?(puzzle: Pz, action: A, before: S, after: S): string;
   /** Short label for the current puzzle (e.g. "9×9 killer"), shown in the header. */
   describe?(puzzle: Pz): string;
+  /** Ids of the datasets this puzzle is built on; while one isn't loaded the puzzle can't be played. */
+  datasets?: readonly string[];
+  /**
+   * Offered as a puzzle of the day: everyone gets the same one for a date, with these params
+   * (missing keys: defaults), and nobody can know it before that date starts anywhere.
+   */
+  daily?: { params?: Partial<Values<P>> };
+  /**
+   * How well a finished game went, for stats: lower or higher is better as `better` says (e.g.
+   * guesses used). Without it, stats count wins and times only.
+   */
+  score?(puzzle: Pz, state: S): { value: number; label: string; better: "lower" | "higher" } | null;
+  /**
+   * Text to share a finished (or lost) game without giving the answer away (e.g. a grid of
+   * colored squares). Shown with a copy button when the game ends.
+   */
+  shareText?(puzzle: Pz, state: S): string | null;
 }
 
 export interface PluginApi<Pz, S, A extends Action, I, P extends Schema = {}> {
@@ -427,6 +444,77 @@ export interface FrontendHandle {
   /** Remove everything the frontend added (to `root`, the document, timers, listeners) and return what the next mount should continue from. */
   unmount(): unknown;
 }
+
+/**
+ * What one item has for one attribute. null: the source records nothing for this item (e.g. no
+ * habitat for later generations), which is never equal to anything, itself included.
+ */
+export type DataValue = number | string | boolean | readonly string[] | null;
+
+/**
+ * One thing a dataset knows about each item, typed so games can compare, filter and describe it
+ * without knowing the dataset:
+ * - number: a measurement (`unit`), compared higher / lower / close.
+ * - ordinal: one of `values`, which are in order, so also higher / lower (e.g. generation).
+ * - category: one of `values`, no order (e.g. color).
+ * - set: any number of `values` (e.g. types); compared by how much two sets share.
+ * - bool: yes or no.
+ * - text: prose, never compared (e.g. a dex entry).
+ */
+export interface DataAttribute {
+  id: string;
+  label: string;
+  description?: string;
+  kind: "number" | "ordinal" | "category" | "set" | "bool" | "text";
+  unit?: string;
+  /** ordinal, category, set: every possible value (ordinal: lowest first), with what to show for it. */
+  values?: readonly { value: string; label: string; color?: string }[];
+  /** number, ordinal: how far off still counts as close unless a game is told otherwise (ordinal: steps). */
+  near?: { abs?: number; rel?: number };
+  /** set: the order of an item's values means something (e.g. primary type first). */
+  ordered?: boolean;
+  /** number: decimals worth showing. */
+  decimals?: number;
+}
+
+/** One thing in a dataset. Datasets may add their own fields (see the dataset's own item type). */
+export interface DataItem {
+  /** Stable across dataset versions: saved games and links name items by it. */
+  id: string;
+  name: string;
+  /** Other names a player might type for it. */
+  aliases?: readonly string[];
+  values: Readonly<Record<string, DataValue>>;
+}
+
+/**
+ * Data a pack provides for any pack to build on (pokémon, minecraft items, …). A dataset arrives
+ * the way everything else does, in a pack, so it is updated, pinned and rolled back with that pack.
+ */
+export interface Dataset<Item extends DataItem = DataItem> {
+  id: string;
+  name: string;
+  /** Changes whenever the items or attributes change. */
+  version: string;
+  /** Where the data comes from and under what terms, for players. */
+  credits: string;
+  attributes: readonly DataAttribute[];
+  /** Every item. May be built on first call; the same array every call after. */
+  items(): readonly Item[];
+  /**
+   * Media for an item by kind (e.g. "sprite", "shiny", "cry"), as URLs loaded when shown and never
+   * bundled. null: none for this item. What kinds exist and what they hold is the dataset's to say.
+   */
+  media?: Readonly<Record<string, (item: Item) => string | null>>;
+  /** Dataset-specific tables beyond per-item attributes (e.g. a type chart). */
+  tables?: Readonly<Record<string, unknown>>;
+}
+
+/**
+ * Datasets by id with their item types, declared by the packs that know them:
+ * `declare module "…/core/types" { interface Datasets { pokemon: Dataset<PokemonItem> } }`.
+ */
+export interface Datasets {}
 
 /** A look: values for the CSS custom properties every view and widget styles with. */
 export interface Theme {
