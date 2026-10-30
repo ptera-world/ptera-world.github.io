@@ -70,6 +70,27 @@ Primitives (see `src/games/core/types.ts`): Technique, CommandDef, WidgetDef, Th
 - [ ] **lessons that still know one instance**: bridges and rect techniques build each finding on the previous one, so their lessons ask for the first instance only
 - [ ] **work budgets cover what is counted**: tests budget lib/work units, counted in grid-kit constraint runs, the perm solver and pattern line solves; time spent elsewhere in a generator isn't counted
 
+### Datasets and pokémon games
+Datasets are things packs register (`registry.dataset`, `src/games/core/types.ts` Dataset); pokemon-data is the first (`bun run src/cli.ts data pokemon` rebuilds it from PokeAPI's CSVs and Showdown). Eleven games build on it: pokedle, pokedoku, pokemon-connections, pokemon-closeness, pokemon-sort, whos-that, find-the-shiny, pokemon-higher-lower, type-matchups, name-them-all, pokewordle.
+- [ ] **more datasets**: minecraft or anything else follows the same contract (typed attributes, `media`, `tables`); no second dataset exists yet to prove the contract generalises
+- [ ] **dataset not in other languages**: only English names and dex text are carried; PokeAPI has names in ~10 languages (would roughly double the pack)
+- [ ] **no "starter" or "fossil" attribute**: common pokedoku / connections categories; PokeAPI has no field for them, so it would be a hand-made list in the data build
+- [ ] **daily beacon signature not verified**: core/daily.ts trusts the drand relays over HTTPS; verifying needs BLS12-381 code
+- [ ] **daily across devices not checked**: two fresh browser contexts on one machine got the same puzzle; two real devices / time zones not tried
+- [ ] **notifications beyond the calendar file**: real web push needs a sender holding keys (e.g. OneSignal free tier + a scheduled job) and works on iOS only for home-screen-installed sites; periodic background sync is Chromium-only and can't fire at a set time. Neither is built; the .ics daily reminder is
+- [ ] **download-ahead progress isn't shown**: the pokémon offline setting starts the download but nothing says how far it got (lib/dataset/ahead.ts `storedCount` exists, unused). Wifi-only never downloads on browsers that don't report the connection (Safari, Firefox, desktop Chrome); there the player has to pick "always"
+- [ ] **media never revalidated**: the service worker's media cache keeps a sprite forever once stored (PokeAPI rarely changes them); cap 6000 entries, oldest dropped
+- [ ] **ogg cries on Safari / Firefox not tried**: whos-that only offers cries where the browser says it can play ogg vorbis; PokeAPI's latest/25.ogg is really an MP3
+- [ ] **technique strip gives hints away**: the side strip shows instance counts ("only one fits 1") without being asked, which in guessing games says a board is down to one candidate. Hide counts for some puzzles, or make it opt-in?
+- [ ] **per-game stats outside the stats store don't merge across devices**: pokedle's per-attribute stats (games:pokedle:*) follow the "this device's copy stays" rule when moving devices
+- [ ] **pokedle**: no custom "guess my pokémon" puzzles to send (no format), no hard mode; 161-board full gen × type grid not tried for speed; `aspect` is a getter reading the window size
+- [ ] **pokedoku**: rarity is 100 ÷ answers per square (no popularity data), so it measures which squares you filled, not which pokémon
+- [ ] **pokemon-connections**: "only one way" holds for the link kinds in play; tier difficulty per link kind is a judgement call
+- [ ] **pokemon-closeness**: map is t-SNE from an MDS start; exact positions may differ in the last digits across browsers (ranks don't)
+- [ ] **find-the-shiny**: `shiny-diff.json` is rebuilt by hand with its measure.ts when the data changes; mixed grids pick neighbours at random, not similar-looking ones
+- [ ] **name-them-all**: the countdown stops while the tab is hidden (the session pauses); hints (first letter) are an addition Sporcle doesn't have
+- [ ] **none of the pokémon games tried on a real phone, iOS Safari, or with a dark theme**
+
 ### Bigger ideas (designed for, not built)
 - [ ] **puzzlescript-style engine**: puzzles described as data/rules. Would be a pack that turns a description into a PuzzleDef (+ techniques from rule-level deductions); nothing in core blocks it
 - [ ] **real-time games (later)**: match-3 (candy crush / bejeweled) with configurable power-ups, brick breaker, zuma (with a spline editor for maps), tower defense with custom units. Needs a game-loop foundation the turn-based core doesn't have yet: a fixed-step simulation clock in the session (pause, speed, replay by inputs), input sampled per tick instead of per action, and a render loop on core/anim. The cube's rolling animation is the first small user of the animation side
@@ -109,7 +130,7 @@ Primitives (see `src/games/core/types.ts`): Technique, CommandDef, WidgetDef, Th
 - [ ] **Cross-field param validation** — schemas only have `when` (visibility). Add a way for one field to constrain another (e.g. net: wrapping needs every side ≥ 3) so the form blocks impossible combos instead of failing at generate time
 - [ ] **Generation off the main thread** — generators yield between steps, but a single long solve still blocks (loopy 20×20 hard ≈ 12s, 30×30 tricky ≈ 18s). Run `generate` in a Worker; puzzle defs are already pure + deterministic
 - [ ] **Linking from the main site** — `/games/` is reachable only by URL; no portal node / nav link yet
-- [ ] **Stats / best times** per puzzle + params (the results strip already has the data per game)
+- [x] **Stats / best times** per puzzle: stats tab (played, solved, fastest / typical time, score histogram, daily streak). Not yet split by params (each result stores its canonical params)
 - [ ] **layout shift on load**: the board area moves once from where "generating…" sat (`?debugLayout` shows it)
 
 ### Simon Tatham collection packs
