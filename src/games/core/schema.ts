@@ -152,6 +152,16 @@ export function coerce(field: Field, raw: unknown, values: Record<string, unknow
   }
 }
 
+/**
+ * The values that take effect: a field hidden by its `when` takes its default (given the fields
+ * before it), so a setting the player can't see never changes anything.
+ */
+export function effective<S extends Schema>(schema: S, values: Values<S>): Values<S> {
+  const out: Record<string, unknown> = { ...values };
+  for (const [k, f] of Object.entries(schema)) if (f.when && !f.when(out)) out[k] = defaultOf(f, out);
+  return out as Values<S>;
+}
+
 /** Fill missing keys with defaults, coerce present ones, drop unknown keys. */
 export function resolve<S extends Schema>(schema: S, partial: Record<string, unknown> | undefined): Values<S> {
   const out: Record<string, unknown> = {};

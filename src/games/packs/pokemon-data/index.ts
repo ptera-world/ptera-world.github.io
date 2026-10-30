@@ -21,7 +21,7 @@ export default function pack(games: GamesApi): void {
     credits: file.credits,
     attributes: file.attributes,
     noun: { one: "pokémon", many: "pokémon" },
-    spelling: { label: "letters of the name" },
+    spelling: { label: "letters of the name", lengths: { min: 4, max: 8 } },
     featured: ["type", "gen", "stage", "color", "height", "weight"],
     pools: POOL_PRESETS.map((x) => ({ label: x.label, query: x.pool })),
     items: () => (items ??= decode(file)),

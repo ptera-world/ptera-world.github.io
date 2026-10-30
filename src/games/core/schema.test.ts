@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { applyEdit } from "../packs/shell/form";
-import { defaults, defineSchema, fromQuery, resolve, toQuery } from "./schema";
+import { defaults, defineSchema, effective, fromQuery, resolve, toQuery } from "./schema";
 
 /** A dataset field, then fields whose choices and defaults come from the dataset picked. */
 const DATA: Record<string, { attrs: string[]; featured: string[]; pool: string }> = {
@@ -36,4 +36,13 @@ test("editing a field brings dependent defaults along and keeps the player's own
   expect(applyEdit(schema, start, "data", "b")).toEqual({ data: "b", pool: "all-b", attrs: ["q"] });
   const custom = { ...start, pool: "mine" };
   expect(applyEdit(schema, custom, "data", "b")).toEqual({ data: "b", pool: "mine", attrs: ["q"] });
+});
+
+test("a setting hidden by its when takes its default, so it changes nothing", () => {
+  const s = defineSchema({
+    kind: { type: "enum", label: "kind", default: "a", options: [{ value: "a", label: "a" }, { value: "b", label: "b" }] },
+    extra: { type: "bool", label: "extra", default: false, when: (v) => v.kind === "b" },
+  });
+  expect(effective(s, resolve(s, { kind: "a", extra: true }))).toEqual({ kind: "a", extra: false });
+  expect(effective(s, resolve(s, { kind: "b", extra: true }))).toEqual({ kind: "b", extra: true });
 });

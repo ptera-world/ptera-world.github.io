@@ -27,7 +27,7 @@ export default function pack(games: GamesApi): void {
     credits: file.credits,
     attributes: file.attributes,
     noun: { one: "word", many: "words" },
-    spelling: { label: "letters", primary: true },
+    spelling: { label: "letters", primary: true, lengths: { min: 5, max: 5 } },
     featured: ["length", "common"],
     // lengths are a game's own setting, so pools don't fix one
     pools: [

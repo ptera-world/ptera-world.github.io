@@ -35,6 +35,7 @@ export default function pack(games: GamesApi): void {
     spelling: {
       label: "moves",
       primary: true,
+      lengths: { min: 6, max: 10 },
       of: (it) => it.moves,
       // any legal line is a fair guess, written exactly as SAN writes it (Nxf7+, not Nxf7)
       valid: (seq) => {

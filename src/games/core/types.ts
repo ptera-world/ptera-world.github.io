@@ -561,6 +561,8 @@ export interface Spelling<Item extends DataItem = DataItem> {
   label: string;
   /** The spelling is what the items are (words, move orders), so games compare it unless told otherwise. */
   primary?: boolean;
+  /** The usual range of spelling lengths for a game to draw from, unless told otherwise. */
+  lengths?: { min: number; max: number };
   /** An item's symbols, or null if it can't be spelled. Default: the letters of its name. */
   of?(item: Item): readonly string[] | null;
   /** Why a sequence that isn't any item's spelling can't be a guess, or null if it can (e.g. any legal line of moves). */
