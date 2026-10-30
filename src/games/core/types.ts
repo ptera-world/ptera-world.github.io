@@ -325,6 +325,8 @@ export interface Plugin<Pz = any, S = any, A extends Action = any, I = any, P ex
   /** Grouping label in the settings UI. */
   category?: string;
   appliesTo: readonly PuzzleRef[] | "*";
+  /** Only for puzzles built on one of these datasets (see PuzzleDef.datasets), e.g. a dataset's own settings. */
+  datasets?: readonly string[];
   /** Features the loaded puzzle must have (see PuzzleDef.features), e.g. ["boxes"] or ["candidates"]. */
   requires?: readonly Feature[];
   enabledByDefault?: boolean;
@@ -447,7 +449,7 @@ export interface FrontendHandle {
 
 /**
  * What one item has for one attribute. null: the source records nothing for this item (e.g. no
- * habitat for later generations), which is never equal to anything, itself included.
+ * habitat for later generations); a filter on a value never matches it.
  */
 export type DataValue = number | string | boolean | readonly string[] | null;
 

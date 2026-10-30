@@ -4,6 +4,7 @@ import { generate } from "./generate";
 import { createRng } from "./rng";
 import { canonical, defineSchema, fromQuery, resolve, toQuery } from "./schema";
 import { Session } from "./session";
+import { Registry } from "./registry";
 import { isPartOfStep, stepsLeft } from "./techniques";
 
 test("rng is deterministic and forks are independent", () => {
@@ -186,4 +187,17 @@ test("a lesson asks for every instance, and an alternative another one ruled out
   // pressing 0 and pressing 1 overlap on cell 1: once 0 is pressed, 1 can no longer give its own result
   const rivals = [press(0), press(1)];
   expect(stepsLeft(flip, puzzle, start, one, rivals).length).toBe(0);
+});
+
+test("datasets: a plugin for a dataset applies only to puzzles built on it; missing datasets are named", () => {
+  const reg = new Registry();
+  const base = { generatorVersion: 1, params: {}, formats: [], generate: () => ({}), init: () => ({}), reduce: (_p: unknown, s: unknown) => s, isSolved: () => false };
+  reg.puzzle({ ...base, id: "on", name: "on", datasets: ["pokemon"] });
+  reg.puzzle({ ...base, id: "off", name: "off" });
+  reg.plugin({ id: "p", name: "p", appliesTo: "*", datasets: ["pokemon"] });
+  expect(reg.pluginsFor({ id: "on" }).map((p) => p.id)).toEqual(["p"]);
+  expect(reg.pluginsFor({ id: "off" })).toEqual([]);
+  expect(reg.missingDatasets(reg.getPuzzle("on")!)).toEqual(["pokemon"]);
+  reg.dataset({ id: "pokemon", name: "p", version: "1", credits: "", attributes: [], items: () => [] });
+  expect(reg.missingDatasets(reg.getPuzzle("on")!)).toEqual([]);
 });

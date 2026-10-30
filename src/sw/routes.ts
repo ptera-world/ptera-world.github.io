@@ -26,6 +26,23 @@ export async function fileHash(bytes: BufferSource): Promise<string> {
 export const CACHE_PREFIX = "site-";
 
 /**
+ * Media from other sites the worker keeps, across deploys (the name doesn't start with
+ * CACHE_PREFIX, so a deploy never clears it). Oldest entries go first beyond MEDIA_LIMIT.
+ */
+export const MEDIA_CACHE = "media-v1";
+export const MEDIA_LIMIT = 6000;
+
+/**
+ * True for a request the media cache answers: a GET for an image, sound or video on another
+ * origin, made in cors mode. A page asks for that on purpose (`crossorigin` on the element), and
+ * only a cors answer can be stored without the browser padding its size, so a plain cross-origin
+ * `<img>` is never kept.
+ */
+export function isMedia(req: { method: string; mode: string; destination: string; url: string }, origin: string): boolean {
+  return req.method === "GET" && req.mode === "cors" && ["image", "audio", "video"].includes(req.destination) && new URL(req.url).origin !== origin;
+}
+
+/**
  * The worker the dev server serves at /sw.js: it deletes the site worker's caches and unregisters,
  * so pages served by the dev server are never answered from a stored deploy.
  */
@@ -41,4 +58,17 @@ export interface SwManifest {
   version: string;
   /** Key of every file the worker may keep, to the hash of its bytes in this deploy. */
   files: Record<string, string>;
+}
+
+/**
+ * When the media cache may download ahead (fill in media nobody has shown yet): never, only on a
+ * connection the browser says is wifi or ethernet, or always. An unknown connection is not wifi.
+ */
+export type AheadWhen = "off" | "wifi" | "always";
+
+/** Whether downloading ahead is allowed right now, given what the browser says about the connection. */
+export function aheadAllowed(when: AheadWhen, conn: { type?: string; saveData?: boolean } | undefined): boolean {
+  if (when === "always") return true;
+  if (when === "off") return false;
+  return !conn?.saveData && (conn?.type === "wifi" || conn?.type === "ethernet");
 }

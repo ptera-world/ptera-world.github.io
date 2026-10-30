@@ -1,4 +1,4 @@
-import { CACHE_PREFIX, fileHash, keysForPath, type SwManifest } from "./routes";
+import { CACHE_PREFIX, MEDIA_CACHE, MEDIA_LIMIT, aheadAllowed, fileHash, isMedia, keysForPath, type AheadWhen, type SwManifest } from "./routes";
 
 /**
  * Offline copy of the parts of the site this browser has used. Replaced at build time with the
@@ -6,7 +6,9 @@ import { CACHE_PREFIX, fileHash, keysForPath, type SwManifest } from "./routes";
  * does: checking for a new deploy is the browser's one update request for this file.
  *
  * Contract:
- * - Only same-origin GETs for files in the manifest are answered here. Everything else (other
+ * - Same-origin GETs for files in the manifest are answered from this deploy's copy. Media other
+ *   sites serve in cors mode (see isMedia; e.g. sprites a game shows) are kept in their own cache
+ *   once seen, answered from it from then on, and outlive deploys. Everything else (other
  *   origins, anything not listed, such as pack modules, which keep their own versions) goes to
  *   the network untouched, except that a navigation that fails offline gets the stored 404 page.
  * - A listed file is answered from the stored copy when there is one, with no request.
@@ -149,6 +151,7 @@ sw.addEventListener("fetch", (e) => {
   if (req.method !== "GET") return;
   const key = keyOf(req.url);
   if (key !== undefined) e.respondWith(serve(e, key));
+  else if (isMedia(req, sw.location.origin)) e.respondWith(serveMedia(e));
   else if (req.mode === "navigate" && new URL(req.url).origin === sw.location.origin) e.respondWith(fetch(req).catch(offline));
 });
 /** `{ type: "cache", urls }`: a page loaded without this worker names what it loaded, to be stored. */
@@ -167,4 +170,64 @@ sw.addEventListener("message", (e) => {
       }
     }
   })());
+});
+
+/** Store a media response if it is a cors answer, dropping the oldest entries beyond MEDIA_LIMIT. */
+async function keepMedia(url: string, res: Response): Promise<void> {
+  if (!res.ok || res.type !== "cors") return;
+  const cache = await caches.open(MEDIA_CACHE);
+  await cache.put(url, res);
+  const keys = await cache.keys();
+  for (const k of keys.slice(0, Math.max(0, keys.length - MEDIA_LIMIT))) await cache.delete(k);
+}
+
+async function serveMedia(e: FetchEvent): Promise<Response> {
+  const cache = await caches.open(MEDIA_CACHE);
+  const stored = await cache.match(e.request.url);
+  if (stored) return stored;
+  const res = await fetch(e.request);
+  e.waitUntil(keepMedia(e.request.url, res.clone()).catch(() => {}));
+  return res;
+}
+
+/** Downloading ahead: one run at a time; a newer request replaces what's left of the older one. */
+let ahead: { urls: string[]; when: AheadWhen } | null = null;
+let aheadRunning = false;
+const AHEAD_AT_ONCE = 2;
+
+async function runAhead(): Promise<void> {
+  if (aheadRunning) return;
+  aheadRunning = true;
+  try {
+    const cache = await caches.open(MEDIA_CACHE);
+    const conn = (navigator as Navigator & { connection?: { type?: string; saveData?: boolean } }).connection;
+    const worker = async (): Promise<void> => {
+      // the connection is checked before every file, so leaving wifi stops the run
+      while (ahead && ahead.urls.length && aheadAllowed(ahead.when, conn)) {
+        const url = ahead.urls.pop()!;
+        if (await cache.match(url)) continue;
+        try {
+          await keepMedia(url, await fetch(url, { mode: "cors", credentials: "omit" }));
+        } catch {
+          // offline or refused: tried again on the next run
+        }
+      }
+    };
+    await Promise.all(Array.from({ length: AHEAD_AT_ONCE }, worker));
+  } finally {
+    aheadRunning = false;
+  }
+}
+
+/**
+ * `{ type: "media-ahead", urls, when }`: download these media ahead (skipping stored ones) while
+ * `when` allows; `when: "off"` stops a run. Urls must be on another origin.
+ */
+sw.addEventListener("message", (e) => {
+  const data = e.data as { type?: string; urls?: unknown; when?: unknown };
+  if (data?.type !== "media-ahead") return;
+  const when = data.when === "always" || data.when === "wifi" ? data.when : "off";
+  const urls = Array.isArray(data.urls) ? data.urls.filter((u): u is string => typeof u === "string" && new URL(u).origin !== sw.location.origin) : [];
+  ahead = when === "off" ? null : { urls: urls.reverse(), when };
+  if (ahead) e.waitUntil(runAhead());
 });

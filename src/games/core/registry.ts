@@ -105,6 +105,13 @@ export class Registry {
     return requires.every((r) => features.includes(r));
   }
 
+  /** True if the puzzle is built on one of `datasets` (always true when none are given). */
+  private builtOn(ref: PuzzleRef, datasets: readonly string[] | undefined): boolean {
+    if (!datasets) return true;
+    const uses = this.puzzles.get(ref.id)?.datasets ?? [];
+    return datasets.some((d) => uses.includes(d));
+  }
+
   /** Techniques for a puzzle, easiest first (ties by id, so order is stable). */
   techniquesFor(ref: PuzzleRef, puzzle?: unknown): Technique[] {
     return [...this.techniques.values()]
@@ -130,7 +137,7 @@ export class Registry {
 
   pluginsFor(ref: PuzzleRef, puzzle?: unknown): AnyPlugin[] {
     return [...this.plugins.values()]
-      .filter((p) => covers(p.appliesTo, ref) && this.has(ref, puzzle, p.requires))
+      .filter((p) => covers(p.appliesTo, ref) && this.has(ref, puzzle, p.requires) && this.builtOn(ref, p.datasets))
       .map((p) => this.hooks.resolvePlugin.call(p));
   }
 
