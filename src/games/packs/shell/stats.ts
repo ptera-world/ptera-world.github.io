@@ -1,4 +1,5 @@
 import { namespace } from "../../core/storage";
+import type { Metric } from "../../core/types";
 
 /**
  * How games ended, per puzzle, for stats. A game is recorded the first time it ends (solved,
@@ -16,6 +17,24 @@ export interface Result {
   outcome: "solved" | "revealed" | "lost";
   ms: number;
   score?: { value: number; label: string; better: "lower" | "higher" };
+  /** The game's own measurements (PuzzleDef.metrics). */
+  metrics?: Metric[];
+}
+
+/**
+ * Which games are comparable: the puzzle of the day is its own setup (fixed params, everyone the
+ * same), every other game is grouped by its exact params, imported puzzles together. Stats are
+ * only ever summed within one setup, so a 16-board game never shares a histogram with a 1-board one.
+ */
+export function setupOf(r: Pick<Result, "daily" | "params">): string {
+  return r.daily ? "daily" : r.params ? `p:${r.params}` : "imported";
+}
+
+/** Setups with results, most recently played first. */
+export function setups(list: readonly Result[]): string[] {
+  const last = new Map<string, number>();
+  for (const r of list) last.set(setupOf(r), Math.max(last.get(setupOf(r)) ?? 0, r.at));
+  return [...last.keys()].sort((a, b) => last.get(b)! - last.get(a)!);
 }
 
 const store = namespace("stats");
@@ -44,6 +63,8 @@ export interface Summary {
   better: "lower" | "higher" | null;
   streak: number;
   bestStreak: number;
+  /** Each measurement averaged over the games that had it. */
+  metrics: { id: string; label: string; better: "lower" | "higher"; mean: number; n: number }[];
 }
 
 /** Totals over `list`; streaks count consecutive dates with a solved puzzle of the day, up to `today` or the day before. */
@@ -70,7 +91,18 @@ export function summarize(list: readonly Result[], today: string, dayBefore: (d:
   let streak = 0;
   let d = won.has(today) ? today : dayBefore(today);
   while (won.has(d)) { streak++; d = dayBefore(d); }
+  const metrics = new Map<string, { id: string; label: string; better: "lower" | "higher"; sum: number; n: number }>();
+  for (const r of list) {
+    if (r.outcome === "revealed") continue;
+    for (const m of r.metrics ?? []) {
+      const e = metrics.get(m.id) ?? { id: m.id, label: m.label, better: m.better, sum: 0, n: 0 };
+      e.sum += m.value;
+      e.n++;
+      metrics.set(m.id, e);
+    }
+  }
   return {
+    metrics: [...metrics.values()].map(({ sum, ...m }) => ({ ...m, mean: sum / m.n })),
     played: list.length,
     solved: solved.length,
     bestMs: times[0] ?? null,

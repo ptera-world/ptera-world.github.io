@@ -63,3 +63,34 @@ test("moving devices: stats and saved games combine, this device's settings stay
   expect(JSON.parse(mem.get("games:games-index:list")!).map((m: { id: string }) => m.id)).toEqual(["g2", "g1", "g3"]);
   expect(mem.has("games:packstore:https://x/pack.js")).toBe(false);
 });
+
+test("setups: dailies, each exact set of params, and imported puzzles are kept apart; metrics average per setup", () => {
+  const { setupOf, setups, summarize: sum } = require("./stats") as typeof import("./stats");
+  const m = (v: number) => [{ id: "first-right:type", label: "type right by guess", value: v, better: "lower" as const }];
+  const list: Result[] = [
+    r("a", "solved", { params: "boards=1", at: 1, metrics: m(2) }),
+    r("b", "solved", { params: "boards=16", at: 2, metrics: m(9) }),
+    r("c", "solved", { params: "boards=1", at: 3, metrics: m(4) }),
+    r("d", "solved", { params: "boards=1", daily: "2026-10-30", at: 4 }),
+    r("e", "lost", { params: "", at: 5 }),
+  ];
+  expect(setups(list)).toEqual(["imported", "daily", "p:boards=1", "p:boards=16"]);
+  const one = list.filter((x) => setupOf(x) === "p:boards=1");
+  expect(one.map((x) => x.id)).toEqual(["a", "c"]);
+  expect(sum(one, "2026-10-31", before).metrics).toEqual([{ id: "first-right:type", label: "type right by guess", better: "lower", mean: 3, n: 2 }]);
+});
+
+test("setup labels: the day, a preset's name, default settings, or what differs from the defaults", async () => {
+  const { setupLabel } = await import("./play-widgets");
+  const { canonical, defineSchema, resolve } = await import("../../core/schema");
+  const params = defineSchema({
+    boards: { type: "int", label: "boards", default: 1, min: 1, max: 32 },
+    mode: { type: "enum", label: "mode", default: "together", options: [{ value: "together", label: "together" }, { value: "sequence", label: "one after another" }] },
+  });
+  const def = { id: "x", name: "x", generatorVersion: 1, params, formats: [], presets: [{ label: "4 boards", params: { boards: 4 } }] } as never;
+  const key = (v: Record<string, unknown>) => `p:${canonical(params, resolve(params, v))}`;
+  expect(setupLabel(def, "daily")).toBe("puzzle of the day");
+  expect(setupLabel(def, key({}))).toBe("default settings");
+  expect(setupLabel(def, key({ boards: 4 }))).toBe("4 boards");
+  expect(setupLabel(def, key({ boards: 8, mode: "sequence" }))).toBe("boards: 8 · mode: one after another");
+});

@@ -306,6 +306,21 @@ export interface PuzzleDef<Pz = unknown, S = unknown, A extends Action = Action,
    * right" for a quiz, where reaching the end is the only way it ends). null: the default.
    */
   verdict?(puzzle: Pz, state: S): string | null;
+  /**
+   * The game's own measurements of an ended game (not a revealed one), kept with its result and
+   * averaged per setup in stats, e.g. on which guess each attribute was first right. Leave out
+   * any that don't apply to this game.
+   */
+  metrics?(puzzle: Pz, state: S): readonly Metric[] | null;
+}
+
+/** One measurement of an ended game (see PuzzleDef.metrics). */
+export interface Metric {
+  /** Stable across games, so the same measurement averages together. */
+  id: string;
+  label: string;
+  value: number;
+  better: "lower" | "higher";
 }
 
 export interface PluginApi<Pz, S, A extends Action, I, P extends Schema = {}> {

@@ -2,13 +2,12 @@ import { expect, test } from "bun:test";
 import { generate as run } from "../../core/generate";
 import { createRng } from "../../core/rng";
 import { applyStep, firstStep } from "../../core/techniques";
-import type { KeyValue } from "../../core/types";
 import { consistent, compareItems } from "../../lib/dataset/compare";
 import { filter } from "../../lib/dataset/query";
 import { decode, type PokemonDataFile } from "../../lib/pokemon/codec";
 import type { PokemonDataset } from "../../lib/pokemon/types";
 import { candidates, ctxOf, fitsGiven, isOpen, pokedleDef, shareText, solvedAt, type PokedlePuzzle, type PokedleState } from "./logic";
-import { readStats, record } from "./stats";
+import { pokedleMetrics } from "./stats";
 import { fallbackHint, pokedleTechniques } from "./techniques";
 
 const file = (await Bun.file(new URL("../pokemon-data/data.json", import.meta.url)).json()) as PokemonDataFile;
@@ -150,17 +149,11 @@ test("share text and score say how it went without naming the pokémon", async (
   expect(shareText(data, q, s4)).toBe("pokédle X/9\n🟥 🟥\n1\ufe0f\u20e3 🟥");
 });
 
-test("attribute stats: the guess each attribute was first right on, once per game", async () => {
-  const mem = new Map<string, unknown>();
-  const store: KeyValue = { get: (k, f) => (mem.has(k) ? mem.get(k) : f) as never, set: (k, v) => void mem.set(k, v), remove: (k) => void mem.delete(k) };
+test("metrics: the guess each attribute was first right on, per attribute, over the boards found", async () => {
   const p = await gen({ pool: "form:default gen:1", attrs: ["gen", "type"] }, "stats");
   const ans = byId(p.boards[0]!.answer);
   const other = ctxOf(data, p).pool.find((i) => i.id !== ans.id && JSON.stringify(i.values.type) !== JSON.stringify(ans.values.type))!;
   const s = guess(p, guess(p, def.init(p), other.id), ans.id);
-  expect(record(data, p, s, store)).toBe(true);
-  expect(record(data, p, s, store)).toBe(false);
-  const st = readStats(store);
-  expect(st.boards).toBe(1);
-  expect(st.attrs.gen).toEqual({ sum: 1, n: 1 }); // gen 1 pool: right on the first guess
-  expect(st.attrs.type).toEqual({ sum: 2, n: 1 });
+  const m = Object.fromEntries(pokedleMetrics(data)(p, s).map((x) => [x.id, x.value]));
+  expect(m).toEqual({ "first-right:gen": 1, "first-right:type": 2 }); // gen 1 pool: gen right on the first guess
 });

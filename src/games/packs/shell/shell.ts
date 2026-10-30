@@ -1488,8 +1488,10 @@ export class Shell {
     const outcome = s.lost ? "lost" : s.solved ? "solved" : s.finished ? "revealed" : null;
     if (!outcome) return;
     let score: Result["score"] | undefined;
+    let metrics: Result["metrics"] | undefined;
     try {
       score = outcome === "revealed" ? undefined : s.def.score?.(s.puzzle, s.state) ?? undefined;
+      metrics = outcome === "revealed" ? undefined : s.def.metrics?.(s.puzzle, s.state)?.map((m) => ({ ...m })) ?? undefined;
     } catch (e) {
       console.error(e);
     }
@@ -1499,6 +1501,7 @@ export class Shell {
       params: o.kind === "generated" ? canonical(s.def.params, resolve(s.def.params, o.params)) : "",
       ...(o.kind === "generated" && o.daily ? { daily: o.daily } : {}),
       ...(score ? { score } : {}),
+      ...(metrics?.length ? { metrics } : {}),
     });
     if (fresh) this.hooks.stats.call();
   }

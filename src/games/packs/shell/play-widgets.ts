@@ -1,11 +1,45 @@
 import { add, clear, formatTime, h, style } from "../../core/dom";
 import { packJson, unpackJson } from "../../core/patch";
 import type { Session } from "../../core/session";
-import type { AnyWidget, WidgetDef } from "../../core/types";
+import type { AnyPuzzleDef, AnyWidget, WidgetDef } from "../../core/types";
+import { canonical, defaults, fromQuery, resolve, type Field } from "../../core/schema";
 import { confirmDialog } from "./dialog";
 import { addDays, today } from "./engine";
 import type { Shell } from "./shell";
-import { dailyReminderIcs, results, summarize } from "./stats";
+import { dailyReminderIcs, results, setupOf, setups, summarize } from "./stats";
+
+/** A field's value in words, for setup labels. */
+function describe(field: Field, v: unknown): string {
+  switch (field.type) {
+    case "bool": return v ? "on" : "off";
+    case "enum": return field.options.find((o) => o.value === v)?.label ?? String(v);
+    case "set": return (v as readonly string[]).map((x) => field.options.find((o) => o.value === x)?.label ?? x).join(", ") || "none";
+    default: return String(v);
+  }
+}
+
+/**
+ * A setup in words: the puzzle of the day, a preset's name when the params are exactly a preset,
+ * "default settings", or the settings that differ from the defaults.
+ */
+export function setupLabel(def: AnyPuzzleDef, setup: string): string {
+  if (setup === "daily") return "puzzle of the day";
+  if (setup === "imported") return "imported puzzles";
+  const values = fromQuery(def.params, new URLSearchParams(setup.slice(2)));
+  const key = canonical(def.params, values);
+  const preset = def.presets?.find((p) => canonical(def.params, resolve(def.params, p.params)) === key);
+  if (preset) return preset.label;
+  const base = defaults(def.params) as Record<string, unknown>;
+  const differs = Object.entries(def.params as Record<string, Field>).filter(([k, f]) =>
+    canonical({ [k]: f }, { [k]: (values as Record<string, unknown>)[k] } as never) !== canonical({ [k]: f }, { [k]: base[k] } as never));
+  return differs.length ? differs.map(([k, f]) => `${f.label}: ${describe(f, (values as Record<string, unknown>)[k])}`).join(" · ") : "default settings";
+}
+
+/** The setup of the open game. */
+export function sessionSetup(s: Session<any, any, any, any>): string {
+  const o = s.origin;
+  return setupOf({ daily: o.kind === "generated" ? o.daily : undefined, params: o.kind === "generated" ? canonical(s.def.params, resolve(s.def.params, o.params)) : "" });
+}
 
 const CSS = `
 .w-stats { display: flex; flex-direction: column; gap: 10px; }
@@ -15,6 +49,8 @@ const CSS = `
 .w-stats .st-num span { font-size: 12px; color: var(--text-dim); text-align: center; }
 .w-stats .st-bars { display: flex; flex-direction: column; gap: 3px; }
 .w-stats .st-bar { display: grid; grid-template-columns: 7ch 1fr; gap: 6px; align-items: center; font-size: 12px; }
+.w-stats .st-metrics .st-bar { grid-template-columns: minmax(7ch, 12ch) 1fr; }
+.w-stats .st-setup { max-width: 100%; }
 .w-stats .st-bar i { display: block; height: 14px; min-width: 2px; background: var(--accent); border-radius: 3px; font-style: normal; color: #fff; font-size: 11px; padding: 0 4px; box-sizing: border-box; text-align: right; line-height: 14px; }
 .w-share { display: flex; flex-direction: column; gap: 6px; }
 .w-share pre { margin: 0; padding: 8px; background: var(--surface-2); border-radius: 8px; white-space: pre-wrap; font-family: var(--font); font-size: 14px; line-height: 1.3; max-height: 220px; overflow-y: auto; }
@@ -45,8 +81,12 @@ export function shareBlock(shell: Shell, s: Session<any, any, any, any>): HTMLEl
     console.error(e);
   }
   if (!text) return null;
-  const withLink = async () => `${text}\n${new URL(await shell.shareUrl("puzzle"), location.href).href}`;
-  return h("div", { class: "w-share" }, h("pre", null, text), h("div", { class: "w-inline" }, copyButton(withLink)));
+  // which setup it was, in words, and the link that opens the same one (same seed, or the same day)
+  const o = s.origin;
+  const setup = o.kind === "generated" && o.daily ? `puzzle of the day, ${o.daily}` : o.kind === "generated" ? setupLabel(s.def, sessionSetup(s)) : null;
+  const full = [text, setup].filter(Boolean).join("\n");
+  const withLink = async () => `${full}\n${new URL(await shell.shareUrl("puzzle"), location.href).href}`;
+  return h("div", { class: "w-share" }, h("pre", null, full), h("div", { class: "w-inline" }, copyButton(withLink)));
 }
 
 /** "streak 4" for a puzzle of the day, else null. */
@@ -110,20 +150,33 @@ export function playWidgets(shell: Shell): AnyWidget[] {
     id: "stats", name: "stats", description: "how your games of this puzzle went: wins, times, scores, and your streak for the puzzle of the day", puzzles: "*", defaultSlot: "panel", order: 35,
     mount(el, ctx) {
       const def = ctx.session.def;
+      // stats are per setup (stats.ts setupOf); the one being played unless the player picks another
+      let picked = sessionSetup(ctx.session);
       const render = () => {
         clear(el);
-        const list = results(def.id);
+        const all = results(def.id);
+        const known = setups(all);
+        if (!known.includes(picked) && known.length && picked !== sessionSetup(ctx.session)) picked = known[0]!;
+        const list = all.filter((r) => setupOf(r) === picked);
         const box = h("div", { class: "w-stats" });
         el.append(box);
+        const choices = [...new Set([sessionSetup(ctx.session), ...known])];
+        if (choices.length > 1) {
+          box.append(h("select", {
+            "aria-label": "which setup", class: "st-setup",
+            onchange: (e: Event) => { picked = (e.target as HTMLSelectElement).value; render(); },
+          }, choices.map((k) => h("option", { value: k, selected: k === picked },
+            `${setupLabel(def, k)}${k === sessionSetup(ctx.session) ? " (this game)" : ""} · ${all.filter((r) => setupOf(r) === k).length} played`))));
+        } else box.append(h("p", { class: "w-dim" }, setupLabel(def, picked)));
         const sum = summarize(list, today(), (d) => addDays(d, -1));
         const num = (v: string | number, label: string) => h("div", { class: "st-num" }, h("b", null, String(v)), h("span", null, label));
-        if (!list.length) box.append(h("p", { class: "w-dim" }, "no finished games yet."));
+        if (!list.length) box.append(h("p", { class: "w-dim" }, "no finished games with these settings yet."));
         else {
           box.append(h("div", { class: "st-nums" },
             num(sum.played, "played"),
             num(`${Math.round((sum.solved / sum.played) * 100)}%`, "solved"),
-            def.daily ? num(sum.streak, "streak") : null,
-            def.daily ? num(sum.bestStreak, "best streak") : null,
+            picked === "daily" ? num(sum.streak, "streak") : null,
+            picked === "daily" ? num(sum.bestStreak, "best streak") : null,
             sum.bestMs !== null ? num(formatTime(sum.bestMs), "fastest") : null,
             sum.medianMs !== null ? num(formatTime(sum.medianMs), "typical time") : null));
           if (sum.scores.length) {
@@ -132,6 +185,13 @@ export function playWidgets(shell: Shell): AnyWidget[] {
               h("div", { class: "st-bars" }, sum.scores.map((x) => h("div", { class: "st-bar" },
                 h("span", null, String(x.value)),
                 h("i", { style: `width: ${(x.count / most) * 100}%`, title: `${x.label}: ${x.count}` }, String(x.count))))));
+          }
+          if (sum.metrics.length) {
+            const most = Math.max(...sum.metrics.map((m) => m.mean), 1e-9);
+            box.append(h("h3", { class: "w-dim" }, "on average"),
+              h("div", { class: "st-bars st-metrics" }, sum.metrics.map((m) => h("div", { class: "st-bar", title: `${m.n} ${m.n === 1 ? "game" : "games"} · ${m.better} is better` },
+                h("span", null, m.label),
+                h("i", { style: `width: ${(m.mean / most) * 100}%` }, m.mean.toFixed(1))))));
           }
         }
         if (def.daily) {
