@@ -101,7 +101,7 @@ test("names that still fit are exactly the pool words consistent with every mark
   expect(def.hint!(p, s)!.message).toBe(`${c.length} names of 7 letters still fit every mark`);
 });
 
-test("known letter fills a letter every fitting name has; one name left guesses it", () => {
+test("known letter fills a letter every fitting name has; no technique guesses the answer", () => {
   const p = puzzle("pikachu");
   // CETITAN leaves JIRACHI, LUCARIO and PIKACHU: all have A 4th, though CETITAN's A was only yellow
   const s = play(p, "cetitan");
@@ -114,12 +114,10 @@ test("known letter fills a letter every fitting name has; one name left guesses 
   for (const ch of "jirachi") filled = def.reduce(p, filled, { type: "letter", ch });
   expect(filled.row.join("")).toBe("jirachi");
   expect(firstStep(def, techniques, p, def.init(p))).toBe(null);
-  // guess fitting names until one is left: then the answer is guessed
+  // guess fitting names until one is left: no technique plays it
   let t = s;
   while (candidates(words, p, t).length > 1) t = play(p, ...t.done.map((g) => g.word), candidates(words, p, t).find((w) => w !== "pikachu")!);
-  const last = firstStep(def, techniques, p, t);
-  expect(last?.technique.id).toBe("pokewordle.last-name");
-  expect(def.isSolved(p, applyStep(def, p, t, last!.step))).toBe(true);
+  expect(firstStep(def, techniques, p, t)).toBe(null);
 });
 
 test("the check plugin points out a typed name an earlier guess rules out", () => {

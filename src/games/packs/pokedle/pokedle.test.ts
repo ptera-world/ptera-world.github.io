@@ -1,21 +1,19 @@
 import { expect, test } from "bun:test";
 import { generate as run } from "../../core/generate";
 import { createRng } from "../../core/rng";
-import { applyStep, firstStep } from "../../core/techniques";
 import { consistent, compareItems } from "../../lib/dataset/compare";
 import { filter } from "../../lib/dataset/query";
 import { decode, type PokemonDataFile } from "../../lib/pokemon/codec";
 import type { PokemonDataset } from "../../lib/pokemon/types";
 import { candidates, ctxOf, fitsGiven, isOpen, pokedleDef, shareText, solvedAt, type PokedlePuzzle, type PokedleState } from "./logic";
 import { pokedleMetrics } from "./stats";
-import { fallbackHint, pokedleTechniques } from "./techniques";
+import { fallbackHint } from "./techniques";
 
 const file = (await Bun.file(new URL("../pokemon-data/data.json", import.meta.url)).json()) as PokemonDataFile;
 const items = decode(file);
 const dataset: PokemonDataset = { id: "pokemon", name: "pokémon", version: file.version, credits: file.credits, attributes: file.attributes, items: () => items, tables: { typeChart: file.typeChart } };
 const data = () => dataset;
 const def = pokedleDef(data);
-const techniques = pokedleTechniques(data, def);
 const sig = () => new AbortController().signal;
 const gen = (params: Record<string, unknown>, seed: string) => run(def, params, seed, sig()) as Promise<PokedlePuzzle>;
 const guess = (p: PokedlePuzzle, s: PokedleState, id: string) => def.reduce(p, s, { type: "guess", id });
@@ -110,30 +108,22 @@ test("in sequence, a board opens once the one before is found, and a board found
   expect(def.isSolved(p, s)).toBe(true);
 });
 
-test("hints: the only-one step guesses the answer; otherwise the count of pokémon that fit is given", async () => {
-  let sawOnly = 0;
+test("hints give the count of pokémon that fit, and never guess the answer", async () => {
   for (let t = 0; t < 10; t++) {
     const p = await gen({ pool: "form:default gen:1" }, `h${t}`);
     const pool = ctxOf(data, p).pool;
     const rng = createRng(`h${t}`);
     let s = def.init(p);
     for (let k = 0; k < 12 && !def.isSolved(p, s); k++) {
-      const hit = firstStep(def, techniques, p, s);
-      if (hit) {
-        sawOnly++;
-        expect(hit.step.actions as unknown).toEqual([{ type: "guess", id: p.boards[0]!.answer }]);
-        s = applyStep(def, p, s, hit.step);
-        expect(def.isSolved(p, s)).toBe(true);
-        break;
-      }
       if (s.guesses.length) {
         const n = candidates(data, p, s, 0).length;
-        expect(fallbackHint(data, p, s)!.message).toStartWith(`${n} pokémon fit`);
+        const hint = fallbackHint(data, p, s)!;
+        expect(hint.message).toStartWith(`${n} pokémon fit`);
+        expect(hint.actions).toBeUndefined();
       }
       s = guess(p, s, rng.pick(pool.filter((i) => !s.guesses.includes(i.id))).id);
     }
   }
-  expect(sawOnly).toBeGreaterThan(3);
 });
 
 test("share text and score say how it went without naming the pokémon", async () => {

@@ -42,25 +42,6 @@ export function makeTechniques(def: PuzzleRef, dataset: () => PokemonDataset | u
     instances(p, s, visit) { const st = knownStep(p, s); if (st) visit(st); },
   };
 
-  const last: WT = {
-    id: "pokewordle.last-name",
-    name: "only one name left",
-    puzzles: [def],
-    level: 2,
-    description: "when exactly one pokémon name fits all the marks so far, it is the answer: guess it.",
-    instances(p, s, visit) {
-      const c = left(p, s);
-      if (!c || c.length !== 1) return;
-      visit({
-        message: `only one name fits every mark: ${c[0]!.toUpperCase()}`,
-        nudge: "how many names still fit every mark?",
-        focus: { slots: s.row.map((_, i) => i), rows: allRows(s) } satisfies WordleFocus,
-        nudgeFocus: { slots: [], rows: allRows(s) } satisfies WordleFocus,
-        actions: [{ type: "row", row: c[0]!.split("") }, { type: "submit" }],
-      });
-    },
-  };
-
   /** Runs ahead of technique hints: a typed name that can't be the answer is pointed out first. */
   const checkRow: Plugin<WordlePuzzle, WordleState, WordleAction> = {
     id: "pokewordle.check-row",
@@ -83,5 +64,5 @@ export function makeTechniques(def: PuzzleRef, dataset: () => PokemonDataset | u
     },
   };
 
-  return { techniques: [known, last], plugins: [checkRow] };
+  return { techniques: [known], plugins: [checkRow] };
 }

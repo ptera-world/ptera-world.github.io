@@ -1,7 +1,7 @@
 import type { GamesApi } from "../../api";
 import { pokedleDef } from "./logic";
 import { pokedleMetrics } from "./stats";
-import { fallbackHint, pokedleTechniques } from "./techniques";
+import { fallbackHint } from "./techniques";
 import { pokedleView } from "./view";
 
 /**
@@ -14,5 +14,4 @@ export default function pack(games: GamesApi): void {
   const def = pokedleDef(data);
   registry.puzzle({ ...def, hint: (p, s) => fallbackHint(data, p, s), metrics: pokedleMetrics(data) });
   registry.view(pokedleView(data, def));
-  for (const t of pokedleTechniques(data, def)) registry.technique(t);
 }
