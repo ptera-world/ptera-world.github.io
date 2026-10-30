@@ -869,6 +869,7 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
             else if (src.kind === "technique") steps.push({ t: list.find((x) => x.id === src.technique) ?? null, how: src.auto ? "auto" : src.viaHint ? "hint" : "cast" });
           }
         }
+        const techniqueUsed = steps.some((st) => st.t !== null);
         const hows: readonly How[] = ["hand", "cast", "hint", "auto"];
         const howName: Record<How, string> = { hand: "by hand", cast: "cast", hint: "from hints", auto: "auto" };
         const byT = new Map<Technique | null, Record<How, number>>();
@@ -894,13 +895,14 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
             score ? h("span", { class: "w-dim" }, score) : h("span", { class: "w-dim" }, `${steps.length} steps`),
             streakLine(s) ? h("span", { class: "w-dim" }, streakLine(s)) : null),
           shareBlock(shell, s),
-          steps.length ? h("div", { class: "rs-line", "aria-label": "every step in order, colored by technique" },
+          // the breakdown says which techniques the solve used; with none it would say nothing
+          techniqueUsed && steps.length ? h("div", { class: "rs-line", "aria-label": "every step in order, colored by technique" },
             steps.map((st) => h("span", { class: `rs-tick ${st.how}`, style: `--tc: ${colorFor(st.t)}`, title: `${st.t?.name ?? "no technique"} · ${howName[st.how]}` }))) : null,
-          rows.length ? h("div", { class: "rs-rows" }, rows.map(([t, c]) => h("div", { class: "rs-row", style: `--tc: ${colorFor(t)}` },
+          techniqueUsed && rows.length ? h("div", { class: "rs-rows" }, rows.map(([t, c]) => h("div", { class: "rs-row", style: `--tc: ${colorFor(t)}` },
             h("span", { class: "rs-name" }, t?.name ?? "other moves"),
             h("span", { class: "rs-bar" }, hows.filter((k) => c[k]).map((k) => h("span", { class: `rs-seg ${k}`, style: `width: ${(c[k] / most) * 100}%` }))),
             h("span", { class: "rs-count" }, hows.filter((k) => c[k]).map((k) => `${c[k]} ${howName[k]}`).join(" · "))))) : null,
-          h("div", { class: "rs-key w-dim" }, hows.map((k) => h("span", null, h("span", { class: `rs-seg ${k}`, style: "--tc: var(--text-dim); width: 18px" }), howName[k]))),
+          techniqueUsed ? h("div", { class: "rs-key w-dim" }, hows.map((k) => h("span", null, h("span", { class: `rs-seg ${k}`, style: "--tc: var(--text-dim); width: 18px" }), howName[k]))) : null,
           h("div", { class: "w-inline" },
             h("button", { class: "primary", onclick: () => ctx.run("shell.new") }, "new game"),
             h("button", { onclick: () => shell.openTab("share") }, "share"),
