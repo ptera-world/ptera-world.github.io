@@ -13,7 +13,7 @@ import { liveBoards } from "./techniques";
 
 const CSS = `
 .pkd { width: 100%; height: 100%; display: flex; flex-direction: column; gap: 8px; min-height: 0; font-size: 12px; }
-.pkd-top { display: flex; gap: 8px; align-items: center; flex: none; }
+.pkd-top { display: flex; gap: 8px; align-items: center; flex: none; padding-right: 40px; }
 .pkd-top .name-entry { flex: 1; max-width: none; }
 .pkd-left { color: var(--text-dim); white-space: nowrap; font-size: 13px; }
 .pkd-tiles { flex: none; max-height: 40%; overflow: auto; display: grid; gap: 4px; grid-template-columns: repeat(auto-fill, minmax(58px, 1fr)); padding: 2px; }
@@ -43,8 +43,8 @@ const CSS = `
   .pkd-tile .cnt { display: block; }
 }
 .pkd-scroll { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; border-radius: 6px; }
-.pkd-grid { display: grid; gap: 3px; grid-template-columns: var(--cols); width: max-content; min-width: 100%; }
-.pkd-grid > div { min-height: 44px; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2px 3px; box-sizing: border-box; line-height: 1.15; overflow: hidden; overflow-wrap: anywhere; }
+.pkd-grid { display: grid; gap: 3px; grid-template-columns: var(--cols); width: 100%; }
+.pkd-grid > div { min-height: 44px; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2px 3px; box-sizing: border-box; line-height: 1.15; overflow: hidden; overflow-wrap: break-word; hyphens: auto; }
 .pkd-grid > .th { position: sticky; top: 0; z-index: 2; min-height: 0; padding: 4px 2px; background: var(--bg); color: var(--text-dim); font-size: 10.5px; }
 .pkd-grid > .nm { position: sticky; left: 0; z-index: 1; background: var(--surface); padding: 0 2px; }
 .pkd-grid > .th.nm { z-index: 3; background: var(--bg); color: var(--text); font-weight: 600; }
@@ -55,7 +55,7 @@ const CSS = `
 .pkd-grid .m { display: block; }
 .pkd-grid .m.x { text-decoration: line-through; opacity: .55; }
 .pkd-grid .chip { display: block; border-radius: 99px; padding: 0 5px; margin: 1px 0; color: #fff; text-shadow: 0 1px 1px rgb(0 0 0 / .6); font-size: 10.5px; }
-.pkd-grid .chip.x { opacity: .35; text-decoration: line-through; }
+.pkd-grid .chip.x { opacity: .5; text-decoration: line-through; text-decoration-thickness: 2px; }
 .pkd-grid > .answer { outline: 2px dashed var(--danger); outline-offset: -2px; background: var(--surface); }
 .pkd-grid > .hint { box-shadow: inset 0 0 0 2px var(--hint); }
 .pkd-grid > .new { animation: pkd-in .35s ease-out both; }
@@ -63,6 +63,13 @@ const CSS = `
 @media (prefers-reduced-motion: reduce) { .pkd-grid > .new { animation: none; } }
 .pkd-empty { color: var(--text-dim); padding: 8px; }
 `;
+
+/** Column headers for the pokémon attributes whose labels don't fit a narrow column. */
+const SHORT: Record<string, string> = {
+  gen: "gen", stage: "stage", bst: "total", spa: "sp. atk", spd: "sp. def", atk: "atk", def: "def", spe: "speed",
+  shape: "shape", egg: "egg groups", hidden: "hidden ability", final: "final", capture: "catch rate",
+  happiness: "friend­ship", growth: "growth", gender: "gender", eggcycles: "egg cycles", dex: "dex",
+};
 
 /** Column width by what a column holds. */
 function colWidth(a: DataAttribute): string {
@@ -101,7 +108,7 @@ function cell(a: DataAttribute, v: DataValue, fb: Feedback | null, cls: string):
 const BINDINGS = {
   "pokedle.next-board": { label: "next board", category: "pokédle", keys: ["PageDown", "alt+ArrowRight"] },
   "pokedle.prev-board": { label: "previous board", category: "pokédle", keys: ["PageUp", "alt+ArrowLeft"] },
-  "pokedle.name": { label: "type a guess", category: "pokédle", keys: ["slash"], description: "move to the name box" },
+  "pokedle.name": { label: "type a guess", category: "pokédle", keys: ["slash"], description: "move to the name box", hidden: true },
 } satisfies BindingSchema;
 
 declare module "../../core/commands" {
@@ -222,7 +229,7 @@ export function pokedleView(data: DataSource, puzzle: PuzzleRef): View<PokedlePu
         shownBoard = b;
         clear(tableEl);
         tableEl.append(h("div", { class: "th nm", role: "columnheader" }, many ? (givenLabel(c.data, board.given) || `board ${b + 1}`) : ""));
-        for (const a of c.attrs) tableEl.append(h("div", { class: "th", role: "columnheader" }, a.label));
+        for (const a of c.attrs) tableEl.append(h("div", { class: "th", role: "columnheader", title: a.label }, SHORT[a.id] ?? a.label));
         const over = isOver(p, st);
         const answer = c.byId.get(board.answer);
         const row = (item: PokemonItem | undefined, id: string, marks: ReturnType<typeof markOf> | null, cls: string) => {
@@ -305,7 +312,8 @@ export function pokedleView(data: DataSource, puzzle: PuzzleRef): View<PokedlePu
         get aspect() {
           // fill the space the board gets: a list of guesses has no shape of its own
           const w = innerWidth, hgt = innerHeight;
-          return w < 700 ? Math.min(1, Math.max(0.45, w / Math.max(1, hgt - 140))) : Math.min(1.5, Math.max(0.75, (w - 380) / Math.max(1, hgt - 110)));
+          // phones: as tall as the screen allows; wider screens: square, so the panel keeps its place beside it
+          return w < 700 ? Math.min(1, Math.max(0.45, w / Math.max(1, hgt - 140))) : 1;
         },
         // the last row's cells turn one after another (see the animation delays above)
         endDelayMs: (c.attrs.length + 1) * 70 + 350,

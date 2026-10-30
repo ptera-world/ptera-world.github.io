@@ -347,7 +347,8 @@ export function givenLabel(d: PokemonDataset, given: Given | undefined): string 
   }).join(" · ");
 }
 
-const keycap = (n: number) => String(n).split("").map((ch) => `${ch}⃣`).join("");
+/** Digits as keycap emoji (digit, emoji presentation selector, combining keycap). */
+const keycap = (n: number) => String(n).split("").map((ch) => `${ch}\ufe0f\u20e3`).join("");
 
 export function shareText(data: DataSource, p: PokedlePuzzle, s: PokedleState): string {
   const c = ctxOf(data, p);
@@ -429,7 +430,7 @@ export function pokedleDef(data: DataSource): PuzzleDef<PokedlePuzzle, PokedleSt
     shareText: (p, s) => shareText(data, p, s),
     rate: (p) => {
       const n = ctxOf(data, p).pool.length;
-      return { label: `${n} pokémon${p.boards.length > 1 ? `, ${p.boards.length} boards` : ""}`, score: Math.log2(Math.max(2, n)) * p.boards.length / Math.max(1, p.attrs.length) };
+      return { label: `${n} pokémon`, score: Math.log2(Math.max(2, n)) * p.boards.length / Math.max(1, p.attrs.length) };
     },
   };
 }

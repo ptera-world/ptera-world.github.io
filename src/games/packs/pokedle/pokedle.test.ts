@@ -147,7 +147,7 @@ test("share text and score say how it went without naming the pokémon", async (
   expect(def.score!(p, s)).toMatchObject({ value: 2, better: "lower" });
   const q = await gen({ boards: 4, guesses: 9 }, "share4");
   const s4 = guess(q, def.init(q), q.boards[2]!.answer);
-  expect(shareText(data, q, s4)).toBe("pokédle X/9\n🟥 🟥\n1⃣ 🟥");
+  expect(shareText(data, q, s4)).toBe("pokédle X/9\n🟥 🟥\n1\ufe0f\u20e3 🟥");
 });
 
 test("attribute stats: the guess each attribute was first right on, once per game", async () => {
