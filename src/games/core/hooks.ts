@@ -48,6 +48,11 @@ abstract class HookBase<F> {
     return this.taps.length;
   }
 
+  /** Owners with a tap here, in tap order (repeats removed). */
+  owners(): string[] {
+    return [...new Set(this.taps.map((t) => t.owner))];
+  }
+
   protected guard<R>(t: Tap<F>, run: () => R): R | undefined {
     try {
       return run();

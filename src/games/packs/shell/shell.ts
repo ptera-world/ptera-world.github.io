@@ -987,6 +987,10 @@ export class Shell {
     const def = s.def;
     const progress = () => s.canUndo && !s.finished;
     const confirmNew = () => (progress() ? "start a new game? this one's progress will be lost." : null);
+    // commands this puzzle can never use aren't offered at all (rather than greyed out forever):
+    // hints need a technique, the puzzle's own hint or an assist that gives hints; reveal needs an answer
+    const hints = !!def.hint || (this.techniques?.list.length ?? 0) > 0 || s.hooks.hint.owners().some((o) => o !== "techniques");
+    const never = new Set<string>([...(hints ? [] : ["shell.hint", "shell.apply-hint"]), ...(def.solve ? [] : ["shell.reveal"])]);
     return [
       ...base,
       ...bindCommands(GAME_BINDINGS, {
@@ -1021,7 +1025,7 @@ export class Shell {
         "shell.pause": { when: (c) => !c.finished, checked: () => s.paused },
         "shell.swap-buttons": { menu: "board", when: () => !!this.view?.handle.gestures?.secondaryClick, checked: () => buttonsSwapped(def.id) },
         "shell.new": { danger: progress, confirm: confirmNew },
-      }),
+      }).filter((c) => !never.has(c.id)),
       ...(def.presets ?? []).map((p, i): CommandDef => ({
         id: presetCommand(i), label: `new ${def.name}: ${p.label}`, category: "new game",
         confirm: confirmNew,
