@@ -266,7 +266,7 @@ export function makeGrid(get: Dataset): PuzzleDef<GridPuzzle, GridState, GridAct
       const board = assignment(an(p).answers, s.cells);
       return board ? { board: { ...s, cells: board } } : null;
     },
-    score: (p, s) => ({ value: rarity(an(p), s), label: "rarity", better: "lower" }),
+    score: (p, s) => ({ value: rarity(an(p), s), label: `rarity ${rarity(an(p), s)}`, better: "lower" }),
     shareText: (p, s) => {
       const a = an(p);
       const rows = p.rows.map((_, r) => p.cols.map((_, c) => (s.cells[r * p.cols.length + c] ? "🟩" : "⬜")).join(""));

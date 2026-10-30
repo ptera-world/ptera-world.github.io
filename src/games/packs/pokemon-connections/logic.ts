@@ -313,7 +313,7 @@ export function makeConnections(get: Dataset): PuzzleDef<ConnPuzzle, ConnState, 
     isSolved,
     isLost,
     solve: (p, s) => (isLost(p, s) ? null : { moves: p.groups.filter((_, g) => !found(p, s).includes(g)).map((g): ConnAction => ({ type: "guess", items: g.items.slice() })) }),
-    score: (p, s) => (isSolved(p, s) ? { value: mistakesMade(p, s), label: "mistakes", better: "lower" } : null),
+    score: (p, s) => (isSolved(p, s) ? { value: mistakesMade(p, s), label: mistakesMade(p, s) === 1 ? "1 mistake" : `${mistakesMade(p, s)} mistakes`, better: "lower" } : null),
     shareText: (p, s) => {
       const tierOf = (id: string) => p.groups.find((g) => g.items.includes(id))!.tier;
       const rows = s.guesses.map((g) => g.map((id) => TIER_EMOJI[tierOf(id)] ?? "⬜").join(""));
@@ -334,10 +334,6 @@ export function makeConnections(get: Dataset): PuzzleDef<ConnPuzzle, ConnState, 
       const g = groupOf(p, a.items);
       if (g >= 0) return `found: ${bd(p).links[g]!.label}`;
       return `${a.items.map((id) => name(p, id)).join(", ")}: wrong${oneAway(p, after) ? ", one away" : ""}`;
-    },
-    rate: (p) => {
-      const top = p.groups[p.groups.length - 1]!;
-      return { label: `hardest link: ${facet(needDataset(get), top.link).label}`, score: p.groups.reduce((s, g) => s + (KIND_DIFFICULTY[facet(needDataset(get), g.link).kind] ?? 2), 0) };
     },
   };
 }

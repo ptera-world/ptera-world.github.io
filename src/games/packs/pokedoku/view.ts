@@ -9,6 +9,7 @@ import { analyse, cellRarity, isOver, left, needDataset, type Dataset, type Grid
 const CSS = `
 .pkd { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; gap: 6px; container-type: size; user-select: none; -webkit-user-select: none; }
 .pkd .name-entry { max-width: none; flex: none; }
+.pkd .name-entry input { padding-right: 44px; }
 .pkd-grid { flex: 1; min-height: 0; display: grid; gap: 4px; }
 .pkd-head { display: flex; align-items: center; justify-content: center; text-align: center; padding: 2px; font-size: clamp(10px, 3.2cqmin, 15px); line-height: 1.15; color: var(--text); overflow: hidden; overflow-wrap: anywhere; }
 .pkd-head .pk-type { font-size: clamp(11px, 3.4cqmin, 16px); padding: 2px 10px; }
@@ -47,6 +48,9 @@ declare module "../../core/commands" {
   interface CommandNames extends Ids<typeof BINDINGS> {}
 }
 
+/** A rarity as shown: whole percents, one decimal below 10. */
+const pct = (x: number): string => `${x < 10 ? (Math.round(x * 10) / 10).toString() : Math.round(x)}%`;
+
 /** A criterion as a header: types as their colored chip, the rest as words. */
 function header(f: Facet): HTMLElement {
   return h("div", { class: "pkd-head", title: f.detail ?? f.label }, f.typeChip ? typeChip(f.typeChip, f.label.replace(/ type$/, "")) : f.label);
@@ -78,7 +82,7 @@ export function gridView(get: Dataset): View<GridPuzzle, GridState, GridAction, 
         items: () => a.pool,
         icon: (it) => sprite(it, { size: 36 }),
         used: (it) => session.state.cells.includes(it.id) || session.state.wrong.some((w) => w.cell === sel() && w.item === it.id),
-        placeholder: "name a pokémon for the selected square",
+        placeholder: "name a pokémon",
         pick: (it) => {
           const before = session.state.wrong.length;
           session.dispatch({ type: "guess", cell: sel(), item: it.id });
@@ -142,7 +146,7 @@ export function gridView(get: Dataset): View<GridPuzzle, GridState, GridAction, 
           const tried = st.wrong.filter((w) => w.cell === i).length;
           cell.className = `pkd-cell${it ? " filled" : ""}${over ? " over" : ""}${!over && i === sel() ? " sel" : ""}${i === sel() ? " cur" : ""}`;
           cell.replaceChildren(
-            ...(it ? [sprite(it, { size: 96 }), h("span", { class: "nm" }, it.name), h("span", { class: "pct" }, `${Math.round(cellRarity(a, st, i))}%`)] : []),
+            ...(it ? [sprite(it, { size: 96 }), h("span", { class: "nm" }, it.name), h("span", { class: "pct" }, pct(cellRarity(a, st, i)))] : []),
             ...(over && !it ? [h("span", { class: "count" }, `${a.answers[i]!.length} fit`)] : []),
             ...(tried ? [h("span", { class: "tried" }, `✗${tried}`)] : []),
           );

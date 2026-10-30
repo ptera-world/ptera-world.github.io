@@ -67,7 +67,7 @@ test("rarity: 100 ÷ answers for a filled square, 100 for an empty one", () => {
   const a = analyse(ds, fixed);
   const s: GridState = { cells: ["charmander", null, null, null], wrong: [] };
   expect(rarity(a, s)).toBe(Math.round(100 / a.answers[0]!.length + 300));
-  expect(def.score!(fixed, s)).toEqual({ value: rarity(a, s), label: "rarity", better: "lower" });
+  expect(def.score!(fixed, s)).toEqual({ value: rarity(a, s), label: `rarity ${rarity(a, s)}`, better: "lower" });
   expect(def.shareText!(fixed, s)).toBe(`pokémon grid 1/4\n🟩⬜\n⬜⬜\nrarity ${rarity(a, s)}`);
 });
 

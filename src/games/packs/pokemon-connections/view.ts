@@ -123,7 +123,7 @@ export function connectionsView(get: Dataset): View<ConnPuzzle, ConnState, ConnA
           return t;
         }));
         const left = p.mistakes - mistakesMade(p, st);
-        const note = fin ? null : sel.length === k && alreadyGuessed(st, sel) ? "already guessed" : oneAway(p, st) && st.guesses.length === lastSeen ? "one away…" : null;
+        const note = fin ? null : st.guesses.length === lastSeen && oneAway(p, st) ? "one away…" : sel.length === k && alreadyGuessed(st, sel) ? "already guessed" : null;
         status.replaceChildren(
           h("span", null, "mistakes left"),
           h("span", { class: "pkc-dots", "aria-label": String(Math.max(0, left)) }, Array.from({ length: p.mistakes }, (_, i) => h("i", { class: i < left ? undefined : "used" }))),

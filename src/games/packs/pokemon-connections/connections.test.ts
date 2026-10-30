@@ -89,5 +89,5 @@ test("a solved game scores its mistakes", async () => {
   let s = def.init(p) as ConnState;
   for (const grp of p.groups) s = def.reduce(p, s, { type: "guess", items: grp.items });
   expect(def.isSolved(p, s)).toBe(true);
-  expect(def.score!(p, s)).toEqual({ value: 0, label: "mistakes", better: "lower" });
+  expect(def.score!(p, s)).toEqual({ value: 0, label: "0 mistakes", better: "lower" });
 });
