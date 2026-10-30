@@ -842,11 +842,12 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
         const wait = holdUntil - performance.now();
         if (wait > 0) { clearTimeout(holdTimer); holdTimer = window.setTimeout(render, wait); return; }
         const score = (() => { try { return s.outcome === "revealed" ? undefined : s.def.score?.(s.puzzle, s.state)?.label; } catch { return undefined; } })();
+        const verdict = (() => { try { return s.outcome === "revealed" ? null : s.def.verdict?.(s.puzzle, s.state) ?? null; } catch { return null; } })();
         if (s.lost) {
           const share = shareBlock(shell, s);
           const streak = streakLine(s);
           add(el, h("div", { class: `w-results lost${share ? " shared" : ""}`, role: "status" },
-            h("strong", { class: "big" }, "game over"),
+            h("strong", { class: "big" }, verdict ?? "game over"),
             score ? h("span", { class: "w-dim" }, score) : null,
             streak ? h("span", { class: "w-dim" }, streak) : null,
             share,
@@ -887,7 +888,7 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
         announced.add(key);
         add(el, h("div", { class: `w-results${fresh ? " anim" : ""}`, role: "status" },
           h("div", { class: "rs-head" },
-            h("strong", { class: "big" }, s.outcome === "revealed" ? "revealed" : s.origin.kind === "practice" ? "nice!" : "solved!"),
+            h("strong", { class: "big" }, s.outcome === "revealed" ? "revealed" : s.origin.kind === "practice" ? "nice!" : verdict ?? "solved!"),
             time ? h("span", { class: "time" }, time) : null,
             rating ? h("span", { class: "w-dim" }, rating) : null,
             score ? h("span", { class: "w-dim" }, score) : h("span", { class: "w-dim" }, `${steps.length} steps`),

@@ -301,6 +301,11 @@ export interface PuzzleDef<Pz = unknown, S = unknown, A extends Action = Action,
    * and no restart until the game has ended.
    */
   irreversible?: boolean;
+  /**
+   * The headline when the game ends by play, instead of "solved!" / "game over" (e.g. "2 of 3
+   * right" for a quiz, where reaching the end is the only way it ends). null: the default.
+   */
+  verdict?(puzzle: Pz, state: S): string | null;
 }
 
 export interface PluginApi<Pz, S, A extends Action, I, P extends Schema = {}> {
