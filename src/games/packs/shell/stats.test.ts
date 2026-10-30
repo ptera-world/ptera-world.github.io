@@ -16,14 +16,16 @@ test("streaks: consecutive solved dailies, alive through yesterday, broken by a 
   expect(summarize(list, "2026-10-09", before).streak).toBe(0);
 });
 
-test("scores: a histogram of solved games only; times from solved games", () => {
+test("scores: a histogram of every ending that has one but reveals; times from solved games", () => {
   const s = summarize([
     r("a", "solved", { score: { value: 3, label: "3 guesses", better: "lower" }, ms: 5000 }),
     r("b", "solved", { score: { value: 3, label: "3 guesses", better: "lower" }, ms: 2000 }),
     r("c", "solved", { score: { value: 5, label: "5 guesses", better: "lower" }, ms: 9000 }),
     r("d", "lost", { score: { value: 8, label: "8 guesses", better: "lower" }, ms: 1 }),
+    r("e", "revealed", { score: { value: 9, label: "9 guesses", better: "lower" }, ms: 1 }),
+    r("f", "lost", { ms: 1 }),
   ], "2026-10-08", before);
-  expect(s.scores).toEqual([{ value: 3, label: "3 guesses", count: 2 }, { value: 5, label: "5 guesses", count: 1 }]);
+  expect(s.scores).toEqual([{ value: 3, label: "3 guesses", count: 2 }, { value: 5, label: "5 guesses", count: 1 }, { value: 8, label: "8 guesses", count: 1 }]);
   expect(s.bestMs).toBe(2000);
   expect(s.medianMs).toBe(5000);
 });

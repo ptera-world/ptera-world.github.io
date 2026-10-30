@@ -829,18 +829,29 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
     mount(el, ctx) {
       const s = ctx.session;
       let dismissed = false;
+      // a game seen ending live (not one opened already over) holds the results back for the view's end animation
+      let holdUntil = 0, holdTimer = 0;
+      let ended = s.finished || s.lost;
       const render = () => {
+        const over = s.finished || s.lost;
+        if (over && !ended) holdUntil = performance.now() + (ctx.view?.endDelayMs ?? 0);
+        ended = over;
         clear(el);
         if ((!s.finished && !s.lost) || dismissed) return;
+        // a game that just ended: let the board finish showing the last move first
+        const wait = holdUntil - performance.now();
+        if (wait > 0) { clearTimeout(holdTimer); holdTimer = window.setTimeout(render, wait); return; }
+        const score = (() => { try { return s.outcome === "revealed" ? undefined : s.def.score?.(s.puzzle, s.state)?.label; } catch { return undefined; } })();
         if (s.lost) {
           const share = shareBlock(shell, s);
           const streak = streakLine(s);
           add(el, h("div", { class: `w-results lost${share ? " shared" : ""}`, role: "status" },
             h("strong", { class: "big" }, "game over"),
+            score ? h("span", { class: "w-dim" }, score) : null,
             streak ? h("span", { class: "w-dim" }, streak) : null,
             share,
             h("div", { class: "w-inline" },
-              h("button", { class: "primary", onclick: () => s.undo() }, "undo"),
+              s.canUndo ? h("button", { class: "primary", onclick: () => s.undo() }, "undo") : null,
               h("button", { onclick: () => ctx.run("shell.new") }, "new game"),
               h("button", { onclick: () => { dismissed = true; render(); } }, "look at the board"))));
           return;
@@ -870,7 +881,6 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
         const colorFor = (t: Technique | null) => (t ? shell.cast.color(t) : "var(--text-dim)");
         const rating = (() => { try { return s.def.rate?.(s.puzzle)?.label; } catch { return undefined; } })();
         const time = s.origin.kind === "practice" ? null : formatTime(s.finishedAtMs ?? 0);
-        const score = (() => { try { return s.solved ? s.def.score?.(s.puzzle, s.state)?.label : undefined; } catch { return undefined; } })();
         // the panel animates in once per finish, not every time it is re-mounted (tab switches, layout changes)
         const key = `${shell.sessionId}:${s.finishedAtMs}`;
         const fresh = !announced.has(key);
@@ -899,6 +909,7 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
       sessionTaps(ctx, () => { if (!s.finished && !s.lost) dismissed = false; render(); });
       s.hooks.solved.tap(() => { dismissed = false; render(); }, { owner: ctx.owner });
       render();
+      return () => clearTimeout(holdTimer);
     },
   };
 

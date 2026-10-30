@@ -39,7 +39,7 @@ export interface Summary {
   solved: number;
   bestMs: number | null;
   medianMs: number | null;
-  /** Score value → how many solved games had it, with the label of one of them. */
+  /** Score value → how many games ended with it (revealed ones never count), with the label of one of them. */
   scores: { value: number; label: string; count: number }[];
   better: "lower" | "higher" | null;
   streak: number;
@@ -51,13 +51,13 @@ export function summarize(list: readonly Result[], today: string, dayBefore: (d:
   const solved = list.filter((r) => r.outcome === "solved");
   const times = solved.map((r) => r.ms).sort((a, b) => a - b);
   const byScore = new Map<number, { value: number; label: string; count: number }>();
-  for (const r of solved) {
-    if (!r.score) continue;
+  for (const r of list) {
+    if (!r.score || r.outcome === "revealed") continue;
     const e = byScore.get(r.score.value) ?? { value: r.score.value, label: r.score.label, count: 0 };
     e.count++;
     byScore.set(r.score.value, e);
   }
-  const better = solved.find((r) => r.score)?.score?.better ?? null;
+  const better = list.find((r) => r.score)?.score?.better ?? null;
   const won = new Set(list.filter((r) => r.daily && r.outcome === "solved").map((r) => r.daily!));
   const dates = [...new Set(list.filter((r) => r.daily).map((r) => r.daily!))].sort();
   let bestStreak = 0, run = 0, prev: string | null = null;

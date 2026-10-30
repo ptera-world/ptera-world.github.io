@@ -285,8 +285,10 @@ export interface PuzzleDef<Pz = unknown, S = unknown, A extends Action = Action,
    */
   daily?: { params?: Partial<Values<P>> };
   /**
-   * How well a finished game went, for stats: lower or higher is better as `better` says (e.g.
-   * guesses used). Without it, stats count wins and times only.
+   * How well an ended game went (solved or lost; never asked for a revealed one), for stats: lower
+   * or higher is better as `better` says, e.g. guesses used, or a streak that ends in a loss. null
+   * when this ending has no score (e.g. a guessing game that was lost). Without it, stats count
+   * wins and times only.
    */
   score?(puzzle: Pz, state: S): { value: number; label: string; better: "lower" | "higher" } | null;
   /**
@@ -294,6 +296,11 @@ export interface PuzzleDef<Pz = unknown, S = unknown, A extends Action = Action,
    * colored squares). Shown with a copy button when the game ends.
    */
   shareText?(puzzle: Pz, state: S): string | null;
+  /**
+   * Moves can't be taken back (quizzes: an answer, once seen marked, is final). No undo or redo,
+   * and no restart until the game has ended.
+   */
+  irreversible?: boolean;
 }
 
 export interface PluginApi<Pz, S, A extends Action, I, P extends Schema = {}> {
@@ -394,6 +401,8 @@ export interface ViewHandle {
   locate?(focus: unknown): DOMRect[];
   /** Screen rects of the elements that differ between two states. */
   locateChange?(prev: unknown, next: unknown): DOMRect[];
+  /** How long the board keeps animating the last move when a game ends live, so the results wait that long before covering it. */
+  endDelayMs?: number;
 }
 
 /** The only layer that touches the DOM. Remounted when its settings change. */

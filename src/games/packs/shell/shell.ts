@@ -1012,7 +1012,7 @@ export class Shell {
         "shell.undo": { when: (c) => !!c.canUndo && (!c.locked || !!c.lost) },
         "shell.redo": { when: (c) => !!c.canRedo && !c.locked },
         "shell.restart": {
-          danger: true, when: (c) => !!c.canUndo || !!c.finished,
+          danger: true, when: (c) => !!c.canUndo || !!c.finished || !!c.lost,
           confirm: () => (s.finished ? "this game is over. restarting clears it. restart anyway?" : "restart this board from the beginning?"),
         },
         "shell.hint": { when: (c) => !c.finished },
@@ -1485,7 +1485,7 @@ export class Shell {
     if (!outcome) return;
     let score: Result["score"] | undefined;
     try {
-      score = s.def.score?.(s.puzzle, s.state) ?? undefined;
+      score = outcome === "revealed" ? undefined : s.def.score?.(s.puzzle, s.state) ?? undefined;
     } catch (e) {
       console.error(e);
     }

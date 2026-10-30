@@ -201,3 +201,20 @@ test("datasets: a plugin for a dataset applies only to puzzles built on it; miss
   reg.dataset({ id: "pokemon", name: "p", version: "1", credits: "", attributes: [], items: () => [] });
   expect(reg.missingDatasets(reg.getPuzzle("on")!)).toEqual([]);
 });
+
+test("irreversible puzzles: no undo or redo, and no restart until the game has ended", () => {
+  const def = {
+    id: "quiz", name: "quiz", generatorVersion: 1, params: {}, formats: [], irreversible: true,
+    generate: () => ({}), init: () => ({ n: 0 }), reduce: (_p: unknown, s: { n: number }) => ({ n: s.n + 1 }), isSolved: (_p: unknown, s: { n: number }) => s.n >= 2,
+  };
+  const s = new Session(def as never, {}, { kind: "imported" });
+  s.dispatch({ type: "answer" });
+  expect(s.canUndo).toBe(false);
+  expect(s.undo()).toBe(false);
+  s.restart();
+  expect((s.state as { n: number }).n).toBe(1);
+  s.dispatch({ type: "answer" });
+  expect(s.solved).toBe(true);
+  s.restart();
+  expect((s.state as { n: number }).n).toBe(0);
+});

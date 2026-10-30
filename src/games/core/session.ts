@@ -436,11 +436,11 @@ export class Session<Pz = unknown, S = unknown, A extends Action = Action, I = u
   }
 
   get canUndo(): boolean {
-    return this.past.length > 0 && this.batchDepth === 0;
+    return this.past.length > 0 && this.batchDepth === 0 && !this.def.irreversible;
   }
 
   get canRedo(): boolean {
-    return this.future.length > 0 && this.batchDepth === 0;
+    return this.future.length > 0 && this.batchDepth === 0 && !this.def.irreversible;
   }
 
   undo(): boolean {
@@ -473,6 +473,7 @@ export class Session<Pz = unknown, S = unknown, A extends Action = Action, I = u
    * timer so a replay is timed from scratch; undoing a restart restores the board only.
    */
   restart(): void {
+    if (this.def.irreversible && !this.finished && !this.lost) return;
     this.endAllBatches();
     const wasTiming = this.runningSince !== null || this.finished;
     this._finishedAtMs = null;
