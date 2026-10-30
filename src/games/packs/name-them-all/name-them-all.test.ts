@@ -79,7 +79,7 @@ test("giving up (or time up) ends the game as a loss with a score; nothing can b
   expect(isSolved(p, session.state)).toBe(false);
   expect(def.hint!(p, session.state)).toBe(null);
   expect(def.score!(p, session.state)).toEqual({ value: 2, label: "2/151", better: "higher" });
-  expect(def.shareText!(p, session.state)).toBe("name them all · form:default gen:1\n2/151 in 16:00");
+  expect(def.shareText!(p, session.state)).toBe("name them all · form:default gen:1\n2/151 · 16:00 limit");
 });
 
 test("naming every one solves it", async () => {

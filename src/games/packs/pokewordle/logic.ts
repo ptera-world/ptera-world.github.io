@@ -220,7 +220,7 @@ export function makeDef(dataset: () => PokemonDataset | undefined): PuzzleDef<Wo
   return {
     id: "pokewordle",
     name: "name wordle",
-    aliases: ["pokémon wordle", "pokewordle", "pokédle", "wordle"],
+    aliases: ["pokémon wordle", "pokewordle", "wordle"],
     tags: ["pokémon", "deduction", "words"],
     description: "guess the hidden pokémon's name. each guess must be a pokémon name of the same length; its letters show which are right, which are in the name elsewhere, and which aren't in it.",
     datasets: ["pokemon"],

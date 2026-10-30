@@ -11,9 +11,8 @@ import {
 const FLIP_MS = 320, STAGGER_MS = 110;
 const CSS = `
 .pw { container-type: size; position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 6px; user-select: none; -webkit-user-select: none; }
-.pw-sink { position: absolute; left: 0; top: 0; width: 1px; height: 1px; opacity: 0; border: 0; padding: 0; pointer-events: none; }
-.pw { --k: clamp(30px, 8.5cqh, 56px); --t: min(62px, calc((100cqw - (var(--L) - 1) * 5px) / var(--L)), calc((100cqh - 3 * var(--k) - 16px - 34px - (var(--G) - 1) * 5px) / var(--G))); }
-.pw-grid { display: grid; grid-template-columns: repeat(var(--L), var(--t)); grid-auto-rows: var(--t); gap: 5px; margin-top: 2px; }
+.pw { --k: clamp(30px, 8.5cqh, 56px); --t: min(62px, calc((100cqw - (var(--L) - 1) * 5px) / var(--L)), calc((100cqh - 3 * var(--k) - 16px - 34px - 34px - (var(--G) - 1) * 5px) / var(--G))); }
+.pw-grid { display: grid; grid-template-columns: repeat(var(--L), var(--t)); grid-auto-rows: var(--t); gap: 5px; margin-top: 34px; }
 .pw-tile { display: flex; align-items: center; justify-content: center; border: 2px solid var(--border); border-radius: 4px; box-sizing: border-box; font: 700 calc(var(--t) * .52) var(--font); text-transform: uppercase; line-height: 1; }
 .pw-tile.typed { border-color: var(--text-dim); animation: pw-pop .1s; }
 .pw-tile.v-match, .pw-tile.v-partial, .pw-tile.v-miss { border-color: transparent; }
@@ -33,7 +32,8 @@ const CSS = `
 .pw-kb div { display: flex; gap: 4px; justify-content: center; }
 .pw-kb button { flex: 1 1 0; min-width: 0; height: var(--k); padding: 0; border-radius: 5px; font: 600 15px var(--font); text-transform: uppercase; touch-action: manipulation; }
 .pw-kb button.wide { flex: 1.6 1 0; font-size: 12px; text-transform: none; }
-.pw-kb button.v-miss { opacity: .45; }
+.pw { --verdict-miss-c: var(--verdict-miss, color-mix(in srgb, var(--text-dim) 65%, var(--bg))); }
+.pw .v-miss { color: #fff; }
 @keyframes pw-flip { 0% { transform: rotateX(0); background: transparent; color: var(--text); border-color: var(--text-dim); } 49% { transform: rotateX(90deg); background: transparent; color: var(--text); border-color: var(--text-dim); } 50% { transform: rotateX(90deg); } 100% { transform: rotateX(0); } }
 @keyframes pw-pop { 0% { transform: scale(.9); } 100% { transform: scale(1); } }
 @keyframes pw-shake { 0%, 100% { transform: none; } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
@@ -64,7 +64,6 @@ export function makeView(def: { id: string }, dataset: () => PokemonDataset | un
       const L = session.state.row.length;
       const words = (() => { const d = dataset(); return d ? wordsOf(d) : null; })();
 
-      const sink = h("input", { class: "pw-sink", type: "text", inputmode: "none", autocomplete: "off", autocapitalize: "off", spellcheck: "false", "aria-label": "type your guess" });
       const grid = h("div", { class: "pw-grid", role: "grid", "aria-label": `${p.guesses} guesses of ${L} letters` });
       const rows: HTMLElement[][] = [];
       const rowEls: HTMLElement[] = [];
@@ -80,13 +79,14 @@ export function makeView(def: { id: string }, dataset: () => PokemonDataset | un
       const kb = h("div", { class: "pw-kb" }, KEYS.map((line) => h("div", null, line.split("").map((k) => {
         const label = k === "+" ? "enter" : k === "-" ? "⌫" : k;
         const b = h("button", { type: "button", class: k === "+" || k === "-" ? "wide" : undefined, "aria-label": k === "-" ? "delete" : label }, label);
-        // keep focus where it is (the sink), so typing on a keyboard goes on working
+        // a tapped key keeps no focus, so Enter afterwards hands the guess in rather than pressing the key again
         b.addEventListener("pointerdown", (e) => e.preventDefault());
+        b.addEventListener("mousedown", (e) => e.preventDefault());
         b.addEventListener("click", () => press(k === "+" ? "Enter" : k === "-" ? "Backspace" : k));
         keys.set(k, b);
         return b;
       }))));
-      const el = h("div", { class: "pw", style: `--L: ${L}; --G: ${p.guesses}` }, sink, grid, status, kb);
+      const el = h("div", { class: "pw", style: `--L: ${L}; --G: ${p.guesses}` }, grid, status, kb);
       root.append(el);
 
       let message: { text: string; err: boolean } | null = null;
@@ -147,15 +147,21 @@ export function makeView(def: { id: string }, dataset: () => PokemonDataset | un
         else if (/^[a-z]$/i.test(key)) type({ type: "letter", ch: key.toLowerCase() });
         render();
       };
-      sink.addEventListener("keydown", (e) => {
-        if (e.ctrlKey || e.metaKey || e.altKey) return;
-        if (e.key === "Enter" || e.key === "Backspace" || /^[a-z]$/i.test(e.key)) {
-          e.preventDefault();
-          press(e.key);
-        }
-      });
-      const focusSink = () => { if (!session.finished) sink.focus({ preventScroll: true }); };
-      el.addEventListener("pointerdown", (e) => { if (!(e.target as Element).closest("button")) { e.preventDefault(); focusSink(); } });
+      // While the board is up, letters, Backspace and Enter spell the guess wherever focus is, ahead of
+      // the page's own one-key shortcuts (the keybinds hub listens on window, after this). Text boxes
+      // keep their keys, and so does a control reached with the keyboard (Enter presses it).
+      const onKey = (e: KeyboardEvent) => {
+        if (e.ctrlKey || e.metaKey || e.altKey || e.defaultPrevented) return;
+        if (!(e.key === "Enter" || e.key === "Backspace" || /^[a-z]$/i.test(e.key))) return;
+        const t = e.target as HTMLElement | null;
+        if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable)) return;
+        if (e.key === "Enter" && t && t !== document.body && !el.contains(t) && t.matches(":focus-visible")) return;
+        if (!el.isConnected || session.finished || isOver(p, session.state)) return;
+        e.preventDefault();
+        e.stopPropagation();
+        press(e.key);
+      };
+      document.addEventListener("keydown", onKey, { capture: true });
 
       const offs = [
         session.hooks.change.tap(render, { owner: "view" }),
@@ -163,7 +169,6 @@ export function makeView(def: { id: string }, dataset: () => PokemonDataset | un
         session.hooks.solved.tap(render, { owner: "view" }),
       ];
       render();
-      queueMicrotask(focusSink);
 
       const rects = (f: WordleFocus) => [
         ...f.rows.flatMap((r) => rows[r] ? [rows[r]!.map((t) => t.getBoundingClientRect())].map((rs) => new DOMRect(rs[0]!.left, rs[0]!.top, rs[rs.length - 1]!.right - rs[0]!.left, rs[0]!.height)) : []),
@@ -171,7 +176,13 @@ export function makeView(def: { id: string }, dataset: () => PokemonDataset | un
       ];
       return {
         endDelayMs: L * STAGGER_MS + FLIP_MS,
-        aspect: Math.min(1.1, Math.max(0.62, (L * 1.1 + 1) / (p.guesses + 4.5))),
+        aspect: (() => {
+          // the board's shape as drawn at the width it is likely to get: tiles, status line, keyboard
+          const w = Math.min(560, window.innerWidth - 24);
+          const t = Math.min(62, (w - (L - 1) * 5) / L);
+          const k = Math.min(56, Math.max(30, 0.085 * window.innerHeight));
+          return Math.min(1.2, Math.max(0.5, w / (p.guesses * (t + 5) + 84 + 3 * (k + 5))));
+        })(),
         locate: (focus) => rects((focus as WordleFocus | undefined) ?? { slots: [], rows: [] }),
         locateChange: (a, b) => {
           const x = a as WordleState, y = b as WordleState;
@@ -180,6 +191,7 @@ export function makeView(def: { id: string }, dataset: () => PokemonDataset | un
           return rects({ slots: changed, rows: [] });
         },
         destroy() {
+          document.removeEventListener("keydown", onKey, { capture: true });
           offs.forEach((f) => f());
           el.remove();
         },

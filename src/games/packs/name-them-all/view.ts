@@ -10,7 +10,7 @@ import {
 
 const CSS = `
 .nta { display: flex; flex-direction: column; width: 100%; height: 100%; min-height: 0; font-size: 14px; }
-.nta-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 0 0 8px; }
+.nta-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 0 40px 8px 0; }
 .nta-bar input { flex: 1 1 180px; min-width: 0; font-size: 16px; padding: 8px 10px; box-sizing: border-box; }
 .nta-bar input.outside { outline: 2px solid var(--warn); }
 .nta-count, .nta-clock { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -25,8 +25,8 @@ const CSS = `
 .nta-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(62px, 1fr)); gap: 3px; }
 .nta-slot { position: relative; height: 74px; border-radius: 6px; background: var(--cell); border: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; justify-content: flex-end; overflow: hidden; box-sizing: border-box; }
 .nta-slot .num { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--text-dim); font-family: var(--mono); font-size: 12px; }
-.nta-slot .sil { position: absolute; left: 50%; top: 2px; width: 56px; height: 56px; transform: translateX(-50%); background: var(--text-dim); -webkit-mask: var(--m) center / contain no-repeat; mask: var(--m) center / contain no-repeat; }
-.nta-slot img { position: absolute; left: 50%; top: 0; width: 56px; height: 56px; transform: translateX(-50%); image-rendering: pixelated; }
+.nta-slot .sil { position: absolute; left: 50%; top: -6px; width: 68px; height: 68px; transform: translateX(-50%); background: var(--text-dim); -webkit-mask: var(--m) center / contain no-repeat; mask: var(--m) center / contain no-repeat; }
+.nta-slot img { position: absolute; left: 50%; top: -6px; width: 68px; height: 68px; transform: translateX(-50%); image-rendering: pixelated; }
 .nta-slot .nm { position: relative; width: 100%; padding: 0 2px 2px; box-sizing: border-box; text-align: center; font-size: 10.5px; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .nta-slot.named { background: color-mix(in srgb, var(--accent) 16%, var(--cell)); border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
 .nta-slot.missed { border-color: var(--danger); border-style: dashed; }

@@ -253,7 +253,7 @@ export function makeDef(dataset: () => PokemonDataset | undefined): PuzzleDef<Na
     ],
     score: (p, s) => ({ value: s.named.length, label: `${s.named.length}/${p.pool.length}`, better: "higher" }),
     shareText: (p, s) => {
-      const lines = [`name them all · ${what(p)}`, `${s.named.length}/${p.pool.length}${p.limitMs ? ` in ${formatClock(p.limitMs)}` : ""}`];
+      const lines = [`name them all · ${what(p)}`, `${s.named.length}/${p.pool.length}${p.limitMs ? ` · ${formatClock(p.limitMs)} limit` : ""}`];
       const d = dataset();
       if (d) {
         const named = new Set(s.named);
