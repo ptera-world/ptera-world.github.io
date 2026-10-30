@@ -295,6 +295,10 @@ export function makeTypeMatchups(ds: () => PokemonDataset | undefined): PuzzleDe
       return { value: n, label: `${n}/${p.questions.length}`, better: "higher" };
     },
     shareText: (p, s) => shareText(types(), p, s),
+    verdict: (p, s) => {
+      const n = rightCount(types(), p, s), of = p.questions.length;
+      return n === of ? `all ${of} right` : `${n} of ${of} right`;
+    },
     rules: (p) => {
       const kinds = new Set(p.questions.map((q) => q.kind));
       return [

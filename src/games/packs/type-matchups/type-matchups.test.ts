@@ -132,3 +132,9 @@ test("the answer finishes the round with every question right", async () => {
 test("every technique has a practice board", async () => {
   for (const t of techniques) expect([t.id, !!(await findPracticePosition(def, techniques, t, "x", new AbortController().signal))]).toEqual([t.id, true]);
 });
+
+test("the results headline is the score", () => {
+  const s = { replies: [4, ["grass"], ["fire"]], picked: [], open: false, since: 0 };
+  expect(def.verdict!(hand, s)).toBe("2 of 3 right");
+  expect(def.verdict!(hand, { ...s, replies: [4, ["grass"], ["fire", "water"]] })).toBe("all 3 right");
+});

@@ -91,3 +91,9 @@ test("share text shows the score and the rounds, not the pokémon", () => {
   expect(text).toBe("higher or lower · base stat total\nstreak 1\n🟩🟥");
   expect(text).not.toMatch(/pikachu|raichu/i);
 });
+
+test("the results headline names the streak, or how the run ended", () => {
+  expect(def.verdict!(handmade, { results: [true, false] })).toBe("streak of 1");
+  expect(def.verdict!({ ...handmade, lives: 2 }, { results: [true, false, false] })).toBe("out of lives: 1 right");
+  expect(def.verdict!(handmade, { results: [true, true, true] })).toBe("run cleared: 3 right");
+});

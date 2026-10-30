@@ -193,6 +193,11 @@ export function makeHigherLower(ds: () => PokemonDataset | undefined): PuzzleDef
     },
     score: (_p, s) => ({ value: correct(s), label: `${correct(s)} right`, better: "higher" }),
     shareText: (p, s) => shareText("higher or lower", p, s),
+    verdict: (p, s) => {
+      const n = correct(s);
+      if (mistakes(s) < p.lives) return `run cleared: ${n} right`;
+      return p.lives > 1 ? `out of lives: ${n} right` : `streak of ${n}`;
+    },
     rules: (p) => [
       `two pokémon side by side. you see the left one's ${attrsLabel(p)}${new Set(p.attrs).size > 1 ? " (which one changes each round)" : ""}.`,
       "say whether the right one's is higher or lower. if they're equal, either answer is right.",
