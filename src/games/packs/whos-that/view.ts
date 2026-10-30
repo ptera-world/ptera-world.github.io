@@ -310,7 +310,7 @@ export function makeView(ds: () => PokemonDataset | undefined, puzzle: { id: str
             style0(el, k, level);
             if (k === "zoom" && el.complete && el.naturalWidth) placeZoom(el, p.spots[i] ?? 0.5, level);
           }
-        } else if (!sameRound || over !== shownOver || k === "entry" || k === "cry") {
+        } else if (!sameRound || over !== shownOver || (!over && (k === "entry" || k === "cry"))) {
           stage.replaceChildren();
           stage.className = "wt-stage";
           img = null;
@@ -331,11 +331,11 @@ export function makeView(ds: () => PokemonDataset | undefined, puzzle: { id: str
               h("span", { class: "wt-genus" }, `the ${String(it.values.genus ?? "").replace(/ Pokémon$/, "")} Pokémon`),
               parts.flatMap((t, j) => (j ? [h("span", { class: "wt-blank", "aria-label": "a pokémon's name" }, BLANK), t] : [t]))));
           }
-          if (over && it) {
-            const ok = named(p, i, r);
-            stage.append(h("div", { class: `wt-answer${ok ? "" : " miss"}` }, it.name,
-              h("small", null, ok ? (r.guesses.length === 1 ? "first guess" : `in ${r.guesses.length} guesses`) : r.passed ? "given up" : "missed")));
-          }
+        }
+        if (over && it && !stage.querySelector(".wt-answer")) {
+          const ok = named(p, i, r);
+          stage.append(h("div", { class: `wt-answer${ok ? "" : " miss"}` }, it.name,
+            h("small", null, ok ? (r.guesses.length === 1 ? "first guess" : `in ${r.guesses.length} guesses`) : r.passed ? "given up" : "missed")));
         }
         shownRound = i;
         shownOver = over;
