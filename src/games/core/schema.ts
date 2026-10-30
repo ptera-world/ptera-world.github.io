@@ -17,7 +17,12 @@ export interface EnumField extends FieldBase<string> {
   type: "enum";
   options: readonly { value: string; label: string; description?: string }[];
 }
-export interface StringField extends FieldBase<string> { type: "string"; placeholder?: string }
+export interface StringField extends FieldBase<string> {
+  type: "string";
+  placeholder?: string;
+  /** Live note under the box for the current text (e.g. "312 match", or what is wrong with it). */
+  check?: (value: string) => string;
+}
 /** Unordered subset of options; serialized as comma-joined values. */
 export interface SetField extends FieldBase<readonly string[]> {
   type: "set";

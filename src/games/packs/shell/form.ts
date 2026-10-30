@@ -49,12 +49,23 @@ export function schemaForm(
           id, onchange: (e: Event) => set(key, (e.target as HTMLSelectElement).value),
         }, field.options.map((o) => h("option", { value: o.value, selected: o.value === v, title: o.description }, o.label)));
         break;
-      case "string":
-        control = h("input", {
-          id, type: "text", value: v, placeholder: field.placeholder,
+      case "string": {
+        const input = h("input", {
+          id, type: "text", value: v, placeholder: field.placeholder, spellcheck: "false",
           onchange: (e: Event) => set(key, (e.target as HTMLInputElement).value),
         });
+        if (field.check) {
+          const check = field.check;
+          const note = h("small", { class: "check", "aria-live": "polite" });
+          const update = () => {
+            try { note.textContent = check(input.value); } catch (e) { note.textContent = e instanceof Error ? e.message : String(e); }
+          };
+          input.addEventListener("input", update);
+          update();
+          control = h("div", { class: "checked" }, input, note);
+        } else control = input;
         break;
+      }
       case "cells":
         control = cellsControl(id, field, v, (value) => set(key, value));
         break;
