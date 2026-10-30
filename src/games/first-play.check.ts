@@ -60,8 +60,10 @@ async function check(page: Page, id: string, name: string): Promise<void> {
   const play = page.locator(".w-howto button", { hasText: /^play$/ }).first();
   if (await play.isVisible()) await play.click();
   else fail("the how-to card has no visible way to start playing");
+  // each needs a visible button where the puzzle has it at all (a puzzle with no way to give hints has no hint command)
   for (const [cmd, what] of [["shell.hint", "hint"], ["shell.undo", "undo"], ["shell.new", "new game"]] as const) {
-    if (!(await visible(page, `[data-command="${cmd}"]`))) fail(`no visible ${what} button`);
+    const offered = await page.evaluate((c) => !!(globalThis as any).pteraGames.shell.hub.get(c), cmd);
+    if (offered && !(await visible(page, `[data-command="${cmd}"]`))) fail(`no visible ${what} button`);
   }
   if (!(await visible(page, ".board-menu-btn"))) fail("no visible way into the board menu");
 
