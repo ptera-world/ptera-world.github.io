@@ -213,8 +213,15 @@ switch (command) {
       const i = args.indexOf(name);
       return i === -1 ? undefined : args[i + 1];
     };
+    if (which === "words") {
+      const { buildWordsData } = await import("./games/packs/words-data/build");
+      const out = resolve(import.meta.dir, "games/packs/words-data/data.json");
+      const file = await buildWordsData({ cache: resolve(flag("--cache") ?? join(import.meta.dir, "..", ".cache", "words")), out, refresh: args.includes("--refresh") });
+      console.log(`words data ${file.version}: ${file.groups.length} groups, ${file.attributes.length} attributes → ${out}`);
+      break;
+    }
     if (which !== "pokemon") {
-      console.error("Usage: bun run src/cli.ts data pokemon [--cache <dir>] [--refresh]");
+      console.error("Usage: bun run src/cli.ts data pokemon|words [--cache <dir>] [--refresh]");
       process.exit(1);
     }
     const { buildPokemonData } = await import("./games/packs/pokemon-data/build");
