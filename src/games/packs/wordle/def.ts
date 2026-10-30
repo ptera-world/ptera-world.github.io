@@ -12,6 +12,7 @@ import {
 import { kindOf, drawAnswers, codeSymbols, type Entry, type Kind } from "./kinds";
 import { ELSEWHERE, RIGHT } from "./marks";
 import { makeParams, MARKS, POSITIONAL, SPELLING, spelled, symbolsName, type DataSource, type Params, type Settings } from "./params";
+import { sgtFormat } from "./formats";
 import { presetsFor } from "./presets";
 
 /** Values of an attribute boards can be split by, in its order. */
@@ -175,6 +176,7 @@ export function reduce(data: DataSource, p: WordlePuzzle, st: WordleState, a: Wo
 // --- words ---
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+const an = (w: string) => `${/^[aeiou]/i.test(w) ? "an" : "a"} ${w}`;
 
 function nounOf(data: DataSource, s: Settings): { one: string; many: string } {
   if (s.secret === "codes") return { one: "code", many: "codes" };
@@ -189,12 +191,13 @@ export function rules(data: DataSource, p: WordlePuzzle): string[] {
   const many = p.boards.length > 1;
   const sym = symbolsName(s, data);
   const out: string[] = [];
-  out.push(many ? `${p.boards.length} ${n.many} are hidden, one on each board${s.pair ? " (two per board)" : ""}.` : s.pair ? `two ${n.many} are hidden; they share no ${sym}.` : `a ${n.one} is hidden.`);
+  out.push(many ? `${p.boards.length} ${n.many} are hidden, one on each board${s.pair ? " (two per board)" : ""}.` : s.pair ? `two ${n.many} are hidden; they share no ${sym}.` : `${an(n.one)} is hidden.`);
   if (s.answer === "dodge") out.push(`it isn't chosen yet: after each guess it is whichever ${n.one} keeps the most possibilities open, so every guess is marked as unhelpfully as the marks so far allow.`);
   if (p.split.length) out.push(`each board says what its ${n.one}'s ${p.split.map((id) => k.data?.attributes.find((a) => a.id === id)?.label ?? id).join(" and ")} is.`);
   if (p.boards[0]?.target !== undefined) out.push(`it is a calculation of ${p.length} symbols that comes to the number shown.`);
   else if (spelled(s)) out.push(`it has ${p.length} ${sym}.${s.reveal ? ` the first is shown.` : ""}`);
-  out.push(`each guess must be ${k.named ? `one of the ${n.many} in the list` : s.secret === "equations" ? "a correct calculation" : `${p.length} ${sym}${s.secret === "codes" ? (s.distinct ? ", no symbol twice" : "") : " that spell one in the list"}`}${many ? (s.open === "sequence" ? "; each counts on every open board, and the next board opens (with your guesses so far marked on it) once one is found" : "; each counts on every board") : ""}.`);
+  const valid = s.secret === "items" && s.guess === "valid" ? `any ${p.length} ${sym} the dataset accepts, not only its ${n.many}` : null;
+  out.push(`each guess must be ${k.named ? `one of the ${n.many} in the list` : s.secret === "equations" ? "a correct calculation" : valid ?? `${p.length} ${sym}${s.secret === "codes" ? (s.distinct ? ", no symbol twice" : "") : ` that spell ${s.guess === "pool" ? "one that can be hidden" : "one in the list"}`}`}${many ? (s.open === "sequence" ? "; each counts on every open board, and the next board opens (with your guesses so far marked on it) once one is found" : "; each counts on every board") : ""}.`);
   if (spelled(s)) {
     const m = MARKS.find((x) => x.value === s.marks)!;
     out.push(`${sym} are marked ${m.label.replace(/^each position: /, "one by one: ").replace(/^counted: /, "with a count of ")}${s.marks === "warm" ? ` (near: within ${s.near})` : ""}. ${m.description}.`);
@@ -291,7 +294,7 @@ export function wordleDef(data: DataSource): PuzzleDef<WordlePuzzle, WordleState
     // a guess, once marked, has told you what it told you: taking it back would only refund the guess
     irreversible: true,
     generate: (v, rng) => generate(data, v, rng),
-    formats: [],
+    formats: [sgtFormat(params)],
     init: (p) => ({ guesses: p.starters.slice(), row: Array.from({ length: kind(data, p).named ? 0 : p.length }, () => "") }),
     initInteraction: () => ({ board: 0 }),
     reduce: (p, s, a) => reduce(data, p, s, a),

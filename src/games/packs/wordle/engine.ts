@@ -79,7 +79,7 @@ const bandsOf = (s: Settings): Bands =>
 
 /** Symbol order for order and warm marks: the keyboard's symbols sorted (letters a–z, digits 0–9). */
 function rankOf(k: Kind): (c: string) => number {
-  const all = [...new Set(k.keys.flat())].sort((a, b) => (/^\d+$/.test(a) && /^\d+$/.test(b) ? Number(a) - Number(b) : a < b ? -1 : a > b ? 1 : 0));
+  const all = [...new Set(k.keys.flat())].filter((c) => c !== "_").sort((a, b) => (/^\d+$/.test(a) && /^\d+$/.test(b) ? Number(a) - Number(b) : a < b ? -1 : a > b ? 1 : 0));
   const at = new Map(all.map((c, i) => [c, i]));
   return (c) => at.get(c) ?? -1;
 }

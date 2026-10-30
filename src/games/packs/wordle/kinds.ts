@@ -3,6 +3,7 @@ import type { DataAttribute, DataItem, DataValue, Dataset } from "../../core/typ
 import { filter } from "../../lib/dataset/query";
 import { spellingOf } from "../../lib/dataset/spelling";
 import { canonical, equationError, generateEquation, OPERATORS, type EquationRules } from "./equations";
+import { BLANK } from "./marks";
 import { spelled, type DataSource, type Settings } from "./params";
 
 /**
@@ -141,11 +142,12 @@ function codesKind(s: Settings, length: number): Kind {
   const prime = s.symbols === "digits" && s.prime;
   const ok = (q: readonly string[]): string | null => {
     if (q.length !== length) return "not the right length";
-    if (q.some((c) => c !== "" && !syms.includes(c))) return "not one of the symbols";
-    if (q.every((c) => c === "")) return "nothing guessed";
-    if (!s.blanks && q.some((c) => c === "")) return "every place needs a symbol";
-    if (s.distinct) { const used = q.filter(Boolean); if (new Set(used).size !== used.length) return "no symbol twice"; }
-    if (prime && (q.some((c) => c === "") || q[0] === "0" || !isPrime(Number(q.join(""))))) return `${q.join("")} isn't a prime`;
+    if (q.some((c) => c === "")) return "not enough";
+    if (q.some((c) => c !== BLANK && !syms.includes(c))) return "not one of the symbols";
+    if (q.every((c) => c === BLANK)) return "nothing guessed";
+    if (!s.blanks && q.includes(BLANK)) return "every place needs a symbol";
+    if (s.distinct) { const used = q.filter((c) => c !== BLANK); if (new Set(used).size !== used.length) return "no symbol twice"; }
+    if (prime && (q.includes(BLANK) || q[0] === "0" || !isPrime(Number(q.join(""))))) return `${q.join("")} isn't a prime`;
     return null;
   };
   let all: Entry[] | null | undefined;
@@ -175,9 +177,9 @@ function codesKind(s: Settings, length: number): Kind {
     },
     named: null,
     next: () => null,
-    keys: s.symbols === "letters" ? keyboardRows(syms) : [syms],
+    keys: [...(s.symbols === "letters" ? keyboardRows(syms) : [syms]), ...(s.blanks ? [[BLANK]] : [])],
     same: (g, a) => !!g.seq && !!a.seq && g.seq.join(" ") === a.seq.join(" "),
-    label: (e) => (e.seq ?? []).map((c) => c || "·").join(s.symbols === "colors" ? " " : ""),
+    label: (e) => (e.seq ?? []).map((c) => (c === BLANK ? "·" : c)).join(s.symbols === "colors" ? " " : ""),
   };
 }
 

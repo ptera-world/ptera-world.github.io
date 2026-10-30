@@ -251,3 +251,18 @@ test("every combination of the axes plays to an end without breaking its own rul
   }
   expect(played).toBeGreaterThan(combos.length / 2);
 }, 300_000);
+
+test("Guess game ids round-trip and use the original's hidden form", async () => {
+  const p = await gen({ secret: "codes", symbols: "colors", alphabet: 8, minLen: 5, maxLen: 5, limit: 12, blanks: true, distinct: true, marks: "counts" }, "fmt");
+  const f = def.formats[0]!;
+  const text = f.serialize!(p);
+  expect(text.startsWith("c8p5g12bM:")).toBe(true);
+  expect(text).not.toContain(p.boards[0]!.answers[0]!.seq!.map((c) => Number(c).toString(16).padStart(2, "0")).join(""));
+  const back = f.parse(text) as WordlePuzzle;
+  expect(back.boards[0]!.answers[0]!.seq).toEqual(p.boards[0]!.answers[0]!.seq);
+  expect([back.s.alphabet, back.length, back.s.limit, back.s.blanks, back.s.distinct]).toEqual([8, 5, 12, true, true]);
+  expect(() => f.parse("c6p4g10Bm:00")).toThrow();
+  // a blank in a guess is never marked
+  const st = play(back, init(back), { seq: ["_", "_", "_", "_", back.boards[0]!.answers[0]!.seq![4]!] });
+  expect(board(data, back, st, 0).marks[0]!.counts).toEqual([1, 0]);
+});

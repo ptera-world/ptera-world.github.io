@@ -939,7 +939,8 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
         clear(el);
         if (!open) return;
         const rules = s.def.rules?.(s.puzzle) ?? [];
-        const gestures = (shell.view?.def.controls ?? []).map((g) => h("li", null, h("strong", null, g.how), h("span", { class: "w-dim" }, ` · ${g.what}`)));
+        const c = shell.view?.def.controls;
+        const gestures = (typeof c === "function" ? c(s.puzzle) : c ?? []).map((g) => h("li", null, h("strong", null, g.how), h("span", { class: "w-dim" }, ` · ${g.what}`)));
         // what you can do with a pointer; keyboard-only commands live in the shortcuts list
         const own = ctx.commands().filter((c) => !/^(shell|toggle|technique|widget|fx)\./.test(c.id) && !c.hidden && (c.mouse?.length || [c.menu].flat().includes("board")));
         own.sort((a, b) => Number(!(a.mouse?.length)) - Number(!(b.mouse?.length)));

@@ -83,7 +83,8 @@ export function guideWidget(shell: Shell, el: HTMLElement, ctx: WidgetContext): 
     {
       id: "play", q: "how do i play?",
       answer: () => {
-        const gestures = view?.def.controls ?? [];
+        const c = view?.def.controls;
+        const gestures = typeof c === "function" ? c(s.puzzle) : c ?? [];
         const pointer = ctx.commands().filter((c) => !/^(shell|toggle|technique|widget|fx)\./.test(c.id) && !c.hidden && (c.mouse?.length || [c.menu].flat().includes("board")));
         return [
           gestures.length || pointer.length ? h("ul", null,

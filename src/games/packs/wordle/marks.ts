@@ -5,16 +5,19 @@ import { compare, type Bands, type Feedback } from "../../lib/dataset/compare";
 export const ABSENT = 0, ELSEWHERE = 1, RIGHT = 2;
 export type PositionMark = typeof ABSENT | typeof ELSEWHERE | typeof RIGHT;
 
+/** A blank place in a guess (codes may allow them): never marked, never in an answer. */
+export const BLANK = "_";
+
 /**
  * Wordle's marks for a sequence: right places first, then each other symbol is "elsewhere" while
- * the answer has unmarked copies of it left. Empty symbols ("", a blank peg) are never marked.
+ * the answer has unmarked copies of it left. Blanks are never marked.
  */
 export function markPositions(guess: readonly string[], answer: readonly string[]): PositionMark[] {
-  const out: PositionMark[] = guess.map((c, i) => (c !== "" && c === answer[i] ? RIGHT : ABSENT));
+  const out: PositionMark[] = guess.map((c, i) => (c !== BLANK && c === answer[i] ? RIGHT : ABSENT));
   const left = new Map<string, number>();
   answer.forEach((c, i) => { if (out[i] !== RIGHT) left.set(c, (left.get(c) ?? 0) + 1); });
   guess.forEach((c, i) => {
-    if (out[i] === RIGHT || c === "") return;
+    if (out[i] === RIGHT || c === BLANK) return;
     const n = left.get(c) ?? 0;
     if (n > 0) { out[i] = ELSEWHERE; left.set(c, n - 1); }
   });
