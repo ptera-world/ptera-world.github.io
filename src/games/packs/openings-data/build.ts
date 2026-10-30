@@ -70,11 +70,11 @@ export async function buildOpeningsData(opts: { cache: string; out: string; refr
   const firsts = [...new Set(lines.map(([, , moves]) => moves.split(" ")[0]!.replace(/[+#]/g, "")))].sort();
   const eco = VOLUMES.flatMap((v) => Array.from({ length: 100 }, (_, i) => `${v.value}${String(i).padStart(2, "0")}`));
   const attributes: DataAttribute[] = [
-    { id: "eco", label: "ECO code", kind: "ordinal", near: { abs: 5 }, values: eco.map((c) => ({ value: c, label: c })), description: "its code in the Encyclopaedia of Chess Openings, A00 to E99; nearby codes are related lines" },
+    { id: "eco", label: "ECO code", kind: "ordinal", values: eco.map((c) => ({ value: c, label: c })), description: "its code in the Encyclopaedia of Chess Openings, A00 to E99" },
     { id: "volume", label: "ECO volume", kind: "category", values: VOLUMES, description: "the letter of its ECO code" },
     { id: "family", label: "opening", kind: "category", values: families.map((f) => ({ value: slug(f), label: f })), description: "the opening it is a line of: its name before any variation" },
     { id: "variation", label: "variation", kind: "bool", description: "named as a variation of an opening, not as the opening itself" },
-    { id: "plies", label: "length", kind: "number", unit: "plies", near: { abs: 2 }, description: "how many moves the line has, white's and black's counted separately" },
+    { id: "plies", label: "length", kind: "number", unit: "plies", description: "how many moves the line has, white's and black's counted separately" },
     { id: "first", label: "first move", kind: "category", values: firsts.map((m) => ({ value: m, label: `1. ${m}` })) },
     { id: "pgn", label: "moves", kind: "text", description: "the line's moves, e.g. 1. e4 c5 2. Nf3" },
   ];

@@ -490,7 +490,7 @@ export type DataValue = number | string | boolean | readonly string[] | null;
 /**
  * One thing a dataset knows about each item, typed so games can compare, filter and describe it
  * without knowing the dataset:
- * - number: a measurement (`unit`), compared higher / lower / close.
+ * - number: a measurement (`unit`), compared higher / lower.
  * - ordinal: one of `values`, which are in order, so also higher / lower (e.g. generation).
  * - category: one of `values`, no order (e.g. color).
  * - set: any number of `values` (e.g. types); compared by how much two sets share.
@@ -505,8 +505,6 @@ export interface DataAttribute {
   unit?: string;
   /** ordinal, category, set: every possible value (ordinal: lowest first), with what to show for it. */
   values?: readonly { value: string; label: string; color?: string }[];
-  /** number, ordinal: how far off still counts as close unless a game is told otherwise (ordinal: steps). */
-  near?: { abs?: number; rel?: number };
   /** set: the order of an item's values means something (e.g. primary type first). */
   ordered?: boolean;
   /** number: decimals worth showing. */

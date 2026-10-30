@@ -68,14 +68,22 @@ test("query: mistakes say what is wrong and where", () => {
   expect(compile("", attrs)(get("pikachu"))).toBe(true);
 });
 
-test("compare: numbers say which way, and close within the band", () => {
+test("compare: numbers say which way; close only within a band the game gives", () => {
   const w = attr("weight");
   expect(compare(w, 10, 10)).toEqual({ verdict: "match" });
-  expect(compare(w, 10, 11)).toEqual({ verdict: "close", dir: "higher" });
-  expect(compare(w, 10, 20)).toEqual({ verdict: "miss", dir: "higher" });
-  expect(compare(w, 10, 11, { weight: null })).toEqual({ verdict: "miss", dir: "higher" });
-  expect(compare(attr("gen"), "3", "4")).toEqual({ verdict: "close", dir: "higher" });
-  expect(compare(attr("gen"), "3", "1")).toEqual({ verdict: "miss", dir: "lower" });
+  expect(compare(w, 10, 11)).toEqual({ verdict: "miss", dir: "higher" });
+  expect(compare(w, 10, 11, { weight: { rel: 0.2 } })).toEqual({ verdict: "close", dir: "higher" });
+  expect(compare(w, 10, 20, { weight: { rel: 0.2 } })).toEqual({ verdict: "miss", dir: "higher" });
+  expect(compare(attr("gen"), "3", "4")).toEqual({ verdict: "miss", dir: "higher" });
+  expect(compare(attr("gen"), "3", "4", { gen: { abs: 1 } })).toEqual({ verdict: "close", dir: "higher" });
+  expect(compare(attr("gen"), "3", "1", { gen: { abs: 1 } })).toEqual({ verdict: "miss", dir: "lower" });
+});
+
+test("datasets carry no close bands: closeness is a game's setting, not a fact about the data", async () => {
+  for (const pack of ["pokemon-data", "words-data", "openings-data"]) {
+    const j = JSON.parse(await Bun.file(new URL(`../../packs/${pack}/data.json`, import.meta.url)).text()) as { attributes: object[] };
+    for (const a of j.attributes) expect("near" in a).toBe(false);
+  }
 });
 
 test("compare: sets as sets — order doesn't matter, overlap is partial", () => {

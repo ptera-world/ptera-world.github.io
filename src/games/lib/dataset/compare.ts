@@ -3,7 +3,7 @@ import type { DataAttribute, DataItem, DataValue } from "../../core/types";
 /**
  * How a guessed item's value for one attribute relates to the answer's:
  * - match: the same (sets: the same members, in any order).
- * - close: not the same but within the attribute's close band (numbers, ordinals).
+ * - close: not the same but within the band a game gives (numbers, ordinals).
  * - partial: sets that share some members but not all.
  * - miss: neither.
  * `dir` says where the answer lies from the guess for numbers and ordinals.
@@ -17,7 +17,7 @@ export interface Feedback {
   shared?: readonly string[];
 }
 
-/** How far off still counts as close, per attribute id (overrides the attribute's own `near`). */
+/** How far off still counts as close, per attribute id; an attribute without one is never close. */
 export type Bands = Readonly<Record<string, { abs?: number; rel?: number } | null>>;
 
 /** Position of an ordinal value among the attribute's values, or -1. */
@@ -37,7 +37,7 @@ function within(diff: number, of: number, band: { abs?: number; rel?: number } |
  * unless equal).
  */
 export function compare(attr: DataAttribute, guess: DataValue, answer: DataValue, bands: Bands = {}): Feedback {
-  const band = attr.id in bands ? bands[attr.id] : attr.near;
+  const band = bands[attr.id] ?? null;
   if (guess === null || answer === null) return { verdict: guess === answer ? "match" : "miss" };
   switch (attr.kind) {
     case "number": {

@@ -117,9 +117,9 @@ export async function buildWordsData(opts: { cache: string; out: string; refresh
     .map((g) => ({ common: g.common, spelling: g.spelling, words: frontCode(g.words.sort()) }));
 
   const attributes: DataAttribute[] = [
-    { id: "length", label: "length", kind: "number", unit: "letters", near: { abs: 1 }, description: "how many letters it has" },
+    { id: "length", label: "length", kind: "number", unit: "letters", description: "how many letters it has" },
     {
-      id: "common", label: "how common", kind: "ordinal", near: { abs: 1 },
+      id: "common", label: "how common", kind: "ordinal",
       description: "the smallest SCOWL size listing it: lower is more common. SCOWL calls 35 small, 50 medium, 70 large and 80 the unusual words word games use",
       values: SIZES.map((s) => ({ value: s, label: `size ${s}` })),
     },
