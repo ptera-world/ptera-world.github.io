@@ -220,8 +220,15 @@ switch (command) {
       console.log(`words data ${file.version}: ${file.groups.length} groups, ${file.attributes.length} attributes → ${out}`);
       break;
     }
+    if (which === "openings") {
+      const { buildOpeningsData } = await import("./games/packs/openings-data/build");
+      const out = resolve(import.meta.dir, "games/packs/openings-data/data.json");
+      const file = await buildOpeningsData({ cache: resolve(flag("--cache") ?? join(import.meta.dir, "..", ".cache", "openings")), out, refresh: args.includes("--refresh") });
+      console.log(`openings data ${file.version}: ${file.lines.length} lines, ${file.attributes.length} attributes → ${out}`);
+      break;
+    }
     if (which !== "pokemon") {
-      console.error("Usage: bun run src/cli.ts data pokemon|words [--cache <dir>] [--refresh]");
+      console.error("Usage: bun run src/cli.ts data pokemon|words|openings [--cache <dir>] [--refresh]");
       process.exit(1);
     }
     const { buildPokemonData } = await import("./games/packs/pokemon-data/build");
