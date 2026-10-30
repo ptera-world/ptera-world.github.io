@@ -578,7 +578,7 @@ export class Shell {
       session.hooks.solved.tap(() => this.syncLock(), { owner: "shell" }),
       session.hooks.action.tap((a, { source }) => {
         if (!a || !session.locked || source.kind !== "player") return a;
-        this.setStatus(session.lost ? "game over. undo to step back, or start a new game" : session.solved ? "this board is solved. unlock it to keep playing with it" : "the answer was revealed. unlock the board to keep playing with it");
+        this.setStatus(session.lost ? (session.canUndo ? "game over. undo to step back, or start a new game" : "game over. start a new game") : session.solved ? "this board is solved. unlock it to keep playing with it" : "the answer was revealed. unlock the board to keep playing with it");
         session.hooks.fx.call({ kind: "locked" });
         return null;
       }, { owner: "shell", priority: -100 }),
@@ -1510,7 +1510,7 @@ export class Shell {
     this.syncLock();
     if (s.lost) {
       delete this.root.dataset.solved;
-      this.setStatus("game over. undo to step back, or start a new game");
+      this.setStatus(s.canUndo ? "game over. undo to step back, or start a new game" : "game over. start a new game");
       return;
     }
     if (s.solved) {
