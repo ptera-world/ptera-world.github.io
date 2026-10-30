@@ -208,7 +208,7 @@ export function makeWhoThat(dataset: () => PokemonDataset | undefined): PuzzleDe
   const clueName = (p: WhoPuzzle) => (new Set(p.clues).size > 1 ? "mixed clues" : CLUE_LABELS[p.clues[0]!]);
   return {
     id: "whos-that",
-    name: "Who's that pokémon",
+    name: "who's that pokémon",
     aliases: ["who's that pokemon", "whos that pokemon", "pokemon silhouette", "guess the pokemon", "pokemon quiz", "pokedle silhouette"],
     tags: ["quiz", "pokémon"],
     description: "name the pokémon from one clue: its silhouette, a blurred or zoomed-in picture, its cry, or its dex entry. a wrong guess makes the clue easier.",

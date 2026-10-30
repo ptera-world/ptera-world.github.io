@@ -262,7 +262,7 @@ export function makeTypeMatchups(ds: () => PokemonDataset | undefined): PuzzleDe
   };
   return {
     id: "type-matchups",
-    name: "Type matchups",
+    name: "type matchups",
     aliases: ["type chart quiz", "type effectiveness", "pokémon types quiz", "super effective"],
     tags: ["pokémon", "trivia", "quiz"],
     description: "how effective is this move against that pokémon? which types hit it super effectively, which resist these attacks? a round of type-chart questions, explained as you go.",

@@ -171,7 +171,7 @@ export function makeFindTheShiny(dataset: () => PokemonDataset | undefined, diff
   const params = makeParams(dataset);
   return {
     id: "find-the-shiny",
-    name: "Find the shiny",
+    name: "find the shiny",
     aliases: ["shiny hunt", "spot the shiny", "odd one out", "spot the difference"],
     tags: ["observation", "pokémon"],
     description: "one pokémon in the grid is shiny: find it. the shinies get subtler as you go.",
