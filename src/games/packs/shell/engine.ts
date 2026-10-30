@@ -24,6 +24,9 @@ export let colorOf!: GamesApi["techniques"]["colorOf"];
 export let rememberPosition!: GamesApi["techniques"]["rememberPosition"];
 export let stepsAt!: GamesApi["techniques"]["stepsAt"];
 export let generate!: GamesApi["generate"];
+export let dailySeed!: GamesApi["daily"]["dailySeed"];
+export let today!: GamesApi["daily"]["today"];
+export let addDays!: GamesApi["daily"]["addDays"];
 export let labelSides!: GamesApi["board"]["labelSides"];
 export let setLabelSides!: GamesApi["board"]["setLabelSides"];
 export let cycleLabels!: GamesApi["board"]["cycleLabels"];
@@ -48,6 +51,7 @@ export function bind(g: GamesApi): void {
   ({ PluginHost: PluginHostCtor, loadPluginConfig } = g.plugins);
   ({ TechniqueHost: TechniqueHostCtor, findPracticePosition, hintFrom, isPartOfStep, stepsLeft, stepsOf, firstStep, findStep, loadPace, rateByTechniques, findStepAt, aimable, applyStep, colorOf, rememberPosition, stepsAt } = g.techniques);
   generate = g.generate;
+  ({ dailySeed, today, addDays } = g.daily);
   ({ labelSides, setLabelSides, cycleLabels, onBoardPrefsChange } = g.board);
   ({ COLOR_TOKENS, SYSTEM_THEME, setTheme, setTokenOverride, themeChoice, tokenOverrides, onThemeChange } = g.look);
   ({ checkForUpdate, listMods, packRecord, saveMods, selectPackVersion, setPackEnabled, setTrack } = g.packs);

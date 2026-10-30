@@ -15,7 +15,8 @@ function slim(src: Source): Source {
 }
 
 export type Origin =
-  | { kind: "generated"; seed: string; params: Record<string, unknown>; generatorVersion: number }
+  /** `daily`: the date whose puzzle of the day this is (seed and params are then that date's). */
+  | { kind: "generated"; seed: string; params: Record<string, unknown>; generatorVersion: number; daily?: string }
   | { kind: "imported"; format?: string; source?: string }
   /** A lesson: every instance of `technique` in `start`, the position the board began at. */
   | { kind: "practice"; technique: string; seed: string; start: unknown };

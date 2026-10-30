@@ -4,6 +4,7 @@
  */
 import * as board from "./core/board";
 import * as commands from "./core/commands";
+import * as daily from "./core/daily";
 import * as dom from "./core/dom";
 import { fx } from "./core/fx";
 import { generate } from "./core/generate";
@@ -35,6 +36,8 @@ export const api = {
   plugins,
   generate,
   patch,
+  /** Puzzles of the day: a date's seed, unknowable before the date starts anywhere. */
+  daily,
   /** Effect helpers (flash, pop, burst, shake). */
   fx,
   /** How themes apply: `asset("pattern.empty-mark", defaultSvg)` for themed graphics, plus the theme and color settings. */

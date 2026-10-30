@@ -5,7 +5,7 @@ import type { Registry } from "../../core/registry";
 import { randomSeed } from "../../core/rng";
 import { canonical, fromQuery, resolve, toQuery, type Schema, type Values } from "../../core/schema";
 import type { Origin, Session, SharedHistory, Snapshot } from "../../core/session";
-import { PluginHostCtor, SessionCtor, TechniqueHostCtor, aimable, colorOf, rememberPosition, cycleLabels, findPracticePosition, generate, hintFrom, isPartOfStep, stepsLeft, stepsOf, loadPluginConfig, onBoardPrefsChange, onThemeChange } from "./engine";
+import { dailySeed, today, PluginHostCtor, SessionCtor, TechniqueHostCtor, aimable, colorOf, rememberPosition, cycleLabels, findPracticePosition, generate, hintFrom, isPartOfStep, stepsLeft, stepsOf, loadPluginConfig, onBoardPrefsChange, onThemeChange } from "./engine";
 import { packJson, unpackJson, type Patch } from "../../core/patch";
 
 /** What a share link carries beyond the puzzle itself. */
@@ -24,10 +24,12 @@ import { CommandHub } from "./commands";
 import { add, clear, formatTime, h, setInputKind, style } from "../../core/dom";
 import { arrange, loadLayout, saveLayout, type LayoutConfig } from "./layout";
 import { builtinWidgets } from "./widgets";
+import { playWidgets } from "./play-widgets";
 import { installTooltips } from "./tooltips";
 import { sessionList } from "./session-list";
 import { tagStyle } from "./tags";
 import { openOverlays, popup, type SurfaceItem } from "./surfaces";
+import { record, type Result } from "./stats";
 import { SAVE_PREFIX, INDEX_KEY, finished, findSession, listSessions, loadSession, newSessionId, removeSession, saveSession } from "./sessions";
 
 
@@ -53,6 +55,7 @@ export function trySerialize(fmt: Format<unknown>, puzzle: unknown): string | nu
 
 /** Identity of a puzzle source, used to decide whether a save belongs to the requested puzzle. */
 function originKey(def: AnyPuzzleDef, origin: Origin): string {
+  if (origin.kind === "generated" && origin.daily) return `d|${origin.daily}`;
   if (origin.kind === "generated") {
     return `g|${origin.generatorVersion}|${canonical(def.params, resolve(def.params, origin.params))}|${origin.seed}`;
   }
@@ -104,6 +107,8 @@ export class Shell {
     watch: new HookEvent<{ technique: Technique | null }>("watch"),
     /** A hand move turned out to be part of an instance of this technique (null: the light from the last one is out). */
     recognized: new HookEvent<{ technique: Technique | null }>("recognized"),
+    /** A game's result was recorded for stats. */
+    stats: new HookEvent<void>("stats"),
   };
 
   session: Session<any, any, any, any> | null = null;
@@ -147,7 +152,7 @@ export class Shell {
     this.hub = new CommandHub(root);
     this.cast = new Casting(this);
     this.hub.addContext(() => this.context());
-    for (const w of builtinWidgets(this)) registry.widget(w);
+    for (const w of [...builtinWidgets(this), ...playWidgets(this)]) registry.widget(w);
   }
 
   /** `carried`: what a previous shell's stop returned, to continue from; anything else is ignored. */
@@ -335,6 +340,12 @@ export class Shell {
       }
       return;
     }
+    // ?daily alone is today's puzzle (what a reminder links to); ?daily=<date> is that date's
+    const daily = q.get("daily");
+    if (daily !== null && def.daily && (daily === "" || /^\d{4}-\d{2}-\d{2}$/.test(daily))) {
+      await this.startDaily(def, daily || today(), false);
+      return;
+    }
     const seed = q.get("seed");
     if (seed) {
       const params = fromQuery(def.params, q);
@@ -375,17 +386,47 @@ export class Shell {
     this.els.boardbox.append(h("div", { class: "generating" }, h("span", null, text), h("button", { onclick: () => ac.abort() }, "cancel")));
   }
 
-  async newGame(def: AnyPuzzleDef, params: Record<string, unknown>, seed: string, push = true, shared: Shared | null = null): Promise<void> {
+  /**
+   * The puzzle of the day for `date` (the player's today by default): reopened if it was started
+   * here, else generated from the date's beacon seed with the puzzle's daily params.
+   */
+  async startDaily(def: AnyPuzzleDef, date: string = today(), push = true): Promise<void> {
+    if (!def.daily) return;
+    if (this.resume(def, `d|${date}`, false)) return;
+    this.generating?.abort();
+    const ac = new AbortController();
+    this.generating = ac;
+    this.showBusy(`getting the puzzle for ${date}…`, ac);
+    let seed: string;
+    try {
+      seed = await dailySeed(date);
+    } catch (e) {
+      if (!ac.signal.aborted) this.showError(`${e instanceof Error ? e.message : e}. the puzzle of the day needs a connection the first time it is opened.`);
+      return;
+    } finally {
+      if (this.generating === ac) this.generating = null;
+    }
+    if (ac.signal.aborted) return;
+    await this.newGame(def, resolve(def.params, def.daily.params ?? {}), seed, push, null, date);
+  }
+
+  async newGame(def: AnyPuzzleDef, params: Record<string, unknown>, seed: string, push = true, shared: Shared | null = null, daily?: string): Promise<void> {
+    const missing = this.registry.missingDatasets(def);
+    if (missing.length) {
+      this.showError(`${def.name} is built on the ${missing.join(", ")} data, and no loaded pack provides it. turn its pack on in the packs tab and reload.`);
+      return;
+    }
     this.generating?.abort();
     const ac = new AbortController();
     this.generating = ac;
     const values = resolve(def.params, params);
-    prefs.set(`params:${def.id}`, values);
+    // a daily is played with fixed params, never the player's own
+    if (!daily) prefs.set(`params:${def.id}`, values);
     this.showBusy("generating…", ac);
     try {
       const puzzle = await generate(def, values, seed, ac.signal);
       if (ac.signal.aborted) return;
-      this.loadPuzzle(def, puzzle, { kind: "generated", seed, params: values, generatorVersion: def.generatorVersion }, push, shared);
+      this.loadPuzzle(def, puzzle, { kind: "generated", seed, params: values, generatorVersion: def.generatorVersion, ...(daily ? { daily } : {}) }, push, shared);
     } catch (e) {
       if (ac.signal.aborted) {
         if (this.session) this.mountView();
@@ -446,7 +487,10 @@ export class Shell {
     const def = session.def;
     const q = new URLSearchParams({ p: def.id });
     const o = session.origin;
-    if (o.kind === "generated") {
+    if (o.kind === "generated" && o.daily) {
+      // the date names the puzzle for everyone; the seed would be a spoiler-free but needless copy
+      q.set("daily", o.daily);
+    } else if (o.kind === "generated") {
       q.set("seed", o.seed);
       toQuery(def.params, resolve(def.params, o.params), q);
       q.set("v", String(o.generatorVersion));
@@ -600,6 +644,11 @@ export class Shell {
     this.unmountWidgets();
     this.unmountView();
     clear(this.els.boardbox);
+    const missing = this.registry.missingDatasets(session.def);
+    if (missing.length) {
+      this.els.boardbox.append(h("p", { class: "error" }, `${session.def.name} is built on the ${missing.join(", ")} data, and no loaded pack provides it. turn its pack on in the packs tab and reload.`));
+      return;
+    }
     const v = this.chosenView(session.def);
     if (!v) {
       this.els.boardbox.append(h("p", { class: "error" }, `no view registered for ${session.def.id}`));
@@ -1369,6 +1418,7 @@ export class Shell {
     };
     const items = all.map((def) => {
       const n = this.registry.techniquesFor(def).length;
+      const missing = this.registry.missingDatasets(def);
       const p = encodeURIComponent(def.id);
       return h("li", null,
         h("a", { href: `?p=${p}`, class: "card", onclick: go(`p=${p}`) },
@@ -1376,6 +1426,8 @@ export class Shell {
           def.aliases?.length ? h("em", { class: "aka" }, `also: ${def.aliases.join(", ")}`) : null,
           def.description ? h("span", null, def.description) : null),
         def.tags?.length ? h("span", { class: "tags" }, def.tags.map((tag) => h("span", { class: "tag", style: tagStyle(tag) }, tag))) : null,
+        missing.length ? h("span", { class: "needs" }, `needs the ${missing.join(", ")} data pack, which is off or failed to load (packs tab)`) : null,
+        def.daily && !missing.length ? h("a", { href: `?p=${p}&daily`, class: "learn", onclick: go(`p=${p}&daily`) }, "today's puzzle") : null,
         n ? h("a", { href: `?p=${p}&tab=techniques`, class: "learn", onclick: go(`p=${p}&tab=techniques`) }, `learn · ${n} techniques`) : null);
     }).map((el, i) => ({ el, def: all[i]! }));
     const resume = h("aside", { class: "index-continue", "aria-label": "games in progress" }, h("h2", null, "continue"),
@@ -1425,9 +1477,32 @@ export class Shell {
     this.hooks.status.call({ text });
   }
 
+  /** Stats: how this game first ended (see stats.ts), once it has. Practice isn't counted. */
+  private recordResult(): void {
+    const s = this.session;
+    if (!s || s.origin.kind === "practice") return;
+    const outcome = s.lost ? "lost" : s.solved ? "solved" : s.finished ? "revealed" : null;
+    if (!outcome) return;
+    let score: Result["score"] | undefined;
+    try {
+      score = s.def.score?.(s.puzzle, s.state) ?? undefined;
+    } catch (e) {
+      console.error(e);
+    }
+    const o = s.origin;
+    const fresh = record(s.def.id, {
+      id: this.sessionId, at: Date.now(), outcome, ms: s.finishedAtMs ?? s.elapsedMs(),
+      params: o.kind === "generated" ? canonical(s.def.params, resolve(s.def.params, o.params)) : "",
+      ...(o.kind === "generated" && o.daily ? { daily: o.daily } : {}),
+      ...(score ? { score } : {}),
+    });
+    if (fresh) this.hooks.stats.call();
+  }
+
   private syncSolvedStatus(): void {
     const s = this.session;
     if (!s) return;
+    this.recordResult();
     if (this.keepStatus) {
       this.keepStatus = false;
       return;
@@ -1545,6 +1620,7 @@ const SHELL_CSS = `
 .index .card:hover { background: var(--surface-2); text-decoration: none; }
 .index span { color: var(--text-dim); font-size: 13px; }
 .index .learn { font-size: 12px; padding: 8px 14px; border-top: 1px solid var(--border); }
+.index .needs { font-size: 12px; padding: 0 14px 10px; color: var(--warn); }
 .generating { display: flex; gap: 12px; align-items: center; color: var(--text-dim); }
 `;
 

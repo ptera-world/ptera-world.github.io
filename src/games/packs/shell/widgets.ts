@@ -21,6 +21,7 @@ import { sessionList } from "./session-list";
 import type { Shell, ShareLevel } from "./shell";
 import { trySerialize } from "./shell";
 import { explainer } from "./explainer";
+import { shareBlock, streakLine } from "./play-widgets";
 
 
 const CSS = `
@@ -60,6 +61,7 @@ button.danger:hover:not(:disabled) { border-color: var(--danger); background: va
 .w-search { position: sticky; top: -12px; background: var(--bg); padding: 4px 0 8px; z-index: 1; }
 .w-results { background: color-mix(in srgb, var(--surface) 94%, transparent); border: 1px solid var(--accent); border-radius: 12px; padding: 14px 16px; box-shadow: 0 10px 30px rgba(0,0,0,.35); display: flex; flex-direction: column; gap: 10px; width: min(520px, 100%); max-height: 100%; overflow-y: auto; }
 .w-results.lost { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: center; width: auto; }
+.w-results.lost.shared { flex-direction: column; align-items: stretch; width: min(520px, 100%); }
 .w-results .rs-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
 .w-results .rs-line { display: flex; gap: 1px; height: 14px; border-radius: 4px; overflow: hidden; }
 .w-results .rs-tick { flex: 1; min-width: 1px; background: var(--tc); }
@@ -240,8 +242,15 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
             },
           }, p.label)))
         : null;
-      const seedNow = ctx.session.origin.kind === "generated" ? ctx.session.origin.seed : null;
+      const o = ctx.session.origin;
+      const seedNow = o.kind === "generated" && !o.daily ? o.seed : null;
+      const daily = def.daily
+        ? h("div", { class: "w-inline" },
+          h("button", { class: o.kind === "generated" && o.daily ? undefined : "primary", onclick: () => void shell.startDaily(def) }, "today's puzzle"),
+          o.kind === "generated" && o.daily ? h("span", { class: "w-dim" }, `playing the puzzle for ${o.daily}`) : null)
+        : null;
       add(el,
+        daily,
         presets, formBox,
         h("div", { class: "row" }, h("label", null, "seed"), seedInput),
         h("button", { class: "primary", onclick: () => void start() }, "generate"),
@@ -824,8 +833,12 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
         clear(el);
         if ((!s.finished && !s.lost) || dismissed) return;
         if (s.lost) {
-          add(el, h("div", { class: "w-results lost", role: "status" },
+          const share = shareBlock(shell, s);
+          const streak = streakLine(s);
+          add(el, h("div", { class: `w-results lost${share ? " shared" : ""}`, role: "status" },
             h("strong", { class: "big" }, "game over"),
+            streak ? h("span", { class: "w-dim" }, streak) : null,
+            share,
             h("div", { class: "w-inline" },
               h("button", { class: "primary", onclick: () => s.undo() }, "undo"),
               h("button", { onclick: () => ctx.run("shell.new") }, "new game"),
@@ -857,6 +870,7 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
         const colorFor = (t: Technique | null) => (t ? shell.cast.color(t) : "var(--text-dim)");
         const rating = (() => { try { return s.def.rate?.(s.puzzle)?.label; } catch { return undefined; } })();
         const time = s.origin.kind === "practice" ? null : formatTime(s.finishedAtMs ?? 0);
+        const score = (() => { try { return s.solved ? s.def.score?.(s.puzzle, s.state)?.label : undefined; } catch { return undefined; } })();
         // the panel animates in once per finish, not every time it is re-mounted (tab switches, layout changes)
         const key = `${shell.sessionId}:${s.finishedAtMs}`;
         const fresh = !announced.has(key);
@@ -866,7 +880,9 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
             h("strong", { class: "big" }, s.outcome === "revealed" ? "revealed" : s.origin.kind === "practice" ? "nice!" : "solved!"),
             time ? h("span", { class: "time" }, time) : null,
             rating ? h("span", { class: "w-dim" }, rating) : null,
-            h("span", { class: "w-dim" }, `${steps.length} steps`)),
+            score ? h("span", { class: "w-dim" }, score) : h("span", { class: "w-dim" }, `${steps.length} steps`),
+            streakLine(s) ? h("span", { class: "w-dim" }, streakLine(s)) : null),
+          shareBlock(shell, s),
           steps.length ? h("div", { class: "rs-line", "aria-label": "every step in order, colored by technique" },
             steps.map((st) => h("span", { class: `rs-tick ${st.how}`, style: `--tc: ${colorFor(st.t)}`, title: `${st.t?.name ?? "no technique"} · ${howName[st.how]}` }))) : null,
           rows.length ? h("div", { class: "rs-rows" }, rows.map(([t, c]) => h("div", { class: "rs-row", style: `--tc: ${colorFor(t)}` },
