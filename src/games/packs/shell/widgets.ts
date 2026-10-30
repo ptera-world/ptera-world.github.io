@@ -929,7 +929,9 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
       const s = ctx.session;
       const seenKey = `howtoSeen:${s.def.id}` as const;
       let open = !prefs.get(seenKey, false) && s.origin.kind !== "practice";
-      const close = () => { open = false; prefs.set(seenKey, true); render(); };
+      // the card leaving frees its slot, so the board is laid out again (it may get the room),
+      // and the board comes back into view: on a phone the player scrolled down past it to reach "play"
+      const close = () => { open = false; prefs.set(seenKey, true); render(); shell.relayout(); shell.boardEl.scrollIntoView({ block: "nearest" }); };
       el.addEventListener(HOWTO_TOGGLE, () => { if (open) close(); else { open = true; render(); } });
       const render = () => {
         clear(el);

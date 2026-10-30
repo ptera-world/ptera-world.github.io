@@ -1564,7 +1564,8 @@ const SHELL_CSS = `
   .bar .pause-mark:not(.on) { display: none; }
 }
 
-.stage { flex: 1; display: flex; min-height: 0; }
+/* no scroll anchoring: a slot changing size (the how-to card closing) must never scroll the board away */
+.stage { flex: 1; display: flex; min-height: 0; overflow-anchor: none; }
 .stage[data-panel="below"] { flex-direction: column; overflow-y: auto; }
 .main { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 12px; overflow-y: auto; }
 .stage[data-panel="below"] .main { flex: none; overflow: visible; }

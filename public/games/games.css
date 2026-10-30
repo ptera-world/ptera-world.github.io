@@ -58,6 +58,8 @@ code { font-family: var(--mono); }
 
 .form { display: flex; flex-direction: column; gap: 10px; }
 .row { display: flex; flex-direction: column; gap: 4px; }
+/* the hidden attribute always hides, whatever display a rule gives the element (form fields shown only for some settings use it) */
+[hidden] { display: none !important; }
 .row-bool { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px; }
 .row-bool label { order: 2; }
 .row-bool input { order: 1; }
