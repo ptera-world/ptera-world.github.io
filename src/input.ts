@@ -8,7 +8,14 @@ import { isPanelOpen, closePanel, openPanel } from "./panel";
 import { siteConfig, getActiveCollection, siteUrl } from "./site-config";
 import { getSettings } from "./settings";
 import { signal, onFrame } from "./life";
-import { keybinds, defineSchema, fromBindings, fuzzyMatcher, createComponent } from "keybinds";
+import { keybinds, defineSchema, fromBindings, fuzzyMatcher, createComponent, keys, keysUI, symbols, aliases, CommandPalette, KeybindCheatsheet, ContextMenu } from "keybinds";
+
+/** The keyboard, reading "/", "=" and "-" as the keys that type them, and "up"-style names. */
+const keyboard = () => keys(symbols(), aliases());
+/** The same, also shown in the palette, cheatsheet and menu. */
+const keyboardShown = () => keysUI(symbols(), aliases());
+/** Components take the inputs they show bindings with; keybinds sets this at runtime but its types leave it out on some components. */
+const showWith = (el: object): void => { (el as { inputs: unknown }).inputs = [keyboardShown()]; };
 import type { Command } from "keybinds";
 
 export interface InputCallbacks {
@@ -343,7 +350,7 @@ export function setupInput(
     };
   }
 
-  signal.addEventListener("abort", keybinds(commands, getContext));
+  signal.addEventListener("abort", keybinds(commands, getContext, { inputs: [keyboard()] }));
 
   // --- History (popstate) ---
 
@@ -457,7 +464,8 @@ export function setupInput(
     bodyIndex.set(node.label, node.description);
   }
 
-  const palette = createComponent("command-palette");
+  const palette = createComponent(CommandPalette);
+  showWith(palette);
   paletteEl = palette;
   palette.setAttribute("auto-trigger", "");
   palette.setAttribute("placeholder", "Search nodes, essays, commands\u2026");
@@ -519,7 +527,8 @@ export function setupInput(
     if (palette.hasAttribute("open")) loadHeadings();
   }).observe(palette, { attributes: true, attributeFilter: ["open"] });
 
-  const cheatsheet = createComponent("cheatsheet");
+  const cheatsheet = createComponent(KeybindCheatsheet);
+  showWith(cheatsheet);
   cheatsheet.setAttribute("auto-trigger", "");
   cheatsheet.commands = commands;
   cheatsheet.context = {};
@@ -549,7 +558,8 @@ export function setupInput(
   ];
   allCommands.push(...contextMenuCommands);
 
-  const ctxMenu = createComponent("context-menu");
+  const ctxMenu = createComponent(ContextMenu);
+  showWith(ctxMenu);
   ctxMenu.setAttribute("auto-trigger", "");
   ctxMenu.setAttribute("target", "#viewport");
   ctxMenu.menu = "node";

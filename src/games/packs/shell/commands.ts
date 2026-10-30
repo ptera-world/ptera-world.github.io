@@ -1,11 +1,16 @@
 import {
   CommandHub as KeybindsHub,
+  CommandPalette,
+  ContextMenu,
+  KeybindCheatsheet,
+  KeybindSettings,
+  aliases,
   fuzzyMatcher,
+  keysUI,
+  mouseUI,
+  releases,
+  symbols,
   type Command,
-  type CommandPalette,
-  type ContextMenu,
-  type KeybindCheatsheet,
-  type KeybindSettings,
 } from "keybinds";
 import { KEYBINDS_CSS } from "./keybinds-theme";
 import type { CommandContext, CommandDef } from "../../core/types";
@@ -66,9 +71,26 @@ export class CommandHub extends KeybindsHub<CommandDef, CommandContext> {
   declare readonly settings: KeybindSettings;
   declare readonly menu: ContextMenu;
 
+  /** A command's key bindings as shown to people (e.g. "Ctrl+Z"). */
+  keysFor(id: string): string[] {
+    return this.bindingsFor(id, "keys");
+  }
+
+  /** A command's mouse bindings as shown to people (e.g. "Ctrl+Click"). */
+  mouseFor(id: string): string[] {
+    return this.bindingsFor(id, "mouse");
+  }
+
   constructor(host: HTMLElement) {
     style("keybinds", KEYBINDS_CSS);
-    super({ storageKey: "games:keys", host, adapt: toCommand });
+    super({
+      storageKey: "games:keys", host, adapt: toCommand,
+      // the keyboard (with "?"-style symbols and "up"-style names) and the mouse, both shown and rebindable
+      inputs: [keysUI(symbols(), aliases()), mouseUI()],
+      components: [CommandPalette, KeybindCheatsheet, KeybindSettings, ContextMenu],
+      // the technique picker binds a key's release as well as its press ("f" and "f:up")
+      releases: releases(),
+    });
     this.palette.matcher = fuzzyMatcher as CommandPalette["matcher"];
   }
 }

@@ -164,4 +164,4 @@ Datasets are things packs register (`registry.dataset`, `src/games/core/types.ts
 - [ ] bridges: islands without a number, dead-end assist
 - [ ] nonogram: keyboard way into the clue "where can this block go" hover
 
-- [ ] **keybinds lockfile** — the games shell and site palette now use keybinds' `CommandHub`, `createComponent` and `data-keybinds` selectors (keybinds 389e324 or later). Once keybinds is pushed, run `bun update keybinds` so `bun.lock` points at that commit; until then only a local `node_modules/keybinds` link to `~/git/keybinds` has them.
+- [ ] **keybinds lockfile**: the code targets keybinds at its latest (d8895fd, local only). bun.lock pins 53bf6c1, the newest commit on GitHub, which has a bug that commit fixes: pointing at a context-menu item rebuilds the menu, so clicking a board-menu item does nothing (reproduced in headless Chrome; d8895fd fixes it). Push ~/git/keybinds, then `bun update keybinds`, so bun.lock and the deployed build get d8895fd

@@ -419,7 +419,7 @@ export class Casting {
 
   /** True if the press matches a mouse binding of the picker, which the board then leaves alone. */
   private pickerPress(e: PointerEvent): boolean {
-    return this.shell.hub.mouseMatches("shell.skill-picker", e);
+    return this.shell.hub.matches("shell.skill-picker", e);
   }
 
   /** Dragging techniques within the palette and to, from and within the hotbar. */
