@@ -21,7 +21,7 @@ export const POOL_PRESETS: readonly { label: string; pool: string }[] = [
  */
 export function poolField(dataset: () => PokemonDataset | undefined, label = "which pokémon"): StringField {
   return {
-    type: "string", label, default: DEFAULT_POOL, placeholder: "e.g. gen:1-4 type:fire,water !legendary",
+    type: "string", label, default: DEFAULT_POOL, filterOf: () => dataset(), placeholder: "e.g. gen:1-4 type:fire,water !legendary",
     description: "a filter: gen:1-3 type:fire,water (any of) type=fire (exactly) bst>=500 final mega !mythical, | for or, brackets to group. empty: every form",
     check: (v) => {
       const d = dataset();

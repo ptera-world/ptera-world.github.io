@@ -112,6 +112,7 @@ export function makeParams(data: DataSource) {
       type: "string", label: "what can be hidden", when: (v) => v.secret === "items",
       default: (v) => datasetOf(data, v)?.pools?.[0]?.query ?? "",
       placeholder: "a filter; empty: everything",
+      filterOf: (v) => datasetOf(data, v),
       check: (q, v) => {
         const d = datasetOf(data, v);
         if (!d) return "that dataset's pack isn't loaded";

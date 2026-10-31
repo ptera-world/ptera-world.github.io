@@ -3,6 +3,8 @@
  * settings, so every option gets a form, persistence, URL encoding, and validation for free.
  */
 
+import type { Dataset } from "./types";
+
 /**
  * A value, or one worked out from the values of the fields declared before this one (e.g. choices
  * that depend on a dataset picked above).
@@ -30,6 +32,11 @@ export interface StringField extends FieldBase<string> {
   placeholder?: string;
   /** Live note under the box for the current text (e.g. "312 match", or what is wrong with it). */
   check?: (value: string, values: Record<string, unknown>) => string;
+  /**
+   * The text is a filter (lib/dataset/query) over this dataset's items: the form offers values to
+   * pick instead of a box to type in.
+   */
+  filterOf?: (values: Record<string, unknown>) => Dataset | undefined;
 }
 /** Unordered subset of options; serialized as comma-joined values. */
 export interface SetField extends FieldBase<readonly string[]> {

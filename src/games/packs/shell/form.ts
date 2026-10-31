@@ -1,5 +1,6 @@
 import { coerce, defaultOf, formatCells, isDependent, optionsOf, parseCells, type CellOffset, type CellsField, type Field, type Schema } from "../../core/schema";
 import { h, style } from "../../core/dom";
+import { filterPicker } from "./filter-picker";
 
 /**
  * The values after one field changes: fields declared after it whose default or choices depend on
@@ -79,6 +80,8 @@ export function schemaForm(
           }, optionsOf(field, current).map((o) => h("option", { value: o.value, selected: o.value === v, title: o.description }, o.label)));
           break;
         case "string": {
+          const fd = field.filterOf?.(current);
+          if (fd) { control = filterPicker(fd, String(v ?? ""), (q) => set(key, q)); break; }
           const input = h("input", {
             id, type: "text", value: v, placeholder: field.placeholder, spellcheck: "false",
             onchange: (e: Event) => set(key, (e.target as HTMLInputElement).value),
