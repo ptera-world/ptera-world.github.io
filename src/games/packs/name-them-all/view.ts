@@ -1,16 +1,18 @@
 import { h, style } from "../../core/dom";
 import { defineSchema } from "../../core/schema";
-import type { View } from "../../core/types";
-import { mediaUrl } from "../../lib/pokemon/media";
-import type { PokemonDataset, PokemonItem } from "../../lib/pokemon/types";
+import type { DataItem, View } from "../../core/types";
+import { applyLook } from "../../lib/dataset/look";
 import {
-  formatClock, groups, isOver, nameIndex, readTyped,
-  type Grouping, type NameAllAction, type NameAllFocus, type NameAllPuzzle, type NameAllState,
+  datasetOf, formatClock, groups, isOver, lookupOf, nameIndex, pictureOf, readTyped, slotName, slotText, slotsOf,
+  type DataSource, type Grouping, type NameAllAction, type NameAllFocus, type NameAllPuzzle, type NameAllState,
 } from "./logic";
 
+// tiles and the bar take the dataset's look (see DatasetLook), with the theme's colors as defaults
 const CSS = `
-.nta { display: flex; flex-direction: column; width: 100%; height: 100%; min-height: 0; font-size: 14px; }
+.nta { display: flex; flex-direction: column; width: 100%; height: 100%; min-height: 0; box-sizing: border-box; font-size: 14px; color: var(--text); font-family: var(--font); }
+.nta.has-look { padding: 10px; border-radius: 12px; }
 .nta-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 0 40px 8px 0; }
+.nta.has-look .nta-bar { margin: 0 40px 8px 0; padding: 6px 10px; background: var(--panel-bg); color: var(--panel-text); border: var(--panel-border); border-radius: var(--panel-radius); }
 .nta-bar input { flex: 1 1 180px; min-width: 0; font-size: 16px; padding: 8px 10px; box-sizing: border-box; }
 .nta-bar input.outside { outline: 2px solid var(--warn); }
 .nta-count, .nta-clock { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -18,19 +20,27 @@ const CSS = `
 .nta-clock.low { color: var(--danger); }
 .nta-giveup.armed { background: var(--danger); color: #fff; }
 .nta-status { flex: 1 0 100%; min-height: 20px; display: flex; align-items: center; gap: 6px; color: var(--text-dim); font-size: 13px; }
-.nta-status img { width: 28px; height: 28px; image-rendering: pixelated; margin: -4px 0; }
+.nta.has-look .nta-status { color: inherit; opacity: .85; }
+.nta-status img { width: 28px; height: 28px; object-fit: contain; margin: -4px 0; }
 .nta-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; border-top: 1px solid var(--border); }
+.nta.has-look .nta-scroll { border-top: none; }
 .nta-group { content-visibility: auto; contain-intrinsic-size: auto 400px; }
 .nta-group h3 { margin: 10px 2px 4px; font-size: 13px; font-weight: 600; color: var(--text-dim); display: flex; gap: 8px; }
+.nta.has-look .nta-group h3 { text-shadow: 0 2px 0 rgb(0 0 0 / .45); }
 .nta-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(62px, 1fr)); gap: 3px; }
-.nta-slot { position: relative; height: 74px; border-radius: 6px; background: var(--cell); border: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; justify-content: flex-end; overflow: hidden; box-sizing: border-box; }
-.nta-slot .num { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--text-dim); font-family: var(--mono); font-size: 12px; }
-.nta-slot .sil { position: absolute; left: 50%; top: -6px; width: 68px; height: 68px; transform: translateX(-50%); background: var(--text-dim); -webkit-mask: var(--m) center / contain no-repeat; mask: var(--m) center / contain no-repeat; }
-.nta-slot img { position: absolute; left: 50%; top: -6px; width: 68px; height: 68px; transform: translateX(-50%); image-rendering: pixelated; }
+.nta-slot { position: relative; height: 74px; border-radius: var(--tile-radius, 6px); background: var(--tile-bg, var(--cell)); color: var(--tile-text, inherit); border: var(--tile-border, 1px solid var(--border)); box-shadow: var(--tile-shadow, none); display: flex; flex-direction: column; align-items: center; justify-content: flex-end; overflow: hidden; box-sizing: border-box; }
+.nta-slot .num { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 0 2px; text-align: center; opacity: .7; font-family: var(--mono); font-size: 12px; overflow: hidden; }
+.nta-slot .sil { position: absolute; left: 50%; top: -6px; width: 68px; height: 68px; transform: translateX(-50%); background: currentColor; opacity: .6; -webkit-mask: var(--m) center / contain no-repeat; mask: var(--m) center / contain no-repeat; }
+.nta-slot img { position: absolute; left: 50%; top: -6px; width: 68px; height: 68px; transform: translateX(-50%); object-fit: contain; }
+.nta-slot img.pixel, .nta-status img.pixel { image-rendering: pixelated; }
 .nta-slot .nm { position: relative; width: 100%; padding: 0 2px 2px; box-sizing: border-box; text-align: center; font-size: 10.5px; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.nta-slot.named { background: color-mix(in srgb, var(--accent) 16%, var(--cell)); border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
-.nta-slot.missed { border-color: var(--danger); border-style: dashed; }
-.nta-slot.missed .nm { color: var(--danger); }
+/* no pictures: wider tiles, the whole name */
+.nta-grid.text { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.nta-grid.text .nta-slot { height: auto; min-height: 44px; justify-content: center; }
+.nta-grid.text .nta-slot .nm { padding: 4px 6px; font-size: 12px; white-space: normal; overflow-wrap: anywhere; }
+.nta-slot.named { background: color-mix(in srgb, var(--verdict-match, var(--accent)) 16%, var(--tile-bg, var(--cell))); border-color: color-mix(in srgb, var(--verdict-match, var(--accent)) 45%, var(--border)); }
+.nta-slot.missed { border-color: var(--verdict-miss, var(--danger)); border-style: dashed; }
+.nta-slot.missed .nm { color: var(--verdict-miss, var(--danger)); }
 .nta-slot.flash { animation: nta-flash .7s; }
 .nta-slot.focus { box-shadow: 0 0 0 2px var(--hint); }
 @keyframes nta-flash { 0% { box-shadow: 0 0 0 3px var(--focus); } 100% { box-shadow: 0 0 0 0 transparent; } }
@@ -38,20 +48,18 @@ const CSS = `
 
 const settings = defineSchema({
   group: {
-    type: "enum", label: "group the board", default: "gen",
+    type: "enum", label: "group the board", default: "one",
     options: [
-      { value: "gen", label: "by generation" },
-      { value: "type", label: "by first type" },
+      { value: "one", label: "by a kind each has one of (e.g. generation)" },
+      { value: "first", label: "by the first of a list each has (e.g. first type)" },
       { value: "none", label: "not at all" },
     ],
   },
 });
 
-const dex = (it: PokemonItem) => `#${String(it.species).padStart(4, "0")}`;
-
 export function makeView(
   def: { id: string },
-  dataset: () => PokemonDataset | undefined,
+  data: DataSource,
 ): View<NameAllPuzzle, NameAllState, NameAllAction, null, typeof settings> {
   return {
     id: "name-them-all.board",
@@ -68,16 +76,23 @@ export function makeView(
     ],
     mount(root, { session, settings }) {
       style("name-them-all", CSS);
-      const d = dataset();
       const p = session.puzzle;
-      const byId = new Map((d?.items() ?? []).map((it) => [it.id, it]));
-      const pool = p.pool.map((id) => byId.get(id)).filter((x): x is PokemonItem => !!x);
+      const d = data.get(datasetOf(p));
+      if (!d) throw new Error(`the ${datasetOf(p)} dataset's pack isn't loaded`);
+      const look = lookupOf(d);
+      const pool = p.pool.map((id) => look.item(id)).filter((x): x is DataItem => !!x);
       const index = nameIndex(pool);
-      const all = nameIndex(d?.items() ?? []);
+      const all = nameIndex(d.items());
+      const picture = pictureOf(d);
+      const urlOf = (it: DataItem): string | null => picture?.url(it) ?? null;
+      const img = (url: string, attrs: Record<string, string> = {}) =>
+        h("img", { ...attrs, class: picture?.pixel ? "pixel" : "", decoding: "async", crossorigin: "anonymous", src: url, alt: "", draggable: "false" });
+      const shows = slotsOf(p);
+      const one = d.noun?.one ?? "item";
 
       const input = h("input", {
-        type: "text", placeholder: "type a pokémon", autocomplete: "off", autocapitalize: "off", spellcheck: "false",
-        "aria-label": "pokémon name", enterkeyhint: "done",
+        type: "text", placeholder: "type a name", autocomplete: "off", autocapitalize: "off", spellcheck: "false",
+        "aria-label": `${one} name`, enterkeyhint: "done",
       });
       const count = h("span", { class: "nta-count", "aria-live": "off" });
       const clock = h("span", { class: "nta-clock", hidden: !p.limitMs });
@@ -86,50 +101,51 @@ export function makeView(
       const scroll = h("div", { class: "nta-scroll" });
       const el = h("div", { class: "nta" }, h("div", { class: "nta-bar" }, input, count, clock, giveUp, status), scroll);
       root.append(el);
+      const unlook = applyLook(d, el);
 
       // --- the board ---
       const slots = new Map<string, HTMLElement>();
-      const heads: { el: HTMLElement; items: PokemonItem[] }[] = [];
+      const heads: { el: HTMLElement; items: DataItem[] }[] = [];
       const sil = new IntersectionObserver((entries) => {
         for (const e of entries) {
           if (!e.isIntersecting) continue;
           const m = e.target as HTMLElement;
-          const url = byId.get(m.dataset.id!) ? mediaUrl(byId.get(m.dataset.id!)!, "sprite") : null;
+          const it = look.item(m.dataset.id!);
+          const url = it ? urlOf(it) : null;
           if (url) m.style.setProperty("--m", `url("${url}")`);
           sil.unobserve(m);
         }
       }, { root: scroll, rootMargin: "300px" });
-      for (const g of groups(pool, settings.group as Grouping, d!)) {
+      for (const g of groups(pool, settings.group as Grouping, d)) {
         const tally = h("span");
         const head = g.label ? h("h3", null, h("span", null, g.label), tally) : null;
         if (head) heads.push({ el: tally, items: g.items });
-        const grid = h("div", { class: "nta-grid" }, g.items.map((it) => {
-          const slot = h("div", { class: "nta-slot", "data-id": it.id, "aria-label": dex(it) });
+        const grid = h("div", { class: `nta-grid${picture ? "" : " text"}` }, g.items.map((it) => {
+          const slot = h("div", { class: "nta-slot", "data-id": it.id, "aria-label": slotName(p, d, it) });
           slots.set(it.id, slot);
           return slot;
         }));
         scroll.append(h("section", { class: "nta-group" }, head, grid));
       }
       const shown = new Map<string, string>();
-      const paint = (it: PokemonItem, how: "open" | "named" | "missed") => {
+      const paint = (it: DataItem, how: "open" | "named" | "missed") => {
         const slot = slots.get(it.id)!;
         if (shown.get(it.id) === how) return;
         shown.set(it.id, how);
         slot.className = `nta-slot${how === "open" ? "" : ` ${how}`}`;
         slot.replaceChildren();
         if (how === "open") {
-          slot.setAttribute("aria-label", dex(it));
-          if (p.slots === "number") slot.append(h("span", { class: "num" }, dex(it)));
-          else if (p.slots === "silhouette") {
+          slot.setAttribute("aria-label", slotName(p, d, it));
+          if (shows === "silhouette") {
             const m = h("span", { class: "sil", "data-id": it.id });
             slot.append(m);
             sil.observe(m);
-          }
+          } else if (shows !== "blank") slot.append(h("span", { class: "num" }, slotText(p, d, it)));
           return;
         }
-        slot.setAttribute("aria-label", `${dex(it)} ${it.name}${how === "missed" ? ", missed" : ""}`);
-        const url = mediaUrl(it, "sprite");
-        if (url) slot.append(h("img", { loading: "lazy", decoding: "async", crossorigin: "anonymous", src: url, alt: "", draggable: "false" }));
+        slot.setAttribute("aria-label", `${slotName(p, d, it)}: ${it.name}${how === "missed" ? ", missed" : ""}`);
+        const url = urlOf(it);
+        if (url) slot.append(img(url, { loading: "lazy" }));
         slot.append(h("span", { class: "nm", title: it.name }, it.name));
       };
 
@@ -160,9 +176,9 @@ export function makeView(
           slot.classList.add("flash");
         }
       };
-      const say = (it: PokemonItem | null, text: string) => {
-        const url = it ? mediaUrl(it, "sprite") : null;
-        status.replaceChildren(...(url ? [h("img", { src: url, crossorigin: "anonymous", alt: "" })] : []), text);
+      const say = (it: DataItem | undefined, text: string) => {
+        const url = it ? urlOf(it) : null;
+        status.replaceChildren(...(url ? [img(url)] : []), text);
       };
       const onInput = () => {
         if (isOver(p, session.state)) return;
@@ -181,13 +197,14 @@ export function makeView(
         if (r.name.length) {
           session.dispatch({ type: "name", ids: r.name });
           flash(r.name);
-          const it = byId.get(r.name[0]!)!;
-          say(it, it.name);
+          const it = look.item(r.name[0]!);
+          say(it, it?.name ?? "");
           if (r.longer) carried = text;
           else input.value = "";
         } else if (r.known.length) {
           flash(r.known);
-          say(byId.get(r.known[0]!) ?? null, `${byId.get(r.known[0]!)?.name ?? ""}: already named`);
+          const it = look.item(r.known[0]!);
+          say(it, `${it?.name ?? ""}: already named`);
           if (!r.longer) input.value = "";
         } else if (r.outside && !r.longer) {
           status.replaceChildren("not in this round");
@@ -247,6 +264,7 @@ export function makeView(
           disarm();
           sil.disconnect();
           offs.forEach((f) => f());
+          unlook();
           el.remove();
         },
       };

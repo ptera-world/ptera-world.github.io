@@ -1,12 +1,13 @@
 import type { GamesApi } from "../../api";
-import { makeDef } from "./logic";
+import { makeDef, type DataSource } from "./logic";
 import { makeView } from "./view";
 
-/** Name them all: type every pokémon of a pool you can remember, against the clock. */
+/** Name them all: type every one of a pool you can remember, against the clock, on any dataset whose pools fit a board. */
 export default function pack(games: GamesApi): void {
-  // looked up when used, never now: the dataset's pack may load after this one
-  const dataset = () => games.registry.getDataset("pokemon");
-  const def = makeDef(dataset);
-  games.registry.puzzle(def);
-  games.registry.view(makeView(def, dataset));
+  const { registry } = games;
+  // looked up when used, never now: datasets' packs may load after this one
+  const data: DataSource = { get: (id) => registry.getDataset(id), list: () => registry.listDatasets() };
+  const def = makeDef(data);
+  registry.puzzle(def);
+  registry.view(makeView(def, data));
 }
