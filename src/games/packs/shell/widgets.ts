@@ -944,19 +944,12 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
         // what you can do with a pointer; keyboard-only commands live in the shortcuts list
         const own = ctx.commands().filter((c) => !/^(shell|toggle|technique|widget|fx)\./.test(c.id) && !c.hidden && (c.mouse?.length || [c.menu].flat().includes("board")));
         own.sort((a, b) => Number(!(a.mouse?.length)) - Number(!(b.mouse?.length)));
-        const keyCount = ctx.commands().filter((c) => !/^(toggle|technique|widget|fx)\./.test(c.id) && !c.hidden && shell.hub.keysFor(c.id).length).length;
         const how = [...gestures, ...own.slice(0, Math.max(0, 9 - gestures.length)).map((c) => {
           const ways = [...shell.hub.mouseFor(c.id), ...shell.hub.keysFor(c.id)].join(", ");
           return h("li", null, h("strong", null, c.label), ways ? h("span", { class: "w-dim" }, ` · ${ways}`) : null, c.description ? h("div", { class: "w-dim" }, c.description) : null);
         })];
         const lessons = (shell.techniques?.list ?? []).filter((t) => t.practice !== false);
         const hasTutorial = lessons.length > 0;
-        const g = shell.view?.handle.gestures ?? {};
-        const hasMenu = ctx.commands().some((c) => [c.menu].flat().includes("board"));
-        const menuWays = [g.secondaryClick ? "" : "right-click the board", g.hold ? "" : "hold on it (touch)"].filter(Boolean);
-        const shortcut = shell.hub.keysFor(command("shell.shortcuts"))[0];
-        const menuLine = (hasMenu && menuWays.length ? `${menuWays.join(" or ")} for more. ` : "") + "every action is in the commands list, top right."
-          + (keyCount ? ` ${keyCount} keyboard shortcuts${shortcut ? ` (${shortcut} lists them)` : ""}.` : "");
         const lg = shell.view?.def.legend;
         const legend = (typeof lg === "function" ? lg(s.puzzle) : lg ?? []).map((l) => {
           const sw = h("span", { class: "sw", "aria-hidden": "true" });
@@ -968,7 +961,7 @@ export function builtinWidgets(shell: Shell): AnyWidget[] {
           s.def.description ? h("p", { class: "goal" }, s.def.description) : null,
           rules.length ? [h("h4", null, "rules"), h("ul", null, rules.map((r) => h("li", null, r)))] : null,
           legend.length ? [h("h4", null, "what you see"), h("ul", { class: "legend" }, legend)] : null,
-          how.length ? [h("h4", null, "playing"), h("ul", { class: "how" }, how), h("p", { class: "w-dim" }, menuLine)] : null,
+          how.length ? [h("h4", null, "playing"), h("ul", { class: "how" }, how)] : null,
           h("div", { class: "w-inline" },
             hasTutorial ? h("button", { class: "primary", onclick: () => { close(); void shell.startPractice(s.def, lessons[0]!, randomSeed()); } }, "learn by doing") : null,
             h("button", { class: hasTutorial ? undefined : "primary", onclick: close }, "play"))));
