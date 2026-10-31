@@ -68,7 +68,9 @@ export function filterPicker(d: Dataset, value: string, onChange: (query: string
     } else if (a.kind === "number") {
       const r = p?.kind === "range" ? p : { kind: "range" as const };
       const nums = d.items().map((it) => it.values[a.id]).filter((x): x is number => typeof x === "number");
-      const lo = nums.length ? Math.min(...nums) : undefined, hi = nums.length ? Math.max(...nums) : undefined;
+      // a loop, not Math.min(...nums): spreading a quarter of a million values overflows the stack
+      let lo: number | undefined, hi: number | undefined;
+      for (const x of nums) { if (lo === undefined || x < lo) lo = x; if (hi === undefined || x > hi) hi = x; }
       const box = (which: "min" | "max") => h("input", {
         type: "number", value: r[which] ?? "", placeholder: String((which === "min" ? lo : hi) ?? ""), "aria-label": `${a.label} ${which === "min" ? "at least" : "at most"}`,
         onchange: (e: Event) => {
