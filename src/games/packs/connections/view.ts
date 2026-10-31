@@ -26,6 +26,7 @@ ${inputIs("keyboard")} .cn-tile.cur { outline: 3px solid var(--focus); outline-o
 .cn-tile.shake { animation: cn-shake .35s; }
 @keyframes cn-shake { 0%, 100% { transform: none; } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
 .cn-status { flex: none; display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 22px; font-size: 14px; color: var(--text-dim); }
+.cn.has-look .cn-bar { background: var(--panel-bg); border: var(--panel-border); border-radius: var(--panel-radius); padding: 6px 10px; }
 .cn.has-look .cn-status { background: var(--panel-bg); color: var(--panel-text); border: var(--panel-border); border-radius: var(--panel-radius); padding: 4px 10px; }
 .cn-dots { display: inline-flex; gap: 5px; }
 .cn-dots i { width: 10px; height: 10px; border-radius: 50%; background: currentColor; }
