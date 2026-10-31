@@ -6,7 +6,10 @@ import { createRng } from "../../core/rng";
 import { resolve } from "../../core/schema";
 import { Session } from "../../core/session";
 import { TechniqueHost, applyStep, findPracticePosition, findStep, firstStep, isPartOfStep, stepsAt } from "../../core/techniques";
-import { keen, sudoku, towers, unequal } from "./defs";
+import { sudoku } from "./defs";
+// calcudoku, skyscrapers and futoshiki are setups of sudoku: rows and columns only, their clue alone
+const keen = sudoku, towers = sudoku, unequal = sudoku;
+const KEEN = { regions: "none", variants: ["keen"] }, TOWERS = { regions: "none", variants: ["towers"] }, UNEQUAL = { regions: "none", variants: ["unequal"] };
 import { bit, digits } from "./engine/bits";
 import { grade, gridFrom, logicalSolve } from "./engine/human";
 import { compile, conflicts, modelOf } from "./engine/model";
@@ -63,11 +66,11 @@ test("seeded generation is reproducible and unique across puzzle types", async (
   const cases = [
     [sudoku, { variants: [] }],
     [sudoku, { variants: ["killer", "antiknight"], difficulty: "any" }],
-    [sudoku, { variants: ["jigsaw", "thermo"], difficulty: "any" }],
-    [sudoku, { size: "6", variants: ["kropki"], difficulty: "any" }],
-    [keen, { size: 5 }],
-    [towers, { size: 5 }],
-    [unequal, { size: 5 }],
+    [sudoku, { regions: "jigsaw", variants: ["thermo"], difficulty: "any" }],
+    [sudoku, { size: 6, variants: ["kropki"], difficulty: "any" }],
+    [keen, { ...KEEN, size: 5 }],
+    [towers, { ...TOWERS, size: 5 }],
+    [unequal, { ...UNEQUAL, size: 5 }],
   ] as const;
   for (const [def, params] of cases) {
     const a = await generate(def, params, "fixed", sig()) as LatinPuzzle;
@@ -150,7 +153,7 @@ test("without the mistakes plugin, a wrong digit gets no hint of its own", async
 test("every technique step is sound and changes the board, across puzzle types", async () => {
   const cases = [
     [sudoku, { difficulty: "expert" }], [sudoku, { variants: ["killer"], difficulty: "hard" }],
-    [sudoku, { variants: ["thermo", "kropki"], difficulty: "any" }], [keen, { size: 6 }], [towers, { size: 5 }], [unequal, { size: 5 }],
+    [sudoku, { variants: ["thermo", "kropki"], difficulty: "any" }], [keen, { ...KEEN, size: 6 }], [towers, { ...TOWERS, size: 5 }], [unequal, { ...UNEQUAL, size: 5 }],
   ] as const;
   const seen = new Set<string>();
   for (const [def, params] of cases) {
@@ -174,7 +177,7 @@ test("every technique step is sound and changes the board, across puzzle types",
 }, 60_000);
 
 test("features keep techniques, assists and widgets to the puzzles they make sense on", async () => {
-  const t = await generate(towers, { size: 5 }, "feat", sig()) as LatinPuzzle;
+  const t = await generate(towers, { ...TOWERS, size: 5 }, "feat", sig()) as LatinPuzzle;
   const k = await generate(sudoku, { variants: ["killer"], difficulty: "any" }, "feat", sig()) as LatinPuzzle;
   const registry = new Registry();
   register(registry);
@@ -269,15 +272,15 @@ test("practice boards for eliminations show candidates, and striking one is part
 }, 60_000);
 
 test("names, aliases and rules", async () => {
-  expect([sudoku, keen, towers, unequal].map((d) => d.name)).toEqual(["sudoku", "calcudoku", "skyscrapers", "futoshiki"]);
-  expect(keen.aliases).toContain("kenken");
+  for (const a of ["kenken", "calcudoku", "skyscrapers", "futoshiki"]) expect(sudoku.aliases).toContain(a);
+  for (const label of ["calcudoku (KenKen) 6×6", "skyscrapers 5×5", "futoshiki 5×5"]) expect((sudoku.presets ?? []).map((x) => x.label)).toContain(label);
   const p = await generate(sudoku, { variants: ["thermo"], difficulty: "any" }, "rules", sig()) as LatinPuzzle;
   expect(sudoku.rules!(p).some((r) => r.includes("thermometer"))).toBe(true);
 });
 
 test("every cell a hint names is highlighted, at both hint levels", async () => {
   const cases = [
-    [sudoku, { difficulty: "expert" }], [sudoku, { variants: ["killer", "thermo"], difficulty: "hard" }], [sudoku, { variants: ["arrow", "renban", "whispers", "xv"], difficulty: "any" }], [sudoku, { variants: ["littlekiller", "kropki", "jigsaw"], difficulty: "any" }], [keen, { size: 6 }], [towers, { size: 6 }], [unequal, { size: 5 }],
+    [sudoku, { difficulty: "expert" }], [sudoku, { variants: ["killer", "thermo"], difficulty: "hard" }], [sudoku, { variants: ["arrow", "renban", "whispers", "xv"], difficulty: "any" }], [sudoku, { variants: ["littlekiller", "kropki"], regions: "jigsaw", difficulty: "any" }], [keen, { ...KEEN, size: 6 }], [towers, { ...TOWERS, size: 6 }], [unequal, { ...UNEQUAL, size: 5 }],
   ] as const;
   const named = (text: string) => [...text.matchAll(/\b([A-I])([1-9])\b/g)].map((m) => (Number(m[2]) - 1) * 9 + m[1]!.charCodeAt(0) - 65);
   for (const [def, params] of cases) {
@@ -340,3 +343,11 @@ test("aimed finds: cellAt changes part of what an instance at that cell does", a
     s = applyStep(sudoku, p, s, hit.step);
   }
 }, 300000);
+
+test("clues mix across what used to be separate games: skyscrapers with boxes, futoshiki with killer cages", async () => {
+  for (const params of [{ size: 6, variants: ["towers"] }, { size: 5, regions: "none", variants: ["unequal", "killer"], givens: false }]) {
+    const p = await generate(sudoku, { ...params, difficulty: "any" }, `mix ${JSON.stringify(params)}`, sig()) as LatinPuzzle;
+    expect(p.n).toBe(params.size);
+    expect(sudoku.solve!(p, sudoku.init(p))).not.toBeNull();
+  }
+}, 120_000);
