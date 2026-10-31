@@ -1,9 +1,7 @@
 import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
 import { h, style } from "../../core/dom";
-import type { View } from "../../core/types";
-import { mediaUrl } from "../../lib/pokemon/media";
-import type { PokemonItem } from "../../lib/pokemon/types";
-import { sprite, typeChip, typeColor } from "../../lib/pokemon/ui";
+import type { DataItem, View } from "../../core/types";
+import { applyLook } from "../../lib/dataset/look";
 import {
   FACTORS, answerOf, current, started, factor, factorText, isRight, rightCount, single,
   type Question, type Reply, type TMAction, type TMPuzzle, type TMState, type Types,
@@ -30,7 +28,10 @@ const CSS = `
 .tm-mon .tm-types .unknown { color: var(--text-dim); font-size: 14px; }
 .tm-arrow { font-size: 26px; color: var(--text-dim); }
 @container (width < 480px) { .tm-q { flex-direction: column; gap: 6px; } .tm-arrow { transform: rotate(90deg); } }
-.tm-big .pk-type { font-size: 18px; padding: 4px 14px; }
+.tm-chip { display: inline-block; padding: 1px 8px; border-radius: 99px; font-size: 12px; color: #fff; text-shadow: 0 1px 1px rgb(0 0 0 / .5); white-space: nowrap; background: var(--accent); }
+.tm-pic img { width: 100%; height: 100%; object-fit: contain; }
+.tm-pic img.pixel { image-rendering: pixelated; }
+.tm-big .tm-chip { font-size: 18px; padding: 4px 14px; }
 .tm-ask { text-align: center; font-weight: 600; }
 .tm-attacks { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
 .tm-factors { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; max-width: 520px; width: 100%; margin: 0 auto; }
@@ -73,16 +74,23 @@ declare module "../../core/commands" {
 
 const FACTOR_COMMANDS = ["type-matchups.x0", "type-matchups.x025", "type-matchups.x05", "type-matchups.x1", "type-matchups.x2", "type-matchups.x4"] as const;
 
-const picture = (it: PokemonItem): HTMLElement => {
-  const art = !!mediaUrl(it, "art");
-  const el = sprite(it, { kind: art ? "art" : "sprite", size: 140 });
-  if (art) el.classList.add("art");
-  return el;
+/** An item's picture: its smooth image (artwork) first, else any. */
+const picture = (T: Types, it: DataItem): HTMLElement | null => {
+  const ms = Object.values(T.d.media ?? {}).filter((m) => m.type === "image");
+  const m = ms.find((x) => !x.pixel) ?? ms[0];
+  const url = m?.url(it);
+  return url ? h("img", { src: url, alt: "", crossorigin: "anonymous", draggable: "false", class: m!.pixel ? "pixel" : "" }) : null;
 };
 
-const chipRow = (types: readonly string[]) => types.map((t) => typeChip(t));
+/** A value as a chip in its dataset colour. */
+const chipOf = (T: Types, t: string): HTMLElement => {
+  const c = h("span", { class: "tm-chip" }, T.label(t));
+  const col = T.color(t);
+  if (col) c.style.background = col;
+  return c;
+};
 
-export function makeView(types: () => Types, puzzle: { id: string }): View<TMPuzzle, TMState, TMAction, null> {
+export function makeView(types: (p: TMPuzzle) => Types, puzzle: { id: string }): View<TMPuzzle, TMState, TMAction, null> {
   return {
     id: "type-matchups.quiz",
     name: "quiz",
@@ -92,16 +100,19 @@ export function makeView(types: () => Types, puzzle: { id: string }): View<TMPuz
       { how: "click or tap types", what: "pick or unpick them, then check" },
     ],
     legend: [
-      { sample: `<svg viewBox="0 0 40 16"><rect x="1" y="1" width="38" height="14" rx="7" fill="${typeColor("fire")}"/></svg>`, meaning: "a picked type" },
+      { sample: `<svg viewBox="0 0 40 16"><rect x="1" y="1" width="38" height="14" rx="7" fill="var(--accent)"/></svg>`, meaning: "a picked type" },
       { sample: `<svg viewBox="0 0 40 16"><rect x="1" y="1" width="38" height="14" rx="7" fill="none" stroke="var(--verdict-match, #2a8a3a)" stroke-width="2" stroke-dasharray="3 2"/></svg>`, meaning: "after checking: a type you missed" },
       { sample: `<svg viewBox="0 0 40 16"><rect x="1" y="1" width="38" height="14" rx="7" fill="none" stroke="var(--danger, #c33)" stroke-width="2"/><path d="M8 8H32" stroke="var(--danger, #c33)" stroke-width="2"/></svg>`, meaning: "after checking: a wrong pick" },
     ],
     mount(root, { session }) {
       style("type-matchups", CSS);
-      const T = types();
       const p = session.puzzle;
+      const T = types(p);
       const el = h("div", { class: "tm" });
       root.append(el);
+      const unlook = applyLook(T.d, el);
+      const typeChip = (t: string) => chipOf(T, t);
+      const chipRow = (types: readonly string[]) => types.map(typeChip);
       let clockFill: HTMLElement | null = null;
       let clockBox: HTMLElement | null = null;
 
@@ -115,10 +126,10 @@ export function makeView(types: () => Types, puzzle: { id: string }): View<TMPuz
       const defenderCard = (id: string, reveal: boolean, hint: boolean) => {
         const it = T.item(id);
         return h("div", { class: `tm-mon${hint ? " hint" : ""}` },
-          h("div", { class: "tm-pic" }, picture(it)),
+          h("div", { class: "tm-pic" }, picture(T, it)),
           h("div", null,
             h("div", { class: "tm-name" }, it.name),
-            h("div", { class: "tm-types" }, p.showTypes || reveal ? chipRow(T.of(id)) : h("span", { class: "unknown" }, "types hidden"))));
+            h("div", { class: "tm-types" }, p.showTypes || reveal ? chipRow(T.of(id)) : h("span", { class: "unknown" }, `${T.words.value}s hidden`))));
       };
 
       /** What the last answer was and how it works out. */
@@ -204,7 +215,7 @@ export function makeView(types: () => Types, puzzle: { id: string }): View<TMPuz
               answered && ans.includes(t) ? (on ? "answer" : "missed") : "",
               answered && on && !ans.includes(t) ? "extra" : "",
             ].filter(Boolean).join(" ");
-            return h("button", { style: `--tc: ${typeColor(t)}`, class: cls || undefined, "aria-pressed": String(on), disabled: answered, onclick: () => session.dispatch({ type: "pick", t }) }, t);
+            return h("button", { style: `--tc: ${T.color(t) ?? "var(--accent)"}`, class: cls || undefined, "aria-pressed": String(on), disabled: answered, onclick: () => session.dispatch({ type: "pick", t }) }, T.label(t));
           })));
           if (!answered) parts.push(h("div", { class: "tm-go" }, h("button", { class: "primary", "data-command": "type-matchups.go", onclick: go }, "check")));
         }
@@ -267,6 +278,7 @@ export function makeView(types: () => Types, puzzle: { id: string }): View<TMPuz
         destroy() {
           if (interval) clearInterval(interval);
           offs.forEach((f) => f());
+          unlook();
           el.remove();
         },
       };

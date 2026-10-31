@@ -1,8 +1,16 @@
 import type { Rng } from "../../core/rng";
-import { defineSchema, type Values } from "../../core/schema";
-import type { PuzzleDef } from "../../core/types";
-import { poolField, poolOf } from "../../lib/pokemon/pool";
-import type { PokemonDataset, PokemonItem, TypeChart } from "../../lib/pokemon/types";
+import { defineSchema, effective, type FieldOption, type Values } from "../../core/schema";
+import type { DataItem, Dataset, DatasetChart, PuzzleDef } from "../../core/types";
+import { filter } from "../../lib/dataset/query";
+
+/** The datasets the game can be played on, looked up when needed (packs load in any order). */
+export interface DataSource {
+  get(id: string): Dataset | undefined;
+  list(): readonly Dataset[];
+}
+
+/** A dataset's charts whose attribute it has. */
+export const chartsOf = (d: Dataset | undefined): DatasetChart[] => (d?.charts ?? []).filter((c) => d!.attributes.some((a) => a.id === c.attribute));
 
 export type Kind = "factor" | "weak" | "resist";
 export const KINDS: readonly { value: Kind; label: string; description: string }[] = [
@@ -14,8 +22,18 @@ export const KINDS: readonly { value: Kind; label: string; description: string }
 /** The answers a "how effective" question offers, in order. */
 export const FACTORS = [0, 0.25, 0.5, 1, 2, 4] as const;
 
-export function makeParams(ds: () => PokemonDataset | undefined) {
+export function makeParams(data: DataSource) {
+  const ds = (v: Record<string, unknown>) => data.get(String(v.dataset));
   return defineSchema({
+    dataset: {
+      type: "enum", label: "dataset",
+      default: () => (data.get("pokemon") ? "pokemon" : data.list().find((d) => chartsOf(d).length)?.id ?? ""),
+      options: () => data.list().filter((d) => chartsOf(d).length).map((d) => ({ value: d.id, label: d.name })),
+    },
+    chart: {
+      type: "enum", label: "chart", default: (v) => chartsOf(ds(v))[0]?.id ?? "",
+      options: (v): FieldOption[] => chartsOf(ds(v)).map((c) => ({ value: c.id, label: c.label })),
+    },
     kinds: { type: "set", label: "questions", default: ["factor", "weak", "resist"], options: KINDS },
     questions: { type: "int", label: "questions in a round", default: 10, min: 1, max: 50 },
     seconds: { type: "int", label: "seconds per question", default: 0, min: 0, max: 60, description: "0: no time limit. running out counts as wrong" },
@@ -32,7 +50,17 @@ export function makeParams(ds: () => PokemonDataset | undefined) {
       type: "int", label: "attacking types to resist", default: 3, min: 2, max: 4,
       when: (v) => (v.kinds as readonly string[] | undefined)?.includes("resist") ?? true,
     },
-    pool: { ...poolField(ds, "which pokémon defend"), when: (v: Record<string, unknown>) => (v.kinds as readonly string[] | undefined)?.some((k) => k !== "resist") ?? true },
+    pool: {
+      type: "string", label: "which ones defend", default: (v) => ds(v)?.pools?.[0]?.query ?? "", placeholder: "a filter; empty: everything",
+      filterOf: (v) => ds(v),
+      check: (q, v) => {
+        const d = ds(v);
+        if (!d) return "that dataset's pack isn't loaded";
+        const r = filter(d.items(), q, d.attributes);
+        return "error" in r ? r.error : `${r.items.length} ${d.noun?.many ?? "items"}`;
+      },
+      when: (v) => (v.kinds as readonly string[] | undefined)?.some((k) => k !== "resist") ?? true,
+    },
   });
 }
 
@@ -44,6 +72,8 @@ export type Question =
   | { kind: "resist"; attacks: string[] };
 
 export interface TMPuzzle {
+  dataset: string;
+  chart: string;
   questions: Question[];
   /** Per question; 0: no limit. */
   seconds: number;
@@ -74,29 +104,45 @@ export type TMAction =
 export interface Types {
   /** Every type, in the chart's order. */
   all: readonly string[];
-  chart: TypeChart;
+  chart: DatasetChart["factors"];
+  /** The chart's own words, and the dataset's: "attacking type", "defending type", "type", "pokémon". */
+  words: { row: string; column: string; value: string; one: string; many: string };
+  /** A value's label and colour, as the dataset gives them. */
+  label(v: string): string;
+  color(v: string): string | undefined;
+  d: Dataset;
   of(id: string): readonly string[];
-  item(id: string): PokemonItem;
+  item(id: string): DataItem;
 }
 
-const cache = new WeakMap<PokemonDataset, Types>();
+const cache = new WeakMap<Dataset, Map<string, Types>>();
 
-export function typesOf(ds: PokemonDataset): Types {
-  let t = cache.get(ds);
+export function typesOf(ds: Dataset, chartId: string): Types {
+  let per = cache.get(ds);
+  if (!per) cache.set(ds, per = new Map());
+  let t = per.get(chartId);
   if (t) return t;
+  const c = chartsOf(ds).find((x) => x.id === chartId);
+  if (!c) throw new Error(`the ${ds.name} data has no chart "${chartId}"`);
+  const attr = ds.attributes.find((a) => a.id === c.attribute)!;
   const byId = new Map(ds.items().map((i) => [i.id, i]));
   const item = (id: string) => {
     const it = byId.get(id);
-    if (!it) throw new Error(`this game names a pokémon (${id}) the loaded pokémon data doesn't have`);
+    if (!it) throw new Error(`this game names one (${id}) the loaded ${ds.name} data doesn't have`);
     return it;
   };
-  const chart = ds.tables.typeChart;
-  const declared = ds.attributes.find((a) => a.id === "type")?.values?.map((v) => v.value) ?? [];
-  cache.set(ds, t = {
+  const chart = c.factors;
+  const declared = attr.values?.map((v) => v.value) ?? [];
+  const val = (v: string) => attr.values?.find((x) => x.value === v);
+  per.set(chartId, t = {
     all: declared.filter((x) => x in chart),
     chart,
     item,
-    of: (id) => (item(id).values.type as readonly string[] | null) ?? [],
+    d: ds,
+    words: { row: c.row, column: c.column, value: attr.label, one: ds.noun?.one ?? "item", many: ds.noun?.many ?? "items" },
+    label: (v) => val(v)?.label ?? v,
+    color: (v) => val(v)?.color,
+    of: (id) => { const x = item(id).values[c.attribute]; return Array.isArray(x) ? (x as string[]) : typeof x === "string" ? [x] : []; },
   });
   return t;
 }
@@ -205,17 +251,19 @@ function answerableAttacks(T: Types, k: number): string[][] {
   return out;
 }
 
-export function generate(v: Values<Params>, rng: Rng, ds: PokemonDataset): TMPuzzle {
-  const T = typesOf(ds);
+export function generate(v: Values<Params>, rng: Rng, ds: Dataset): TMPuzzle {
+  const T = typesOf(ds, v.chart);
   const kinds = KINDS.map((k) => k.value).filter((k) => v.kinds.includes(k));
   if (!kinds.length) throw new Error("pick at least one kind of question");
   const needPool = kinds.some((k) => k !== "resist");
-  const pool = needPool ? poolOf(ds, v.pool).filter((i) => T.of(i.id).length > 0) : [];
-  if (needPool && !pool.length) throw new Error("the pokémon filter leaves no pokémon with types");
+  const r = needPool ? filter(ds.items(), v.pool, ds.attributes) : { items: [] };
+  if ("error" in r) throw new Error(`the filter: ${r.error}`);
+  const pool = r.items.filter((i) => T.of(i.id).length > 0);
+  if (needPool && !pool.length) throw new Error(`the filter leaves no ${T.words.many} with a ${T.words.value}`);
   // kinds take turns as evenly as the count allows, in a shuffled order
   const order = rng.shuffle(Array.from({ length: v.questions }, (_, i) => kinds[i % kinds.length]!));
   // defenders without repeats until the pool runs out
-  let deck: PokemonItem[] = [];
+  let deck: DataItem[] = [];
   const defender = (): string => {
     if (!deck.length) deck = rng.shuffle(pool.slice());
     return deck.pop()!.id;
@@ -234,7 +282,7 @@ export function generate(v: Values<Params>, rng: Rng, ds: PokemonDataset): TMPuz
     const f = rng.pick([...byFactor.keys()].sort((x, y) => x - y));
     return { kind, attack: rng.pick(byFactor.get(f)!), defender: d };
   });
-  return { questions, seconds: v.seconds, showTypes: v.showTypes };
+  return { dataset: ds.id, chart: v.chart, questions, seconds: v.seconds, showTypes: v.showTypes };
 }
 
 // --- words ---
@@ -251,65 +299,78 @@ export function shareText(T: Types, p: TMPuzzle, s: TMState): string {
   const marks = s.replies.map((r, i) => (r === null ? "⬛" : isRight(T, p.questions[i]!, r) ? "🟩" : "🟥"));
   const rows: string[] = [];
   for (let i = 0; i < marks.length; i += 10) rows.push(marks.slice(i, i + 10).join(""));
-  return [`type matchups ${rightCount(T, p, s)}/${p.questions.length}${p.seconds ? `, ${p.seconds} s each` : ""}${p.showTypes ? "" : ", types hidden"}`, ...rows].join("\n");
+  return [`type matchups ${rightCount(T, p, s)}/${p.questions.length}${p.seconds ? `, ${p.seconds} s each` : ""}${p.showTypes ? "" : `, ${T.words.value}s hidden`}`, ...rows].join("\n");
 }
 
-export function makeTypeMatchups(ds: () => PokemonDataset | undefined): PuzzleDef<TMPuzzle, TMState, TMAction, null, Params> {
-  const types = (): Types => {
-    const d = ds();
-    if (!d) throw new Error("the pokémon data pack isn't loaded");
-    return typesOf(d);
-  };
+/** The chart a puzzle is played on. */
+export const typesFor = (data: DataSource) => (p: TMPuzzle): Types => {
+  const d = data.get(p.dataset);
+  if (!d) throw new Error(`the ${p.dataset} dataset's pack isn't loaded`);
+  return typesOf(d, p.chart);
+};
+
+export function makeTypeMatchups(data: DataSource): PuzzleDef<TMPuzzle, TMState, TMAction, null, Params> {
+  const typesOfP = typesFor(data);
+  const params = makeParams(data);
   return {
     id: "type-matchups",
     name: "type matchups",
-    aliases: ["type chart quiz", "type effectiveness", "pokémon types quiz", "super effective"],
-    tags: ["pokémon", "trivia", "quiz"],
-    description: "how effective is this move against that pokémon? which types hit it super effectively, which resist these attacks? a round of type-chart questions, explained as you go.",
-    datasets: ["pokemon"],
+    aliases: ["type chart quiz", "type effectiveness", "pokémon types quiz", "super effective", "matchup chart"],
+    tags: ["trivia", "quiz"],
+    description: "how effective is this attack against that one? which types hit it super effectively, which resist these attacks? a round of questions on a dataset's chart (pokémon's type chart), explained as you go.",
+    datasetsOf: (p) => [p.dataset],
     generatorVersion: 1,
-    params: makeParams(ds),
-    presets: [
-      { label: "mixed, 10 questions", params: {} },
-      { label: "how effective", params: { kinds: ["factor"] } },
-      { label: "weaknesses", params: { kinds: ["weak"] } },
-      { label: "resist these", params: { kinds: ["resist"] } },
-      { label: "as in battle: 8 seconds, types hidden", params: { seconds: 8, showTypes: false, mix: "natural" } },
-      { label: "gen 1 pokémon, 20 questions", params: { pool: "form:default gen:1", questions: 20 } },
-    ],
+    params,
+    get presets() {
+      const on = (id: string, list: { label: string; params: Record<string, unknown> }[]) => (data.get(id) ? list.map((x) => ({ label: x.label, params: { dataset: id, ...x.params } })) : []);
+      return [
+        ...on("pokemon", [
+          { label: "pokémon types: mixed, 10 questions", params: {} },
+          { label: "pokémon types: how effective", params: { kinds: ["factor"] } },
+          { label: "pokémon types: weaknesses", params: { kinds: ["weak"] } },
+          { label: "pokémon types: resist these", params: { kinds: ["resist"] } },
+          { label: "as in battle: 8 seconds, types hidden", params: { seconds: 8, showTypes: false, mix: "natural" } },
+          { label: "gen 1 pokémon, 20 questions", params: { pool: "form:default gen:1", questions: 20 } },
+        ]),
+        ...data.list().filter((d) => d.id !== "pokemon" && chartsOf(d).length).map((d) => ({ label: d.name, params: { dataset: d.id } })),
+      ];
+    },
     daily: { params: {} },
     irreversible: true,
     generate: (v, rng) => {
-      const d = ds();
-      if (!d) throw new Error("the pokémon data pack isn't loaded");
-      return generate(v, rng, d);
+      const d = data.get(String(v.dataset));
+      if (!d) throw new Error(`the ${v.dataset} dataset's pack isn't loaded`);
+      return generate(effective(params, v), rng, d);
     },
     formats: [],
     // a timed round waits for "start", so reading the rules doesn't eat the first question's time
     init: (p) => ({ replies: [], picked: [], open: false, since: p.seconds > 0 ? -1 : 0 }),
-    reduce: (p, s, a) => reduce(p, s, a, types()),
+    reduce: (p, s, a) => reduce(p, s, a, typesOfP(p)),
     isSolved: isDone,
-    solve: (p, s) => (isDone(p, s) ? null : { moves: solveMoves(p, s, types()) }),
+    solve: (p, s) => (isDone(p, s) ? null : { moves: solveMoves(p, s, typesOfP(p)) }),
     score: (p, s) => {
-      const n = rightCount(types(), p, s);
+      const n = rightCount(typesOfP(p), p, s);
       return { value: n, label: `${n}/${p.questions.length}`, better: "higher" };
     },
-    shareText: (p, s) => shareText(types(), p, s),
+    shareText: (p, s) => shareText(typesOfP(p), p, s),
     verdict: (p, s) => {
-      const n = rightCount(types(), p, s), of = p.questions.length;
+      const n = rightCount(typesOfP(p), p, s), of = p.questions.length;
       return n === of ? `all ${of} right` : `${n} of ${of} right`;
     },
     rules: (p) => {
       const kinds = new Set(p.questions.map((q) => q.kind));
+      const T = typesOfP(p);
+      const { row, column, value, one } = T.words;
+      const factors = [...new Set(T.all.flatMap((a) => T.all.map((b) => single(T, a, b))))].sort((x, y) => y - x).map(factorText);
       return [
-        `${p.questions.length} questions on the type chart. each attacking type does ×2, ×½, ×0 or ×1 against each defending type.`,
-        "against a pokémon with two types, the two factors multiply: ×2 and ×2 make ×4, ×2 and ×½ make ×1, and ×0 makes ×0 whatever the other is.",
-        ...(kinds.has("factor") ? ["how effective: pick the factor the attacking type does to the pokémon."] : []),
-        ...(kinds.has("weak") ? ["weaknesses: pick every attacking type that does ×2 or ×4 to the pokémon, then check."] : []),
-        ...(kinds.has("resist") ? ["resist these: pick every single type that takes ×½ or less (immune counts) from all of the attacking types, then check."] : []),
+        `${p.questions.length} questions on the ${data.get(p.dataset)?.charts?.find((c) => c.id === p.chart)?.label ?? "chart"}. each ${row} does ${factors.join(", ")} against each ${column}.`,
+        `against ${one === "item" ? "one" : `a ${one}`} with two ${value}s, the two factors multiply: ×2 and ×2 make ×4, ×2 and ×½ make ×1, and ×0 makes ×0 whatever the other is.`,
+        ...(kinds.has("factor") ? [`how effective: pick the factor the ${row} does to the ${one}.`] : []),
+        ...(kinds.has("weak") ? [`weaknesses: pick every ${row} that does ×2 or ×4 to the ${one}, then check.`] : []),
+        ...(kinds.has("resist") ? [`resist these: pick every single ${value} that takes ×½ or less (immune counts) from all of the ${row}s, then check.`] : []),
         ...(p.seconds ? [`you have ${p.seconds} seconds per question; running out counts as wrong.`] : []),
-        ...(p.showTypes ? [] : ["the pokémon's types aren't shown: you need to know them."]),
-        "after each answer you see how it works out, type by type.",
+        ...(p.showTypes ? [] : [`the ${one}'s ${value}s aren't shown: you need to know them.`]),
+        `after each answer you see how it works out, ${value} by ${value}.`,
       ];
     },
     describe: (p) => `${p.questions.length} questions${p.seconds ? `, ${p.seconds} s` : ""}`,

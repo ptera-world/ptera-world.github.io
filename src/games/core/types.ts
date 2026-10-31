@@ -559,6 +559,8 @@ export interface Dataset<Item extends DataItem = DataItem> {
   alike?: readonly { id: string; label: string; weights: Readonly<Record<string, number>> }[];
   /** How games played on it look, so they feel like its world (see DatasetLook). */
   look?: DatasetLook;
+  /** Charts of factors between an attribute's values (a type chart), for games that quiz them. */
+  charts?: readonly DatasetChart[];
   /** Dataset-specific tables beyond per-item attributes (e.g. a type chart). */
   tables?: Readonly<Record<string, unknown>>;
 }
@@ -579,6 +581,22 @@ export interface DatasetLook {
   backdrop?: string;
   /** Stylesheet the look needs loaded (a font's @import or @font-face). */
   css?: string;
+}
+
+/**
+ * Factors between the values of one attribute: what a row value (an attacking type) does to a
+ * column value (a defending type). An item with several values of the attribute takes the product.
+ */
+export interface DatasetChart {
+  id: string;
+  label: string;
+  /** The attribute whose values are the rows and columns, and whose value on an item is what it is made of. */
+  attribute: string;
+  /** Row value → column value → factor; missing: ×1. */
+  factors: Readonly<Record<string, Readonly<Record<string, number>>>>;
+  /** What a row and a column are called ("attacking type", "defending type"). */
+  row: string;
+  column: string;
 }
 
 /** See Dataset.media. */

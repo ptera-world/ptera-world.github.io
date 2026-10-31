@@ -16,11 +16,11 @@ export interface TMFocus {
  * The deductions a competitive player makes, one per idea: read the chart for one type, an
  * immunity cancels everything, two types multiply, and the pick questions done type by type.
  */
-export function makeTechniques(puzzle: { id: string }, types: () => Types): TMTechnique[] {
+export function makeTechniques(puzzle: { id: string }, types: (p: TMPuzzle) => Types): TMTechnique[] {
   const factorStep = (p: TMPuzzle, s: TMState, want: "mono" | "immune" | "dual"): Step<TMAction> | null => {
     const q = current(p, s);
     if (q?.kind !== "factor") return null;
-    const T = types();
+    const T = types(p);
     const def = T.of(q.defender);
     const zero = def.find((d) => single(T, q.attack, d) === 0);
     const kind = zero ? "immune" : def.length > 1 ? "dual" : "mono";
@@ -54,7 +54,7 @@ export function makeTechniques(puzzle: { id: string }, types: () => Types): TMTe
   const pickSteps = (p: TMPuzzle, s: TMState, kind: "weak" | "resist", visit: (step: Step<TMAction>) => boolean | void) => {
     const q = current(p, s);
     if (q?.kind !== kind) return;
-    const T = types();
+    const T = types(p);
     const answer = q.kind === "weak" ? weaknesses(T, T.of(q.defender)) : resisters(T, q.attacks);
     const why = (t: string): string => {
       if (q.kind === "weak") {
@@ -84,14 +84,14 @@ export function makeTechniques(puzzle: { id: string }, types: () => Types): TMTe
 
   return [
     factorTechnique("one-type", "read the chart", 1, "mono",
-      "against a pokémon with one type, the factor is the chart's: what the attacking type does to that type (×2, ×1, ×½ or ×0)."),
+      "against one with a single type, the factor is the chart's: what the attacking type does to that type (for pokémon: ×2, ×1, ×½ or ×0)."),
     factorTechnique("immunity", "an immunity wins", 1, "immune",
-      "if either of the pokémon's types is immune to the attacking type (normal and fighting vs ghost, ground vs flying, electric vs ground, …), the answer is ×0, whatever the other type does."),
+      "if either of its types is immune to the attacking type (in pokémon: normal and fighting vs ghost, ground vs flying, electric vs ground, …), the answer is ×0, whatever the other type does."),
     factorTechnique("multiply", "two types multiply", 2, "dual",
       "against two types, take each one alone and multiply: ×2 and ×2 make ×4, ×2 and ×½ cancel to ×1, ×½ and ×½ make ×¼."),
     {
       id: "type-matchups.weaknesses", name: "find the weaknesses", puzzles: [puzzle], level: 3,
-      description: "go through the attacking types one at a time and multiply what each does to the pokémon's types; every one that comes out at ×2 or ×4 is a weakness. a weakness of one type that the other resists (or is immune to) cancels out.",
+      description: "go through the attacking types one at a time and multiply what each does to its types; every one that comes out at ×2 or ×4 is a weakness. a weakness of one type that the other resists (or is immune to) cancels out.",
       practice: { params: { kinds: ["weak"] } },
       instances: (p, s, visit) => pickSteps(p, s, "weak", visit),
     },

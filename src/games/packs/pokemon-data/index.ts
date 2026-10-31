@@ -55,6 +55,7 @@ export default function pack(games: GamesApi): void {
     },
     alike: ALIKE,
     look: POKEMON_LOOK,
+    charts: [{ id: "types", label: "type chart", attribute: "type", factors: file.typeChart, row: "attacking type", column: "defending type" }],
     tables: { typeChart: file.typeChart },
   };
   games.registry.dataset(dataset);

@@ -4,14 +4,16 @@ import { generate } from "../../core/generate";
 import { Registry } from "../../core/registry";
 import { findPracticePosition, firstStep } from "../../core/techniques";
 import pokemonData from "../pokemon-data/index";
+import wordsData from "../words-data/index";
 import pack from "./index";
 import { answerOf, factor, resisters, shareText, typesOf, weaknesses, type TMAction, type TMPuzzle, type TMState } from "./logic";
 
 const registry = new Registry();
 pokemonData({ ...api, registry });
+wordsData({ ...api, registry });
 pack({ ...api, registry });
 const def = registry.getPuzzle("type-matchups")!;
-const T = typesOf(registry.getDataset("pokemon")!);
+const T = typesOf(registry.getDataset("pokemon")!, "types");
 const techniques = registry.techniquesFor(def);
 const make = (params: Record<string, unknown>, seed = "s") => generate(def, params, seed, new AbortController().signal) as Promise<TMPuzzle>;
 const play = (p: TMPuzzle, actions: TMAction[], from: TMState = def.init(p)) => actions.reduce((s, a) => def.reduce(p, s, a), from);
@@ -58,6 +60,7 @@ test("the pool picks the defenders", async () => {
 });
 
 const hand: TMPuzzle = {
+  dataset: "pokemon", chart: "types",
   questions: [
     { kind: "factor", attack: "fire", defender: "ferrothorn" },
     { kind: "weak", defender: "swampert" },
@@ -96,7 +99,7 @@ test("time up counts as wrong, only with a time limit", () => {
 
 test("techniques: an immunity, one type, two types; the pick questions one type at a time", () => {
   const step = (p: TMPuzzle, s: TMState) => firstStep(def, techniques, p, s) as { technique: { id: string }; step: { message: string; actions: TMAction[] } } | null;
-  const q = (x: TMPuzzle["questions"][number]): TMPuzzle => ({ questions: [x], seconds: 0, showTypes: true });
+  const q = (x: TMPuzzle["questions"][number]): TMPuzzle => ({ dataset: "pokemon", chart: "types", questions: [x], seconds: 0, showTypes: true });
   const imm = step(q({ kind: "factor", attack: "ground", defender: "charizard" }), def.init(hand))!;
   expect(imm.technique.id).toBe("type-matchups.immunity");
   expect(imm.step.actions).toEqual([{ type: "factor", factor: 0 }]);
@@ -137,4 +140,10 @@ test("the results headline is the score", () => {
   const s = { replies: [4, ["grass"], ["fire"]], picked: [], open: false, since: 0 };
   expect(def.verdict!(hand, s)).toBe("2 of 3 right");
   expect(def.verdict!(hand, { ...s, replies: [4, ["grass"], ["fire", "water"]] })).toBe("all 3 right");
+});
+
+test("only datasets with a chart are offered", () => {
+  const opts = def.params.dataset!;
+  const list = (opts as { options: () => { value: string }[] }).options();
+  expect(list.map((o) => o.value)).toEqual(["pokemon"]);
 });
