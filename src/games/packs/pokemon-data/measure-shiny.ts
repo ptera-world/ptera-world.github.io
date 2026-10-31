@@ -1,10 +1,10 @@
 /**
  * Measures how different each pokémon's shiny sprite looks from its normal one and writes
- * shiny-diff.json, which find-the-shiny picks its rounds by (the difference has to be known when a
+ * shiny-diff.json: the shiny media's difference (see Media.difference), which odd-one-out picks its rounds by (the difference has to be known when a
  * puzzle is generated, which is deterministic and offline, so it can't be measured then).
  *
  * The sprites are decoded and compared in headless Chrome, so the pixels are the ones players see.
- * Nothing but the numbers is kept. Run: `bun run src/games/packs/find-the-shiny/measure.ts`
+ * Nothing but the numbers is kept. Run: `bun run src/games/packs/pokemon-data/measure-shiny.ts`
  * (CHROME, else google-chrome-stable / chromium on PATH; needs network).
  *
  * The number: over every pixel either sprite draws, the mean CIE76 colour difference (ΔE in Lab,
@@ -16,7 +16,7 @@ import { writeFileSync } from "fs";
 import { decode, type PokemonDataFile } from "../../lib/pokemon/codec";
 import { mediaUrl } from "../../lib/pokemon/media";
 
-const file = (await Bun.file(new URL("../pokemon-data/data.json", import.meta.url)).json()) as PokemonDataFile;
+const file = (await Bun.file(new URL("./data.json", import.meta.url)).json()) as PokemonDataFile;
 const items = decode(file).filter((i) => i.media.includes("sprite") && i.media.includes("shiny"));
 const chrome = process.env.CHROME ?? Bun.which("google-chrome-stable") ?? Bun.which("chromium") ?? Bun.which("chromium-browser");
 if (!chrome) throw new Error("no Chrome found: set CHROME to a Chrome or Chromium binary");

@@ -1,11 +1,10 @@
 import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
 import { h, inputIs, style } from "../../core/dom";
-import type { View } from "../../core/types";
-import { mediaUrl } from "../../lib/pokemon/media";
-import type { PokemonDataset, PokemonItem } from "../../lib/pokemon/types";
-import { cellCount, type ShinyRound, idAt, isOver, mistakesMade, roundDone, type ShinyAction, type ShinyFocus, type ShinyInteraction, type ShinyPuzzle, type ShinyState } from "./logic";
+import type { DataItem, View } from "../../core/types";
+import { applyLook } from "../../lib/dataset/look";
+import { type DataSource, cellCount, type OddRound, idAt, isOver, mistakesMade, roundDone, type OddAction, type OddFocus, type OddInteraction, type OddPuzzle, type OddState } from "./logic";
 
-/** How long a found (or missed) shiny stays showing before the next grid comes in. */
+/** How long a found (or missed) odd one stays showing before the next grid comes in. */
 const HOLD_MS = 800;
 
 const CSS = `
@@ -41,11 +40,11 @@ ${inputIs("pointer")} .fs-cell.cursor:not(.hint):not(.found):not(.missed) { box-
 `;
 
 const BINDINGS = {
-  "find-the-shiny.left": { label: "cursor left", category: "find the shiny", keys: ["ArrowLeft", "a"] },
-  "find-the-shiny.right": { label: "cursor right", category: "find the shiny", keys: ["ArrowRight", "d"] },
-  "find-the-shiny.up": { label: "cursor up", category: "find the shiny", keys: ["ArrowUp", "w"] },
-  "find-the-shiny.down": { label: "cursor down", category: "find the shiny", keys: ["ArrowDown", "s"] },
-  "find-the-shiny.pick": { label: "pick", category: "find the shiny", keys: ["space", "Enter"], description: "pick the pokémon under the keyboard cursor" },
+  "odd-one-out.left": { label: "cursor left", category: "odd one out", keys: ["ArrowLeft", "a"] },
+  "odd-one-out.right": { label: "cursor right", category: "odd one out", keys: ["ArrowRight", "d"] },
+  "odd-one-out.up": { label: "cursor up", category: "odd one out", keys: ["ArrowUp", "w"] },
+  "odd-one-out.down": { label: "cursor down", category: "odd one out", keys: ["ArrowDown", "s"] },
+  "odd-one-out.pick": { label: "pick", category: "odd one out", keys: ["space", "Enter"], description: "pick the one under the keyboard cursor" },
 } satisfies BindingSchema;
 
 declare module "../../core/commands" {
@@ -85,20 +84,20 @@ function boxOf(img: HTMLImageElement): Box | null {
   return out;
 }
 
-export function makeView(ds: () => PokemonDataset | undefined, puzzle: { id: string }): View<ShinyPuzzle, ShinyState, ShinyAction, ShinyInteraction> {
+export function makeView(data: DataSource, puzzle: { id: string }): View<OddPuzzle, OddState, OddAction, OddInteraction> {
   return {
-    id: "find-the-shiny.grid",
+    id: "odd-one-out.grid",
     name: "grid",
     puzzle,
-    controls: [{ how: "click or tap a pokémon", what: "pick it as the shiny" }],
+    controls: [{ how: "click or tap a picture", what: "pick it as the odd one" }],
     legend: [
       { sample: `<span style="color:var(--danger,#c33);font-weight:800">✕</span>`, meaning: "a wrong pick (a mistake)" },
       { sample: `<span style="color:var(--danger,#c33)">♥♥<span style="opacity:.25">♥</span></span>`, meaning: "mistakes you can still make" },
       { sample: `<span style="display:inline-block;width:40px;height:8px;border-radius:99px;background:var(--accent)"></span>`, meaning: "time left this round" },
     ],
     mount(root, { session }) {
-      style("find-the-shiny", CSS);
-      const d = ds();
+      style("odd-one-out", CSS);
+      const d = data.get(session.puzzle.dataset);
       const byId = new Map((d?.items() ?? []).map((it) => [it.id, it]));
       const p = session.puzzle;
 
@@ -111,6 +110,7 @@ export function makeView(ds: () => PokemonDataset | undefined, puzzle: { id: str
       const wait = h("div", { class: "fs-wait" });
       const box = h("div", { class: "fs" }, bar, h("div", { class: "fs-gridwrap" }, grid, wait));
       root.append(box);
+      const unlook = applyLook(d, box);
 
       /** The round on screen: lags the state by HOLD_MS after a round ends, so the find can be seen. */
       let shown = session.state.rounds.length - 1;
@@ -123,16 +123,17 @@ export function makeView(ds: () => PokemonDataset | undefined, puzzle: { id: str
       let timedOut = -1;
       let cells: HTMLButtonElement[] = [];
 
-      const url = (it: PokemonItem | undefined, shiny: boolean) => (it ? mediaUrl(it, shiny ? "shiny" : "sprite") : null);
+      const odd = d?.media?.[p.variant], plain = d?.media?.[p.plain];
+      const url = (it: DataItem | undefined, isOdd: boolean) => (it ? (isOdd ? odd : plain)?.url(it) ?? null : null);
 
-      /** Fit each cell's picture to its pokémon: the box around what both its sprites draw, the same for every cell of a pokémon so none stands out by position. */
-      const frame = (r: ShinyRound, loaded: Map<string, HTMLImageElement>) => {
+      /** Fit each cell's picture to its item: the box around what both its pictures draw, the same for every cell of an item so none stands out by position. */
+      const frame = (r: OddRound, loaded: Map<string, HTMLImageElement>) => {
         const boxes = new Map<string, Box>();
         for (const id of new Set(r.ids)) {
           const it = byId.get(id);
           let b: Box | null = null;
-          for (const shiny of [false, true]) {
-            const im = loaded.get(url(it, shiny) ?? "");
+          for (const isOdd of [false, true]) {
+            const im = loaded.get(url(it, isOdd) ?? "");
             const bb = im ? boxOf(im) : null;
             if (bb) b = b ? { x0: Math.min(b.x0, bb.x0), y0: Math.min(b.y0, bb.y0), x1: Math.max(b.x1, bb.x1), y1: Math.max(b.y1, bb.y1) } : bb;
           }
@@ -161,7 +162,7 @@ export function makeView(ds: () => PokemonDataset | undefined, puzzle: { id: str
         const flips = new Set(r.flips);
         const urls = new Set<string>();
         cells = Array.from({ length: cellCount(r) }, (_, c) => {
-          const src = url(byId.get(idAt(r, c)), c === r.shiny);
+          const src = url(byId.get(idAt(r, c)), c === r.odd);
           if (src) urls.add(src);
           const b = h("button", { type: "button", class: "fs-cell", "data-cell": c, tabindex: "-1", "aria-label": `row ${Math.floor(c / r.size) + 1}, column ${(c % r.size) + 1}` },
             src ? h("span", { class: `fs-pic${flips.has(c) ? " flip" : ""}` }, h("img", { src, alt: "", crossorigin: "anonymous", draggable: "false" })) : null);
@@ -193,8 +194,8 @@ export function makeView(ds: () => PokemonDataset | undefined, puzzle: { id: str
         }
         // fetch the next round's pictures meanwhile
         const nx = p.rounds[i + 1];
-        if (nx) for (const id of new Set(nx.ids)) for (const shiny of [false, true]) {
-          const u = url(byId.get(id), shiny);
+        if (nx) for (const id of new Set(nx.ids)) for (const isOdd of [false, true]) {
+          const u = url(byId.get(id), isOdd);
           if (u) { const im = new Image(); im.crossOrigin = "anonymous"; im.src = u; }
         }
       };
@@ -207,11 +208,11 @@ export function makeView(ds: () => PokemonDataset | undefined, puzzle: { id: str
         const play = st.rounds[i] ?? { wrong: [] };
         const over = isOver(p, st);
         const wrong = new Set(play.wrong);
-        const hint = session.activeHint?.focus as ShinyFocus | undefined;
+        const hint = session.activeHint?.focus as OddFocus | undefined;
         const hinted = new Set(i === st.rounds.length - 1 ? hint?.cells ?? [] : []);
         const cur = session.interaction.cursor;
         cells.forEach((b, c) => {
-          const isShiny = c === r.shiny;
+          const isShiny = c === r.odd;
           b.className = "fs-cell"
             + (wrong.has(c) ? " wrong" : "")
             + (isShiny && play.found ? " found" : "")
@@ -306,18 +307,19 @@ export function makeView(ds: () => PokemonDataset | undefined, puzzle: { id: str
         // the biggest grid, counted in double cells so a sprite never gets smaller than two minimum cells
         cells: (() => { const n = Math.max(...p.rounds.map((r) => r.size)) * 2; return { cols: n, rows: n + 1 }; })(),
         commands: bindCommands(BINDINGS, {
-          "find-the-shiny.left": move(-1, 0),
-          "find-the-shiny.right": move(1, 0),
-          "find-the-shiny.up": move(0, -1),
-          "find-the-shiny.down": move(0, 1),
-          "find-the-shiny.pick": () => pick(session.interaction.cursor),
-        }, { "find-the-shiny.pick": { menu: "board" } }),
+          "odd-one-out.left": move(-1, 0),
+          "odd-one-out.right": move(1, 0),
+          "odd-one-out.up": move(0, -1),
+          "odd-one-out.down": move(0, 1),
+          "odd-one-out.pick": () => pick(session.interaction.cursor),
+        }, { "odd-one-out.pick": { menu: "board" } }),
         target: () => session.interaction.cursor,
-        locate: (focus) => rects((focus as ShinyFocus | undefined)?.cells ?? []),
+        locate: (focus) => rects((focus as OddFocus | undefined)?.cells ?? []),
         destroy() {
           offs.forEach((f) => f());
           clearTimeout(holdTimer);
           cancelAnimationFrame(raf);
+          unlook();
           box.remove();
         },
       };

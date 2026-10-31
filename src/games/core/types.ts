@@ -592,6 +592,16 @@ export interface Media<Item extends DataItem = DataItem> {
   pixel?: boolean;
   /** Its URL for an item, or null when the item has none. */
   url(item: Item): string | null;
+  /**
+   * The same picture with a difference (a shiny sprite is the sprite recolored): the id of the
+   * media it varies, for games that hide one variant among the plain ones.
+   */
+  variantOf?: string;
+  /**
+   * How different an item's variant looks from the plain one: mean CIE76 colour difference (ΔE)
+   * over the pixels either draws; under 2 people can't tell them apart. null: not measured.
+   */
+  difference?(item: Item): number | null;
 }
 
 /** See Dataset.spelling. */
