@@ -4,7 +4,8 @@ import { filter } from "../../lib/dataset/query";
 import { spellingOf } from "../../lib/dataset/spelling";
 import { canonical, equationError, generateEquation, OPERATORS, type EquationRules } from "./equations";
 import { BLANK } from "./marks";
-import { spelled, type DataSource, type Settings } from "./params";
+import { closeness, Space, weightsFor, type Closeness } from "../../lib/dataset/likeness/similarity";
+import { RANK, spelled, type DataSource, type Settings } from "./params";
 
 /**
  * A guess or an answer: a dataset item (by id), a sequence of symbols, or both (an item's spelling).
@@ -43,6 +44,19 @@ export interface Kind {
   same(guess: Entry, answer: Entry): boolean;
   /** A short label for an entry. */
   label(e: Entry): string;
+  /** Likeness to an answer: every guessable item's rank (1: the answer) and warmth; null unless ranked. */
+  likeness?(answer: Entry): Likeness | null;
+}
+
+/** Ranks of every guessable item against one answer. */
+export interface Likeness {
+  items: readonly DataItem[];
+  index: ReadonlyMap<string, number>;
+  close: readonly Closeness[];
+  answer: number;
+  space: Space;
+  /** Names the map of these items under these weights, in caches. */
+  mapKey: string;
 }
 
 const LETTERS = "abcdefghijklmnopqrstuvwxyz".split("");
@@ -100,8 +114,28 @@ function itemsKind(data: DataSource, s: Settings, length: number): Kind {
   const bySpelling = new Map<string, DataItem>();
   if (spell) for (const it of guessable) { const q = seq(it); if (q && !bySpelling.has(q.join(" "))) bySpelling.set(q.join(" "), it); }
   const symbols = [...new Set(guessable.flatMap((it) => seq(it) ?? []))].sort();
-  const typed = spell && !attrs.length;
+  const typed = spell && !attrs.length && !s.compare.includes(RANK);
+  // likeness: one space over what can be guessed, ranks per answer worked out when first asked
+  let space: Space | null = null;
+  const ranked = new Map<string, Likeness>();
+  const weights = s.compare.includes(RANK) ? weightsFor(d, s.alike) : null;
+  const mapKey = weights ? `${d.version}|${s.guess}|${s.pool}|${Object.keys(weights).sort().map((x) => `${x}:${weights[x]}`).join(",")}` : "";
+  const likeness = (a: Entry): Likeness | null => {
+    if (!weights || !a.item) return null;
+    let l = ranked.get(a.item);
+    if (l) return l;
+    const items = guessable;
+    space ??= new Space(items, d.attributes, weights);
+    const index = new Map(items.map((it, i) => [it.id, i]));
+    const at = index.get(a.item);
+    if (at === undefined) return null;
+    l = { items, index, close: closeness(space, at), answer: at, space, mapKey };
+    if (ranked.size > 40) ranked.delete(ranked.keys().next().value!);
+    ranked.set(a.item, l);
+    return l;
+  };
   return {
+    likeness,
     length: spell ? length : 0,
     attrs,
     data: d,

@@ -3,16 +3,18 @@ import { clear, h, style } from "../../core/dom";
 import type { CommandDef, DataAttribute, DataItem, DataValue, Dataset, PuzzleRef, View } from "../../core/types";
 import { formatValue, type Feedback } from "../../lib/dataset/compare";
 import { applyLook } from "../../lib/dataset/look";
+import { mapFor } from "../../lib/dataset/likeness/layout";
+import { heatOf, likenessMap } from "../../lib/dataset/likeness/map-view";
 import { VERDICT_CSS, arrow, nameEntry, verdictClass } from "../../lib/dataset/ui";
 import { CLUE_CSS, pictureClue, soundClue, textClue, type PictureClue } from "./clue";
-import { givenLabel, guessError, revealText } from "./def";
+import { bandOf, givenLabel, guessError, revealText } from "./def";
 import {
   board, currentRound, easeLevel, foundCount, guessesOf, inRounds, isOpen, isOver, kind, revealsShown, roundOver, shownAnswers, EARLIER, LATER, NEAR,
   type Mark, type WordleAction, type WordleFocus, type WordleInteraction, type WordlePuzzle, type WordleState,
 } from "./engine";
 import type { Entry, Kind } from "./kinds";
 import { ABSENT, BLANK, ELSEWHERE, RIGHT } from "./marks";
-import { POSITIONAL, spelled, symbolsName, type DataSource, type Look } from "./params";
+import { POSITIONAL, RANK, spelled, symbolsName, type DataSource, type Look } from "./params";
 
 const FLIP_MS = 300, STAGGER_MS = 90;
 /** Gap between tiles, and between boards. */
@@ -102,6 +104,17 @@ const CSS = `
 .has-look .wd-given, .has-look .wd-answer { text-shadow: 0 2px 0 rgb(0 0 0 / .45); }
 .has-look .wd-stage { border: var(--panel-border, none); box-sizing: border-box; background: var(--stage-bg, var(--wd-stage)); }
 .has-look .wd-fact { background: var(--panel-bg, var(--surface-2)); color: var(--panel-text, inherit); }
+.wd-map, .lk-map { width: min(680px, 100%); height: min(44vh, 460px); align-self: stretch; }
+.wd-rank { flex-direction: row; gap: 8px; justify-content: flex-start; background: var(--tile-bg, var(--surface)); color: var(--tile-text, inherit); }
+.wd.ranked .wd-boards { grid-template-columns: minmax(0, 1fr); justify-content: stretch; }
+.wd.ranked .wd-board { align-items: stretch; }
+.wd.ranked .wd-rows { justify-content: stretch; }
+.wd.ranked .lk-map { width: 100%; height: min(44vh, 460px); }
+.wd-rank .wd-bar { flex: 1; min-width: 3em; height: 9px; border-radius: 5px; background: rgb(127 127 127 / .25); overflow: hidden; }
+.wd-rank .wd-bar > i { display: block; height: 100%; border-radius: 5px; }
+.wd-rank small { opacity: .7; }
+.has-look .wd-a.wd-rank { color: var(--tile-text, inherit); text-shadow: none; }
+.wd-row.latest > * { box-shadow: 0 0 0 2px var(--accent); margin-bottom: 6px; }
 @keyframes wd-flip { 0% { transform: rotateX(0); } 50% { transform: rotateX(90deg); } 100% { transform: rotateX(0); } }
 @media (prefers-reduced-motion: reduce) { .wd-t.flip, .wd-row.new > .wd-a { animation: none; } }
 `;
@@ -220,7 +233,7 @@ export function wordleView(data: DataSource, puzzle: PuzzleRef): View<WordlePuzz
       ];
     },
     legend: (p) => legendFor(data, p),
-    mount(root, { session }) {
+    mount(root, { session, storage }) {
       style("dataset-verdicts", VERDICT_CSS);
       style("wordle", CSS + CLUE_CSS);
       const p = session.puzzle;
@@ -236,6 +249,7 @@ export function wordleView(data: DataSource, puzzle: PuzzleRef): View<WordlePuzz
       const overview = p.boards.length > OVERVIEW;
       const showsCounts = spell && !POSITIONAL.has(s.marks);
       const rounds = inRounds(p);
+      const ranked = s.compare.includes(RANK) && s.secret === "items";
       const pictured = p.boards.some((b) => b.clue?.look);
       const cur = () => currentRound(p, session.state);
       const roundDone = () => rounds && roundOver(data, p, session.state, cur());
@@ -255,7 +269,7 @@ export function wordleView(data: DataSource, puzzle: PuzzleRef): View<WordlePuzz
       const over = overview ? h("div", { class: "wd-over", role: "group", "aria-label": "boards, closest to found first" }) : null;
       const boardsEl = h("div", { class: "wd-boards" });
       const kb = typed ? h("div", { class: `wd-kb${moves ? " moves" : ""}` }) : null;
-      const el = h("div", { class: "wd" }, top, over, boardsEl, kb);
+      const el = h("div", { class: `wd${ranked ? " ranked" : ""}` }, top, over, boardsEl, kb);
       root.append(el);
       const unlook = applyLook(d, el);
 
@@ -364,6 +378,40 @@ export function wordleView(data: DataSource, puzzle: PuzzleRef): View<WordlePuzz
         }
         return x;
       };
+      // --- likeness: a map per board, kept across renders ---
+      type MapBox = ReturnType<typeof likenessMap>;
+      const maps = new Map<number, MapBox>();
+      const mapOf = (b: number): MapBox | null => {
+        if (!ranked) return null;
+        let m = maps.get(b);
+        if (m) return m;
+        const l = k.likeness?.(p.boards[b]!.answers[0] ?? {});
+        if (!l) return null;
+        const n = l.items.length;
+        m = likenessMap({
+          items: l.items,
+          xy: mapFor(l, storage),
+          rank: (i) => l.close[i]!.rank,
+          band: (r) => bandOf(r, n),
+          guessed: () => guessesOf(p, session.state, b).map((g) => l.index.get(g.item ?? "") ?? -1).filter((i) => i >= 0),
+          over: () => boardOver(b),
+          answer: l.answer,
+          picture: (it) => { const ms = Object.values(d?.media ?? {}).filter((x) => x.type === "image"); return (ms.find((x) => x.pixel) ?? ms[0])?.url(it) ?? null; },
+          guess: () => (session.locked || boardOver(b) ? null : (i) => { submit({ item: l.items[i]!.id }); }),
+          noun: d?.noun?.one ?? "item",
+        });
+        maps.set(b, m);
+        return m;
+      };
+      const rankCell = (m: Mark | null, b: number): HTMLElement => {
+        const el = h("div", { class: "wd-a wd-rank" });
+        const r = m?.rank;
+        if (!r) return el;
+        const n = k.likeness?.(p.boards[b]!.answers[0] ?? {})?.items.length ?? 1;
+        el.classList.add(`lk-band-${bandOf(r.rank, n)}`);
+        el.append(h("span", { class: "wd-bar" }, h("i", { class: `lk-${bandOf(r.rank, n)}`, style: `width: ${Math.max(4, Math.round(heatOf(r.rank, n) * 100))}%` })), h("strong", null, `#${r.rank}`), h("small", null, `${r.temp}°`));
+        return el;
+      };
       const playSound = () => { const x = stages.get(rounds ? cur() : shownBoard()); x?.sound?.play(); };
 
       const renderBoard = (b: number): HTMLElement => {
@@ -385,6 +433,8 @@ export function wordleView(data: DataSource, puzzle: PuzzleRef): View<WordlePuzz
           const it = answerItem(b)!;
           if (boardOver(b)) box.append(h("div", { class: `wd-answer${v.solvedAt < 0 ? " miss" : ""}` }, it.name));
         }
+        const map = mapOf(b);
+        if (map) { box.append(map.el); map.update(); }
         const facts = boardOver(b) ? p.s.reveals : revealsShown(data, p, st, b);
         const it = answerItem(b);
         if (facts.length && it && d) box.append(h("div", { class: "wd-facts" }, facts.map((id) => h("span", { class: "wd-fact" }, revealText(d.attributes, it, id)))));
@@ -392,13 +442,15 @@ export function wordleView(data: DataSource, puzzle: PuzzleRef): View<WordlePuzz
         if (k.named) cols.push("auto");
         if (spell) for (let i = 0; i < k.length; i++) cols.push("auto");
         if (showsCounts) cols.push("auto");
+        if (ranked) cols.push(k.attrs.length ? "minmax(9em, auto)" : "minmax(9em, 1fr)");
         for (const _ of k.attrs) cols.push("minmax(5em, auto)");
         const rows = h("div", { class: "wd-rows", role: "table" });
         rows.style.setProperty("--cols", cols.join(" "));
-        if (k.attrs.length) {
+        if (k.attrs.length || ranked) {
           if (k.named) rows.append(h("div", { class: "wd-th" }));
           if (spell) for (let i = 0; i < k.length; i++) rows.append(h("div", { class: "wd-th" }));
           if (showsCounts) rows.append(h("div", { class: "wd-th" }));
+          if (ranked) rows.append(h("div", { class: "wd-th" }, "how alike"));
           for (const a of k.attrs) rows.append(h("div", { class: "wd-th", title: a.description ?? a.label }, a.label));
         }
         const row = (g: Entry | null, m: Mark | null, r: number, cls: string, typedRow?: string[]) => {
@@ -416,6 +468,7 @@ export function wordleView(data: DataSource, puzzle: PuzzleRef): View<WordlePuzz
             }
           }
           if (showsCounts) line.append(countsOf(m));
+          if (ranked) line.append(rankCell(m, b));
           k.attrs.forEach((a, i) => {
             const c = attrCell(a, g ? k.valuesOf(g)?.[a.id] ?? null : null, m?.attrs?.[i] ?? null, m?.slots?.[i]);
             c.style.setProperty("--i", String(i));
@@ -426,7 +479,13 @@ export function wordleView(data: DataSource, puzzle: PuzzleRef): View<WordlePuzz
         // attribute tables read newest first, like a list; spellings fill down, like Wordle
         const shown = guessesOf(p, st, b).slice(0, v.marks.length).map((g, r) => ({ g, r }));
         const live = v.solvedAt < 0 && !done && !(rounds && roundOver(data, p, st, b));
-        if (k.attrs.length) {
+        if (ranked) {
+          // closest first (Contexto), the latest guess pinned on top
+          if (boardOver(b) && v.solvedAt < 0) for (const a of shownAnswers(data, p, st, b)) row(a, null, -1, "answer");
+          const last = shown[shown.length - 1];
+          if (last && shown.length > 1) row(last.g, v.marks[last.r]!, last.r, `latest${last.r === flipping ? " new" : ""}`);
+          for (const { g, r } of shown.slice().sort((x, y) => (v.marks[x.r]!.rank?.rank ?? 1e9) - (v.marks[y.r]!.rank?.rank ?? 1e9))) row(g, v.marks[r]!, r, r === flipping && shown.length === 1 ? "new" : "");
+        } else if (k.attrs.length) {
           if (boardOver(b) && v.solvedAt < 0) for (const a of shownAnswers(data, p, st, b)) row(a, null, -1, "answer");
           for (const { g, r } of shown.reverse()) row(g, v.marks[r]!, r, r === flipping ? "new" : "");
         } else {
@@ -443,7 +502,7 @@ export function wordleView(data: DataSource, puzzle: PuzzleRef): View<WordlePuzz
 
       /** Tile size and boards per row that make every board fit, as large as allowed. */
       const fit = (count: number) => {
-        if (k.attrs.length || !spell) { boardsEl.style.setProperty("--t", "2.6em"); boardsEl.style.setProperty("--bc", "1"); return; }
+        if (k.attrs.length || !spell || ranked) { boardsEl.style.setProperty("--t", "2.6em"); boardsEl.style.setProperty("--bc", "1"); return; }
         const W = boardsEl.clientWidth || 600, H = boardsEl.clientHeight || 500;
         const unit = (moves ? 1.7 : 1) * k.length + (showsCounts ? 1.9 : 0);
         const solve = (rowsN: number) => {
@@ -595,6 +654,11 @@ export function wordleView(data: DataSource, puzzle: PuzzleRef): View<WordlePuzz
         const at = open.indexOf(session.interaction.board);
         select(open[(at + dir + open.length) % open.length]!);
       };
+      // only the commands this puzzle has: rounds, a sound, several boards, a name box
+      const applies: Record<string, boolean> = {
+        "wordle.next": rounds, "wordle.pass": rounds, "wordle.play": p.boards.some((b) => b.clue?.id.startsWith("media:") && !b.clue.look),
+        "wordle.next-board": many && !rounds, "wordle.prev-board": many && !rounds, "wordle.name": !!entry,
+      };
       const commands: CommandDef[] = bindCommands(BINDINGS, {
         "wordle.next-board": () => step(1),
         "wordle.prev-board": () => step(-1),
@@ -609,7 +673,7 @@ export function wordleView(data: DataSource, puzzle: PuzzleRef): View<WordlePuzz
         "wordle.next-board": { captureInput: true, when: () => many && !rounds },
         "wordle.prev-board": { captureInput: true, when: () => many && !rounds },
         "wordle.name": { when: () => !!entry },
-      });
+      }).filter((c) => applies[c.id] !== false);
 
       const rect = (e: Element | null | undefined) => (e ? [e.getBoundingClientRect()] : []);
       return {
@@ -629,6 +693,7 @@ export function wordleView(data: DataSource, puzzle: PuzzleRef): View<WordlePuzz
         destroy() {
           document.removeEventListener("keydown", onKey, { capture: true });
           for (const x of stages.values()) x.sound?.stop();
+          for (const m of maps.values()) m.destroy();
           ro?.disconnect();
           unlook();
           offs.forEach((f) => f());

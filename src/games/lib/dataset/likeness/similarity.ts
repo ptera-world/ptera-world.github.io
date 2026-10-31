@@ -1,81 +1,34 @@
-import type { DataAttribute } from "../../core/types";
-import type { PokemonItem } from "../../lib/pokemon/types";
+import type { DataAttribute, DataItem, Dataset } from "../../../core/types";
+
 
 /**
- * How alike two pokémon are: a weighted Gower distance over the dataset's attributes, plus the
- * evolution family (an item field, not an attribute), in [0, 1].
+ * How alike two items are: a weighted Gower distance over the dataset's attributes, in [0, 1].
  *
  * Per attribute, a distance in [0, 1]:
  * - number: difference of the two values' percentiles within the pool (midranks). Unit-free and
- *   untroubled by skew: weight runs 0.1 to 999.9 kg with half the pool under 28 kg, so a plain
- *   range would put nearly everything at the light end and call it "the same".
+ *   untroubled by skew: pokémon weight runs 0.1 to 999.9 kg with half the pool under 28 kg, so a
+ *   plain range would put nearly everything at the light end and call it "the same".
  * - ordinal: steps apart over the most steps there are.
  * - category, bool: 0 if equal, else 1.
  * - set: Jaccard distance, 1 − shared / either (fire vs fire/flying: 0.5).
- * - family: 0 in the same evolution family, else 1.
- * An attribute either item has nothing recorded for (habitat after gen 3) is left out of that pair,
- * and the weights of what is left are what the total is divided by (Gower's rule).
+ * An attribute either item has nothing recorded for is left out of that pair, and the weights of
+ * what is left are what the total is divided by (Gower's rule).
  */
-export const FAMILY = "family";
-
 export type Weights = Readonly<Record<string, number>>;
 
-/**
- * Where the weights come from: what a player would call alike first, in this order. Same family and
- * type are what people mean by "close" (Charmander and Charizard, Charmander and Cyndaquil); then
- * the look (color, body shape, size) and the generation; then the battle numbers, which players
- * know roughly, as a profile spread over six stats plus the total; then the details few know by
- * heart (egg groups, catch rate, growth), each worth little alone but they cluster sensibly
- * (legendaries share catch rate 3, slow growth, no gender, undiscovered eggs).
- */
-export const PROFILES: Readonly<Record<string, { label: string; weights: Weights }>> = {
-  balanced: {
-    label: "balanced",
-    weights: {
-      family: 3, type: 3, gen: 1.5, color: 1.5, shape: 1.5, class: 1.5, bst: 1.5,
-      height: 1, weight: 1, egg: 1, form: 1, ability: 0.75, stage: 0.75,
-      hp: 0.5, atk: 0.5, def: 0.5, spa: 0.5, spd: 0.5, spe: 0.5,
-      final: 0.5, habitat: 0.5, capture: 0.5, growth: 0.5, gender: 0.5, eggcycles: 0.5, dex: 0.5,
-      hidden: 0.25, happiness: 0.25,
-    },
-  },
-  looks: {
-    label: "looks (color, shape, size, type)",
-    weights: { color: 3, shape: 3, type: 2, height: 2, weight: 1.5, family: 1, egg: 0.5 },
-  },
-  battle: {
-    label: "battle (stats, type, abilities)",
-    weights: { type: 3, bst: 2, hp: 1, atk: 1, def: 1, spa: 1, spd: 1, spe: 1, ability: 1.5, hidden: 0.5, final: 0.5, class: 0.5 },
-  },
-  lore: {
-    label: "lore (family, generation, class, habitat, eggs)",
-    weights: { family: 3, gen: 2, class: 2, habitat: 1.5, egg: 1.5, dex: 1, stage: 1, growth: 1, gender: 1, capture: 0.5 },
-  },
-};
-
-/** Attributes the weights may name: every comparable attribute, and the family. */
+/** Attributes weights may name: every one but text. */
 export function weighable(attrs: readonly DataAttribute[]): string[] {
-  return [FAMILY, ...attrs.filter((a) => a.kind !== "text").map((a) => a.id)];
+  return attrs.filter((a) => a.kind !== "text").map((a) => a.id);
 }
 
-/**
- * A profile's weights with `tweak` laid over them (`type:5, color:0`): any weighable id, any
- * non-negative number. Throws with what is wrong; at least one weight must stay above zero.
- */
-export function resolveWeights(profile: string, tweak: string, attrs: readonly DataAttribute[]): Record<string, number> {
-  const ok = new Set(weighable(attrs));
+/** What alike means for a dataset: one of its profiles by id, else its featured attributes (or every one) weighed evenly. */
+export function weightsFor(d: Dataset, profile: string): Record<string, number> {
+  const ok = new Set(weighable(d.attributes));
+  const p = d.alike?.find((x) => x.id === profile);
+  const src: Record<string, number> = p ? { ...p.weights } : Object.fromEntries((d.featured?.length ? d.featured : [...ok]).map((id) => [id, 1]));
   const out: Record<string, number> = {};
-  for (const [k, v] of Object.entries(PROFILES[profile]?.weights ?? PROFILES.balanced!.weights)) if (ok.has(k) && v > 0) out[k] = v;
-  for (const part of tweak.split(",").map((p) => p.trim()).filter(Boolean)) {
-    const m = /^([a-z0-9_-]+)\s*[:=]\s*(\d+(?:\.\d+)?)$/i.exec(part);
-    if (!m) throw new Error(`"${part}": write attribute:weight, e.g. type:5 or color:0`);
-    const id = m[1]!.toLowerCase();
-    if (!ok.has(id)) throw new Error(`"${id}" isn't something to weigh; one of: ${[...ok].join(", ")}`);
-    const w = Number(m[2]);
-    if (w > 0) out[id] = w;
-    else delete out[id];
-  }
-  if (!Object.keys(out).length) throw new Error("every weight is zero: nothing would be alike or different");
+  for (const [k, v] of Object.entries(src)) if (ok.has(k) && v > 0) out[k] = v;
+  if (!Object.keys(out).length) throw new Error("nothing to weigh: every weight is zero");
   return out;
 }
 
@@ -112,15 +65,11 @@ export class Space {
   private readonly features: Feature[];
   private readonly total: number;
 
-  constructor(readonly items: readonly PokemonItem[], attrs: readonly DataAttribute[], weights: Weights) {
+  constructor(readonly items: readonly DataItem[], attrs: readonly DataAttribute[], weights: Weights) {
     this.n = items.length;
     const fs: Feature[] = [];
     for (const [id, w] of Object.entries(weights)) {
       if (!(w > 0)) continue;
-      if (id === FAMILY) {
-        fs.push({ kind: "cat", w, v: Int32Array.from(items, (it) => it.family) });
-        continue;
-      }
       const a = attrs.find((x) => x.id === id);
       if (!a || a.kind === "text") continue;
       const raw = items.map((it) => it.values[id] ?? null);
@@ -207,7 +156,7 @@ export class Space {
 
 /** What a guess learns about the answer. */
 export interface Closeness {
-  /** 1 for the answer; else 1 + how many pokémon are closer to it than this one (at least 2). */
+  /** 1 for the answer; else 1 + how many items are closer to it than this one (at least 2). */
   rank: number;
   /** 100 for the answer, 0 for the pool's median distance from it, negative further out. */
   temp: number;

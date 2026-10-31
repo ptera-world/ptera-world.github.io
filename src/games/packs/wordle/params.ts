@@ -41,6 +41,9 @@ export const HARD_RULES = [
 
 const datasetOf = (data: DataSource, v: V): Dataset | undefined => (v.secret === "items" ? data.get(String(v.dataset)) : undefined);
 
+/** The compare choice for likeness: each guess gets its rank among all by how alike it is to the answer. */
+export const RANK = "*rank";
+
 /** Reveals: the answer's first symbol (no attribute id can be it). */
 export const FIRST = "*first";
 
@@ -144,9 +147,18 @@ export function makeParams(data: DataSource) {
         const d = datasetOf(data, v);
         return [
           ...(d ? [{ value: SPELLING, label: `spelling (${spellingLabel(d)})`, description: "position by position, as Wordle marks letters" }] : []),
+          ...(d ? [{ value: RANK, label: "how alike overall: its rank among all", description: "#1 is the answer, #2 the most alike (Contexto, Semantle)" }] : []),
           ...comparable(d).map((a) => ({ value: a.id, label: a.label, ...(a.description ? { description: a.description } : {}) })),
         ];
       },
+    },
+    alike: {
+      type: "enum", label: "alike means", when: (v) => Array.isArray(v.compare) && v.compare.includes(RANK),
+      default: (v) => datasetOf(data, v)?.alike?.[0]?.id ?? "",
+      options: (v): FieldOption[] => [
+        ...(datasetOf(data, v)?.alike ?? []).map((p) => ({ value: p.id, label: p.label })),
+        { value: "", label: "the dataset's main attributes, evenly" },
+      ],
     },
     clues: {
       type: "set", label: "the answer is shown by", default: [], when: (v) => v.secret === "items",

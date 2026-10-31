@@ -1,5 +1,5 @@
 import type { Preset } from "../../core/types";
-import { SPELLING, type DataSource, type Params } from "./params";
+import { RANK, SPELLING, type DataSource, type Params } from "./params";
 
 /**
  * Named setups of games people know, each only settings of this one game. A setup on a dataset is
@@ -84,6 +84,10 @@ const ON: Record<string, readonly Preset<Params>[]> = {
     { label: "pokémon: one board per type", params: { secret: "items", dataset: "pokemon", compare: ["type", "gen", "stage", "color", "height", "weight"], split: "type", limit: 0 } },
     { label: "pokémon: generation × type", params: { secret: "items", dataset: "pokemon", pool: "form:default gen:1-3", compare: ["type", "gen", "stage", "color", "height", "weight"], split: "gen", split2: "type", limit: 0 } },
     ...WHOS_THAT.map((x) => ({ label: x.label, params: { secret: "items", dataset: "pokemon", compare: [], clues: ["media:art"], reveals: ["gen", "type", "genus"], limit: 5, ...x.params } })),
+    { label: "pokémon Contexto: how alike is each guess", params: { secret: "items", dataset: "pokemon", pool: "form:default", guess: "pool", compare: [RANK], limit: 0 } },
+    { label: "pokémon Contexto, gen 1", params: { secret: "items", dataset: "pokemon", pool: "form:default gen:1", guess: "pool", compare: [RANK], limit: 0 } },
+    { label: "pokémon Contexto, alike by looks", params: { secret: "items", dataset: "pokemon", pool: "form:default", guess: "pool", compare: [RANK], alike: "looks", limit: 0 } },
+    { label: "pokémon Contexto, alike in battle", params: { secret: "items", dataset: "pokemon", pool: "form:default", guess: "pool", compare: [RANK], alike: "battle", limit: 0 } },
     { label: "Pokédle with its silhouette", params: { secret: "items", dataset: "pokemon", compare: ["type", "gen", "stage", "color", "height", "weight"], clues: ["media:art"], looks: ["silhouette"], limit: 0 } },
   ],
   openings: [

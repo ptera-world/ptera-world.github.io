@@ -3,7 +3,7 @@ import type { DataAttribute, DataValue } from "../../core/types";
 import { formatValue, type Bands, type Feedback } from "../../lib/dataset/compare";
 import { kindOf, type Entry, type Kind } from "./kinds";
 import { ABSENT, ELSEWHERE, RIGHT, markAttributes, markPositions } from "./marks";
-import { LOOKS, POSITIONAL, SOUND_STEPS, spelled, type DataSource, type Look, type Settings } from "./params";
+import { LOOKS, POSITIONAL, RANK, SOUND_STEPS, spelled, type DataSource, type Look, type Settings } from "./params";
 
 /** What a board tells about its answer up front: attribute id → value (sets: one member it has). */
 export type Given = Record<string, string | boolean>;
@@ -74,6 +74,8 @@ export interface Mark {
   counts?: number[];
   attrs?: Feedback[];
   slots?: (number[] | null)[];
+  /** Likeness: the guess's rank among all (1: the answer) and warmth (100: the answer, 0: middling). */
+  rank?: { rank: number; temp: number };
   /** The guess is (one of) the board's answer(s). */
   found: boolean;
 }
@@ -135,6 +137,11 @@ export function markOne(p: WordlePuzzle, k: Kind, guess: Entry, answer: Entry): 
     out.attrs = markAttributes(k.attrs, gv, av, bandsOf(s));
     if (s.slots) out.slots = k.attrs.map((a) => slotMarks(a, gv[a.id] ?? null, av[a.id] ?? null));
   }
+  const l = k.likeness?.(answer);
+  if (l && guess.item) {
+    const c = l.close[l.index.get(guess.item) ?? -1];
+    if (c) out.rank = c;
+  }
   return out;
 }
 
@@ -164,7 +171,7 @@ function lie(p: WordlePuzzle, m: Mark, b: number, row: number): Mark {
   return { ...m, pos };
 }
 
-const keyOf = (m: Mark): string => JSON.stringify([m.pos, m.counts, m.attrs?.map((f) => [f.verdict, f.dir, f.shared]), m.slots]);
+const keyOf = (m: Mark): string => JSON.stringify([m.pos, m.counts, m.attrs?.map((f) => [f.verdict, f.dir, f.shared]), m.slots, m.rank?.rank]);
 
 /** Everything a board shows, worked out from the guesses so far. */
 export interface BoardView {
@@ -310,6 +317,8 @@ export function candidates(data: DataSource, p: WordlePuzzle, st: WordleState, b
   const k = kind(data, p);
   const v = board(data, p, st, b);
   if (v.left) return v.left;
+  // ranks would need every candidate's likeness to everything: too slow to list
+  if (p.s.compare.includes(RANK)) return null;
   const all = k.universe();
   if (!all) return null;
   const found = p.boards.flatMap((o, ob) => (ob !== b ? o.answers.filter((_, i) => board(data, p, st, ob).foundAt[i]! >= 0) : []));

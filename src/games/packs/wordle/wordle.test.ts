@@ -13,7 +13,7 @@ import { redact } from "./clue";
 import { canonical, equationError } from "./equations";
 import type { Entry } from "./kinds";
 import { ABSENT, ELSEWHERE, RIGHT, markCounts, markPositions } from "./marks";
-import { SPELLING, type DataSource, type Settings } from "./params";
+import { RANK, SPELLING, type DataSource, type Settings } from "./params";
 
 const registry = new Registry();
 for (const pack of [wordsPack, pokemonPack, openingsPack]) pack({ ...api, registry });
@@ -332,4 +332,25 @@ test("rounds: each with its own guesses; a miss moves on, or ends a streak", asy
   t = reduce(data, q, t, { type: "pass" });
   expect(isLost(data, q, t)).toBe(true);
   expect(def.score!(q, t)).toMatchObject({ value: 1, label: "streak of 1" });
+});
+
+test("ranked (Contexto): each guess gets its rank; a hint lands halfway to the answer; the answer is #1", async () => {
+  const p = await gen({ secret: "items", dataset: "pokemon", pool: "form:default gen:1", guess: "pool", compare: [RANK], limit: 0 }, "rank");
+  const k = kind(data, p);
+  const l = k.likeness!(p.boards[0]!.answers[0]!)!;
+  expect(l.items.length).toBe(151);
+  let st = init(p);
+  const far = l.items[l.close.findIndex((c) => c.rank === 120)]!;
+  st = play(p, st, { item: far.id });
+  expect(board(data, p, st, 0).marks[0]!.rank).toMatchObject({ rank: 120 });
+  const h = def.hint!(p, st)!;
+  const tip = (h.actions![0] as { entry: Entry }).entry.item!;
+  const r = l.close[l.index.get(tip)!]!.rank;
+  expect(r).toBeLessThanOrEqual(60);
+  expect(r).toBeGreaterThan(1);
+  st = play(p, st, p.boards[0]!.answers[0]!);
+  expect(board(data, p, st, 0).marks[1]!.rank!.rank).toBe(1);
+  expect(isSolved(data, p, st)).toBe(true);
+  expect(shareText(data, p, st, "wordle")).toBe("wordle 2/∞\n🟥\n🟩");
+  expect(() => generate(data, settings({ secret: "items", dataset: "pokemon", compare: [RANK], answer: "dodge" }), createRng("x"))).toThrow(/dodges/);
 });

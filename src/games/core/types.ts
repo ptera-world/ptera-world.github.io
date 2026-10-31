@@ -552,6 +552,11 @@ export interface Dataset<Item extends DataItem = DataItem> {
    * bundled. What kinds exist and what they hold is the dataset's to say.
    */
   media?: Readonly<Record<string, Media<Item>>>;
+  /**
+   * What "alike" can mean, for games that rank items by likeness: attribute id → weight (see
+   * lib/dataset/likeness). The first is the default; without any, the featured attributes weigh evenly.
+   */
+  alike?: readonly { id: string; label: string; weights: Readonly<Record<string, number>> }[];
   /** How games played on it look, so they feel like its world (see DatasetLook). */
   look?: DatasetLook;
   /** Dataset-specific tables beyond per-item attributes (e.g. a type chart). */

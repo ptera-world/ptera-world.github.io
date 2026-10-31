@@ -11,7 +11,7 @@ import {
 } from "./engine";
 import { kindOf, drawAnswers, codeSymbols, type Entry, type Kind } from "./kinds";
 import { ELSEWHERE, RIGHT } from "./marks";
-import { cluesOf, FIRST, LOOKS, makeParams, MARKS, POSITIONAL, SPELLING, spelled, symbolsName, type DataSource, type Look, type Params, type Settings } from "./params";
+import { cluesOf, FIRST, LOOKS, makeParams, MARKS, POSITIONAL, RANK, SPELLING, spelled, symbolsName, type DataSource, type Look, type Params, type Settings } from "./params";
 import { sgtFormat } from "./formats";
 import { presetsFor } from "./presets";
 
@@ -54,6 +54,7 @@ function check(s: Settings): void {
     if (s.distinct && Math.max(s.minLen, s.maxLen) > syms.length) throw new Error(`with no symbol twice, a code can be at most ${syms.length} long`);
   }
   if (s.secret === "items" && !s.compare.length && !s.clues.length && !s.reveals.length) throw new Error("pick something to mark guesses on, something to show the answer by, or something wrong guesses reveal");
+  if (s.compare.includes(RANK) && s.answer === "dodge") throw new Error("an answer that dodges can't rank guesses: pick a fixed answer");
   if (s.clues.length && s.answer === "dodge") throw new Error("an answer that dodges isn't chosen yet, so nothing can show it");
   if (s.clues.some((c) => c.startsWith("media:")) && !s.looks.length) throw new Error("pick at least one way to show a picture");
   if (s.secret === "items" && s.guess === "valid" && s.compare.some((c) => c !== SPELLING)) throw new Error("guesses that aren't the dataset's own can only be marked on spelling");
@@ -251,6 +252,11 @@ export function rules(data: DataSource, p: WordlePuzzle): string[] {
     const m = MARKS.find((x) => x.value === s.marks)!;
     out.push(`${sym} are marked ${m.label.replace(/^each position: /, "one by one: ").replace(/^counted: /, "with a count of ")}${s.marks === "warm" ? ` (near: within ${s.near})` : ""}. ${m.description}.`);
   }
+  if (s.compare.includes(RANK)) {
+    const d = k.data;
+    const prof = d?.alike?.find((x) => x.id === s.alike);
+    out.push(`each guess gets its rank among every ${n.one} that can be guessed: #1 is the answer, #2 the most alike. alike means ${prof ? prof.label : "sharing the main attributes"}. a map puts alike ones near each other; it is only roughly right, the ranks are exact.`);
+  }
   if (k.attrs.length) out.push(`each guess is compared on ${k.attrs.map((a) => a.label).join(", ")}: right, ${s.close.length ? `close (within ${s.within}${s.by === "percent" ? "%" : ""}, on ${s.close.join(", ")}), ` : ""}shares some (lists), or wrong; an arrow says whether the answer's number is higher or lower.${s.slots ? " lists in order are marked slot by slot: right slot, the other slot, or not at all." : ""}`);
   if (s.lies === "one") out.push("one mark in every row is false, except on the row that finds the answer.");
   if (s.hard.length) out.push(`hard mode, checked against ${s.hardRows === "all" ? "every guess so far" : "the guess before"}: ${s.hard.map((r) => ({ keep: "right ones stay right", use: "found symbols are used again", move: "symbols move off places ruled out", exact: "exact counts once known", drop: "absent symbols are dropped", fit: "every guess could be the answer" })[r] ?? r).join("; ")}.`);
@@ -261,6 +267,13 @@ export function rules(data: DataSource, p: WordlePuzzle): string[] {
 }
 
 const SQ = { [RIGHT]: "🟩", [ELSEWHERE]: "🟨", 0: "⬛", [EARLIER]: "🔼", [LATER]: "🔽" } as Record<number, string>;
+/** Likeness bands as fractions of the way down the ranking: the answer, hot (top 3%), warm (top 15%), cold. */
+export function bandOf(rank: number, n: number): "found" | "hot" | "warm" | "cold" {
+  if (rank === 1) return "found";
+  const q = (rank - 1) / Math.max(1, n - 1);
+  return q <= 0.03 ? "hot" : q <= 0.15 ? "warm" : "cold";
+}
+const bandSquare = (rank: number, n: number) => ({ found: "🟩", hot: "🟧", warm: "🟨", cold: "🟥" })[bandOf(rank, n)];
 const keycap = (n: number) => String(n).split("").map((ch) => `${ch}️⃣`).join("");
 
 export function shareText(data: DataSource, p: WordlePuzzle, st: WordleState, name: string): string {
@@ -280,6 +293,7 @@ export function shareText(data: DataSource, p: WordlePuzzle, st: WordleState, na
       ...(m.pos ?? []).map((x) => (s.marks === "warm" && x === NEAR ? "🟧" : SQ[x] ?? "⬛")),
       ...(m.counts ? [m.counts.join("·")] : []),
       ...(m.attrs ?? []).map((f) => (f.verdict === "match" ? "🟩" : f.verdict === "miss" ? "⬛" : "🟨")),
+      ...(m.rank ? [bandSquare(m.rank.rank, kind(data, p).likeness?.(p.boards[0]!.answers[0] ?? {})?.items.length ?? 1)] : []),
     ].join(m.counts && !m.pos ? " " : ""));
     return [head, ...rows].join("\n");
   }
@@ -310,6 +324,19 @@ function hint(data: DataSource, p: WordlePuzzle, st: WordleState) {
       const order = [...p.s.reveals, ...(d.featured ?? []), FIRST].filter((id, i, all) => all.indexOf(id) === i && !shown.includes(id));
       const id = order.find((x) => x === FIRST || (it.values[x] ?? null) !== null);
       if (id) return { message: revealText(d.attributes, it, id), level: 2, focus: { board: c } };
+    }
+  }
+  // ranked: Contexto's hint, something halfway (by rank) between your best guess and the answer
+  if (p.s.compare.includes(RANK)) {
+    const l = k0.likeness?.(p.boards[c]!.answers[0] ?? {});
+    if (l) {
+      const guessed = new Set(guessesOf(p, st, c).map((g) => g.item));
+      const best = Math.min(l.items.length + 1, ...board(data, p, st, c).marks.map((m) => m.rank?.rank ?? Infinity));
+      const want = Math.max(1, Math.floor(best / 2));
+      const byRank = l.close.map((x, i) => [x.rank, i] as const).filter(([, i]) => !guessed.has(l.items[i]!.id)).sort((x, y) => x[0] - y[0]);
+      const below = byRank.filter(([r]) => r <= want && r < best);
+      const pick = below.length ? below[below.length - 1] : byRank.find(([r]) => r >= want);
+      if (pick) { const it = l.items[pick[1]]!; return { message: `try ${it.name}`, actions: [{ type: "guess" as const, entry: { item: it.id } }], level: 2, focus: { board: c } }; }
     }
   }
   if (!st.guesses.length) return null;

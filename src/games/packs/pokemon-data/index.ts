@@ -3,6 +3,7 @@ import { decode, type PokemonDataFile } from "../../lib/pokemon/codec";
 import { mediaUrl } from "../../lib/pokemon/media";
 import { POOL_PRESETS } from "../../lib/pokemon/pool";
 import { typeColor } from "../../lib/pokemon/ui";
+import { ALIKE } from "./alike";
 import { POKEMON_LOOK } from "./look";
 import { offlinePlugin } from "./offline";
 import type { PokemonDataset, PokemonItem } from "../../lib/pokemon/types";
@@ -13,6 +14,18 @@ import raw from "./data.json" with { type: "text" };
  * The pokémon dataset, for any pack to build games on. Sprites and cries are not in it: they are
  * loaded from PokeAPI's repositories when a game shows them (and kept offline once seen).
  */
+/** Each item's evolution family as an attribute, named after the family's first stage (its earliest standard form). */
+function withFamilies(items: PokemonItem[]): PokemonItem[] {
+  const first = new Map<number, PokemonItem>();
+  const stage = (it: PokemonItem) => Number(it.values.stage ?? 9);
+  for (const it of items) {
+    const f = first.get(it.family);
+    const better = !f || (it.form === "default") > (f.form === "default") || ((it.form === "default") === (f.form === "default") && (stage(it) < stage(f) || (stage(it) === stage(f) && Number(it.values.dex) < Number(f.values.dex))));
+    if (better) first.set(it.family, it);
+  }
+  return items.map((it) => ({ ...it, values: { ...it.values, family: first.get(it.family)!.name } }));
+}
+
 export default function pack(games: GamesApi): void {
   const file = JSON.parse(raw as unknown as string) as PokemonDataFile;
   let items: PokemonItem[] | null = null;
@@ -22,18 +35,22 @@ export default function pack(games: GamesApi): void {
     version: file.version,
     credits: file.credits,
     // types in their usual colors (theme tokens --type-fire and so on), for any game showing them
-    attributes: file.attributes.map((a) => (a.id === "type" ? { ...a, values: a.values?.map((v) => ({ ...v, color: typeColor(v.value) })) } : a)),
+    attributes: [
+      ...file.attributes.map((a) => (a.id === "type" ? { ...a, values: a.values?.map((v) => ({ ...v, color: typeColor(v.value) })) } : a)),
+      { id: "family", label: "evolution family", kind: "category", description: "named after its first stage" },
+    ],
     noun: { one: "pokémon", many: "pokémon" },
     spelling: { label: "letters of the name", lengths: { min: 4, max: 8 } },
     featured: ["type", "gen", "stage", "color", "height", "weight"],
     pools: POOL_PRESETS.map((x) => ({ label: x.label, query: x.pool })),
-    items: () => (items ??= decode(file)),
+    items: () => (items ??= withFamilies(decode(file))),
     media: {
       art: { label: "official artwork", type: "image", url: (i) => mediaUrl(i, "art") },
       sprite: { label: "game sprite", type: "image", pixel: true, url: (i) => mediaUrl(i, "sprite") },
       shiny: { label: "shiny sprite", type: "image", pixel: true, url: (i) => mediaUrl(i, "shiny") },
       cry: { label: "cry", type: "audio", mime: 'audio/ogg; codecs="vorbis"', url: (i) => mediaUrl(i, "cry") },
     },
+    alike: ALIKE,
     look: POKEMON_LOOK,
     tables: { typeChart: file.typeChart },
   };

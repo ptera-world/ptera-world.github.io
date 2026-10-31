@@ -1,9 +1,9 @@
-import type { KeyValue } from "../../core/types";
+import type { KeyValue } from "../../../core/types";
 import { embed } from "./mds";
-import type { Scored } from "./logic";
+import type { Space } from "./similarity";
 import { tsne } from "./tsne";
 
-/** Maps kept in storage, newest first; each is ~20 kB for a thousand pokémon. */
+/** Maps kept in storage, newest first; each is ~20 kB for a thousand items. */
 const KEEP = 3;
 const memo = new Map<string, Promise<Float64Array>>();
 
@@ -18,10 +18,10 @@ function pacer(): () => Promise<void> {
 }
 
 /**
- * The pool's map (x, y per item, in [0, 1]): from memory, else from `storage` (computed once per
+ * A pool's map (x, y per item, in [0, 1]): from memory, else from `storage` (computed once per
  * dataset version, pool and weights, then kept), else computed (MDS, refined by t-SNE).
  */
-export function mapFor(sc: Scored, storage: KeyValue): Promise<Float64Array> {
+export function mapFor(sc: { space: Space; mapKey: string; items: readonly unknown[] }, storage: KeyValue): Promise<Float64Array> {
   let m = memo.get(sc.mapKey);
   if (m) return m;
   m = (async () => {
