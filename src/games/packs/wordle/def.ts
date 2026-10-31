@@ -1,17 +1,17 @@
 import type { Rng } from "../../core/rng";
 import { effective } from "../../core/schema";
 import type { Metric, PuzzleDef } from "../../core/types";
-import type { DataAttribute } from "../../core/types";
+import type { DataAttribute, DataItem } from "../../core/types";
 import { formatValue } from "../../lib/dataset/compare";
 import { filter } from "../../lib/dataset/query";
 import { spellingOf } from "../../lib/dataset/spelling";
 import {
-  board, candidates, fitsGiven, hardError, isLost, isOpen, isOver, isSolved, kind, shownAnswers, EARLIER, LATER, NEAR,
+  board, candidates, currentRound, fitsGiven, foundCount, guessesOf, hardError, inRounds, isLost, isOpen, isOver, isSolved, kind, revealsShown, roundOver, shownAnswers, EARLIER, LATER, NEAR,
   type Given, type WordleAction, type WordleBoard, type WordleFocus, type WordleInteraction, type WordlePuzzle, type WordleState,
 } from "./engine";
 import { kindOf, drawAnswers, codeSymbols, type Entry, type Kind } from "./kinds";
 import { ELSEWHERE, RIGHT } from "./marks";
-import { makeParams, MARKS, POSITIONAL, SPELLING, spelled, symbolsName, type DataSource, type Params, type Settings } from "./params";
+import { cluesOf, FIRST, LOOKS, makeParams, MARKS, POSITIONAL, SPELLING, spelled, symbolsName, type DataSource, type Look, type Params, type Settings } from "./params";
 import { sgtFormat } from "./formats";
 import { presetsFor } from "./presets";
 
@@ -53,7 +53,9 @@ function check(s: Settings): void {
     if (s.symbols === "colors" && s.alphabet > 10) throw new Error("there are 10 colors at most");
     if (s.distinct && Math.max(s.minLen, s.maxLen) > syms.length) throw new Error(`with no symbol twice, a code can be at most ${syms.length} long`);
   }
-  if (s.secret === "items" && !s.compare.length) throw new Error("pick at least one thing to mark guesses on");
+  if (s.secret === "items" && !s.compare.length && !s.clues.length && !s.reveals.length) throw new Error("pick something to mark guesses on, something to show the answer by, or something wrong guesses reveal");
+  if (s.clues.length && s.answer === "dodge") throw new Error("an answer that dodges isn't chosen yet, so nothing can show it");
+  if (s.clues.some((c) => c.startsWith("media:")) && !s.looks.length) throw new Error("pick at least one way to show a picture");
   if (s.secret === "items" && s.guess === "valid" && s.compare.some((c) => c !== SPELLING)) throw new Error("guesses that aren't the dataset's own can only be marked on spelling");
 }
 
@@ -63,7 +65,8 @@ export function generate(data: DataSource, given: Settings, rng: Rng): WordlePuz
   const split = s.secret === "items" ? [s.split, s.split2].filter((x, i, all) => x !== "" && all.indexOf(x) === i) : [];
   const per = s.pair ? 2 : 1;
   const dodge = s.answer === "dodge";
-  let length = pickLength(data, s, rng, split.length ? 1 : s.boards * per);
+  const streak = s.open === "rounds" && s.streak;
+  let length = pickLength(data, s, rng, split.length || streak ? 1 : s.boards * per);
   const key = {};
   let k: Kind = kindOf(data, s, length, key);
   let boards: WordleBoard[];
@@ -111,9 +114,21 @@ export function generate(data: DataSource, given: Settings, rng: Rng): WordlePuz
       boards.push({ answers: pair });
     }
   } else {
-    boards = drawAnswers(k, s, length, rng, s.boards).map((x) => ({ answers: [x.entry], ...(x.target !== undefined ? { target: x.target } : {}) }));
+    const unshown = (e: Entry) => !!s.clues.length && !cluesFor(k, s, e).length;
+    // a streak goes on until you miss, so it has every answer there is, up to the board count
+    const n = streak ? Math.min(s.boards, (k.universe() ?? []).filter((e) => !unshown(e)).length || s.boards) : s.boards;
+    boards = drawAnswers(k, s, length, rng, n, unshown).map((x) => ({ answers: [x.entry], ...(x.target !== undefined ? { target: x.target } : {}) }));
   }
-  if (s.limit > 0 && s.goal === "find" && s.limit < boards.length + s.starters) throw new Error(`${boards.length} boards need at least ${boards.length + s.starters} guesses`);
+  if (s.clues.length) {
+    for (const bd of boards) {
+      const ids = cluesFor(k, s, bd.answers[0]!);
+      if (!ids.length) throw new Error("an answer has none of the things picked to show it by");
+      const id = rng.pick(ids);
+      const picture = k.data?.media?.[id.slice(6)]?.type === "image";
+      bd.clue = { id, ...(picture ? { look: rng.pick(s.looks) as Look } : {}), spot: Math.floor(rng.next() * 1000) / 1000 };
+    }
+  }
+  if (s.limit > 0 && s.goal === "find" && s.open !== "rounds" && s.limit < boards.length + s.starters) throw new Error(`${boards.length} boards need at least ${boards.length + s.starters} guesses`);
   // guesses filled in at random: valid guesses that aren't an answer
   const starters: Entry[] = [];
   const isAnswer = (e: Entry) => boards.some((b) => b.answers.some((a) => k.same(e, a)));
@@ -129,13 +144,29 @@ export function generate(data: DataSource, given: Settings, rng: Rng): WordlePuz
   return { s: { ...s }, length, split, boards, starters, seed: String(rng.int(2 ** 31)) };
 }
 
+/** The clues (of those picked) an answer can be shown by: media it has, text it has. */
+function cluesFor(k: Kind, s: Settings, e: Entry): string[] {
+  const it = e.item ? k.itemOf(e.item) : undefined;
+  const d = k.data;
+  if (!it || !d) return [];
+  const have = new Set(cluesOf(d).map((c) => c.id));
+  return s.clues.filter((id) => {
+    if (!have.has(id)) return false;
+    if (id.startsWith("media:")) return !!d.media?.[id.slice(6)]?.url(it);
+    const v = it.values[id.slice(5)];
+    return typeof v === "string" && v.trim() !== "";
+  });
+}
+
 /** Why a guess can't be handed in, or null. */
 export function guessError(data: DataSource, p: WordlePuzzle, st: WordleState, e: Entry, b: number): string | null {
   const k = kind(data, p);
   const why = k.invalid(e, p.boards[b]?.target ?? p.boards[0]?.target);
   if (why) return why;
-  if (st.guesses.some((g) => k.label(g) === k.label(e))) return "already guessed";
-  return hardError(data, p, st, Math.min(b, p.boards.length - 1), e);
+  const on = inRounds(p) ? currentRound(p, st) : Math.min(b, p.boards.length - 1);
+  if (inRounds(p) && roundOver(data, p, st, on)) return "this round is over";
+  if (guessesOf(p, st, on).some((g) => k.label(g) === k.label(e))) return "already guessed";
+  return hardError(data, p, st, on, e);
 }
 
 export function reduce(data: DataSource, p: WordlePuzzle, st: WordleState, a: WordleAction & { board?: number }): WordleState {
@@ -167,7 +198,17 @@ export function reduce(data: DataSource, p: WordlePuzzle, st: WordleState, a: Wo
     case "submit": {
       const e: Entry = { seq: st.row.slice() };
       if (guessError(data, p, st, e, a.board ?? 0)) return st;
-      return { guesses: [...st.guesses, e], row: st.row.map(() => "") };
+      return { ...st, guesses: [...st.guesses, e], row: st.row.map(() => "") };
+    }
+    case "next": {
+      const c = currentRound(p, st);
+      if (!inRounds(p) || !roundOver(data, p, st, c)) return st;
+      return { ...st, starts: [...(st.starts ?? [0]), st.guesses.length], row: st.row.map(() => "") };
+    }
+    case "pass": {
+      const c = currentRound(p, st);
+      if (!inRounds(p) || roundOver(data, p, st, c)) return st;
+      return { ...st, passed: [...(st.passed ?? []), c] };
     }
   }
   return st;
@@ -191,13 +232,21 @@ export function rules(data: DataSource, p: WordlePuzzle): string[] {
   const many = p.boards.length > 1;
   const sym = symbolsName(s, data);
   const out: string[] = [];
-  out.push(many ? `${p.boards.length} ${n.many} are hidden, one on each board${s.pair ? " (two per board)" : ""}.` : s.pair ? `two ${n.many} are hidden; they share no ${sym}.` : `${an(n.one)} is hidden.`);
+  const rounds = inRounds(p);
+  if (rounds) out.push(s.streak ? `find ${n.many} one after another until you miss one; your score is how many you found.` : `find ${p.boards.length} ${n.many}, one after another; missing one moves you on.`);
+  else out.push(many ? `${p.boards.length} ${n.many} are hidden, one on each board${s.pair ? " (two per board)" : ""}.` : s.pair ? `two ${n.many} are hidden; they share no ${sym}.` : `${an(n.one)} is hidden.`);
+  if (s.clues.length) {
+    const labels = cluesOf(k.data).filter((c) => s.clues.includes(c.id)).map((c) => (c.type === "image" ? `its ${c.label} (${s.looks.map((l) => LOOKS.find((x) => x.value === l)?.label ?? l).join(", or ")})` : `its ${c.label}${c.type === "text" ? ", with every name blanked out" : ""}`));
+    out.push(`you see ${labels.length > 1 ? `one of: ${labels.join("; ")}` : labels[0]}.${s.ease ? " every wrong guess shows more of it." : ""}`);
+  }
+  if (s.reveals.length) out.push(`wrong guesses also reveal, one at a time: ${s.reveals.map((id) => (id === FIRST ? "the first letter" : k.data?.attributes.find((a) => a.id === id)?.label ?? id)).join(", ")}.`);
   if (s.answer === "dodge") out.push(`it isn't chosen yet: after each guess it is whichever ${n.one} keeps the most possibilities open, so every guess is marked as unhelpfully as the marks so far allow.`);
   if (p.split.length) out.push(`each board says what its ${n.one}'s ${p.split.map((id) => k.data?.attributes.find((a) => a.id === id)?.label ?? id).join(" and ")} is.`);
   if (p.boards[0]?.target !== undefined) out.push(`it is a calculation of ${p.length} symbols that comes to the number shown.`);
   else if (spelled(s)) out.push(`it has ${p.length} ${sym}.${s.reveal ? ` the first is shown.` : ""}`);
   const valid = s.secret === "items" && s.guess === "valid" ? `any ${p.length} ${sym} the dataset accepts, not only its ${n.many}` : null;
-  out.push(`each guess must be ${k.named ? `one of the ${n.many} in the list` : s.secret === "equations" ? "a correct calculation" : valid ?? `${p.length} ${sym}${s.secret === "codes" ? (s.distinct ? ", no symbol twice" : "") : ` that spell ${s.guess === "pool" ? "one that can be hidden" : "one in the list"}`}`}${many ? (s.open === "sequence" ? "; each counts on every open board, and the next board opens (with your guesses so far marked on it) once one is found" : "; each counts on every board") : ""}.`);
+  if (rounds) out.push("you can give up on a round; it counts as missed.");
+  out.push(`each guess must be ${k.named ? `one of the ${n.many} in the list` : s.secret === "equations" ? "a correct calculation" : valid ?? `${p.length} ${sym}${s.secret === "codes" ? (s.distinct ? ", no symbol twice" : "") : ` that spell ${s.guess === "pool" ? "one that can be hidden" : "one in the list"}`}`}${many && !rounds ? (s.open === "sequence" ? "; each counts on every open board, and the next board opens (with your guesses so far marked on it) once one is found" : "; each counts on every board") : ""}.`);
   if (spelled(s)) {
     const m = MARKS.find((x) => x.value === s.marks)!;
     out.push(`${sym} are marked ${m.label.replace(/^each position: /, "one by one: ").replace(/^counted: /, "with a count of ")}${s.marks === "warm" ? ` (near: within ${s.near})` : ""}. ${m.description}.`);
@@ -207,7 +256,7 @@ export function rules(data: DataSource, p: WordlePuzzle): string[] {
   if (s.hard.length) out.push(`hard mode, checked against ${s.hardRows === "all" ? "every guess so far" : "the guess before"}: ${s.hard.map((r) => ({ keep: "right ones stay right", use: "found symbols are used again", move: "symbols move off places ruled out", exact: "exact counts once known", drop: "absent symbols are dropped", fit: "every guess could be the answer" })[r] ?? r).join("; ")}.`);
   if (p.starters.length) out.push(`the first ${plural(p.starters.length, "guess is", "guesses are")} filled in at random.`);
   if (s.goal === "avoid") out.push(s.limit ? `don't guess it: survive ${s.limit} guesses.` : "don't guess it: the game ends when you do.");
-  else out.push(s.limit ? `you have ${s.limit} guesses${many ? " for all the boards together" : ""}${s.overtime ? "; after that you can keep going, but it counts as lost" : ""}.` : "there is no guess limit.");
+  else out.push(s.limit ? `you have ${s.limit} guesses${rounds ? " for each round" : many ? " for all the boards together" : ""}${s.overtime ? "; after that you can keep going, but it counts as lost" : ""}.` : "there is no guess limit.");
   return out;
 }
 
@@ -217,6 +266,13 @@ const keycap = (n: number) => String(n).split("").map((ch) => `${ch}️⃣`).joi
 export function shareText(data: DataSource, p: WordlePuzzle, st: WordleState, name: string): string {
   const s = p.s;
   const solved = isSolved(data, p, st);
+  if (inRounds(p)) {
+    const found = foundCount(data, p, st);
+    const marks = p.boards.map((_, b) => b).filter((b) => b <= currentRound(p, st) && roundOver(data, p, st, b)).map((b) => { const v = board(data, p, st, b); return v.solvedAt < 0 ? "🟥" : v.solvedAt === 0 ? "🟩" : "🟨"; });
+    const lines: string[] = [];
+    for (let i = 0; i < marks.length; i += 10) lines.push(marks.slice(i, i + 10).join(""));
+    return [`${name} ${s.streak ? `streak ${found}` : `${found}/${p.boards.length}`}`, ...lines].join("\n");
+  }
   const head = s.goal === "avoid" ? `${name} survived ${survived(data, p, st)}` : `${name} ${solved ? st.guesses.length : "X"}/${s.limit || "∞"}${s.hard.length ? "*" : ""}`;
   if (p.boards.length === 1) {
     const v = board(data, p, st, 0);
@@ -242,7 +298,21 @@ export function survived(data: DataSource, p: WordlePuzzle, st: WordleState): nu
 
 /** When nothing better applies: how many answers still fit the board with the fewest. */
 function hint(data: DataSource, p: WordlePuzzle, st: WordleState) {
-  if (isOver(data, p, st) || !st.guesses.length) return null;
+  if (isOver(data, p, st)) return null;
+  // shown by a clue: one more fact about the answer, past the ones its wrong guesses revealed
+  const k0 = kind(data, p);
+  const c = currentRound(p, st);
+  if (p.s.clues.length || !p.s.compare.length) {
+    const it = p.boards[c]!.answers[0]?.item ? k0.itemOf(p.boards[c]!.answers[0]!.item!) : undefined;
+    const shown = revealsShown(data, p, st, c);
+    const d = k0.data;
+    if (it && d && !(inRounds(p) && roundOver(data, p, st, c))) {
+      const order = [...p.s.reveals, ...(d.featured ?? []), FIRST].filter((id, i, all) => all.indexOf(id) === i && !shown.includes(id));
+      const id = order.find((x) => x === FIRST || (it.values[x] ?? null) !== null);
+      if (id) return { message: revealText(d.attributes, it, id), level: 2, focus: { board: c } };
+    }
+  }
+  if (!st.guesses.length) return null;
   const n = nounOf(data, p.s);
   const live = p.boards.map((_, b) => b).filter((b) => isOpen(data, p, st, b) && board(data, p, st, b).solvedAt < 0);
   const counted = live.map((b) => ({ b, c: candidates(data, p, st, b) })).filter((x): x is { b: number; c: Entry[] } => !!x.c).sort((x, y) => x.c.length - y.c.length || x.b - y.b);
@@ -253,6 +323,17 @@ function hint(data: DataSource, p: WordlePuzzle, st: WordleState) {
   const head = `${plural(first.c.length, `${n.one} fits`, `${n.many} fit`)} every mark${where}`;
   const focus: WordleFocus = { board: first.b, rows: st.guesses.map((_, i) => i) };
   return { message: head, focus: { board: first.b }, level: 1, more: { message: first.c.length <= 6 ? `${head}: ${first.c.map((e) => k.label(e)).join(", ")}` : head, focus, level: 2 } };
+}
+
+/** A fact about an item, as revealed ("gen 1", "fire type", "starts with B"). */
+export function revealText(attrs: readonly DataAttribute[], it: DataItem, id: string): string {
+  if (id === FIRST) return `starts with ${it.name.charAt(0).toUpperCase()}`;
+  const a = attrs.find((x) => x.id === id);
+  if (!a) return "";
+  const v = it.values[id] ?? null;
+  if (a.kind === "text") return String(v ?? "");
+  if (a.kind === "bool") return `${v ? "" : "not "}${a.label}`;
+  return `${a.label}: ${formatValue(a, v)}`;
 }
 
 /** Per attribute: on which guess it was first marked right, averaged over the boards found. */
@@ -295,7 +376,7 @@ export function wordleDef(data: DataSource): PuzzleDef<WordlePuzzle, WordleState
     irreversible: true,
     generate: (v, rng) => generate(data, v, rng),
     formats: [sgtFormat(params)],
-    init: (p) => ({ guesses: p.starters.slice(), row: Array.from({ length: kind(data, p).named ? 0 : p.length }, () => "") }),
+    init: (p) => ({ guesses: p.starters.slice(), row: Array.from({ length: kind(data, p).named ? 0 : p.length }, () => ""), ...(inRounds(p) ? { starts: [0], passed: [] } : {}) }),
     initInteraction: () => ({ board: 0 }),
     reduce: (p, s, a) => reduce(data, p, s, a),
     isSolved: (p, s) => isSolved(data, p, s),
@@ -303,6 +384,15 @@ export function wordleDef(data: DataSource): PuzzleDef<WordlePuzzle, WordleState
     isRetraction: (a) => a.type === "back",
     solve: (p, s) => {
       if (p.s.goal === "avoid" || p.s.answer === "dodge") return null;
+      if (inRounds(p)) {
+        const moves: WordleAction[] = [];
+        for (let b = currentRound(p, s); b < p.boards.length; b++) {
+          if (b === currentRound(p, s) && roundOver(data, p, s, b)) { if (board(data, p, s, b).solvedAt < 0) return null; }
+          else moves.push({ type: "guess", entry: p.boards[b]!.answers[0]! });
+          if (b < p.boards.length - 1) moves.push({ type: "next" });
+        }
+        return { moves };
+      }
       const left = p.boards.flatMap((b, i) => b.answers.filter((_, j) => board(data, p, s, i).foundAt[j]! < 0));
       if (p.s.limit > 0 && !p.s.overtime && s.guesses.length + left.length > p.s.limit) return null;
       return { moves: left.map((entry) => ({ type: "guess" as const, entry })) };
@@ -316,6 +406,8 @@ export function wordleDef(data: DataSource): PuzzleDef<WordlePuzzle, WordleState
         case "back": return "delete";
         case "row": return `type ${a.row.map((c) => c || "_").join(" ")}`;
         case "submit": { const g = after.guesses.at(-1); return g ? `guess ${k.label(g)}` : "guess"; }
+        case "next": return `on to round ${currentRound(p, after) + 1}`;
+        case "pass": return "give up on this round";
       }
     },
     describe: (p) => {
@@ -326,6 +418,7 @@ export function wordleDef(data: DataSource): PuzzleDef<WordlePuzzle, WordleState
     },
     rules: (p) => rules(data, p),
     score: (p, s) => {
+      if (inRounds(p)) { const n = foundCount(data, p, s); return { value: n, label: p.s.streak ? `streak of ${n}` : `${n} of ${p.boards.length} found`, better: "higher" }; }
       if (p.s.goal === "avoid") { const n = survived(data, p, s); return { value: n, label: plural(n, "guess survived", "guesses survived"), better: "higher" }; }
       return isSolved(data, p, s) ? { value: s.guesses.length, label: plural(s.guesses.length, "guess", "guesses"), better: "lower" } : null;
     },

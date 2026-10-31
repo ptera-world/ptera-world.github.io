@@ -28,10 +28,10 @@ export default function pack(games: GamesApi): void {
     pools: POOL_PRESETS.map((x) => ({ label: x.label, query: x.pool })),
     items: () => (items ??= decode(file)),
     media: {
-      sprite: (i) => mediaUrl(i, "sprite"),
-      shiny: (i) => mediaUrl(i, "shiny"),
-      art: (i) => mediaUrl(i, "art"),
-      cry: (i) => mediaUrl(i, "cry"),
+      art: { label: "official artwork", type: "image", url: (i) => mediaUrl(i, "art") },
+      sprite: { label: "game sprite", type: "image", pixel: true, url: (i) => mediaUrl(i, "sprite") },
+      shiny: { label: "shiny sprite", type: "image", pixel: true, url: (i) => mediaUrl(i, "shiny") },
+      cry: { label: "cry", type: "audio", mime: 'audio/ogg; codecs="vorbis"', url: (i) => mediaUrl(i, "cry") },
     },
     tables: { typeChart: file.typeChart },
   };

@@ -549,11 +549,24 @@ export interface Dataset<Item extends DataItem = DataItem> {
   items(): readonly Item[];
   /**
    * Media for an item by kind (e.g. "sprite", "shiny", "cry"), as URLs loaded when shown and never
-   * bundled. null: none for this item. What kinds exist and what they hold is the dataset's to say.
+   * bundled. What kinds exist and what they hold is the dataset's to say.
    */
-  media?: Readonly<Record<string, (item: Item) => string | null>>;
+  media?: Readonly<Record<string, Media<Item>>>;
   /** Dataset-specific tables beyond per-item attributes (e.g. a type chart). */
   tables?: Readonly<Record<string, unknown>>;
+}
+
+/** See Dataset.media. */
+export interface Media<Item extends DataItem = DataItem> {
+  /** What it is, for players ("official artwork", "cry"). */
+  label: string;
+  type: "image" | "audio";
+  /** Its format, for a game to ask the browser whether it can play it (audio/ogg; codecs="vorbis"). */
+  mime?: string;
+  /** Pixel art: scaled up without smoothing. */
+  pixel?: boolean;
+  /** Its URL for an item, or null when the item has none. */
+  url(item: Item): string | null;
 }
 
 /** See Dataset.spelling. */

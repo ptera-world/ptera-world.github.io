@@ -61,6 +61,20 @@ const EQUATIONS: readonly Preset<Params>[] = [
   { label: "Killer Mathler", params: { secret: "equations", form: "target", minLen: 6, maxLen: 6, limit: 6, marks: "killer" } },
 ];
 
+/** Who's that pokémon: shown by a clue, marked only right or wrong; each over the defaults in ON.pokemon. */
+const WHOS_THAT: readonly { label: string; params: Record<string, unknown> }[] = [
+  { label: "who's that pokémon? (silhouette)", params: {} },
+  { label: "who's that pokémon? run of 10, gen 1", params: { open: "rounds", boards: 10, pool: "form:default gen:1" } },
+  { label: "who's that pokémon? blurred", params: { looks: ["blur"] } },
+  { label: "who's that pokémon? zoomed in", params: { looks: ["zoom"] } },
+  { label: "who's that pokémon? through a circle", params: { looks: ["circle"] } },
+  { label: "who's that pokémon? a few tiles", params: { looks: ["tiles"] } },
+  { label: "who's that pokémon? by its cry", params: { clues: ["media:cry"] } },
+  { label: "who's that pokémon? by its dex entry", params: { clues: ["text:entry"], reveals: ["gen", "type"] } },
+  { label: "who's that pokémon? mixed run of 10", params: { open: "rounds", boards: 10, clues: ["media:art", "media:cry", "text:entry"], looks: ["silhouette", "blur", "zoom", "circle", "tiles"] } },
+  { label: "who's that pokémon? silhouette streak", params: { open: "rounds", streak: true, boards: 1024, limit: 1, ease: false, reveals: [] } },
+];
+
 /** Setups on one dataset, by its id: offered while it's loaded. */
 const ON: Record<string, readonly Preset<Params>[]> = {
   pokemon: [
@@ -69,6 +83,8 @@ const ON: Record<string, readonly Preset<Params>[]> = {
     { label: "pokémon names, Wordle's way", params: { secret: "items", dataset: "pokemon", compare: [SPELLING], minLen: 4, maxLen: 8, limit: 6 } },
     { label: "pokémon: one board per type", params: { secret: "items", dataset: "pokemon", compare: ["type", "gen", "stage", "color", "height", "weight"], split: "type", limit: 0 } },
     { label: "pokémon: generation × type", params: { secret: "items", dataset: "pokemon", pool: "form:default gen:1-3", compare: ["type", "gen", "stage", "color", "height", "weight"], split: "gen", split2: "type", limit: 0 } },
+    ...WHOS_THAT.map((x) => ({ label: x.label, params: { secret: "items", dataset: "pokemon", compare: [], clues: ["media:art"], reveals: ["gen", "type", "genus"], limit: 5, ...x.params } })),
+    { label: "Pokédle with its silhouette", params: { secret: "items", dataset: "pokemon", compare: ["type", "gen", "stage", "color", "height", "weight"], clues: ["media:art"], looks: ["silhouette"], limit: 0 } },
   ],
   openings: [
     { label: "chess openings: guess the moves", params: { secret: "items", dataset: "openings", compare: [SPELLING], guess: "valid", limit: 6 } },

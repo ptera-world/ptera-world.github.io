@@ -1,5 +1,5 @@
 import { defineSchema, type FieldOption, type Values } from "../../core/schema";
-import type { Dataset } from "../../core/types";
+import type { Dataset, Media } from "../../core/types";
 import { filter } from "../../lib/dataset/query";
 import { spellingLabel } from "../../lib/dataset/spelling";
 import { EXTRAS, OPERATORS } from "./equations";
@@ -40,6 +40,49 @@ export const HARD_RULES = [
 ] as const;
 
 const datasetOf = (data: DataSource, v: V): Dataset | undefined => (v.secret === "items" ? data.get(String(v.dataset)) : undefined);
+
+/** Reveals: the answer's first symbol (no attribute id can be it). */
+export const FIRST = "*first";
+
+/** Ways a picture clue is shown; each wrong guess (when easing) moves one step. */
+export const LOOKS = [
+  { value: "silhouette", label: "a silhouette", description: "dark, lighter each step", steps: 4 },
+  { value: "blur", label: "blurred", description: "sharper each step", steps: 5 },
+  { value: "zoom", label: "zoomed in on a part", description: "wider each step (LoLdle's splash art)", steps: 5 },
+  { value: "circle", label: "through a circle", description: "a round window on a part, larger each step", steps: 5 },
+  { value: "tiles", label: "a few tiles of it", description: "the rest covered; more tiles each step", steps: 5 },
+  { value: "whole", label: "as it is", description: "the whole picture", steps: 0 },
+] as const;
+export type Look = (typeof LOOKS)[number]["value"];
+
+/** Steps a sound clue eases through: the share of it that plays. */
+export const SOUND_STEPS = [0.25, 0.4, 0.6, 0.8, 1];
+
+/** True if the browser says it can play this media, or can't be asked (tests). */
+export function playable(m: Media): boolean {
+  if (m.type !== "audio" || !m.mime) return true;
+  try {
+    return typeof Audio === "undefined" || new Audio().canPlayType(m.mime) !== "";
+  } catch {
+    return true;
+  }
+}
+
+/** What an answer can be shown by: its pictures and sounds (that play here), and its text attributes. */
+export interface ClueKind {
+  id: string;
+  label: string;
+  type: "image" | "audio" | "text";
+}
+export function cluesOf(d: Dataset | undefined): ClueKind[] {
+  if (!d) return [];
+  return [
+    ...Object.entries(d.media ?? {}).filter(([, m]) => playable(m)).map(([id, m]) => ({ id: `media:${id}`, label: m.label, type: m.type })),
+    ...d.attributes.filter((a) => a.kind === "text").map((a) => ({ id: `text:${a.id}`, label: a.label, type: "text" as const })),
+  ];
+}
+const hasPicture = (data: DataSource, v: V): boolean =>
+  Array.isArray(v.clues) && cluesOf(datasetOf(data, v)).some((c) => c.type === "image" && (v.clues as string[]).includes(c.id));
 const comparable = (d: Dataset | undefined) => (d?.attributes ?? []).filter((a) => a.kind !== "text");
 /** Spelling is compared: always for codes and equations, by choice for dataset items. */
 export const spelled = (v: V): boolean => v.secret !== "items" || (Array.isArray(v.compare) && v.compare.includes(SPELLING));
@@ -103,6 +146,25 @@ export function makeParams(data: DataSource) {
           ...comparable(d).map((a) => ({ value: a.id, label: a.label, ...(a.description ? { description: a.description } : {}) })),
         ];
       },
+    },
+    clues: {
+      type: "set", label: "the answer is shown by", default: [], when: (v) => v.secret === "items",
+      options: (v): FieldOption[] => cluesOf(datasetOf(data, v)).map((c) => ({ value: c.id, label: c.label })),
+      description: "each answer is shown by one of these, picked at random; nothing: shown by nothing (who's that pokémon, Pokédle's silhouette, LoLdle's splash art)",
+    },
+    looks: {
+      type: "set", label: "a picture is shown", default: ["silhouette"], when: (v) => hasPicture(data, v),
+      options: LOOKS.map(({ value, label, description }) => ({ value, label, description })),
+      description: "each picture is shown one of these ways, picked at random",
+    },
+    ease: { type: "bool", label: "each wrong guess shows more of it", default: true, when: (v) => Array.isArray(v.clues) && v.clues.length > 0, description: "less dark, less blur, a wider view, a longer clip" },
+    reveals: {
+      type: "set", label: "wrong guesses also reveal", default: [], when: (v) => v.secret === "items",
+      options: (v): FieldOption[] => [
+        ...(datasetOf(data, v)?.attributes ?? []).map((a) => ({ value: a.id, label: a.label })),
+        { value: FIRST, label: "the first letter" },
+      ],
+      description: "one more after each wrong guess, in this order (Pokédle's and LoLdle's clues)",
     },
     symbols: {
       type: "enum", label: "made of", default: "colors", when: (v) => v.secret === "codes",
@@ -168,22 +230,30 @@ export function makeParams(data: DataSource) {
     },
     open: {
       type: "enum", label: "boards open", default: "together", when: (v) => Number(v.boards) > 1 || v.split !== "",
-      options: [{ value: "together", label: "all at once" }, { value: "sequence", label: "one at a time", description: "the next opens when one is found, with every guess so far marked on it" }],
+      options: [
+        { value: "together", label: "all at once" },
+        { value: "sequence", label: "one at a time, sharing the guesses", description: "the next opens when one is found, with every guess so far marked on it (Quordle sequence)" },
+        { value: "rounds", label: "one at a time, each with its own guesses", description: "a run of rounds: found or missed, on to the next (who's that pokémon runs)" },
+      ],
     },
+    streak: { type: "bool", label: "a missed round ends the game", default: false, when: (v) => v.open === "rounds", description: "a streak: score is how many you found" },
     pair: {
       type: "bool", label: "two answers per board", default: false, when: (v) => spelled(v) && POSITIONAL.has(String(v.marks)),
       description: "sharing no symbols; each mark is the better of the two; find both (Xordle)",
     },
     limit: {
       type: "int", label: "guesses (0: no limit)", min: 0, max: 5000,
+      description: "for all the boards together; with rounds, for each round",
       default: (v) => {
         const n = Number(v.boards) || 1;
         if (v.secret === "codes") return 10;
+        if (v.secret === "items" && Array.isArray(v.compare) && !v.compare.length) return 5;
+        if (v.open === "rounds") return 6;
         if (v.secret === "items" && !spelled(v)) return 0;
         return n + 5;
       },
     },
-    overtime: { type: "bool", label: "keep guessing after the last guess", default: false, when: (v) => Number(v.limit) > 0, description: "finish the boards anyway; it still counts as lost" },
+    overtime: { type: "bool", label: "keep guessing after the last guess", default: false, when: (v) => Number(v.limit) > 0 && v.open !== "rounds", description: "finish the boards anyway; it still counts as lost" },
     starters: { type: "int", label: "guesses filled in at random to start", min: 0, max: 20, default: 0, description: "they count toward the limit (Quordle's rescue, Duotrigordle's jumble)" },
     lies: {
       type: "enum", label: "false marks", default: "none", when: (v) => spelled(v) && POSITIONAL.has(String(v.marks)) && v.answer !== "dodge",

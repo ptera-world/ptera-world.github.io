@@ -3,14 +3,15 @@ import { clear, h, style } from "../../core/dom";
 import type { CommandDef, DataAttribute, DataItem, DataValue, Dataset, PuzzleRef, View } from "../../core/types";
 import { formatValue, type Feedback } from "../../lib/dataset/compare";
 import { VERDICT_CSS, arrow, nameEntry, verdictClass } from "../../lib/dataset/ui";
-import { givenLabel, guessError } from "./def";
+import { CLUE_CSS, pictureClue, soundClue, textClue, type PictureClue } from "./clue";
+import { givenLabel, guessError, revealText } from "./def";
 import {
-  board, isOpen, isOver, kind, shownAnswers, EARLIER, LATER, NEAR,
+  board, currentRound, easeLevel, foundCount, guessesOf, inRounds, isOpen, isOver, kind, revealsShown, roundOver, shownAnswers, EARLIER, LATER, NEAR,
   type Mark, type WordleAction, type WordleFocus, type WordleInteraction, type WordlePuzzle, type WordleState,
 } from "./engine";
 import type { Entry, Kind } from "./kinds";
 import { ABSENT, BLANK, ELSEWHERE, RIGHT } from "./marks";
-import { POSITIONAL, spelled, symbolsName, type DataSource } from "./params";
+import { POSITIONAL, spelled, symbolsName, type DataSource, type Look } from "./params";
 
 const FLIP_MS = 300, STAGGER_MS = 90;
 /** Gap between tiles, and between boards. */
@@ -88,6 +89,9 @@ const BINDINGS = {
   "wordle.next-board": { label: "next board", category: "wordle", keys: ["PageDown", "alt+ArrowRight"] },
   "wordle.prev-board": { label: "previous board", category: "wordle", keys: ["PageUp", "alt+ArrowLeft"] },
   "wordle.name": { label: "type a guess", category: "wordle", keys: ["slash"], description: "move to the name box", hidden: true },
+  "wordle.next": { label: "next round", category: "wordle", keys: ["Enter"], description: "after a round is found or missed" },
+  "wordle.pass": { label: "give up on this round", category: "wordle", description: "show the answer (counts as missed)" },
+  "wordle.play": { label: "play the sound", category: "wordle", keys: ["shift+Enter"] },
 } satisfies BindingSchema;
 
 declare module "../../core/commands" {
@@ -147,9 +151,11 @@ function legendFor(data: DataSource, p: WordlePuzzle): { sample: string; meaning
   return out;
 }
 
-/** A dataset item's picture, if its dataset has one. */
+/** A dataset item's small picture, if its dataset has one (its first pixel-art image, else its first image). */
 function picture(d: Dataset | undefined, it: DataItem | undefined): HTMLElement | null {
-  const url = it && d?.media?.sprite?.(it);
+  const ms = Object.values(d?.media ?? {}).filter((m) => m.type === "image");
+  const m = ms.find((x) => x.pixel) ?? ms[0];
+  const url = it && m?.url(it);
   return url ? h("img", { src: url, crossorigin: "anonymous", alt: "", draggable: "false" }) : null;
 }
 
@@ -195,7 +201,7 @@ export function wordleView(data: DataSource, puzzle: PuzzleRef): View<WordlePuzz
     legend: (p) => legendFor(data, p),
     mount(root, { session }) {
       style("dataset-verdicts", VERDICT_CSS);
-      style("wordle", CSS);
+      style("wordle", CSS + CLUE_CSS);
       const p = session.puzzle;
       const k: Kind = kind(data, p);
       const s = p.s;
@@ -208,16 +214,23 @@ export function wordleView(data: DataSource, puzzle: PuzzleRef): View<WordlePuzz
       const target = p.boards[0]?.target;
       const overview = p.boards.length > OVERVIEW;
       const showsCounts = spell && !POSITIONAL.has(s.marks);
+      const rounds = inRounds(p);
+      const pictured = p.boards.some((b) => b.clue?.look);
+      const cur = () => currentRound(p, session.state);
+      const roundDone = () => rounds && roundOver(data, p, session.state, cur());
 
       const status = h("span", { class: "wd-status", role: "status", "aria-live": "polite" });
       const entry = k.named ? nameEntry<DataItem>({
         items: () => k.named!,
         pick: (it) => submit({ item: it.id }),
-        used: (it) => session.state.guesses.some((g) => g.item === it.id),
-        icon: (it) => picture(d, it),
+        used: (it) => guessesOf(p, session.state, rounds ? cur() : 0).some((g) => g.item === it.id),
+        // a picture by each name would give a picture clue away
+        icon: (it) => (pictured ? null : picture(d, it)),
         placeholder: `guess ${d?.noun ? `a ${d.noun.one}` : "one"}`,
       }) : null;
-      const top = h("div", { class: "wd-top" }, target !== undefined ? h("span", { class: "wd-target", title: "the number to reach" }, `= ${target}`) : null, entry?.el ?? null, status);
+      const nextBtn = h("button", { type: "button", class: "primary", "data-command": "wordle.next", onclick: () => session.dispatch({ type: "next" }) }, "next round");
+      const passBtn = h("button", { type: "button", "data-command": "wordle.pass", onclick: () => session.dispatch({ type: "pass" }) }, "give up");
+      const top = h("div", { class: "wd-top" }, target !== undefined ? h("span", { class: "wd-target", title: "the number to reach" }, `= ${target}`) : null, entry?.el ?? null, rounds ? passBtn : null, rounds ? nextBtn : null, status);
       const over = overview ? h("div", { class: "wd-over", role: "group", "aria-label": "boards, closest to found first" }) : null;
       const boardsEl = h("div", { class: "wd-boards" });
       const kb = typed ? h("div", { class: `wd-kb${moves ? " moves" : ""}` }) : null;
@@ -247,6 +260,7 @@ export function wordleView(data: DataSource, puzzle: PuzzleRef): View<WordlePuzz
       const press = (key: string) => {
         if (session.finished || isOver(data, p, session.state)) return;
         message = null;
+        if (key === "Enter" && roundDone()) { session.dispatch({ type: "next" }); render(); return; }
         if (key === "Enter") {
           const row = session.state.row;
           if (row.some((c) => c === "")) { message = { text: "not enough", err: true }; render(); return; }
@@ -290,10 +304,45 @@ export function wordleView(data: DataSource, puzzle: PuzzleRef): View<WordlePuzz
       /** Rows each board shows: every guess allowed when they fit (Wordle's empty rows), else the guesses so far and the one being typed. */
       const rowsPerBoard = (full = !compact): number => {
         const st = session.state;
-        if (k.attrs.length || !spell) return st.guesses.length + 1;
-        if (full && s.limit && s.limit <= 21) return Math.max(s.limit, st.guesses.length) + (isOver(data, p, st) ? 1 : 0);
-        return st.guesses.length + 2;
+        const n = guessesOf(p, st, rounds ? cur() : 0).length;
+        if (k.attrs.length || !spell) return n + 1;
+        if (full && s.limit && s.limit <= 21) return Math.max(s.limit, n) + (isOver(data, p, st) || roundDone() ? 1 : 0);
+        return n + 2;
       };
+
+      // --- clues: kept per board across renders, so a picture loads once and eases in place ---
+      type Stage = { el: HTMLElement; pic?: PictureClue; sound?: ReturnType<typeof soundClue>; level: number; whole: boolean };
+      const stages = new Map<number, Stage>();
+      const answerItem = (b: number) => { const id = p.boards[b]!.answers[0]?.item; return id ? k.itemOf(id) : undefined; };
+      const boardOver = (b: number) => board(data, p, session.state, b).solvedAt >= 0 || (rounds ? roundOver(data, p, session.state, b) : isOver(data, p, session.state));
+      const stageOf = (b: number): Stage | null => {
+        const c = p.boards[b]!.clue;
+        const it = answerItem(b);
+        if (!c || !it || !d) return null;
+        let x = stages.get(b);
+        if (!x) {
+          const el = h("div", { class: "wd-stage" });
+          x = { el, level: -1, whole: false };
+          const m = c.id.startsWith("media:") ? d.media?.[c.id.slice(6)] : undefined;
+          if (m?.type === "image") { x.pic = pictureClue(m, it, (c.look ?? "whole") as Look, c.spot); el.append(x.pic.el); }
+          else if (m) { x.sound = soundClue(m, it); el.classList.add("audio"); el.append(x.sound.el); }
+          else { el.classList.add("text"); el.append(textClue(d, it, c.id.slice(5))); }
+          stages.set(b, x);
+        }
+        const level = easeLevel(data, p, session.state, b), whole = boardOver(b);
+        if (x.level !== level || x.whole !== whole) {
+          const eased = x.level >= 0 && level > x.level && !whole;
+          const acted = x.level >= 0;
+          x.pic?.set(level, whole);
+          x.sound?.show(level, whole);
+          // a sound plays by itself once the player has done something (a browser won't play one before)
+          if (x.sound && acted && !whole) x.sound.play();
+          if (eased) { x.el.classList.remove("shake"); void x.el.offsetWidth; x.el.classList.add("shake"); }
+          x.level = level; x.whole = whole;
+        }
+        return x;
+      };
+      const playSound = () => { const x = stages.get(rounds ? cur() : shownBoard()); x?.sound?.play(); };
 
       const renderBoard = (b: number): HTMLElement => {
         const st = session.state;
@@ -307,6 +356,16 @@ export function wordleView(data: DataSource, puzzle: PuzzleRef): View<WordlePuzz
         });
         if (p.boards[b]!.given) box.append(h("div", { class: "wd-given" }, givenLabel(d?.attributes ?? [], p.boards[b]!.given)));
         if (!open) { box.append(h("div", { class: "wd-given" }, "opens once the board before it is found")); return box; }
+        const stage = stageOf(b);
+        if (stage) {
+          stage.el.classList.toggle("small", many && !rounds && !overview);
+          box.append(stage.el);
+          const it = answerItem(b)!;
+          if (boardOver(b)) box.append(h("div", { class: `wd-answer${v.solvedAt < 0 ? " miss" : ""}` }, it.name));
+        }
+        const facts = boardOver(b) ? p.s.reveals : revealsShown(data, p, st, b);
+        const it = answerItem(b);
+        if (facts.length && it && d) box.append(h("div", { class: "wd-facts" }, facts.map((id) => h("span", { class: "wd-fact" }, revealText(d.attributes, it, id)))));
         const cols: string[] = [];
         if (k.named) cols.push("auto");
         if (spell) for (let i = 0; i < k.length; i++) cols.push("auto");
@@ -343,16 +402,16 @@ export function wordleView(data: DataSource, puzzle: PuzzleRef): View<WordlePuzz
           rows.append(line);
         };
         // attribute tables read newest first, like a list; spellings fill down, like Wordle
-        const shown = st.guesses.slice(0, v.marks.length).map((g, r) => ({ g, r }));
-        const live = v.solvedAt < 0 && !done;
+        const shown = guessesOf(p, st, b).slice(0, v.marks.length).map((g, r) => ({ g, r }));
+        const live = v.solvedAt < 0 && !done && !(rounds && roundOver(data, p, st, b));
         if (k.attrs.length) {
-          if (done && v.solvedAt < 0) for (const a of shownAnswers(data, p, st, b)) row(a, null, -1, "answer");
+          if (boardOver(b) && v.solvedAt < 0) for (const a of shownAnswers(data, p, st, b)) row(a, null, -1, "answer");
           for (const { g, r } of shown.reverse()) row(g, v.marks[r]!, r, r === flipping ? "new" : "");
         } else {
           for (const { g, r } of shown) row(g, v.marks[r]!, r, "");
           if (live && typed) row(null, null, shown.length, "current", st.row);
           let n = shown.length + (live && typed ? 1 : 0);
-          if (done && v.solvedAt < 0) for (const a of shownAnswers(data, p, st, b)) { row(a, null, -1, "answer"); n++; }
+          if (boardOver(b) && v.solvedAt < 0) for (const a of shownAnswers(data, p, st, b)) { row(a, null, -1, "answer"); n++; }
           if (live) for (const want = rowsPerBoard(); n < want; n++) row(null, null, n, "");
         }
         box.append(rows);
@@ -443,18 +502,27 @@ export function wordleView(data: DataSource, puzzle: PuzzleRef): View<WordlePuzz
         const done = isOver(data, p, st);
         entry?.setDisabled(done || session.locked);
         status.className = `wd-status${message?.err ? " err" : ""}`;
-        const found = p.boards.filter((_, b) => board(data, p, st, b).solvedAt >= 0).length;
+        const found = foundCount(data, p, st);
+        const used = guessesOf(p, st, rounds ? cur() : 0).length;
         status.textContent = message?.text ?? [
-          ...(many ? [`${found}/${p.boards.length} found`] : []),
-          ...(s.limit && !done ? [`${Math.max(0, s.limit - st.guesses.length)} left`] : []),
+          ...(rounds ? [s.streak ? `round ${cur() + 1}` : `round ${cur() + 1}/${p.boards.length}`] : []),
+          ...(many ? [`${found}${rounds && s.streak ? "" : `/${p.boards.length}`} found`] : []),
+          ...(s.limit && !done && !roundDone() ? [`${Math.max(0, s.limit - used)} left`] : []),
         ].join(" · ");
+        if (rounds) {
+          const over = roundDone();
+          nextBtn.hidden = !over || done;
+          passBtn.hidden = over || done;
+          entry?.setDisabled(done || over || session.locked);
+          if (entry) entry.el.hidden = over;
+        }
         clear(boardsEl);
         if (overview && board(data, p, st, shownBoard()).solvedAt >= 0) {
           // the shown board was found: show the closest one left
           const next = p.boards.findIndex((_, b) => board(data, p, st, b).solvedAt < 0);
           if (next >= 0 && next !== shownBoard()) { select(next); return; }
         }
-        const show = overview ? [shownBoard()] : p.boards.map((_, b) => b);
+        const show = rounds ? [cur()] : overview ? [shownBoard()] : p.boards.map((_, b) => b);
         fit(show.length);
         for (const b of show) boardsEl.append(renderBoard(b));
         renderOverview();
@@ -508,9 +576,15 @@ export function wordleView(data: DataSource, puzzle: PuzzleRef): View<WordlePuzz
         "wordle.next-board": () => step(1),
         "wordle.prev-board": () => step(-1),
         "wordle.name": () => entry?.focus(),
+        "wordle.next": () => session.dispatch({ type: "next" }),
+        "wordle.pass": () => session.dispatch({ type: "pass" }),
+        "wordle.play": playSound,
       }, {
-        "wordle.next-board": { captureInput: true, when: () => many },
-        "wordle.prev-board": { captureInput: true, when: () => many },
+        "wordle.next": { menu: "board", when: () => roundDone() && !isOver(data, p, session.state) },
+        "wordle.pass": { menu: "board", danger: true, when: () => rounds && !roundDone() && !isOver(data, p, session.state) },
+        "wordle.play": { menu: "board", captureInput: true, when: () => [...stages.values()].some((x) => x.sound) },
+        "wordle.next-board": { captureInput: true, when: () => many && !rounds },
+        "wordle.prev-board": { captureInput: true, when: () => many && !rounds },
         "wordle.name": { when: () => !!entry },
       });
 
@@ -519,7 +593,7 @@ export function wordleView(data: DataSource, puzzle: PuzzleRef): View<WordlePuzz
         get aspect() {
           // the boards fill the space they get: rows grow down, and the keyboard sits below
           const w = innerWidth, hgt = innerHeight;
-          return w < 700 ? Math.min(1, Math.max(0.45, w / Math.max(1, hgt - 140))) : many && !overview ? 1.5 : k.attrs.length ? 1.3 : 0.85;
+          return w < 700 ? Math.min(1, Math.max(0.45, w / Math.max(1, hgt - 140))) : many && !overview && !rounds ? 1.5 : k.attrs.length ? 1.3 : 0.85;
         },
         endDelayMs: spell ? k.length * STAGGER_MS + FLIP_MS : (k.attrs.length + 1) * 70 + 350,
         commands,
@@ -531,6 +605,7 @@ export function wordleView(data: DataSource, puzzle: PuzzleRef): View<WordlePuzz
         locateChange: () => rect(boardsEl.children[overview ? 0 : shownBoard()]),
         destroy() {
           document.removeEventListener("keydown", onKey, { capture: true });
+          for (const x of stages.values()) x.sound?.stop();
           ro?.disconnect();
           offs.forEach((f) => f());
           el.remove();

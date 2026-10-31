@@ -8,7 +8,8 @@ import openingsPack from "../openings-data/index";
 import pokemonPack from "../pokemon-data/index";
 import wordsPack from "../words-data/index";
 import { generate, guessError, reduce, rules, shareText, wordleDef } from "./def";
-import { board, candidates, hardError, isLost, isOver, isSolved, kind, shownAnswers, type WordlePuzzle, type WordleState } from "./engine";
+import { board, candidates, currentRound, easeLevel, foundCount, hardError, inRounds, isLost, isOver, isSolved, kind, revealsShown, roundOver, shownAnswers, type WordleAction, type WordlePuzzle, type WordleState } from "./engine";
+import { redact } from "./clue";
 import { canonical, equationError } from "./equations";
 import type { Entry } from "./kinds";
 import { ABSENT, ELSEWHERE, RIGHT, markCounts, markPositions } from "./marks";
@@ -65,7 +66,7 @@ test("every named setup generates, and its own answer solves it", async () => {
     let st = init(p);
     const sol = def.solve!(p, st);
     if (p.s.goal === "avoid" || p.s.answer === "dodge") { expect(sol).toBe(null); continue; }
-    for (const m of (sol as { moves: { type: "guess"; entry: Entry }[] }).moves) st = play(p, st, m.entry, p.boards.findIndex((_, b) => board(data, p, st, b).solvedAt < 0));
+    for (const m of (sol as { moves: WordleAction[] }).moves) st = m.type === "guess" ? play(p, st, m.entry, p.boards.findIndex((_, b) => board(data, p, st, b).solvedAt < 0)) : reduce(data, p, st, m);
     expect([preset.label, isSolved(data, p, st)]).toEqual([preset.label, true]);
     expect(rules(data, p).length).toBeGreaterThan(2);
   }
@@ -201,8 +202,9 @@ const AXES: Record<string, Record<string, unknown>[]> = {
     { secret: "codes", symbols: "colors", alphabet: 4, minLen: 3, maxLen: 3 },
     { secret: "equations", minLen: 6, maxLen: 6 },
     { secret: "items", dataset: "pokemon", pool: "form:default gen:1", compare: ["type", "gen", "height"] },
+    { secret: "items", dataset: "pokemon", pool: "form:default gen:1", compare: [], clues: ["media:art", "text:entry"], reveals: ["gen", "type"] },
   ],
-  boards: [{ boards: 1 }, { boards: 3 }, { boards: 3, open: "sequence" }],
+  boards: [{ boards: 1 }, { boards: 3 }, { boards: 3, open: "sequence" }, { boards: 3, open: "rounds" }, { boards: 3, open: "rounds", streak: true }],
   marks: [{ marks: "positions" }, { marks: "counts" }, { marks: "order" }],
   twist: [{}, { lies: "one" }, { answer: "dodge" }, { pair: true }, { starters: 1 }],
   hard: [{ hard: [] }, { hard: ["keep", "fit"], hardRows: "all" }],
@@ -220,7 +222,7 @@ test("every combination of the axes plays to an end without breaking its own rul
       p = generate(data, settings(params), createRng(JSON.stringify(params)));
     } catch (e) {
       // only refusals that say why, for combinations that can't exist
-      expect(String(e)).toMatch(/can only|too many|need at least|no two|pick at least|at most|only \d+/);
+      expect(String(e)).toMatch(/can only|too many|need at least|no two|pick at least|pick something|nothing can show|at most|only \d+/);
       continue;
     }
     played++;
@@ -228,7 +230,8 @@ test("every combination of the axes plays to an end without breaking its own rul
     const rng = createRng(`play ${JSON.stringify(params)}`);
     let st = init(p);
     for (let i = 0; i < 60 && !isOver(data, p, st); i++) {
-      const b = p.boards.findIndex((_, x) => board(data, p, st, x).solvedAt < 0);
+      if (inRounds(p) && roundOver(data, p, st, currentRound(p, st))) { st = reduce(data, p, st, { type: "next" }); continue; }
+      const b = inRounds(p) ? currentRound(p, st) : p.boards.findIndex((_, x) => board(data, p, st, x).solvedAt < 0);
       const open = candidates(data, p, st, Math.max(0, b));
       // guess something that could be the answer when it's known, else a fresh valid guess
       const pool = open?.length ? open : k.universe() ?? [];
@@ -265,4 +268,68 @@ test("Guess game ids round-trip and use the original's hidden form", async () =>
   // a blank in a guess is never marked
   const st = play(back, init(back), { seq: ["_", "_", "_", "_", back.boards[0]!.answers[0]!.seq![4]!] });
   expect(board(data, back, st, 0).marks[0]!.counts).toEqual([1, 0]);
+});
+
+test("who's that pokémon: shown by a clue, marked right or wrong; wrong guesses ease it and reveal facts", async () => {
+  const p = await gen({ secret: "items", dataset: "pokemon", compare: [], clues: ["media:art"], looks: ["circle"], reveals: ["gen", "type", "genus"] }, "who");
+  expect(p.s.limit).toBe(5);
+  const bd = p.boards[0]!;
+  expect(bd.clue).toMatchObject({ id: "media:art", look: "circle" });
+  const k = kind(data, p);
+  const ans = bd.answers[0]!;
+  const wrong = k.named!.filter((it) => it.id !== ans.item).slice(0, 2);
+  let st = init(p);
+  expect(easeLevel(data, p, st, 0)).toBe(0);
+  st = play(p, st, { item: wrong[0]!.id });
+  st = play(p, st, { item: wrong[1]!.id });
+  expect(board(data, p, st, 0).marks.map((m) => [m.found, m.attrs, m.pos])).toEqual([[false, undefined, undefined], [false, undefined, undefined]]);
+  expect(easeLevel(data, p, st, 0)).toBe(2);
+  expect(revealsShown(data, p, st, 0)).toEqual(["gen", "type"]);
+  expect(def.hint!(p, st)?.message).toBe(String(k.itemOf(ans.item!)!.values.genus));
+  st = play(p, st, ans);
+  expect(isSolved(data, p, st)).toBe(true);
+});
+
+test("a cry is only a clue for an answer that has one; a dex entry has every name blanked", async () => {
+  const d = data.get("pokemon")!;
+  const p = await gen({ secret: "items", dataset: "pokemon", compare: [], clues: ["media:cry"], boards: 20, limit: 25 }, "cry");
+  for (const bd of p.boards) expect(d.media!.cry!.url(kind(data, p).itemOf(bd.answers[0]!.item!)!)).not.toBeNull();
+  const pika = d.items().find((it) => it.name === "Pikachu")!;
+  expect(redact(d, pika, "Pikachu and Raichu like Pikachu.")).toBe("▬▬▬ and ▬▬▬ like ▬▬▬.");
+});
+
+test("rounds: each with its own guesses; a miss moves on, or ends a streak", async () => {
+  const base = { secret: "items", dataset: "pokemon", pool: "form:default gen:1", compare: [], clues: ["media:art"], open: "rounds", boards: 3, limit: 2 };
+  const p = await gen(base, "run");
+  const k = kind(data, p);
+  const other = (b: number) => ({ item: k.named!.find((it) => !p.boards.some((x) => x.answers[0]!.item === it.id) && it.id !== p.boards[b]!.answers[0]!.item)!.id });
+  let st = init(p);
+  // round 1: given up on
+  st = reduce(data, p, st, { type: "pass" });
+  expect(roundOver(data, p, st, 0)).toBe(true);
+  expect(play(p, st, p.boards[0]!.answers[0]!)).toBe(st);
+  st = reduce(data, p, st, { type: "next" });
+  expect(currentRound(p, st)).toBe(1);
+  // round 2: one wrong, then found; the wrong guess counts only here
+  st = play(p, st, other(1));
+  st = play(p, st, p.boards[1]!.answers[0]!);
+  expect(board(data, p, st, 1).solvedAt).toBe(1);
+  st = reduce(data, p, st, { type: "next" });
+  // round 3: out of guesses
+  st = play(p, st, other(2));
+  st = play(p, st, { item: k.named!.filter((it) => it.id !== p.boards[2]!.answers[0]!.item)[5]!.id });
+  expect(isOver(data, p, st)).toBe(true);
+  expect(isSolved(data, p, st)).toBe(true);
+  expect(foundCount(data, p, st)).toBe(1);
+  expect(def.score!(p, st)).toMatchObject({ value: 1, better: "higher" });
+  expect(shareText(data, p, st, "wordle")).toBe("wordle 1/3\n🟥🟨🟥");
+
+  const q = await gen({ ...base, streak: true, boards: 1024, limit: 1 }, "streak");
+  expect(q.boards.length).toBe(kind(data, q).universe()!.length);
+  let t = init(q);
+  t = play(q, t, q.boards[0]!.answers[0]!);
+  t = reduce(data, q, t, { type: "next" });
+  t = reduce(data, q, t, { type: "pass" });
+  expect(isLost(data, q, t)).toBe(true);
+  expect(def.score!(q, t)).toMatchObject({ value: 1, label: "streak of 1" });
 });

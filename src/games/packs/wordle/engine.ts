@@ -3,7 +3,7 @@ import type { DataAttribute, DataValue } from "../../core/types";
 import { formatValue, type Bands, type Feedback } from "../../lib/dataset/compare";
 import { kindOf, type Entry, type Kind } from "./kinds";
 import { ABSENT, ELSEWHERE, RIGHT, markAttributes, markPositions } from "./marks";
-import { POSITIONAL, spelled, type DataSource, type Settings } from "./params";
+import { LOOKS, POSITIONAL, SOUND_STEPS, spelled, type DataSource, type Look, type Settings } from "./params";
 
 /** What a board tells about its answer up front: attribute id → value (sets: one member it has). */
 export type Given = Record<string, string | boolean>;
@@ -15,6 +15,8 @@ export interface WordleBoard {
   given?: Given;
   /** Target-form equations: the number the answer comes to, which the player is told. */
   target?: number;
+  /** What the answer is shown by: a clue id (media:… or text:…), and for pictures how and where it looks first (0..1). */
+  clue?: { id: string; look?: Look; spot: number };
 }
 
 export interface WordlePuzzle {
@@ -34,6 +36,10 @@ export interface WordleState {
   guesses: Entry[];
   /** The spelling being typed, one symbol per position ("" for empty). */
   row: string[];
+  /** Rounds: where each round's guesses start (an index into guesses); the last is the round being played. */
+  starts?: number[];
+  /** Rounds given up on. */
+  passed?: number[];
 }
 
 export type WordleAction =
@@ -41,7 +47,9 @@ export type WordleAction =
   | { type: "type"; sym: string }
   | { type: "back" }
   | { type: "row"; row: string[] }
-  | { type: "submit" };
+  | { type: "submit" }
+  | { type: "next" }
+  | { type: "pass" };
 
 export interface WordleInteraction {
   /** Board shown in full. */
@@ -172,8 +180,23 @@ export interface BoardView {
 
 const viewCache = new WeakMap<WordleState, Map<number, BoardView>>();
 
-/** True if the board shows marks yet: always, or in sequence once every board before it is solved. */
+/** Boards played one after another, each with its own guesses. */
+export const inRounds = (p: WordlePuzzle): boolean => p.s.open === "rounds";
+
+/** Rounds: the round being played (0 otherwise). */
+export const currentRound = (p: WordlePuzzle, st: WordleState): number => (inRounds(p) ? Math.min(p.boards.length - 1, (st.starts?.length ?? 1) - 1) : 0);
+
+/** The guesses board `b` is marked on: every guess, or (rounds) the ones made in its round. */
+export function guessesOf(p: WordlePuzzle, st: WordleState, b: number): readonly Entry[] {
+  if (!inRounds(p)) return st.guesses;
+  const starts = st.starts ?? [0];
+  if (b >= starts.length) return [];
+  return st.guesses.slice(starts[b], starts[b + 1] ?? st.guesses.length);
+}
+
+/** True if the board shows marks yet: always, in sequence once every board before it is solved, in rounds once its round comes. */
 export function isOpen(data: DataSource, p: WordlePuzzle, st: WordleState, b: number): boolean {
+  if (inRounds(p)) return b <= currentRound(p, st);
   if (p.s.open !== "sequence") return true;
   for (let i = 0; i < b; i++) if (board(data, p, st, i).solvedAt < 0) return false;
   return true;
@@ -234,22 +257,23 @@ export function board(data: DataSource, p: WordlePuzzle, st: WordleState, b: num
   let per = progressCache.get(p);
   if (!per) progressCache.set(p, per = new Map());
   let pr = per.get(b);
+  const gs = guessesOf(p, st, b);
   const n = pr?.guesses.length ?? 0;
   // the saved progress still holds if these guesses extend the ones it was worked out for
-  const extends_ = pr && n <= st.guesses.length && (n === 0 || pr.guesses[n - 1] === st.guesses[n - 1]);
+  const extends_ = pr && n <= gs.length && (n === 0 || pr.guesses[n - 1] === gs[n - 1]);
   if (!pr || !extends_) {
     const bd = p.boards[b]!;
     pr = { guesses: [], marks: [], solvedAt: -1, foundAt: bd.answers.length ? bd.answers.map(() => -1) : [-1], ...(p.s.answer === "dodge" ? { left: [...(k.universe() ?? [])].filter((e) => fitsGiven(k, e, bd.given)) } : {}) };
     per.set(b, pr);
   }
-  advance(p, k, b, pr, st.guesses);
+  advance(p, k, b, pr, gs);
   // a view for exactly these guesses: rows up to and including the one that solved the board
-  const rows = pr.solvedAt >= 0 ? pr.solvedAt + 1 : Math.min(pr.marks.length, st.guesses.length);
-  const solvedAt = pr.solvedAt >= 0 && pr.solvedAt < st.guesses.length ? pr.solvedAt : -1;
+  const rows = pr.solvedAt >= 0 ? pr.solvedAt + 1 : Math.min(pr.marks.length, gs.length);
+  const solvedAt = pr.solvedAt >= 0 && pr.solvedAt < gs.length ? pr.solvedAt : -1;
   const v: BoardView = {
     marks: pr.marks.slice(0, solvedAt >= 0 ? solvedAt + 1 : rows),
     solvedAt,
-    foundAt: pr.foundAt.map((x) => (x < st.guesses.length ? x : -1)),
+    foundAt: pr.foundAt.map((x) => (x < gs.length ? x : -1)),
     ...(pr.left ? { left: pr.left } : {}),
   };
   cache.set(b, v);
@@ -289,7 +313,8 @@ export function candidates(data: DataSource, p: WordlePuzzle, st: WordleState, b
   const all = k.universe();
   if (!all) return null;
   const found = p.boards.flatMap((o, ob) => (ob !== b ? o.answers.filter((_, i) => board(data, p, st, ob).foundAt[i]! >= 0) : []));
-  return all.filter((e) => fitsGiven(k, e, p.boards[b]!.given) && !found.some((f) => k.same(f, e)) && v.marks.every((m, r) => agrees(p, k, st.guesses[r]!, m, e)));
+  const gs = guessesOf(p, st, b);
+  return all.filter((e) => fitsGiven(k, e, p.boards[b]!.given) && !found.some((f) => k.same(f, e)) && v.marks.every((m, r) => agrees(p, k, gs[r]!, m, e)));
 }
 
 /** Why hard mode refuses `guess` on board `b`, or null. */
@@ -304,7 +329,7 @@ export function hardError(data: DataSource, p: WordlePuzzle, st: WordleState, b:
   const count = (q: readonly string[], c: string) => q.filter((x) => x === c).length;
   for (const r of rows) {
     const m = v.marks[r]!;
-    const prev = st.guesses[r]!;
+    const prev = guessesOf(p, st, b)[r]!;
     const ps = k.seqOf(prev);
     if (s.hard.includes("keep")) {
       if (gs && ps && m.pos) for (let i = 0; i < m.pos.length; i++) if (m.pos[i] === RIGHT && gs[i] !== ps[i]) return `place ${i + 1} must be ${ps[i]}`;
@@ -336,15 +361,32 @@ export function hardError(data: DataSource, p: WordlePuzzle, st: WordleState, b:
 export const allSolved = (data: DataSource, p: WordlePuzzle, st: WordleState): boolean => p.boards.every((_, b) => board(data, p, st, b).solvedAt >= 0);
 /** Avoiding: a guess found an answer. */
 export const hit = (data: DataSource, p: WordlePuzzle, st: WordleState): boolean => p.s.goal === "avoid" && p.boards.some((_, b) => board(data, p, st, b).foundAt.some((x) => x >= 0));
-export const outOfGuesses = (p: WordlePuzzle, st: WordleState): boolean => p.s.limit > 0 && st.guesses.length >= p.s.limit;
+export const outOfGuesses = (p: WordlePuzzle, st: WordleState): boolean => !inRounds(p) && p.s.limit > 0 && st.guesses.length >= p.s.limit;
+
+/** Rounds: round `b` is over: found, given up on, or out of guesses. */
+export function roundOver(data: DataSource, p: WordlePuzzle, st: WordleState, b: number): boolean {
+  return board(data, p, st, b).solvedAt >= 0 || !!st.passed?.includes(b) || (p.s.limit > 0 && guessesOf(p, st, b).length >= p.s.limit);
+}
+
+/** Rounds: boards found. */
+export const foundCount = (data: DataSource, p: WordlePuzzle, st: WordleState): number => p.boards.filter((_, b) => board(data, p, st, b).solvedAt >= 0).length;
+
+function roundsOver(data: DataSource, p: WordlePuzzle, st: WordleState): boolean {
+  const c = currentRound(p, st);
+  if (!roundOver(data, p, st, c)) return false;
+  return c === p.boards.length - 1 || (p.s.streak && board(data, p, st, c).solvedAt < 0);
+}
 
 export function isOver(data: DataSource, p: WordlePuzzle, st: WordleState): boolean {
+  if (inRounds(p)) return roundsOver(data, p, st);
   if (p.s.goal === "avoid") return hit(data, p, st) || outOfGuesses(p, st);
   if (allSolved(data, p, st)) return true;
   return outOfGuesses(p, st) && !p.s.overtime;
 }
 
 export function isSolved(data: DataSource, p: WordlePuzzle, st: WordleState): boolean {
+  // a run is played out whatever you find (its score says how many); a streak is won only by finding them all
+  if (inRounds(p)) return roundsOver(data, p, st) && (!p.s.streak || allSolved(data, p, st));
   if (p.s.goal === "avoid") return !hit(data, p, st) && outOfGuesses(p, st);
   if (!allSolved(data, p, st)) return false;
   const last = Math.max(...p.boards.map((_, b) => board(data, p, st, b).solvedAt));
@@ -360,5 +402,27 @@ export function shownAnswers(data: DataSource, p: WordlePuzzle, st: WordleState,
   const v = board(data, p, st, b);
   return v.solvedAt >= 0 ? [st.guesses[v.solvedAt]!] : v.left?.length ? [v.left[0]!] : [];
 }
+
+// --- clues ---
+
+/** Wrong guesses on board `b`. */
+export const wrongOn = (data: DataSource, p: WordlePuzzle, st: WordleState, b: number): number => board(data, p, st, b).marks.filter((m) => !m.found).length;
+
+/** Steps a clue eases through. */
+export function clueSteps(data: DataSource, p: WordlePuzzle, b: number): number {
+  const c = p.boards[b]?.clue;
+  if (!c) return 0;
+  if (c.look) return LOOKS.find((l) => l.value === c.look)?.steps ?? 0;
+  const m = c.id.startsWith("media:") ? kind(data, p).data?.media?.[c.id.slice(6)] : undefined;
+  return m?.type === "audio" ? SOUND_STEPS.length - 1 : 0;
+}
+
+/** How far board `b`'s clue has eased: one step per wrong guess (when easing), capped. */
+export function easeLevel(data: DataSource, p: WordlePuzzle, st: WordleState, b: number): number {
+  return p.s.ease ? Math.min(clueSteps(data, p, b), wrongOn(data, p, st, b)) : 0;
+}
+
+/** Reveals showing on board `b`: one per wrong guess. */
+export const revealsShown = (data: DataSource, p: WordlePuzzle, st: WordleState, b: number): string[] => p.s.reveals.slice(0, wrongOn(data, p, st, b));
 
 export { POSITIONAL };
