@@ -155,8 +155,9 @@ test("chess openings: offered with a preset, and play from a typed name to the e
   expect(p.dataset).toBe("openings");
   expect(p.pool.length).toBeGreaterThanOrEqual(5);
   expect(p.pool.length).toBeLessThanOrEqual(MAX_POOL);
-  // no pictures: unnamed slots show an attribute value (the ECO code)
-  expect(resolve(def.params, { dataset: "openings" }).slots).toBe("eco");
+  // ECO codes are shared by dozens of openings, so slots show nothing rather than a row of A00s; dex numbers tell pokémon apart
+  expect(resolve(def.params, { dataset: "openings" }).slots).toBe("blank");
+  expect(resolve(def.params, { dataset: "pokemon" }).slots).toBe("dex");
   const openings = data.get("openings")!;
   const pool = p.pool.map((id) => openings.items().find((x) => x.id === id)!);
   const r = readTyped(pool[0]!.name.toUpperCase(), nameIndex(pool), nameIndex(openings.items()), new Set());

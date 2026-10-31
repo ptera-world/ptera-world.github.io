@@ -75,6 +75,13 @@ export const roundable = (d: Dataset | undefined): DataAttribute[] =>
   d ? byFeatured(d).filter((a) => (a.kind === "ordinal" || a.kind === "category" || a.kind === "set") && listed(a)) : [];
 
 /** The attribute pools are put in order of: the first the dataset lists that has an order (pokémon: dex number). */
+/** True if the attribute tells items apart: at least half as many distinct values as items. */
+const telling = (d: Dataset, a: DataAttribute): boolean => {
+  const items = d.items();
+  const seen = new Set(items.map((it) => JSON.stringify(it.values[a.id] ?? null)));
+  return seen.size >= items.length / 2;
+};
+
 export const orderAttr = (d: Dataset): DataAttribute | undefined => d.attributes.find((a) => a.kind === "number" || (a.kind === "ordinal" && listed(a)));
 
 /** Attributes an unnamed slot can show the value of; the pool's order first. */
@@ -182,7 +189,8 @@ export function makeParams(data: DataSource) {
     },
     slots: {
       type: "enum", label: "unnamed ones show",
-      default: (v) => { const d = ds(v); return (d && slotAttrs(d)[0]?.id) || "blank"; },
+      // an attribute only if it tells them apart: most items with a value of their own (dex numbers do; ECO codes, shared by dozens of openings, don't)
+      default: (v) => { const d = ds(v); return (d && slotAttrs(d).find((x) => telling(d, x))?.id) || "blank"; },
       options: (v): FieldOption[] => {
         const d = ds(v);
         return [
