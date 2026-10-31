@@ -164,7 +164,8 @@ test("chess openings: offered with a preset, and play from a typed name to the e
   expect(r.name).toContain(pool[0]!.id);
   const session = new Session(def, p, { kind: "imported" });
   session.dispatch({ type: "name", ids: r.name });
-  expect(def.hint!(p, session.state)!.message).toMatch(/^ECO code [A-E]\d\d starts with /);
+  // blank slots: the hint names the slot by its place
+  expect(def.hint!(p, session.state)!.message).toMatch(/^no\. \d+ starts with /);
   for (const id of p.pool) session.dispatch({ type: "name", ids: [id] });
   expect(session.solved).toBe(true);
   expect(def.rules!(p)[0]).toContain(`name all ${p.pool.length} openings`);
