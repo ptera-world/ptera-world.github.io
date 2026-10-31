@@ -20,3 +20,6 @@ const PATHS: Record<MediaKind, (pid: number) => string> = {
 export function mediaUrl(item: Pick<PokemonItem, "pid" | "media">, kind: MediaKind): string | null {
   return item.media.includes(kind) ? PATHS[kind](item.pid) : null;
 }
+
+/** A game sprite's URL by PokeAPI id, for pictures not tied to an item (a backdrop). */
+export const spriteUrl = (pid: number): string => PATHS.sprite(pid);

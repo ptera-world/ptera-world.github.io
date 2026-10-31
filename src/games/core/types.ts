@@ -552,8 +552,28 @@ export interface Dataset<Item extends DataItem = DataItem> {
    * bundled. What kinds exist and what they hold is the dataset's to say.
    */
   media?: Readonly<Record<string, Media<Item>>>;
+  /** How games played on it look, so they feel like its world (see DatasetLook). */
+  look?: DatasetLook;
   /** Dataset-specific tables beyond per-item attributes (e.g. a type chart). */
   tables?: Readonly<Record<string, unknown>>;
+}
+
+/**
+ * A dataset's look, set on the board of any game played on it. Tokens are custom properties
+ * (without "--") that games read with their own defaults:
+ * - font; text, text-dim: on the board
+ * - verdict-match, verdict-near, verdict-miss; verdict-text: marks
+ * - tile-border, tile-radius, tile-shadow; tile-bg, tile-text: tiles and cells (bg and text: unmarked ones, e.g. a name)
+ * - panel-bg, panel-border, panel-text, panel-radius: the boxes a game puts things in (entry, clues)
+ * - head-bar: under column headings
+ * - stage-bg: behind a picture clue
+ */
+export interface DatasetLook {
+  tokens: Record<string, string>;
+  /** A CSS background for the board. */
+  backdrop?: string;
+  /** Stylesheet the look needs loaded (a font's @import or @font-face). */
+  css?: string;
 }
 
 /** See Dataset.media. */

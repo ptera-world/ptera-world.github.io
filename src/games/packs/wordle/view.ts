@@ -2,6 +2,7 @@ import { bindCommands, type BindingSchema, type Ids } from "../../core/commands"
 import { clear, h, style } from "../../core/dom";
 import type { CommandDef, DataAttribute, DataItem, DataValue, Dataset, PuzzleRef, View } from "../../core/types";
 import { formatValue, type Feedback } from "../../lib/dataset/compare";
+import { applyLook } from "../../lib/dataset/look";
 import { VERDICT_CSS, arrow, nameEntry, verdictClass } from "../../lib/dataset/ui";
 import { CLUE_CSS, pictureClue, soundClue, textClue, type PictureClue } from "./clue";
 import { givenLabel, guessError, revealText } from "./def";
@@ -81,6 +82,26 @@ const CSS = `
 .wd-over button[aria-pressed="true"] { outline: 2px solid var(--accent); }
 .wd-over button i { width: 7px; height: 7px; border-radius: 1px; background: var(--border); }
 .wd-over button i.v-match { background: var(--verdict-match-c); } .wd-over button i.v-partial { background: var(--verdict-near-c); }
+/* a dataset's look (lib/dataset/look): its tokens, read here with these defaults */
+.wd.has-look { padding: 10px; box-sizing: border-box; border-radius: 12px; color: var(--text); font-family: var(--font); --verdict-miss-c: var(--verdict-miss, ${ABSENT_C}); }
+.has-look .wd-top { background: var(--panel-bg, transparent); border: var(--panel-border, none); border-radius: var(--panel-radius, 0); color: var(--panel-text, inherit); padding: 8px 48px 8px 10px; }
+.has-look .wd-status { color: var(--panel-text, var(--text-dim)); }
+.has-look .wd-a, .has-look .wd-name { border: var(--tile-border, none); border-radius: var(--tile-radius, 6px); box-shadow: var(--tile-shadow, none); min-width: 4.4em; min-height: 4.4em; }
+.has-look .wd-a { color: var(--verdict-text, inherit); }
+.has-look .wd-a.v-match, .has-look .wd-a.v-partial, .has-look .wd-a.v-miss, .has-look .wd-t[class*=v-] { text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 0 2px 0 #000; }
+.has-look .wd-a { position: relative; }
+.has-look .wd-a .ar { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 3.4em; line-height: 1; opacity: .3; }
+.has-look .wd-a > :not(.ar) { position: relative; }
+.has-look .wd-a .chip { border: 2px solid rgb(0 0 0 / .5); }
+.has-look .wd-name { background: var(--tile-bg, var(--bg)); color: var(--tile-text, inherit); position: static; }
+.has-look .wd-name img { width: 3em; height: 3em; }
+.has-look .wd-th { color: var(--text); border-bottom: var(--head-bar, none); text-shadow: 0 2px 0 rgb(0 0 0 / .45); margin-bottom: 4px; }
+.has-look .wd-t { border: var(--tile-border, 2px solid var(--border)); box-shadow: var(--tile-shadow, none); }
+.has-look .wd-t:not([class*=v-]) { background: rgb(255 255 255 / .35); color: var(--tile-text, inherit); }
+.has-look .wd-t.v-match, .has-look .wd-t.v-partial, .has-look .wd-t.v-miss { color: var(--verdict-text, #fff); }
+.has-look .wd-given, .has-look .wd-answer { text-shadow: 0 2px 0 rgb(0 0 0 / .45); }
+.has-look .wd-stage { border: var(--panel-border, none); box-sizing: border-box; background: var(--stage-bg, var(--wd-stage)); }
+.has-look .wd-fact { background: var(--panel-bg, var(--surface-2)); color: var(--panel-text, inherit); }
 @keyframes wd-flip { 0% { transform: rotateX(0); } 50% { transform: rotateX(90deg); } 100% { transform: rotateX(0); } }
 @media (prefers-reduced-motion: reduce) { .wd-t.flip, .wd-row.new > .wd-a { animation: none; } }
 `;
@@ -236,6 +257,7 @@ export function wordleView(data: DataSource, puzzle: PuzzleRef): View<WordlePuzz
       const kb = typed ? h("div", { class: `wd-kb${moves ? " moves" : ""}` }) : null;
       const el = h("div", { class: "wd" }, top, over, boardsEl, kb);
       root.append(el);
+      const unlook = applyLook(d, el);
 
       let message: { text: string; err: boolean } | null = null;
       let flipping = -1;
@@ -412,7 +434,8 @@ export function wordleView(data: DataSource, puzzle: PuzzleRef): View<WordlePuzz
           if (live && typed) row(null, null, shown.length, "current", st.row);
           let n = shown.length + (live && typed ? 1 : 0);
           if (boardOver(b) && v.solvedAt < 0) for (const a of shownAnswers(data, p, st, b)) { row(a, null, -1, "answer"); n++; }
-          if (live) for (const want = rowsPerBoard(); n < want; n++) row(null, null, n, "");
+          // empty rows to fill, for spellings typed out (not for names picked from a list)
+          if (live && typed) for (const want = rowsPerBoard(); n < want; n++) row(null, null, n, "");
         }
         box.append(rows);
         return box;
@@ -607,6 +630,7 @@ export function wordleView(data: DataSource, puzzle: PuzzleRef): View<WordlePuzz
           document.removeEventListener("keydown", onKey, { capture: true });
           for (const x of stages.values()) x.sound?.stop();
           ro?.disconnect();
+          unlook();
           offs.forEach((f) => f());
           el.remove();
         },

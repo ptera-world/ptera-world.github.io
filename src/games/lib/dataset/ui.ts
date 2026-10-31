@@ -9,6 +9,8 @@ import { exactName, matchNames } from "./names";
  */
 export const VERDICT_CSS = `
 :root { --verdict-match-c: var(--verdict-match, color-mix(in srgb, var(--accent) 70%, #2a8a3a)); --verdict-near-c: var(--verdict-near, var(--warn)); --verdict-miss-c: var(--verdict-miss, var(--surface-2)); }
+/* a dataset's look sets the tokens on a board, below :root, so the colors are worked out again there */
+.has-look { --verdict-match-c: var(--verdict-match, color-mix(in srgb, var(--accent) 70%, #2a8a3a)); --verdict-near-c: var(--verdict-near, var(--warn)); --verdict-miss-c: var(--verdict-miss, var(--surface-2)); }
 .v-match { background: var(--verdict-match-c); color: #fff; }
 .v-close, .v-partial { background: var(--verdict-near-c); color: #000; }
 .v-miss { background: var(--verdict-miss-c); color: var(--text); }
