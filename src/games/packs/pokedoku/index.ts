@@ -1,10 +1,11 @@
 import type { GamesApi } from "../../api";
-import { makeGrid } from "./logic";
+import { makeGrid, type DataSource } from "./logic";
 import { gridView } from "./view";
 
-/** Pack entry: the pokémon grid (pokedoku / immaculate grid), built on the pokémon dataset. */
+/** Pack entry: the grid (immaculate grid, pokedoku), on any dataset whose attributes can fill one. */
 export default function pack(games: GamesApi): void {
-  const get = () => games.registry.getDataset("pokemon");
-  games.registry.puzzle(makeGrid(get));
-  games.registry.view(gridView(get));
+  const { registry } = games;
+  const data: DataSource = { get: (id) => registry.getDataset(id), list: () => registry.listDatasets() };
+  registry.puzzle(makeGrid(data));
+  registry.view(gridView(data));
 }
