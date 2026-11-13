@@ -197,11 +197,66 @@ function threeCycles<A>(base: Macro<A>[], inv: Map<Macro<A>, Macro<A>>, T: numbe
     return macroFrom("cycle", m.actions.slice().reverse().map((a) => invAction.get(a)!), to, turn);
   };
   const comm = (x: Macro<A>, y: Macro<A>) => compose("cycle", compose("cycle", compose("cycle", x, y, T), inverse(x), T), inverse(y), T);
-  const found = new Map<string, Macro<A>>();
-  const keep = (m: Macro<A>) => {
-    const sig = signature(m);
-    const old = found.get(sig);
-    if (!old || old.actions.length > m.actions.length) found.set(sig, m);
+  /**
+   * A macro moving at most DEEP_SUPPORT cells, held sparsely (closure makes tens of thousands of
+   * them): cells in increasing order, where each one's content goes and the turns it gets. The word
+   * is built only for the ones kept: a seed's own, b·inner·b⁻¹, or a·b⁻¹.
+   */
+  interface Small {
+    cells: number[];
+    to: number[];
+    turn: number[];
+    len: number;
+    word: { actions: A[] } | { conj: Macro<A>; inner: Small } | { a: Small; undo: Small };
+  }
+  const toSmall = (m: Macro<A>): Small => ({
+    cells: m.support, to: m.support.map((c) => m.to[c]!), turn: m.support.map((c) => m.turn?.[c] ?? 0), len: m.actions.length, word: { actions: m.actions },
+  });
+  const isTwist = (s: Small) => s.cells.every((c, i) => s.to[i] === c);
+  const keyOf = (s: Small) => (isTwist(s) ? `t${s.cells.join(",")}|${s.turn.join("")}` : `p${s.cells.join(",")}>${s.to.join(",")}`);
+  /** b·s·b⁻¹, which does to the cells b brings onto s's cells what s does to those. */
+  const conj = (b: Macro<A>, s: Small): Small => {
+    const back = inv.get(b)!;
+    const order = s.cells.map((_, i) => i).sort((i, j) => back.to[s.cells[i]!]! - back.to[s.cells[j]!]!);
+    return {
+      cells: order.map((i) => back.to[s.cells[i]!]!),
+      to: order.map((i) => back.to[s.to[i]!]!),
+      turn: order.map((i) => {
+        const x = back.to[s.cells[i]!]!;
+        return (((b.turn?.[x] ?? 0) + s.turn[i]! + (back.turn?.[s.to[i]!] ?? 0)) % T + T) % T;
+      }),
+      len: s.len + 2,
+      word: { conj: b, inner: s },
+    };
+  };
+  const actionsOf = (s: Small): A[] => {
+    const w = s.word;
+    if ("actions" in w) return w.actions;
+    if ("conj" in w) return [w.conj.actions[0]!, ...actionsOf(w.inner), inv.get(w.conj)!.actions[0]!];
+    return [...actionsOf(w.a), ...actionsOf(w.undo).slice().reverse().map((a) => invAction.get(a)!)];
+  };
+  /**
+   * One macro per rearrangement of cells (whatever it turns), plus twists by their turns: keeping
+   * every turning variant of every 3-cycle is too many when tiles turn. A second macro for a
+   * rearrangement already kept is turned into the twist that tells them apart.
+   */
+  const found = new Map<string, Small>();
+  /** The macro kept, if it's new; a twist derived from it, if that's new; else null. */
+  const put = (s: Small): Small | null => {
+    if (!s.cells.length || s.cells.length > DEEP_SUPPORT) return null;
+    const key = keyOf(s);
+    const old = found.get(key);
+    if (!old) { found.set(key, s); return s; }
+    if (isTwist(s) || old.turn.join() === s.turn.join()) {
+      if (old.len > s.len) found.set(key, s);
+      return null;
+    }
+    const diff = s.cells.map((_, i) => (((s.turn[i]! - old.turn[i]!) % T) + T) % T);
+    const cells = s.cells.filter((_, i) => diff[i]);
+    const t: Small = { cells, to: cells, turn: diff.filter(Boolean), len: s.len + old.len, word: { a: s, undo: old } };
+    if (!cells.length || found.has(keyOf(t))) return null;
+    found.set(keyOf(t), t);
+    return t;
   };
   const moving = new Uint8Array(n);
   for (const b of base) for (const c of b.support) moving[c] = 1;
@@ -209,32 +264,21 @@ function threeCycles<A>(base: Macro<A>[], inv: Map<Macro<A>, Macro<A>>, T: numbe
   const covered = new Uint8Array(n), twisted = new Uint8Array(n);
   const done = (c: number) => covered[c] && (T === 1 || twisted[c]);
   const uncovered = () => moving.some((v, c) => v && !done(c));
-  const still = T > 1 ? "|" + "0".repeat(n) : "";
-  const isTwist = (m: Macro<A>) => m.support.every((c) => m.to[c] === c);
+  let closed = 0;
   const close = () => {
-    const queue = [...found.values()];
+    const queue = [...found.values()].slice(closed);
     for (let i = 0; i < queue.length; i++) {
       work.units++;
       const c = queue[i]!;
-      for (const s of c.support) (isTwist(c) ? twisted : covered)[s] = 1;
-      if (T > 1 && !isTwist(c)) {
-        // a turning 3-cycle undone by the plain one on the same cells leaves only the turns
-        const plain = found.get(c.to.join(",") + still);
-        if (plain && plain !== c) {
-          const t = compose("cycle", c, inverse(plain), T);
-          const sig = signature(t);
-          if (t.support.length && !found.has(sig)) { found.set(sig, t); queue.push(t); }
-        }
-      }
+      for (const s of c.cells) (isTwist(c) ? twisted : covered)[s] = 1;
       for (const b of base) {
-        const m = compose("cycle", compose("cycle", b, c, T), inv.get(b)!, T);
-        const sig = signature(m);
-        if (found.has(sig)) continue;
-        found.set(sig, m);
-        queue.push(m);
+        const m = put(conj(b, c));
+        if (m) queue.push(m);
       }
     }
+    closed = found.size;
   };
+  const keep = (m: Macro<A>) => { put(toSmall(m)); };
   let pool: Macro<A>[] = base.slice();
   for (const a of base) for (const b of base) {
     if (pool.length >= DEEP_WORDS) break;
@@ -266,7 +310,15 @@ function threeCycles<A>(base: Macro<A>[], inv: Map<Macro<A>, Macro<A>>, T: numbe
     close();
     pool = [...pool, ...next.values()];
   }
-  return [...found.values()];
+  return [...found.values()].map((s) => {
+    const to = Int32Array.from({ length: n }, (_, c) => c);
+    const turn = T > 1 ? new Int8Array(n) : null;
+    s.cells.forEach((c, i) => {
+      to[c] = s.to[i]!;
+      if (turn) turn[c] = s.turn[i]!;
+    });
+    return macroFrom("cycle", actionsOf(s), to, turn);
+  });
 }
 
 function library<A>(spec: PermSpec<A>): Library<A> {

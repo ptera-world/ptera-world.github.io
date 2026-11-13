@@ -218,6 +218,7 @@ test("turn: big blocks, upright tiles and other goals solve from generated board
   for (const params of [
     { width: 4, height: 4, block: 3, orientable: true }, { width: 5, height: 5, block: 3, goal: "spiral" },
     { width: 5, height: 3, orientable: true }, { width: 2, height: 5, goal: "rows" }, { width: 7, height: 6 }, { width: 3, height: 3, block: 3 },
+    { width: 8, height: 8, block: 3, orientable: true }, { width: 8, height: 8, block: 5 }, { width: 4, height: 4, blocks: "corners", orientable: true },
   ]) {
     const p = await gen({ moves: "turn", ...params }, "big");
     const answer = fifteen.solve!(p, fifteen.init(p)) as { moves: unknown[] } | null;

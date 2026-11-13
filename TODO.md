@@ -113,7 +113,7 @@ Primitives (see `src/games/core/types.ts`): Technique, CommandDef, WidgetDef, Th
 - [ ] **layout shift on load**: the board area moves once from where "generating…" sat (`?debugLayout` shows it)
 
 ### Simon Tatham collection packs
-- [ ] fifteen (turning blocks of 3×3 and up): hint macros are commutators of commutators, so a solve runs to thousands of turns (6×6 with 4×4 blocks ≈ 6000) and the macro library takes 1–5 s to build on first use, on the main thread; net (sliding): hints can fail on big imported boards; pegs / samegame hints can time out off the known path on big boards
+- [ ] fifteen (turning blocks of 3×3 and up): hint macros are commutators of commutators, so a solve runs to thousands of turns (6×6 with 4×4 blocks ≈ 6000) and the macro library for a board shape takes up to about 4 s to build on first use (8×8 with 3×3 blocks, upright), on the main thread; net (sliding): hints can fail on big imported boards; pegs / samegame hints can time out off the known path on big boards
 - [ ] fifteen: Loopover shows letters (A–Y) where this shows numbers; there is no letters display
 - [ ] slow generation: palisade hard 15×12 (several s), mosaic 25×25 medium/hard (~3s), filling hard 9×7 (2–3s), pearl 10×10 (~0.6s, capped at 12); palisade region size 3 rarely generates
 - [ ] guess, blackbox, untangle: no practice boards; imported untangle has no layout hint or solve; blackbox hints partial on big boards with many balls
