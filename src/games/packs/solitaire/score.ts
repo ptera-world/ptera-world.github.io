@@ -1,38 +1,44 @@
 import { namespace } from "../../core/storage";
 import type { Plugin, PuzzleRef } from "../../core/types";
-import { COLS, FOUND, WASTE, type Pos } from "./solver";
+import type { Ctx, Pos } from "./engine";
 
-export type Scoring = "none" | "standard" | "vegas" | "vegas-keep";
+export type Scoring = "none" | "standard" | "vegas" | "vegas-keep" | "spider";
 
-/** Dealing costs this much in the vegas modes. */
+/** Dealing costs this much per deck in the vegas modes. */
 export const VEGAS_STAKE = 52;
 
 export const isVegas = (m: Scoring): boolean => m === "vegas" || m === "vegas-keep";
 
-/** Standard: a second look at the deck costs 100 when drawing one, 20 after the third pass when drawing three. */
+/** Standard: a second look at the deck costs 100 when turning one card, 20 after the third pass when turning more. */
 const recycleCost = (draw: number, recycles: number): number => (draw === 1 ? 100 : recycles >= 3 ? 20 : 0);
 
 /**
- * What a stock click or move scores, from the position before it. Standard: 5 for a waste card
- * onto a column, 10 for any card home, 5 for turning a card over, −15 for a card back from home.
- * Vegas: 5 for each card home and −5 for each taken back. Never negative in standard.
+ * What a stock click or move scores, from the positions before and after it (spider scoring is
+ * worked out from the state instead, see spiderScore). Standard: 5 for a waste card onto a
+ * column, 10 for any card home, 5 for turning a card over, −15 for a card back from home. Vegas:
+ * 5 for each card home and −5 for each taken back.
  */
-export function gain(mode: Scoring, draw: number, before: Pos, after: Pos, m: { from: number; to: number; n: number } | null): number {
-  if (mode === "none") return 0;
-  if (!m) return mode === "standard" && !before.stock.length && recycleCost(draw, after.recycles) ? -recycleCost(draw, after.recycles) : 0;
+export function gain(c: Ctx, mode: Scoring, before: Pos, after: Pos, m: { from: number; to: number; n: number } | null): number {
+  if (mode === "none" || mode === "spider") return 0;
+  const I = c.idx;
+  if (!m) return mode === "standard" && !before.stock.length && I.waste >= 0 && recycleCost(c.rules.draw, after.recycles) ? -recycleCost(c.rules.draw, after.recycles) : 0;
   const vegas = isVegas(mode);
+  const home = (pile: number) => pile >= I.found && pile < I.cols;
   let g = 0;
-  if (m.to < COLS) g += vegas ? 5 : 10;
-  else if (m.from === WASTE && !vegas) g += 5;
-  if (m.from >= FOUND && m.from < COLS) g -= vegas ? 5 : 15;
-  if (!vegas && m.from >= COLS && after.down[m.from - COLS]! < before.down[m.from - COLS]!) g += 5;
+  if (home(m.to)) g += vegas ? 5 : 10;
+  else if (m.from === I.waste && m.to >= I.cols && !vegas) g += 5;
+  if (home(m.from)) g -= vegas ? 5 : 15;
+  if (!vegas && m.from >= I.cols && after.down[m.from - I.cols]! < before.down[m.from - I.cols]!) g += 5;
   return g;
 }
 
-export const startScore = (mode: Scoring): number => (isVegas(mode) ? -VEGAS_STAKE : 0);
+export const startScore = (mode: Scoring, decks: number): number => (isVegas(mode) ? -VEGAS_STAKE * decks : mode === "spider" ? 500 : 0);
 
 /** Standard scores stop at zero; vegas keeps going below. */
 export const settle = (mode: Scoring, score: number): number => (mode === "standard" ? Math.max(0, score) : score);
+
+/** Microsoft Spider: 500 to start, a point off per move, 100 per finished run, never below zero. */
+export const spiderScore = (moves: number, runsHome: number): number => Math.max(0, 500 - moves + 100 * runsHome);
 
 const TIME_STEP_S = 10;
 
@@ -53,6 +59,7 @@ interface Bank {
 }
 
 const KEEP = 60;
+/** Named for the game it was first kept for, so a running total kept before survives. */
 const store = namespace("klondike");
 const readBank = (): Bank => store.get<Bank>("bank", { base: 0, games: {}, order: [] });
 
@@ -64,8 +71,8 @@ export function bankTotal(key: string, current: number): number {
   return sum;
 }
 
-/** A deal's identity for the running total: replaying or resuming a deal never pays the stake twice. */
-export const dealKey = (deck: readonly number[], draw: number): string => `${draw}:${deck.join(",")}`;
+/** A deal's identity for the running total: the faces in dealing order and the cards turned at a time. Replaying or resuming never pays the stake twice. */
+export const dealKey = (faces: readonly number[], draw: number): string => `${draw}:${faces.join(",")}`;
 
 function record(key: string, score: number): void {
   const b = readBank();
@@ -80,22 +87,21 @@ function record(key: string, score: number): void {
 }
 
 /** Keeps the running vegas total: each deal's current score is stored as it changes. */
-export function bankPlugin(puzzle: PuzzleRef): Plugin {
+export function bankPlugin<Pz extends { scoring: Scoring }>(puzzle: PuzzleRef, keyOf: (p: Pz) => string): Plugin {
   return {
-    id: "klondike.bank",
+    id: "solitaire.bank",
     name: "vegas running total",
     description: "adds each vegas deal's winnings and stake to a total kept in this browser",
     category: "scoring",
     appliesTo: [puzzle],
     enabledByDefault: true,
     setup({ session, owner }) {
-      const p = session.puzzle as { deck: number[]; draw: number; scoring?: Scoring };
+      const p = session.puzzle as Pz;
       if (p.scoring !== "vegas-keep") return;
-      const key = dealKey(p.deck, p.draw);
+      const key = keyOf(p);
       const save = () => record(key, (session.state as { score?: number }).score ?? 0);
       save();
       session.hooks.change.tap(save, { owner });
     },
   };
 }
-
