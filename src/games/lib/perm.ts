@@ -8,7 +8,8 @@ import { work } from "./work";
  * way to bring a matching tile home using "macros": single moves, plus commutators (a b a⁻¹ b⁻¹)
  * and their variants, which shuffle only a few cells and so can work around finished ones. The
  * last few cells are searched together; if they can't be finished without disturbing the rest
- * (a parity problem), one move that flips the parity is made and the placement starts over.
+ * (a parity problem, or turns that only add up right after some number of moves), a few moves that
+ * fix it are made first and the placement starts over.
  */
 
 export interface PermMove<A> {
@@ -33,6 +34,12 @@ export interface PermSpec<A> {
   distinct: boolean;
   /** How many cells at the end of the order are searched together (default 6). */
   endgame?: number;
+  /**
+   * Also build 3-cycles of every reachable triple of cells, as commutators of short words
+   * conjugated round the board. Needed when single moves are too big for their commutators to
+   * stay small (blocks of 3×3 and up).
+   */
+  deep?: boolean;
 }
 
 export interface PermState {
@@ -96,28 +103,171 @@ const signature = (m: Macro<unknown>): string => `${m.to.join(",")}|${m.turn ? m
 interface Library<A> {
   /** Macros placement may use, cheapest first. */
   macros: Macro<A>[];
+  /** Orbit of each cell under the moves, -1 if no move touches it. Invariants are counted per orbit. */
+  orbit: Int32Array;
   /**
-   * Set when nothing inside the endgame cells can change the arrangement's parity but some move can:
-   * placement then sticks to parity-preserving macros, and an odd arrangement is first fixed with this move.
+   * Set when the macros inside the endgame cells can't reach every invariant the moves can: placement
+   * then sticks to macros that keep every invariant, and a state with a nonzero one is first fixed
+   * with the word stored under the invariant that cancels it.
    */
-  flip: Macro<A> | null;
+  fixes: Map<string, Macro<A>> | null;
   /** Indexes into macros of the ones that move each cell. */
   byCell: number[][];
 }
 
-function parity(to: ArrayLike<number>): number {
+/** Parity of a permutation per orbit, as a bit vector (bit k set: odd on orbit k). */
+function parity(to: ArrayLike<number>, orbit: Int32Array): number {
   const seen = new Uint8Array(to.length);
   let par = 0;
   for (let i = 0; i < to.length; i++) {
     if (seen[i]) continue;
     let len = 0;
     for (let j = i; !seen[j]; j = to[j]!) { seen[j] = 1; len++; }
-    par ^= (len - 1) & 1;
+    if ((len - 1) & 1) par ^= 1 << orbit[i]!;
   }
   return par;
 }
 
+/** Orbits of cells under the moves, numbered from 0; cells no move touches get -1. */
+function orbits(n: number, moves: readonly { to: Int32Array }[]): Int32Array {
+  const root = Int32Array.from({ length: n }, (_, i) => i);
+  const find = (i: number): number => { while (root[i] !== i) i = root[i] = root[root[i]!]!; return i; };
+  const moved = new Uint8Array(n);
+  for (const m of moves) for (let c = 0; c < n; c++) if (m.to[c] !== c) { moved[c] = 1; root[find(c)] = find(m.to[c]!); }
+  const ids = new Map<number, number>();
+  const out = new Int32Array(n).fill(-1);
+  for (let c = 0; c < n; c++) {
+    if (!moved[c]) continue;
+    const r = find(c);
+    if (!ids.has(r)) ids.set(r, ids.size);
+    out[c] = ids.get(r)!;
+  }
+  if (ids.size > 30) throw new Error("perm: parity vectors hold at most 30 orbits");
+  return out;
+}
+
+/**
+ * What no commutator can change: the parity of the arrangement on each orbit (when values are
+ * distinct) and the turns added up over each orbit, mod the number of orientations.
+ */
+interface Invariant { par: number; sums: number[] }
+
+const invKey = (v: Invariant) => `${v.par}:${v.sums.join(",")}`;
+const isZero = (v: Invariant) => !v.par && v.sums.every((x) => !x);
+const addInv = (a: Invariant, b: Invariant, T: number): Invariant => ({ par: a.par ^ b.par, sums: a.sums.map((x, i) => (x + b.sums[i]!) % T) });
+const negInv = (a: Invariant, T: number): Invariant => ({ par: a.par, sums: a.sums.map((x) => (T - x) % T) });
+
+function invariantOf(to: ArrayLike<number>, turn: ArrayLike<number> | null | undefined, orbit: Int32Array, T: number, distinct: boolean): Invariant {
+  const count = Math.max(-1, ...orbit) + 1;
+  const sums = Array.from({ length: T > 1 ? count : 0 }, () => 0);
+  if (turn && T > 1) for (let c = 0; c < orbit.length; c++) if (orbit[c]! >= 0) sums[orbit[c]!] = (sums[orbit[c]!]! + turn[c]!) % T;
+  return { par: distinct ? parity(to, orbit) : 0, sums };
+}
+
 const libraries = new Map<string, Library<unknown>>();
+
+/** Two-move words the search for small macros starts from. */
+const DEEP_WORDS = 600;
+/** Elements carried from one round of commutators to the next, smallest support first. */
+const DEEP_POOL = 300;
+const DEEP_ROUNDS = 10;
+/** Commutators are only taken of elements sharing at most this many cells, so the result stays small. */
+const DEEP_SHARED = 4;
+/** Largest support of a macro kept by threeCycles. */
+const DEEP_SUPPORT = 3;
+
+/**
+ * Macros moving at most three cells (3-cycles, and twists when tiles turn), each with the shortest
+ * word found, for every cell conjugation reaches. A commutator [x, y] only moves cells near where
+ * x and y overlap, so commutators of elements that share few cells are smaller than either; rounds
+ * of that shrink big moves (4×4 turns) down to 3-cycles. Each one found is then carried round the
+ * board by conjugating it with single moves. Moves that keep cells apart (3×3 turns keep every tile
+ * on its checkerboard color) need a seed in each class, so rounds go on until every moving cell is covered.
+ */
+function threeCycles<A>(base: Macro<A>[], inv: Map<Macro<A>, Macro<A>>, T: number): Macro<A>[] {
+  const n = base[0]?.to.length ?? 0;
+  const invAction = new Map(base.map((b) => [b.actions[0], inv.get(b)!.actions[0]!]));
+  const inverse = (m: Macro<A>): Macro<A> => {
+    const to = new Int32Array(n);
+    const turn = T > 1 ? new Int8Array(n) : null;
+    for (let c = 0; c < n; c++) {
+      to[m.to[c]!] = c;
+      if (turn) turn[m.to[c]!] = (T - (m.turn?.[c] ?? 0)) % T;
+    }
+    return macroFrom("cycle", m.actions.slice().reverse().map((a) => invAction.get(a)!), to, turn);
+  };
+  const comm = (x: Macro<A>, y: Macro<A>) => compose("cycle", compose("cycle", compose("cycle", x, y, T), inverse(x), T), inverse(y), T);
+  const found = new Map<string, Macro<A>>();
+  const keep = (m: Macro<A>) => {
+    const sig = signature(m);
+    const old = found.get(sig);
+    if (!old || old.actions.length > m.actions.length) found.set(sig, m);
+  };
+  const moving = new Uint8Array(n);
+  for (const b of base) for (const c of b.support) moving[c] = 1;
+  /** Cells some kept 3-cycle moves, and (when tiles turn) cells some kept twist turns in place. */
+  const covered = new Uint8Array(n), twisted = new Uint8Array(n);
+  const done = (c: number) => covered[c] && (T === 1 || twisted[c]);
+  const uncovered = () => moving.some((v, c) => v && !done(c));
+  const still = T > 1 ? "|" + "0".repeat(n) : "";
+  const isTwist = (m: Macro<A>) => m.support.every((c) => m.to[c] === c);
+  const close = () => {
+    const queue = [...found.values()];
+    for (let i = 0; i < queue.length; i++) {
+      work.units++;
+      const c = queue[i]!;
+      for (const s of c.support) (isTwist(c) ? twisted : covered)[s] = 1;
+      if (T > 1 && !isTwist(c)) {
+        // a turning 3-cycle undone by the plain one on the same cells leaves only the turns
+        const plain = found.get(c.to.join(",") + still);
+        if (plain && plain !== c) {
+          const t = compose("cycle", c, inverse(plain), T);
+          const sig = signature(t);
+          if (t.support.length && !found.has(sig)) { found.set(sig, t); queue.push(t); }
+        }
+      }
+      for (const b of base) {
+        const m = compose("cycle", compose("cycle", b, c, T), inv.get(b)!, T);
+        const sig = signature(m);
+        if (found.has(sig)) continue;
+        found.set(sig, m);
+        queue.push(m);
+      }
+    }
+  };
+  let pool: Macro<A>[] = base.slice();
+  for (const a of base) for (const b of base) {
+    if (pool.length >= DEEP_WORDS) break;
+    if (b !== inv.get(a)) pool.push(compose("cycle", a, b, T));
+  }
+  for (let round = 0; round < DEEP_ROUNDS && uncovered(); round++) {
+    pool.sort((a, b) => a.support.length - b.support.length || a.actions.length - b.actions.length);
+    pool = pool.slice(0, DEEP_POOL);
+    const next = new Map<string, Macro<A>>();
+    for (let i = 0; i < pool.length; i++) {
+      const x = pool[i]!;
+      const xs = new Uint8Array(n);
+      for (const c of x.support) xs[c] = 1;
+      for (let j = i + 1; j < pool.length; j++) {
+        const y = pool[j]!;
+        let k = 0, at = -1;
+        for (const c of y.support) if (xs[c]) { k++; at = c; }
+        if (k < 1 || k > DEEP_SHARED || (k === 1 && done(at))) continue;
+        const c = comm(x, y);
+        if (!c.support.length) continue;
+        if (c.support.length <= DEEP_SUPPORT) { if (!c.support.every(done)) keep(c); }
+        else if (c.support.length < Math.max(x.support.length, y.support.length)) {
+          const sig = signature(c);
+          const old = next.get(sig);
+          if (!old || old.actions.length > c.actions.length) next.set(sig, c);
+        }
+      }
+    }
+    close();
+    pool = [...pool, ...next.values()];
+  }
+  return [...found.values()];
+}
 
 function library<A>(spec: PermSpec<A>): Library<A> {
   const cached = libraries.get(spec.key);
@@ -171,15 +321,36 @@ function library<A>(spec: PermSpec<A>): Library<A> {
       add(compose("cycle", x, y, T));
     }
   }
+  if (spec.deep) for (const m of threeCycles(base, inv, T)) add(m);
   const all = [...best.values()].sort((a, b) => a.actions.length - b.actions.length);
   const region = new Set(spec.order.slice(Math.max(0, spec.order.length - (spec.endgame ?? ENDGAME_CELLS))));
-  const oddBase = base.find((m) => parity(m.to));
-  const regionOdd = all.some((m) => parity(m.to) && m.support.every((c) => region.has(c)));
-  const flip = spec.distinct && oddBase && !regionOdd ? oddBase : null;
-  const macros = flip ? all.filter((m) => !parity(m.to)) : all;
+  const orbit = orbits(spec.n, base);
+  const inv0 = (m: Macro<A>) => invariantOf(m.to, m.turn, orbit, T, spec.distinct);
+  /** Every invariant the given macros reach, each with the shortest word reaching it. */
+  const reach = (from: Macro<A>[]) => {
+    const zero = inv0(macroFrom("move", [], Int32Array.from({ length: spec.n }, (_, i) => i), null));
+    const words = new Map<string, { v: Invariant; word: Macro<A> | null }>([[invKey(zero), { v: zero, word: null }]]);
+    const queue = [zero];
+    for (let i = 0; i < queue.length; i++) {
+      const at = words.get(invKey(queue[i]!))!;
+      for (const m of from) {
+        const v = addInv(at.v, inv0(m), T);
+        if (words.has(invKey(v))) continue;
+        words.set(invKey(v), { v, word: at.word ? compose("move", at.word, m, T) : m });
+        queue.push(v);
+      }
+    }
+    return words;
+  };
+  const varying = base.filter((m) => !isZero(inv0(m)));
+  const reachable = varying.length ? reach(base) : null;
+  const inRegion = reachable ? reach(all.filter((m) => m.support.every((c) => region.has(c)) && !isZero(inv0(m)))) : null;
+  const fixFirst = !!reachable && reachable.size > inRegion!.size;
+  const macros = fixFirst ? all.filter((m) => isZero(inv0(m))) : all;
+  const fixes = fixFirst ? new Map([...reachable!].flatMap(([k, w]) => (w.word ? [[k, w.word] as const] : []))) : null;
   const byCellIdx: number[][] = Array.from({ length: spec.n }, () => []);
   macros.forEach((m, k) => { for (const c of m.support) byCellIdx[c]!.push(k); });
-  const lib: Library<A> = { macros, flip, byCell: byCellIdx };
+  const lib: Library<A> = { macros, orbit, fixes, byCell: byCellIdx };
   libraries.set(spec.key, lib as Library<unknown>);
   return lib;
 }
@@ -308,10 +479,11 @@ function progress(spec: PermSpec<unknown>, goal: readonly number[], st: PermStat
 
 const cost = (ms: Macro<unknown>[]) => ms.reduce((a, m) => a + m.actions.length, 0);
 
-/** Parity of the arrangement relative to the goal; only meaningful when every value is distinct. */
-function stateParity(goal: readonly number[], st: PermState): number {
+/** The state's invariant relative to the goal (parity only when every value is distinct). */
+function stateInvariant(spec: PermSpec<unknown>, goal: readonly number[], st: PermState, orbit: Int32Array): Invariant {
   const where = new Map(goal.map((v, c) => [v, c]));
-  return parity(st.values.map((v) => where.get(v)!));
+  const to = spec.distinct ? st.values.map((v) => where.get(v)!) : goal.map((_, c) => c);
+  return invariantOf(to, st.turns, orbit, spec.turns, spec.distinct);
 }
 
 interface Stretch<A> {
@@ -327,7 +499,13 @@ function stretch<A>(spec: PermSpec<A>, goal: readonly number[], st: PermState): 
   const { index, locked } = progress(spec, goal, st);
   if (index === spec.order.length) return "solved";
   const cell = spec.order[index]!;
-  if (lib.flip && stateParity(goal, st)) return { kind: "parity", path: [lib.flip], cell, locked };
+  if (lib.fixes) {
+    const v = stateInvariant(spec, goal, st, lib.orbit);
+    if (!isZero(v)) {
+      const fix = lib.fixes.get(invKey(negInv(v, spec.turns)));
+      return fix ? { kind: "parity", path: [fix], cell, locked } : null;
+    }
+  }
   const endStart = Math.max(0, spec.order.length - (spec.endgame ?? ENDGAME_CELLS));
   if (index < endStart) {
     const path = place(spec, lib, goal, st, cell, locked);
