@@ -1,224 +1,233 @@
-import type { Rng } from "../../core/rng";
+import type { Ids } from "../../core/commands";
+import { featureTests } from "../../core/define";
 import { defineSchema, type Values } from "../../core/schema";
-import type { Format, PuzzleDef, Rating } from "../../core/types";
+import type { GenerateContext, PuzzleDef, Rating } from "../../core/types";
+import type { Rng } from "../../core/rng";
+import { gridFormat, sgtFormat } from "./formats";
+import { goalProblem, goalText, type Goal } from "./goal";
+import { describeShift, generateShift, shift, shiftOk, shiftSolve, shiftSolved, type ShiftAction, type ShiftPuzzle, type ShiftState } from "./shift";
+import { applyMove, describeSlide, generateSlide, slideSolved, type SlideAction, type SlidePuzzle, type SlideState } from "./slide";
 import { fullPlan } from "./solver";
+import { canTurn, describeTurn, generateTurn, rotate, turnSolve, turnSolved, type TurnAction, type TurnPuzzle, type TurnState } from "./turn";
 
 export const params = defineSchema({
+  moves: {
+    type: "enum", label: "moves", default: "slide",
+    options: [
+      { value: "slide", label: "slide into the gap", description: "one tile is missing; tiles next to the gap slide into it (the 15 puzzle)" },
+      { value: "shift", label: "shift rows and columns", description: "a whole row or column slides along and wraps round (sixteen, loopover)" },
+      { value: "turn", label: "turn blocks", description: "a square block of tiles turns a quarter turn (twiddle, gripple)" },
+    ],
+  },
   width: { type: "int", label: "width", default: 4, min: 2, max: 8 },
   height: { type: "int", label: "height", default: 4, min: 2, max: 8 },
+  block: { type: "int", label: "block size", default: 2, min: 2, max: 8, when: (v) => v.moves === "turn", description: "how many tiles across a turning block is; at most the board's shorter side" },
+  blocks: {
+    type: "enum", label: "blocks that turn", default: "all", when: (v) => v.moves === "turn",
+    options: [
+      { value: "all", label: "every block" },
+      { value: "corners", label: "corners and middle", description: "only the four corner blocks and the middle one (gripple)" },
+    ],
+  },
+  goal: {
+    type: "enum", label: "finished board", default: "order",
+    options: [
+      { value: "order", label: "in reading order", description: "left to right, top to bottom (with a gap, it ends the last row)" },
+      { value: "gap-first", label: "gap first", description: "the gap in the top-left corner, then the tiles in reading order (slide only)" },
+      { value: "spiral", label: "spiral", description: "clockwise round the edge from the top left and inwards" },
+      { value: "rows", label: "one number per row", description: "every tile in a row is the same number, so only which row a tile ends up in matters (not slide)" },
+      { value: "quadrants", label: "one number per quarter", description: "four numbers, one for each quarter of the board (not slide; even sides)" },
+    ],
+  },
+  orientable: { type: "bool", label: "tiles must end upright", default: false, when: (v) => v.moves === "turn", description: "tiles turn with the block, and each must finish pointing up" },
   shuffle: {
-    type: "int", label: "scramble moves (0 = fully random)", default: 0, min: 0, max: 1000,
-    description: "fully random boards are any solvable arrangement; a small number of random moves gives an easier board",
+    type: "int", label: "scramble moves (0 = thorough)", default: 0, min: 0, max: 2000,
+    description: "fully random boards are any arrangement that can be reached; a few random moves give an easier board",
   },
 });
 
-export interface FifteenPuzzle {
-  w: number;
-  h: number;
-  /** Row-major; 0 is the gap, 1…n-1 the tiles. Solved: 1…n-1 in order with the gap last. */
-  tiles: number[];
+export type FifteenParams = Values<typeof params>;
+
+export type FifteenPuzzle = SlidePuzzle | ShiftPuzzle | TurnPuzzle;
+export type FifteenState = SlideState | ShiftState | TurnState;
+export type FifteenAction = SlideAction | ShiftAction | TurnAction;
+
+export interface FifteenInteraction {
+  /** Keyboard cursor: a cell (shift) or a block's top-left cell (turn). */
+  cursor: number;
 }
 
-export interface FifteenState {
-  tiles: number[];
-  /** Tiles moved so far (sliding a line of three counts three). */
-  moves: number;
-}
+export type Moves = "slide" | "shift" | "turn";
+/** Boards saved before the games were merged have no `moves`: they slide. */
+export const movesOf = (p: FifteenPuzzle): Moves => p.moves ?? "slide";
+export const goalOf = (p: FifteenPuzzle): Goal => p.goal ?? "order";
 
-/** Slide the tiles between `cell` and the gap one step toward the gap. `cell` must share a row or column with it. */
-export type FifteenAction = { type: "move"; cell: number };
-
-/** Hint focus understood by the view: cells to press, the group's home cells, and the group's tiles. */
-export interface FifteenFocus {
-  press?: number[];
-  homes?: number[];
-  tiles?: number[];
-}
-
-export const home = (n: number, tile: number): number => (tile === 0 ? n - 1 : tile - 1);
-export const solvedTile = (n: number, cell: number): number => (cell === n - 1 ? 0 : cell + 1);
-export const gapOf = (tiles: readonly number[]): number => tiles.indexOf(0);
-
-/** Parity of the arrangement read as a permutation (gap counted as tile n). */
-function permParity(tiles: readonly number[]): number {
-  const n = tiles.length;
-  const seen = new Uint8Array(n);
-  let parity = 0;
-  for (let i = 0; i < n; i++) {
-    if (seen[i]) continue;
-    let len = 0;
-    for (let j = i; !seen[j]; j = home(n, tiles[j]!)) { seen[j] = 1; len++; }
-    parity ^= (len - 1) & 1;
+async function generate(v: FifteenParams, rng: Rng, ctx: GenerateContext): Promise<FifteenPuzzle> {
+  const moves = v.moves as Moves, goal = v.goal as Goal;
+  const problem = goalProblem({ w: v.width, h: v.height, goal, gap: moves === "slide" });
+  if (problem) throw new Error(problem);
+  if (moves === "shift") return generateShift(v.width, v.height, goal, v.shuffle, rng);
+  if (moves === "turn") {
+    const n = v.block;
+    if (n > Math.min(v.width, v.height)) throw new Error(`a ${n}×${n} block doesn't fit on a ${v.width}×${v.height} board`);
+    return generateTurn({ w: v.width, h: v.height, n, blocks: v.blocks as "all" | "corners", goal, orientable: v.orientable, shuffle: v.shuffle }, rng, ctx);
   }
-  return parity;
+  return generateSlide(v.width, v.height, goal, v.shuffle, rng);
 }
 
-/** Every move swaps the gap with a neighbor, so arrangement parity and gap distance parity stay matched. */
-export function isSolvable(w: number, h: number, tiles: readonly number[]): boolean {
-  const g = gapOf(tiles);
-  const dist = (w - 1 - (g % w)) + (h - 1 - Math.floor(g / w));
-  return permParity(tiles) === (dist & 1);
-}
-
-/** Cells the gap passes through for a move from `cell`, nearest the gap first; empty if not in line. */
-export function lineToGap(w: number, tiles: readonly number[], cell: number): number[] {
-  const g = gapOf(tiles);
-  if (cell === g || cell < 0 || cell >= tiles.length) return [];
-  const gx = g % w, gy = Math.floor(g / w), cx = cell % w, cy = Math.floor(cell / w);
-  if (gx !== cx && gy !== cy) return [];
-  const step = gx === cx ? (cy > gy ? w : -w) : (cx > gx ? 1 : -1);
-  const out: number[] = [];
-  for (let p = g + step; ; p += step) {
-    out.push(p);
-    if (p === cell) return out;
-  }
-}
-
-export function applyMove(w: number, s: FifteenState, cell: number): FifteenState {
-  const path = lineToGap(w, s.tiles, cell);
-  if (!path.length) return s;
-  const tiles = s.tiles.slice();
-  let gap = gapOf(tiles);
-  for (const p of path) {
-    tiles[gap] = tiles[p]!;
-    tiles[p] = 0;
-    gap = p;
-  }
-  return { tiles, moves: s.moves + path.length };
-}
-
-export const isSolvedTiles = (tiles: readonly number[]): boolean => tiles.every((t, i) => t === solvedTile(tiles.length, i));
-
-function generate(v: Values<typeof params>, rng: Rng): FifteenPuzzle {
-  const w = v.width, h = v.height, n = w * h;
-  let tiles: number[];
-  if (v.shuffle > 0) {
-    tiles = Array.from({ length: n }, (_, i) => solvedTile(n, i));
-    let prev = -1;
-    for (let i = 0; i < v.shuffle; i++) {
-      const g = gapOf(tiles);
-      const opts = [g - w, g + w, (g % w) > 0 ? g - 1 : -1, (g % w) < w - 1 ? g + 1 : -1]
-        .filter((c) => c >= 0 && c < n && c !== prev);
-      const c = rng.pick(opts);
-      tiles[g] = tiles[c]!;
-      tiles[c] = 0;
-      prev = g;
-    }
-  } else {
-    tiles = rng.shuffle(Array.from({ length: n }, (_, i) => i));
-    if (!isSolvable(w, h, tiles)) {
-      const a = tiles.findIndex((t) => t !== 0);
-      const b = tiles.findIndex((t, i) => i > a && t !== 0);
-      [tiles[a], tiles[b]] = [tiles[b]!, tiles[a]!];
+function solveMoves(p: FifteenPuzzle, s: FifteenState): FifteenAction[] | null {
+  switch (p.moves) {
+    case "shift": return shiftSolve(p, s.tiles);
+    case "turn": return turnSolve(p, s as TurnState);
+    default: {
+      const cells = fullPlan(p, s);
+      return cells ? cells.map((cell) => ({ type: "move" as const, cell })) : null;
     }
   }
-  if (isSolvedTiles(tiles)) {
-    const g = gapOf(tiles), c = g - 1;
-    tiles[g] = tiles[c]!;
-    tiles[c] = 0;
-  }
-  return { w, h, tiles };
 }
-
-function checkTiles(w: number, h: number, tiles: number[]): FifteenPuzzle {
-  if (!(w >= 2 && h >= 2 && w <= 16 && h <= 16)) throw new Error("each side must be between 2 and 16");
-  const n = w * h;
-  if (tiles.length !== n) throw new Error(`expected ${n} numbers, got ${tiles.length}`);
-  const seen = new Set<number>();
-  for (const t of tiles) {
-    if (!Number.isInteger(t) || t < 0 || t >= n) throw new Error(`numbers must run from 0 (the gap) to ${n - 1}`);
-    if (seen.has(t)) throw new Error(`${t} appears twice`);
-    seen.add(t);
-  }
-  if (!isSolvable(w, h, tiles)) throw new Error("this arrangement can't be solved (two tiles would have to swap)");
-  return { w, h, tiles };
-}
-
-const SGT_RE = /^(\d+)(?:x(\d+))?:([\d,\s]+)$/;
-
-/** Simon Tatham's Fifteen game id: `WxH:` then every cell's number, comma-separated, 0 for the gap. */
-export const sgtFormat: Format<FifteenPuzzle> = {
-  id: "sgt",
-  label: "sgt game id (WxH:n,n,…)",
-  detect: (t) => SGT_RE.test(t.trim()),
-  parse(text) {
-    const m = SGT_RE.exec(text.trim());
-    if (!m) throw new Error("expected WxH:n,n,…, e.g. 4x4:1,2,3,…,0");
-    const w = Number(m[1]), h = Number(m[2] ?? m[1]);
-    return checkTiles(w, h, m[3]!.split(",").map((s) => Number(s.trim())));
-  },
-  serialize: (p) => `${p.w}x${p.h}:${p.tiles.join(",")}`,
-};
-
-/** One row per line, numbers separated by spaces; the gap is 0, `.` or `_`. */
-export const gridFormat: Format<FifteenPuzzle> = {
-  id: "grid",
-  label: "grid (rows of numbers, . for the gap)",
-  detect: (t) => t.trim().includes("\n") && /^[\d\s._,]+$/.test(t.trim()),
-  parse(text) {
-    const rows = text.trim().split(/\r?\n/).map((r) => r.trim()).filter(Boolean).map((r) => r.split(/[\s,]+/));
-    const h = rows.length, w = rows[0]?.length ?? 0;
-    if (rows.some((r) => r.length !== w)) throw new Error("rows have different lengths");
-    return checkTiles(w, h, rows.flat().map((t) => (t === "." || t === "_" ? 0 : Number(t))));
-  },
-  serialize(p) {
-    const width = String(p.w * p.h - 1).length;
-    const rows: string[] = [];
-    for (let y = 0; y < p.h; y++) {
-      rows.push(p.tiles.slice(y * p.w, y * p.w + p.w).map((t) => (t === 0 ? "." : String(t)).padStart(width)).join(" "));
-    }
-    return rows.join("\n");
-  },
-};
 
 const ratingCache = new WeakMap<FifteenPuzzle, Rating | null>();
 
 function rate(p: FifteenPuzzle): Rating | null {
   if (ratingCache.has(p)) return ratingCache.get(p)!;
-  const plan = fullPlan(p, { tiles: p.tiles });
-  const r = plan ? { label: `${plan.length} moves`, score: plan.length } : null;
+  const moves = solveMoves(p, init(p));
+  const unit = p.moves === "turn" ? "turns" : "moves";
+  const r = moves ? { label: `${moves.length} ${unit}`, score: moves.length } : null;
   ratingCache.set(p, r);
   return r;
 }
 
-export const fifteen: PuzzleDef<FifteenPuzzle, FifteenState, FifteenAction, null, typeof params> = {
+function init(p: FifteenPuzzle): FifteenState {
+  return p.moves === "turn" ? { tiles: p.tiles.slice(), turns: p.turns.slice(), moves: 0 } : { tiles: p.tiles.slice(), moves: 0 };
+}
+
+function reduce(p: FifteenPuzzle, s: FifteenState, a: FifteenAction): FifteenState {
+  switch (p.moves) {
+    case "shift":
+      if (a.type !== "shift" || !shiftOk(p, a)) return s;
+      return { tiles: shift(p.w, p.h, s.tiles, a), moves: s.moves + 1 };
+    case "turn": {
+      if (a.type !== "rotate" || !canTurn(p, a.x, a.y)) return s;
+      return { ...rotate(p, s as TurnState, a), moves: s.moves + 1 };
+    }
+    default:
+      return a.type === "move" ? applyMove(p.w, s, a.cell) : s;
+  }
+}
+
+function rules(p: FifteenPuzzle): string[] {
+  const goal = goalText({ w: p.w, h: p.h, goal: goalOf(p), gap: movesOf(p) === "slide" });
+  switch (p.moves) {
+    case "shift": return [
+      goalOf(p) === "order" || goalOf(p) === "spiral" ? `the numbers 1 to ${p.w * p.h} fill a ${p.w}×${p.h} grid.` : `the tiles fill a ${p.w}×${p.h} grid.`,
+      "a move slides one whole row or column along by one; the tile pushed off one end comes back on at the other.",
+      goal,
+    ];
+    case "turn": return [
+      p.blocks === "corners"
+        ? `a move turns one of the five ${p.n}×${p.n} blocks (the four corners and the middle) a quarter turn, either way.`
+        : `a move turns one ${p.n}×${p.n} block of tiles a quarter turn, either way.`,
+      goal,
+      ...(p.orientable ? ["tiles turn with their block: every tile must also end up pointing upright."] : []),
+    ];
+    default: return [
+      `the tiles 1 to ${p.w * p.h - 1} sit in a ${p.w}×${p.h} frame with one gap.`,
+      "a tile next to the gap can slide into it. clicking a tile further along the gap's row or column slides the whole line.",
+      goal,
+    ];
+  }
+}
+
+const GOAL_WORDS: Record<Goal, string> = { order: "", "gap-first": ", gap first", spiral: ", spiral", rows: ", rows only", quadrants: ", quarters" };
+
+function describe(p: FifteenPuzzle): string {
+  const size = `${p.w}×${p.h}`, goal = GOAL_WORDS[goalOf(p)];
+  switch (p.moves) {
+    case "shift": return `${size} shifting${goal}`;
+    case "turn": return `${size} turning ${p.n}×${p.n}${p.blocks === "corners" ? " corners and middle" : ""}${goal}${p.orientable ? ", upright" : ""}`;
+    default: return `${size}${goal}`;
+  }
+}
+
+const FEATURES = {
+  /** Tiles slide into a gap. */
+  slide: (p: FifteenPuzzle) => movesOf(p) === "slide",
+  /** Whole rows and columns shift round. */
+  shift: (p: FifteenPuzzle) => p.moves === "shift",
+  /** Square blocks turn. */
+  turn: (p: FifteenPuzzle) => p.moves === "turn",
+};
+
+declare module "../../core/types" {
+  interface FeatureNames extends Ids<typeof FEATURES> {}
+}
+
+/**
+ * Every sliding and permutation puzzle on a grid of numbered tiles, by what a move does: tiles slide
+ * into a gap (the 15 puzzle), whole lines shift round (Sixteen, Loopover), or blocks turn (Twiddle,
+ * Gripple). The finished arrangement is its own setting.
+ */
+export const fifteen: PuzzleDef<FifteenPuzzle, FifteenState, FifteenAction, FifteenInteraction, typeof params> = {
   id: "fifteen",
   name: "fifteen",
-  aliases: ["15 puzzle", "sliding puzzle", "gem puzzle", "sliding tiles"],
-  tags: ["classic", "sliding", "moves"],
-  description: "slide the numbered tiles around using the one gap until they're in order.",
+  aliases: [
+    "15 puzzle", "sliding puzzle", "gem puzzle", "sliding tiles", "8-puzzle", "24-puzzle",
+    "sixteen", "row and column shifting", "loopover",
+    "twiddle", "rotation puzzle", "number rotation puzzle", "gripple",
+  ],
+  tags: ["classic", "sliding", "moves", "permutation", "rotation"],
+  description: "put the numbered tiles back in order. what a move does is a setting: slide tiles into the one gap, shift whole rows and columns round, or turn square blocks of tiles.",
   generatorVersion: 1,
   params,
   presets: [
-    { label: "3×3", params: { width: 3, height: 3 } },
-    { label: "4×4", params: { width: 4, height: 4 } },
-    { label: "5×5", params: { width: 5, height: 5 } },
-    { label: "4×4 · 20 moves", params: { width: 4, height: 4, shuffle: 20 } },
+    { label: "8-puzzle", params: { moves: "slide", width: 3, height: 3 } },
+    { label: "15-puzzle", params: { moves: "slide", width: 4, height: 4 } },
+    { label: "24-puzzle", params: { moves: "slide", width: 5, height: 5 } },
+    { label: "8-puzzle, blank first", params: { moves: "slide", width: 3, height: 3, goal: "gap-first" } },
+    { label: "8-puzzle, spiral goal", params: { moves: "slide", width: 3, height: 3, goal: "spiral" } },
+    { label: "sixteen 3×3", params: { moves: "shift", width: 3, height: 3 } },
+    { label: "sixteen 4×3", params: { moves: "shift", width: 4, height: 3 } },
+    { label: "sixteen 4×4", params: { moves: "shift", width: 4, height: 4 } },
+    { label: "sixteen 5×4", params: { moves: "shift", width: 5, height: 4 } },
+    { label: "sixteen 5×5", params: { moves: "shift", width: 5, height: 5 } },
+    { label: "loopover 5×5", params: { moves: "shift", width: 5, height: 5 } },
+    { label: "twiddle 3×3 rows only", params: { moves: "turn", width: 3, height: 3, block: 2, goal: "rows" } },
+    { label: "twiddle 3×3 normal", params: { moves: "turn", width: 3, height: 3, block: 2 } },
+    { label: "twiddle 3×3 orientable", params: { moves: "turn", width: 3, height: 3, block: 2, orientable: true } },
+    { label: "twiddle 4×4 normal", params: { moves: "turn", width: 4, height: 4, block: 2 } },
+    { label: "twiddle 4×4 orientable", params: { moves: "turn", width: 4, height: 4, block: 2, orientable: true } },
+    { label: "twiddle 4×4, rotating 3×3 blocks", params: { moves: "turn", width: 4, height: 4, block: 3 } },
+    { label: "twiddle 5×5, rotating 3×3 blocks", params: { moves: "turn", width: 5, height: 5, block: 3 } },
+    { label: "twiddle 6×6, rotating 4×4 blocks", params: { moves: "turn", width: 6, height: 6, block: 4 } },
+    { label: "gripple", params: { moves: "turn", width: 4, height: 4, block: 2, blocks: "corners" } },
+    { label: "gripple, four colours", params: { moves: "turn", width: 4, height: 4, block: 2, blocks: "corners", goal: "quadrants" } },
   ],
   generate,
-  formats: [sgtFormat, gridFormat],
-  init: (p) => ({ tiles: p.tiles.slice(), moves: 0 }),
-  reduce(p, s, a) {
-    if (a.type !== "move") return s;
-    return applyMove(p.w, s, a.cell);
-  },
+  formats: [gridFormat, sgtFormat],
+  init,
+  initInteraction: () => ({ cursor: 0 }),
+  reduce,
   describeAction: (p, a, before) => {
-    const path = lineToGap(p.w, before.tiles, a.cell);
-    if (!path.length) return "slide";
-    const g = gapOf(before.tiles), first = path[0]!;
-    const dir = first === g - 1 ? "right" : first === g + 1 ? "left" : first < g ? "down" : "up";
-    return `slide ${path.map((c) => before.tiles[c]).join(", ")} ${dir}`;
+    switch (a.type) {
+      case "shift": return describeShift(a);
+      case "rotate": return describeTurn(p as TurnPuzzle, a);
+      default: return describeSlide(p as SlidePuzzle, a, before);
+    }
   },
-  isSolved: (_p, s) => isSolvedTiles(s.tiles),
+  isSolved: (p, s) => {
+    switch (p.moves) {
+      case "shift": return shiftSolved(p, s.tiles);
+      case "turn": return turnSolved(p, s as TurnState);
+      default: return slideSolved(p, s.tiles);
+    }
+  },
   solve(p, s) {
-    const cells = fullPlan(p, s);
-    return cells ? { moves: cells.map((cell) => ({ type: "move" as const, cell })) } : null;
+    const moves = solveMoves(p, s);
+    return moves ? { moves } : null;
   },
   rate,
-  rules: (p) => [
-    `the tiles 1 to ${p.w * p.h - 1} sit in a ${p.w}×${p.h} frame with one gap.`,
-    "a tile next to the gap can slide into it. clicking a tile further along the gap's row or column slides the whole line.",
-    "get the tiles in order, reading left to right and top to bottom, with the gap in the bottom-right corner.",
-  ],
-  describe: (p) => `${p.w}×${p.h}`,
+  rules,
+  features: featureTests(FEATURES),
+  describe,
 };
+

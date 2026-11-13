@@ -388,7 +388,7 @@ export interface View<Pz = any, S = any, A extends Action = any, I = any, P exte
    * Pointer gestures handled directly on the board (not bindable commands), for the how-to-play
    * card and tooltips, e.g. { how: "click a cell", what: "press it" }. Mouse and touch both.
    */
-  controls?: readonly { how: string; what: string }[];
+  controls?: readonly { how: string; what: string }[] | ((puzzle: Pz) => readonly { how: string; what: string }[]);
   /**
    * What the board's colors and marks mean, for the how-to-play card. `sample` is inline SVG
    * (or HTML) drawn with the same theme tokens the board uses, so it matches the current theme.

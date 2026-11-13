@@ -1,47 +1,43 @@
 import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
 import { s, style, inputIs } from "../../core/dom";
 import { buttonsSwapped, secondary } from "../../core/gestures";
-import { defineSchema } from "../../core/schema";
 import type { View } from "../../core/types";
-import { twiddle, goalTile, type TwiddleAction, type TwiddleFocus, type TwiddleInteraction, type TwiddlePuzzle, type TwiddleState } from "./logic";
+import { fifteen, type FifteenInteraction } from "./logic";
+import { blockCorners, turnGoal, type TurnAction, type TurnFocus, type TurnPuzzle, type TurnState } from "./turn";
+import { viewSettings as settings } from "./view-settings";
 
 const SIZE = 10;
 
 const CSS = `
-.twiddle-board { display: block; width: 100%; height: 100%; touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
-.twiddle-board .tile { transition: transform 120ms ease-out; cursor: pointer; }
-.twiddle-board .tile rect { fill: var(--cell); stroke: var(--border); stroke-width: 0.25; }
-.twiddle-board .tile.home rect { fill: color-mix(in srgb, var(--accent) 16%, var(--cell)); }
-.twiddle-board .tile .face { transition: transform 120ms ease-out; }
-.twiddle-board .tile text { fill: var(--text); font: 600 4.4px var(--font); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
-.twiddle-board .tile .up { stroke: var(--text-dim); stroke-width: 0.5; stroke-linecap: round; pointer-events: none; }
-.twiddle-board .block { fill: none; stroke: var(--accent); stroke-width: 0.6; pointer-events: none; }
-.twiddle-board .mark { fill: none; stroke: var(--hint); pointer-events: none; }
-.twiddle-board .ghost { pointer-events: none; opacity: 0.7; }
-.twiddle-board .ghost rect { fill: color-mix(in srgb, var(--cell) 70%, transparent); stroke: var(--text-dim); stroke-width: 0.35; stroke-dasharray: 1 0.7; }
-.twiddle-board .ghost text { fill: var(--text-dim); font: 600 4.4px var(--font); text-anchor: middle; dominant-baseline: central; }
-.twiddle-board .mark.moving { stroke-width: 0.5; stroke-opacity: 0.8; }
-.twiddle-board .mark.home { stroke-width: 0.7; stroke-dasharray: 1.2 0.8; }
-.twiddle-board .mark.tile { stroke-width: 1; }
-.twiddle-board .mark.block { stroke-width: 0.8; stroke-dasharray: 2 1; }
-.twiddle-board .cursor { fill: none; stroke: var(--focus); stroke-width: 0.6; pointer-events: none; }
-${inputIs("pointer")} .twiddle-board .cursor { display: none; }
-@media (prefers-reduced-motion: reduce) { .twiddle-board .tile, .twiddle-board .tile .face { transition: none; } }
+.fifteen-turn { display: block; width: 100%; height: 100%; touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.fifteen-turn .tile { transition: transform 120ms ease-out; cursor: pointer; }
+.fifteen-turn .tile rect { fill: var(--cell); stroke: var(--border); stroke-width: 0.25; }
+.fifteen-turn .tile.home rect { fill: color-mix(in srgb, var(--accent) 16%, var(--cell)); }
+.fifteen-turn .tile .face { transition: transform 120ms ease-out; }
+.fifteen-turn .tile text { fill: var(--text); font: 600 4.4px var(--font); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.fifteen-turn .tile .up { stroke: var(--text-dim); stroke-width: 0.5; stroke-linecap: round; pointer-events: none; }
+.fifteen-turn .block { fill: none; stroke: var(--accent); stroke-width: 0.6; pointer-events: none; }
+.fifteen-turn .mark { fill: none; stroke: var(--hint); pointer-events: none; }
+.fifteen-turn .ghost { pointer-events: none; opacity: 0.7; }
+.fifteen-turn .ghost rect { fill: color-mix(in srgb, var(--cell) 70%, transparent); stroke: var(--text-dim); stroke-width: 0.35; stroke-dasharray: 1 0.7; }
+.fifteen-turn .ghost text { fill: var(--text-dim); font: 600 4.4px var(--font); text-anchor: middle; dominant-baseline: central; }
+.fifteen-turn .mark.moving { stroke-width: 0.5; stroke-opacity: 0.8; }
+.fifteen-turn .mark.home { stroke-width: 0.7; stroke-dasharray: 1.2 0.8; }
+.fifteen-turn .mark.tile { stroke-width: 1; }
+.fifteen-turn .mark.block { stroke-width: 0.8; stroke-dasharray: 2 1; }
+.fifteen-turn .cursor { fill: none; stroke: var(--focus); stroke-width: 0.6; pointer-events: none; }
+${inputIs("pointer")} .fifteen-turn .cursor { display: none; }
+@media (prefers-reduced-motion: reduce) { .fifteen-turn .tile, .fifteen-turn .tile .face { transition: none; } }
 `;
 
-const settings = defineSchema({
-  tintHome: { type: "bool", label: "tint tiles that are in their final spot (and upright)", default: true },
-  showBlock: { type: "bool", label: "outline the block a click would turn", default: true },
-});
-
 const BINDINGS = {
-  "twiddle.left": { label: "select block left", category: "twiddle", keys: ["ArrowLeft", "a"] },
-  "twiddle.right": { label: "select block right", category: "twiddle", keys: ["ArrowRight", "d"] },
-  "twiddle.up": { label: "select block up", category: "twiddle", keys: ["ArrowUp", "w"] },
-  "twiddle.down": { label: "select block down", category: "twiddle", keys: ["ArrowDown", "s"] },
-  "twiddle.ccw": { label: "turn counterclockwise", category: "twiddle", keys: ["space", "Enter"], description: "turn the selected block a quarter turn counterclockwise" },
-  "twiddle.cw": { label: "turn clockwise", category: "twiddle", keys: ["shift+space", "shift+Enter", "x"], description: "turn the selected block a quarter turn clockwise" },
-  "twiddle.cw-at": { label: "turn clockwise (pointer)", category: "twiddle", mouse: ["rightclick"], description: "turn the block under the pointer clockwise" },
+  "fifteen.block-left": { label: "select block left", category: "fifteen", keys: ["ArrowLeft", "a"] },
+  "fifteen.block-right": { label: "select block right", category: "fifteen", keys: ["ArrowRight", "d"] },
+  "fifteen.block-up": { label: "select block up", category: "fifteen", keys: ["ArrowUp", "w"] },
+  "fifteen.block-down": { label: "select block down", category: "fifteen", keys: ["ArrowDown", "s"] },
+  "fifteen.ccw": { label: "turn counterclockwise", category: "fifteen", keys: ["space", "Enter"], description: "turn the selected block a quarter turn counterclockwise" },
+  "fifteen.cw": { label: "turn clockwise", category: "fifteen", keys: ["shift+space", "shift+Enter", "x"], description: "turn the selected block a quarter turn clockwise" },
+  "fifteen.cw-at": { label: "turn clockwise (pointer)", category: "fifteen", mouse: ["rightclick"], description: "turn the block under the pointer clockwise" },
 } satisfies BindingSchema;
 
 declare module "../../core/commands" {
@@ -54,9 +50,9 @@ const tileSample = (fill: string, extra = "") =>
 const upMark = `<line x1="3.6" y1="7.9" x2="6.4" y2="7.9" stroke="var(--text-dim)" stroke-width="0.5" stroke-linecap="round"/>`;
 const box = (extra: string) => `<rect x="0.5" y="0.5" width="9" height="9" rx="1" fill="none" stroke="var(--hint)" ${extra}/>`;
 
-function legend(p: TwiddlePuzzle) {
+function legend(p: TurnPuzzle) {
   return [
-    { sample: swatch(tileSample("var(--cell)")), meaning: p.rowsOnly ? "a tile: its number is the row it belongs in" : "a tile" },
+    { sample: swatch(tileSample("var(--cell)")), meaning: p.goal === "rows" ? "a tile: its number is the row it belongs in" : p.goal === "quadrants" ? "a tile: its number is the quarter it belongs in" : "a tile" },
     { sample: swatch(tileSample("color-mix(in srgb, var(--accent) 16%, var(--cell))")), meaning: "a tile in its final spot (with the tint setting on)" },
     ...(p.orientable ? [{ sample: swatch(tileSample("var(--cell)", upMark)), meaning: "the line under a number marks its bottom: upright when the line is underneath" }] : []),
     { sample: swatch(`<rect x="0.3" y="0.3" width="9.4" height="9.4" rx="1" fill="none" stroke="var(--accent)" stroke-width="0.6"/>`), meaning: "the block a click would turn" },
@@ -66,22 +62,24 @@ function legend(p: TwiddlePuzzle) {
   ];
 }
 
-export const twiddleView: View<TwiddlePuzzle, TwiddleState, TwiddleAction, TwiddleInteraction, typeof settings> = {
-  id: "twiddle.svg",
+export const turnView: View<TurnPuzzle, TurnState, TurnAction, FifteenInteraction, typeof settings> = {
+  id: "fifteen.turn",
   name: "tiles",
-  puzzle: twiddle,
+  puzzle: fifteen,
   settings,
-  controls: [
-    { how: "click or tap where four tiles meet", what: "turn that 2×2 block counterclockwise" },
+  controls: (p) => [
+    p.n === 2
+      ? { how: "click or tap where four tiles meet", what: "turn that 2×2 block counterclockwise" }
+      : { how: `click or tap the middle of a ${p.n}×${p.n} block`, what: "turn that block counterclockwise" },
     { how: "right-click, or hold on a touch screen", what: "turn it clockwise" },
   ],
   legend,
   mount(root, { session, settings }) {
-    style("twiddle", CSS);
+    style("fifteen-turn", CSS);
     const p = session.puzzle;
     const n = p.w * p.h;
     const W = p.w * SIZE, H = p.h * SIZE;
-    const svg = s("svg", { viewBox: `-0.5 -0.5 ${W + 1} ${H + 1}`, class: "twiddle-board", role: "grid", "aria-label": `${p.w} by ${p.h} twiddle` });
+    const svg = s("svg", { viewBox: `-0.5 -0.5 ${W + 1} ${H + 1}`, class: "fifteen-turn", role: "grid", "aria-label": `${p.w} by ${p.h} turning puzzle` });
     const tileLayer = s("g");
     const tiles: SVGGElement[] = [];
     const faces: SVGGElement[] = [];
@@ -95,12 +93,15 @@ export const twiddleView: View<TwiddlePuzzle, TwiddleState, TwiddleAction, Twidd
       faces.push(face);
       tileLayer.append(g);
     }
-    const hover = s("rect", { width: 2 * SIZE, height: 2 * SIZE, rx: 1.4, class: "block", visibility: "hidden" });
+    const B = p.n * SIZE;
+    const goal = turnGoal(p);
+    const corners = blockCorners(p);
+    const hover = s("rect", { width: B, height: B, rx: 1.4, class: "block", visibility: "hidden" });
     const ghost = s("g", { class: "ghost" });
     const overlay = s("g");
-    const cursor = s("rect", { width: 2 * SIZE, height: 2 * SIZE, rx: 1.4, class: "cursor" });
+    const cursor = s("rect", { width: B, height: B, rx: 1.4, class: "cursor" });
     svg.append(tileLayer, ghost, hover, overlay, cursor);
-    let previewing: TwiddleState | null = null;
+    let previewing: TurnState | null = null;
     root.append(svg);
 
     /** ids[c] = element drawn at cell c; matched to the nearest equal tile on every change so turns animate. */
@@ -147,7 +148,7 @@ export const twiddleView: View<TwiddlePuzzle, TwiddleState, TwiddleAction, Twidd
         g.setAttribute("data-cell", String(c));
         (faces[id]!.firstChild as SVGTextElement).textContent = String(st.tiles[c]);
         faces[id]!.style.transform = p.orientable ? `rotate(${-90 * spin[id]!}deg)` : "";
-        g.classList.toggle("home", !!settings.tintHome && st.tiles[c] === goalTile(p, c) && (!p.orientable || st.turns[c] === 0));
+        g.classList.toggle("home", !!settings.tintHome && st.tiles[c] === goal[c] && (!p.orientable || st.turns[c] === 0));
       }
       ghost.replaceChildren();
       previewing?.tiles.forEach((t, c) => {
@@ -158,26 +159,31 @@ export const twiddleView: View<TwiddlePuzzle, TwiddleState, TwiddleAction, Twidd
           s("text", { x: SIZE / 2, y: SIZE / 2 + 0.3 }, String(t))));
       });
       overlay.replaceChildren();
-      const f = session.activeHint?.focus as TwiddleFocus | undefined;
+      const f = session.activeHint?.focus as TurnFocus | undefined;
       const mark = (c: number, cls: string, inset: number, span = 1) => overlay.append(s("rect", {
         x: (c % p.w) * SIZE + inset, y: Math.floor(c / p.w) * SIZE + inset, width: span * SIZE - 2 * inset, height: span * SIZE - 2 * inset, rx: 1, class: `mark ${cls}`,
       }));
       for (const c of f?.moving ?? []) mark(c, "moving", 0.6);
       if (f?.home !== undefined) mark(f.home, "home", 0.9);
       if (f?.tile !== undefined) mark(f.tile, "tile", 0.5);
-      if (f?.blocks?.length) mark(f.blocks[0]!, "block", 0.2, 2);
+      if (f?.blocks?.length) mark(f.blocks[0]!, "block", 0.2, p.n);
       const cur = session.interaction.cursor;
       cursor.setAttribute("x", String((cur % p.w) * SIZE));
       cursor.setAttribute("y", String(Math.floor(cur / p.w) * SIZE));
     };
 
-    /** Top-left cell of the block whose center is nearest the pointer. */
+    /** Top-left cell of the turnable block whose center is nearest the point (in board units). */
+    const nearest = (ux: number, uy: number, among = corners): number => {
+      let best = among[0]!, bestD = Infinity;
+      for (const c of among) {
+        const d = Math.hypot((c % p.w) * SIZE + B / 2 - ux, Math.floor(c / p.w) * SIZE + B / 2 - uy);
+        if (d < bestD) { bestD = d; best = c; }
+      }
+      return best;
+    };
     const blockAt = (e: MouseEvent): number => {
       const r = svg.getBoundingClientRect();
-      const ux = ((e.clientX - r.left) / r.width) * (W + 1) - 0.5, uy = ((e.clientY - r.top) / r.height) * (H + 1) - 0.5;
-      const x = Math.min(p.w - 2, Math.max(0, Math.round(ux / SIZE) - 1));
-      const y = Math.min(p.h - 2, Math.max(0, Math.round(uy / SIZE) - 1));
-      return y * p.w + x;
+      return nearest(((e.clientX - r.left) / r.width) * (W + 1) - 0.5, ((e.clientY - r.top) / r.height) * (H + 1) - 0.5);
     };
     const turn = (cell: number, clockwise: boolean) => {
       session.setInteraction((i) => ({ ...i, cursor: cell }));
@@ -221,10 +227,11 @@ export const twiddleView: View<TwiddlePuzzle, TwiddleState, TwiddleAction, Twidd
     svg.addEventListener("pointerleave", onLeave);
     svg.addEventListener("contextmenu", onContext);
 
+    /** The nearest turnable block the way the arrow points, or the same one at the edge. */
     const moveCursor = (dx: number, dy: number) => () => session.setInteraction((i) => {
-      const x = Math.min(p.w - 2, Math.max(0, (i.cursor % p.w) + dx));
-      const y = Math.min(p.h - 2, Math.max(0, Math.floor(i.cursor / p.w) + dy));
-      return { ...i, cursor: y * p.w + x };
+      const x = i.cursor % p.w, y = Math.floor(i.cursor / p.w);
+      const ahead = corners.filter((c) => (dx ? Math.sign((c % p.w) - x) === dx : Math.sign(Math.floor(c / p.w) - y) === dy));
+      return ahead.length ? { ...i, cursor: nearest((x + dx) * SIZE + B / 2, (y + dy) * SIZE + B / 2, ahead) } : i;
     });
 
     const offs = [
@@ -244,32 +251,32 @@ export const twiddleView: View<TwiddlePuzzle, TwiddleState, TwiddleAction, Twidd
       cells: { cols: p.w, rows: p.h },
       gestures: { secondaryClick: true, hold: true, labels: ["turn ↺", "turn ↻"] },
       commands: bindCommands(BINDINGS, {
-        "twiddle.left": moveCursor(-1, 0),
-        "twiddle.right": moveCursor(1, 0),
-        "twiddle.up": moveCursor(0, -1),
-        "twiddle.down": moveCursor(0, 1),
-        "twiddle.ccw": () => turn(session.interaction.cursor, false),
-        "twiddle.cw": () => turn(session.interaction.cursor, true),
-        "twiddle.cw-at": (_ctx, e) => {
+        "fifteen.block-left": moveCursor(-1, 0),
+        "fifteen.block-right": moveCursor(1, 0),
+        "fifteen.block-up": moveCursor(0, -1),
+        "fifteen.block-down": moveCursor(0, 1),
+        "fifteen.ccw": () => turn(session.interaction.cursor, false),
+        "fifteen.cw": () => turn(session.interaction.cursor, true),
+        "fifteen.cw-at": (_ctx, e) => {
           if (!(e instanceof MouseEvent)) return false;
           turn(blockAt(e), secondary(e, session.def.id));
           return true;
         },
       }, {
-        "twiddle.ccw": { menu: "board" },
-        "twiddle.cw": { menu: "board" },
+        "fifteen.ccw": { menu: "board" },
+        "fifteen.cw": { menu: "board" },
       }),
       preview: (state) => {
-        previewing = state as TwiddleState | null;
+        previewing = state as TurnState | null;
         render();
       },
       locate: (focus) => {
-        const f = focus as TwiddleFocus | undefined;
+        const f = focus as TurnFocus | undefined;
         if (!f) return [];
         return rects([...(f.moving ?? []), ...(f.home !== undefined ? [f.home] : []), ...(f.tile !== undefined ? [f.tile] : [])]);
       },
       locateChange: (a, b) => {
-        const x = a as TwiddleState, y = b as TwiddleState;
+        const x = a as TurnState, y = b as TurnState;
         return rects(x.tiles.flatMap((t, c) => (t !== y.tiles[c] || x.turns[c] !== y.turns[c] ? [c] : [])));
       },
       destroy() {
