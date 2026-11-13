@@ -35,6 +35,8 @@ export function schemaForm(
   values: Record<string, unknown>,
   onChange: (values: Record<string, unknown>) => void,
 ): HTMLElement {
+  // rows are laid out with display: flex, which would otherwise override the hidden attribute
+  style("form-rows", ".form > .row[hidden] { display: none; }");
   let current = { ...values };
   const form = h("div", { class: "form" });
   const dependent = isDependent(schema);

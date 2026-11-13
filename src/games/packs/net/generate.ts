@@ -3,8 +3,16 @@ import { defineSchema, type Values } from "../../core/schema";
 import type { GenerateContext } from "../../core/types";
 import { D, DIRS, R, centre, isTree, link, neighbour, opp, orientations, rotate, type Geometry, type NetPuzzle } from "./grid";
 import { solveLogic, type Tier } from "./solver";
+import { generateSlide } from "./slide";
 
 export const params = defineSchema({
+  moves: {
+    type: "enum", label: "moves", default: "rotate",
+    options: [
+      { value: "rotate", label: "turn tiles", description: "every tile turns in place" },
+      { value: "slide", label: "slide rows and columns", description: "tiles keep their way round; whole rows and columns slide and wrap, except the middle ones (netslide)" },
+    ],
+  },
   width: { type: "int", label: "width", default: 7, min: 2, max: 30 },
   height: { type: "int", label: "height", default: 7, min: 2, max: 30 },
   wrap: { type: "bool", label: "wrapping", default: false, description: "edges join up with the opposite side" },
@@ -13,13 +21,14 @@ export const params = defineSchema({
     description: "walls placed on this share of the gaps the solution doesn't use",
   },
   difficulty: {
-    type: "enum", label: "difficulty", default: "normal",
+    type: "enum", label: "difficulty", default: "normal", when: (v) => v.moves !== "slide",
     options: [
       { value: "easy", label: "easy", description: "each tile follows from its neighbors and the walls" },
       { value: "normal", label: "normal", description: "also needs loop and closed-off-group reasoning" },
       { value: "hard", label: "hard", description: "also needs 'what if' reasoning one step deep" },
     ],
   },
+  shuffle: { type: "int", label: "scramble slides (0 = standard)", default: 0, min: 0, max: 500, when: (v) => v.moves === "slide" },
 });
 
 export type NetParams = Values<typeof params>;
@@ -165,6 +174,7 @@ function scramble(p: NetPuzzle, rng: Rng): NetPuzzle {
  * reaches it using rules up to the requested tier; when possible it also needs that tier.
  */
 export async function generate(v: NetParams, rng: Rng, ctx: GenerateContext): Promise<NetPuzzle> {
+  if (v.moves === "slide") return generateSlide(v, rng);
   const g: Geometry = { w: v.width, h: v.height, wrap: v.wrap };
   if (g.wrap && (g.w < 3 || g.h < 3)) {
     throw new Error("wrapping needs at least 3 tiles each way: with 2, every link has a twin and the answer is never unique");

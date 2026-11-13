@@ -18,6 +18,10 @@ export interface NetPuzzle {
   barriers: number[];
   /** Default powered cell. */
   source: number;
+  /** Rows and columns slide instead of tiles turning (netslide). Missing on boards whose tiles turn. */
+  slide?: boolean;
+  /** Sliding: a finished arrangement of the same tiles, when known (generated boards). */
+  solution?: number[];
 }
 
 export const opp = (d: number): number => (d < 4 ? d << 2 : d >> 2);

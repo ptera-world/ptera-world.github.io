@@ -1,9 +1,9 @@
 import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
 import { s, style, inputIs } from "../../core/dom";
-import { defineSchema } from "../../core/schema";
 import type { View } from "../../core/types";
-import type { SixteenAction, SixteenFocus, SixteenInteraction, SixteenPuzzle, SixteenState } from "./logic";
-import { sixteen } from "./logic";
+import { fifteen, type FifteenInteraction } from "./logic";
+import { shiftGoal, type ShiftAction, type ShiftFocus, type ShiftPuzzle, type ShiftState } from "./shift";
+import { viewSettings as settings } from "./view-settings";
 
 const SIZE = 10;
 /** Space for the arrow strip on each side. */
@@ -12,41 +12,37 @@ const DRAG_PX = 8;
 let mounts = 0;
 
 const CSS = `
-.sixteen-board { display: block; width: 100%; height: 100%; touch-action: none; user-select: none; -webkit-user-select: none; }
-.sixteen-board .slot { fill: var(--surface-2); }
-.sixteen-board .tile { cursor: grab; transition: transform 100ms ease-out; }
-.sixteen-board .tile.jump { transition: none; }
-.sixteen-board .tile rect { fill: var(--cell); stroke: var(--border); stroke-width: 0.25; }
-.sixteen-board .tile.home rect { fill: color-mix(in srgb, var(--accent) 16%, var(--cell)); }
-.sixteen-board .tile text { fill: var(--text); font: 600 4.4px var(--font); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
-.sixteen-board .arrow { fill: var(--text-dim); cursor: pointer; }
-.sixteen-board .arrow:hover { fill: var(--accent); }
-.sixteen-board .arrow-hit { fill: transparent; cursor: pointer; }
-.sixteen-board .mark { fill: none; stroke: var(--hint); pointer-events: none; }
-.sixteen-board .mark.moving { stroke-width: 0.5; stroke-opacity: 0.8; }
-.sixteen-board .mark.home { stroke-width: 0.7; stroke-dasharray: 1.2 0.8; }
-.sixteen-board .mark.tile { stroke-width: 1; }
-.sixteen-board .ghost { pointer-events: none; opacity: 0.7; }
-.sixteen-board .ghost rect { fill: color-mix(in srgb, var(--cell) 70%, transparent); stroke: var(--text-dim); stroke-width: 0.35; stroke-dasharray: 1 0.7; }
-.sixteen-board .ghost text { fill: var(--text-dim); font: 600 4.4px var(--font); text-anchor: middle; dominant-baseline: central; }
-.sixteen-board .cursor { fill: none; stroke: var(--focus); stroke-width: 0.6; pointer-events: none; }
-${inputIs("pointer")} .sixteen-board .cursor { display: none; }
-@media (prefers-reduced-motion: reduce) { .sixteen-board .tile { transition: none; } }
+.fifteen-shift { display: block; width: 100%; height: 100%; touch-action: none; user-select: none; -webkit-user-select: none; }
+.fifteen-shift .slot { fill: var(--surface-2); }
+.fifteen-shift .tile { cursor: grab; transition: transform 100ms ease-out; }
+.fifteen-shift .tile.jump { transition: none; }
+.fifteen-shift .tile rect { fill: var(--cell); stroke: var(--border); stroke-width: 0.25; }
+.fifteen-shift .tile.home rect { fill: color-mix(in srgb, var(--accent) 16%, var(--cell)); }
+.fifteen-shift .tile text { fill: var(--text); font: 600 4.4px var(--font); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.fifteen-shift .arrow { fill: var(--text-dim); cursor: pointer; }
+.fifteen-shift .arrow:hover { fill: var(--accent); }
+.fifteen-shift .arrow-hit { fill: transparent; cursor: pointer; }
+.fifteen-shift .mark { fill: none; stroke: var(--hint); pointer-events: none; }
+.fifteen-shift .mark.moving { stroke-width: 0.5; stroke-opacity: 0.8; }
+.fifteen-shift .mark.home { stroke-width: 0.7; stroke-dasharray: 1.2 0.8; }
+.fifteen-shift .mark.tile { stroke-width: 1; }
+.fifteen-shift .ghost { pointer-events: none; opacity: 0.7; }
+.fifteen-shift .ghost rect { fill: color-mix(in srgb, var(--cell) 70%, transparent); stroke: var(--text-dim); stroke-width: 0.35; stroke-dasharray: 1 0.7; }
+.fifteen-shift .ghost text { fill: var(--text-dim); font: 600 4.4px var(--font); text-anchor: middle; dominant-baseline: central; }
+.fifteen-shift .cursor { fill: none; stroke: var(--focus); stroke-width: 0.6; pointer-events: none; }
+${inputIs("pointer")} .fifteen-shift .cursor { display: none; }
+@media (prefers-reduced-motion: reduce) { .fifteen-shift .tile { transition: none; } }
 `;
 
-const settings = defineSchema({
-  tintHome: { type: "bool", label: "tint numbers that are in their final spot", default: true },
-});
-
 const BINDINGS = {
-  "sixteen.left": { label: "cursor left", category: "sixteen", keys: ["ArrowLeft", "a"] },
-  "sixteen.right": { label: "cursor right", category: "sixteen", keys: ["ArrowRight", "d"] },
-  "sixteen.up": { label: "cursor up", category: "sixteen", keys: ["ArrowUp", "w"] },
-  "sixteen.down": { label: "cursor down", category: "sixteen", keys: ["ArrowDown", "s"] },
-  "sixteen.row-left": { label: "slide row left", category: "sixteen", keys: ["shift+ArrowLeft", "shift+a"], description: "slide the selected tile's row one place left" },
-  "sixteen.row-right": { label: "slide row right", category: "sixteen", keys: ["shift+ArrowRight", "shift+d"], description: "slide the selected tile's row one place right" },
-  "sixteen.col-up": { label: "slide column up", category: "sixteen", keys: ["shift+ArrowUp", "shift+w"], description: "slide the selected tile's column one place up" },
-  "sixteen.col-down": { label: "slide column down", category: "sixteen", keys: ["shift+ArrowDown", "shift+s"], description: "slide the selected tile's column one place down" },
+  "fifteen.cursor-left": { label: "cursor left", category: "fifteen", keys: ["ArrowLeft", "a"] },
+  "fifteen.cursor-right": { label: "cursor right", category: "fifteen", keys: ["ArrowRight", "d"] },
+  "fifteen.cursor-up": { label: "cursor up", category: "fifteen", keys: ["ArrowUp", "w"] },
+  "fifteen.cursor-down": { label: "cursor down", category: "fifteen", keys: ["ArrowDown", "s"] },
+  "fifteen.row-left": { label: "slide row left", category: "fifteen", keys: ["shift+ArrowLeft", "shift+a"], description: "slide the selected tile's row one place left" },
+  "fifteen.row-right": { label: "slide row right", category: "fifteen", keys: ["shift+ArrowRight", "shift+d"], description: "slide the selected tile's row one place right" },
+  "fifteen.col-up": { label: "slide column up", category: "fifteen", keys: ["shift+ArrowUp", "shift+w"], description: "slide the selected tile's column one place up" },
+  "fifteen.col-down": { label: "slide column down", category: "fifteen", keys: ["shift+ArrowDown", "shift+s"], description: "slide the selected tile's column one place down" },
 } satisfies BindingSchema;
 
 declare module "../../core/commands" {
@@ -67,10 +63,10 @@ function tri(cx: number, cy: number, dir: number): string {
   return pts.join(" ");
 }
 
-export const sixteenView: View<SixteenPuzzle, SixteenState, SixteenAction, SixteenInteraction, typeof settings> = {
-  id: "sixteen.svg",
+export const shiftView: View<ShiftPuzzle, ShiftState, ShiftAction, FifteenInteraction, typeof settings> = {
+  id: "fifteen.shift",
   name: "tiles",
-  puzzle: sixteen,
+  puzzle: fifteen,
   settings,
   controls: [
     { how: "click or tap an arrow at the end of a row or column", what: "slide that line one place the way the arrow points" },
@@ -85,30 +81,56 @@ export const sixteenView: View<SixteenPuzzle, SixteenState, SixteenAction, Sixte
     { sample: swatch(tileSample("var(--cell)") + box(`stroke-width="0.5" stroke-opacity="0.8"`)), meaning: "hint: the tiles the suggested slides move" },
   ],
   mount(root, { session, settings }) {
-    style("sixteen", CSS);
+    style("fifteen-shift", CSS);
     const p = session.puzzle;
     const n = p.w * p.h;
     const W = p.w * SIZE, H = p.h * SIZE;
     const svg = s("svg", {
       viewBox: `${-EDGE} ${-EDGE} ${W + 2 * EDGE} ${H + 2 * EDGE}`,
-      class: "sixteen-board", role: "grid", "aria-label": `${p.w} by ${p.h} sixteen`,
+      class: "fifteen-shift", role: "grid", "aria-label": `${p.w} by ${p.h} shifting puzzle`,
     });
-    const clipId = `sixteen-clip-${++mounts}`;
+    const clipId = `fifteen-shift-clip-${++mounts}`;
     const clip = s("clipPath", { id: clipId }, s("rect", { x: 0, y: 0, width: W, height: H }));
     const slots = Array.from({ length: n }, (_, c) => s("rect", {
       x: (c % p.w) * SIZE + 0.2, y: Math.floor(c / p.w) * SIZE + 0.2, width: SIZE - 0.4, height: SIZE - 0.4, rx: 1, class: "slot",
     }));
     const tileLayer = s("g", { "clip-path": `url(#${clipId})` });
-    const tiles: SVGGElement[] = [];
-    for (let t = 1; t <= n; t++) {
+    const goal = shiftGoal(p);
+    /** One element per starting cell; ids[c] is the element now at cell c. */
+    const tiles = p.tiles.map((t) => {
       const g = s("g", { class: "tile" },
         s("rect", { x: 0.2, y: 0.2, width: SIZE - 0.4, height: SIZE - 0.4, rx: 1 }),
         s("text", { x: SIZE / 2, y: SIZE / 2 + 0.3 }, String(t)));
-      tiles[t] = g;
       tileLayer.append(g);
-    }
+      return g;
+    });
+    let ids = Array.from({ length: n }, (_, c) => c);
+    let lastTiles = session.state.tiles;
+    /** Follow each element through a change: equal numbers are matched nearest-first (round the wrap), so shifts animate. */
+    const track = () => {
+      const st = session.state.tiles;
+      if (st === lastTiles) return;
+      const used = new Uint8Array(n);
+      const next = Array.from({ length: n }, () => -1);
+      for (let c = 0; c < n; c++) if (lastTiles[c] === st[c]) { next[c] = ids[c]!; used[c] = 1; }
+      for (let c = 0; c < n; c++) {
+        if (next[c]! >= 0) continue;
+        let best = -1, bestD = Infinity;
+        for (let d = 0; d < n; d++) {
+          if (used[d] || lastTiles[d] !== st[c]) continue;
+          const dx = Math.abs((d % p.w) - (c % p.w)), dy = Math.abs(Math.floor(d / p.w) - Math.floor(c / p.w));
+          const dist = Math.min(dx, p.w - dx) + Math.min(dy, p.h - dy);
+          if (dist < bestD) { bestD = dist; best = d; }
+        }
+        if (best < 0) best = used.indexOf(0);
+        used[best] = 1;
+        next[c] = ids[best]!;
+      }
+      ids = next;
+      lastTiles = st;
+    };
     const arrows = s("g");
-    const arrow = (cx: number, cy: number, dir: number, a: SixteenAction) => {
+    const arrow = (cx: number, cy: number, dir: number, a: ShiftAction) => {
       const hit = s("rect", { x: cx - EDGE / 2, y: cy - EDGE / 2, width: EDGE, height: EDGE, class: "arrow-hit" });
       const poly = s("polygon", { points: tri(cx, cy, dir), class: "arrow" });
       const g = s("g", {}, hit, poly);
@@ -129,24 +151,26 @@ export const sixteenView: View<SixteenPuzzle, SixteenState, SixteenAction, Sixte
     const overlay = s("g");
     const cursor = s("rect", { width: SIZE, height: SIZE, rx: 1.2, class: "cursor" });
     svg.append(s("defs", {}, clip), ...slots, tileLayer, ghost, arrows, overlay, cursor);
-    let previewing: SixteenState | null = null;
+    let previewing: ShiftState | null = null;
     root.append(svg);
 
     const where: number[] = [];
     let drag: { id: number; cell: number; x: number; y: number; axis: "row" | "col" | null; px: number } | null = null;
 
     const render = () => {
+      track();
       const st = session.state;
       st.tiles.forEach((t, c) => {
-        const g = tiles[t]!;
+        const id = ids[c]!;
+        const g = tiles[id]!;
         const x = c % p.w, y = Math.floor(c / p.w);
-        const old = where[t];
+        const old = where[id];
         const jump = old !== undefined && (Math.abs((old % p.w) - x) > 1 || Math.abs(Math.floor(old / p.w) - y) > 1);
         g.classList.toggle("jump", jump);
         g.style.transform = `translate(${x * SIZE}px, ${y * SIZE}px)`;
         g.setAttribute("data-cell", String(c));
-        g.classList.toggle("home", !!settings.tintHome && t === c + 1);
-        where[t] = c;
+        g.classList.toggle("home", !!settings.tintHome && t === goal[c]);
+        where[id] = c;
       });
       ghost.replaceChildren();
       previewing?.tiles.forEach((t, c) => {
@@ -156,7 +180,7 @@ export const sixteenView: View<SixteenPuzzle, SixteenState, SixteenAction, Sixte
           s("text", { x: SIZE / 2, y: SIZE / 2 + 0.3 }, String(t))));
       });
       overlay.replaceChildren();
-      const f = session.activeHint?.focus as SixteenFocus | undefined;
+      const f = session.activeHint?.focus as ShiftFocus | undefined;
       const mark = (c: number, cls: string, inset: number) => overlay.append(s("rect", {
         x: (c % p.w) * SIZE + inset, y: Math.floor(c / p.w) * SIZE + inset, width: SIZE - 2 * inset, height: SIZE - 2 * inset, rx: 1, class: `mark ${cls}`,
       }));
@@ -175,7 +199,7 @@ export const sixteenView: View<SixteenPuzzle, SixteenState, SixteenAction, Sixte
     const preview = (dx: number) => {
       if (!drag?.axis) return;
       for (const c of lineCells(drag.axis, drag.cell)) {
-        const g = tiles[session.state.tiles[c]!]!;
+        const g = tiles[ids[c]!]!;
         const x = (c % p.w) * SIZE + (drag.axis === "row" ? dx : 0), y = Math.floor(c / p.w) * SIZE + (drag.axis === "col" ? dx : 0);
         g.classList.add("jump");
         g.style.transform = `translate(${x}px, ${y}px)`;
@@ -236,31 +260,31 @@ export const sixteenView: View<SixteenPuzzle, SixteenState, SixteenAction, Sixte
       aspect: (W + 2 * EDGE) / (H + 2 * EDGE),
       cells: { cols: p.w + 1, rows: p.h + 1 },
       commands: bindCommands(BINDINGS, {
-        "sixteen.left": moveCursor(-1, 0),
-        "sixteen.right": moveCursor(1, 0),
-        "sixteen.up": moveCursor(0, -1),
-        "sixteen.down": moveCursor(0, 1),
-        "sixteen.row-left": slide("row", -1),
-        "sixteen.row-right": slide("row", 1),
-        "sixteen.col-up": slide("col", -1),
-        "sixteen.col-down": slide("col", 1),
+        "fifteen.cursor-left": moveCursor(-1, 0),
+        "fifteen.cursor-right": moveCursor(1, 0),
+        "fifteen.cursor-up": moveCursor(0, -1),
+        "fifteen.cursor-down": moveCursor(0, 1),
+        "fifteen.row-left": slide("row", -1),
+        "fifteen.row-right": slide("row", 1),
+        "fifteen.col-up": slide("col", -1),
+        "fifteen.col-down": slide("col", 1),
       }, {
-        "sixteen.row-left": { menu: "board" },
-        "sixteen.row-right": { menu: "board" },
-        "sixteen.col-up": { menu: "board" },
-        "sixteen.col-down": { menu: "board" },
+        "fifteen.row-left": { menu: "board" },
+        "fifteen.row-right": { menu: "board" },
+        "fifteen.col-up": { menu: "board" },
+        "fifteen.col-down": { menu: "board" },
       }),
       preview: (state) => {
-        previewing = state as SixteenState | null;
+        previewing = state as ShiftState | null;
         render();
       },
       locate: (focus) => {
-        const f = focus as SixteenFocus | undefined;
+        const f = focus as ShiftFocus | undefined;
         if (!f) return [];
         return rects([...(f.moving ?? []), ...(f.home !== undefined ? [f.home] : []), ...(f.tile !== undefined ? [f.tile] : [])]);
       },
       locateChange: (a, b) => {
-        const x = (a as SixteenState).tiles, y = (b as SixteenState).tiles;
+        const x = (a as ShiftState).tiles, y = (b as ShiftState).tiles;
         return rects(x.flatMap((t, c) => (t !== y[c] ? [c] : [])));
       },
       destroy() {
