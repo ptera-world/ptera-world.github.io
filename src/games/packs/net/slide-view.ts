@@ -1,8 +1,9 @@
 import { bindCommands, type BindingSchema, type Ids } from "../../core/commands";
 import { s, style, inputIs } from "../../core/dom";
 import type { View } from "../../core/types";
-import { D, L, R, U, centre, connected, degree, neighbour } from "./grid";
-import { netslide, movable, type NetslideAction, type NetslideFocus, type NetslideInteraction, type NetslidePuzzle, type NetslideState } from "./logic";
+import { D, L, R, U, centre, connectedFrom, degree, neighbour, type NetPuzzle } from "./grid";
+import { net, type NetAction, type NetInteraction, type NetState } from "./logic";
+import { movable, type ShiftAction, type SlideFocus } from "./slide";
 
 const SIZE = 10;
 const EDGE = 6;
@@ -10,41 +11,41 @@ const DRAG_PX = 8;
 let mounts = 0;
 
 const CSS = `
-.netslide-board { display: block; width: 100%; height: 100%; touch-action: none; user-select: none; -webkit-user-select: none; }
-.netslide-board .slot { fill: var(--surface-2); }
-.netslide-board .tile { cursor: grab; transition: transform 100ms ease-out; }
-.netslide-board .tile.jump { transition: none; }
-.netslide-board .tile.fixed { cursor: default; }
-.netslide-board .tile rect { fill: var(--cell); stroke: var(--border); stroke-width: 0.2; }
-.netslide-board .pipe { stroke: var(--text-dim); stroke-width: 2; stroke-linecap: butt; fill: none; }
-.netslide-board .cap { fill: var(--cell); stroke: var(--text-dim); stroke-width: 0.9; }
-.netslide-board .tile.on .pipe { stroke: var(--accent); }
-.netslide-board .tile.on .cap { stroke: var(--accent); }
-.netslide-board .hub { fill: var(--accent); }
-.netslide-board .barrier { stroke: var(--text); stroke-width: 1.2; stroke-linecap: round; pointer-events: none; }
-.netslide-board .arrow { fill: var(--text-dim); cursor: pointer; }
-.netslide-board .arrow:hover { fill: var(--accent); }
-.netslide-board .arrow-hit { fill: transparent; cursor: pointer; }
-.netslide-board .mark { fill: none; stroke: var(--hint); pointer-events: none; }
-.netslide-board .ghost { pointer-events: none; opacity: 0.55; }
-.netslide-board .ghost rect { fill: color-mix(in srgb, var(--cell) 60%, transparent); stroke: var(--text-dim); stroke-width: 0.35; stroke-dasharray: 1 0.7; }
-.netslide-board .mark.moving { stroke-width: 0.5; stroke-opacity: 0.8; }
-.netslide-board .mark.home { stroke-width: 0.7; stroke-dasharray: 1.2 0.8; }
-.netslide-board .mark.tile { stroke-width: 1; }
-.netslide-board .cursor { fill: none; stroke: var(--focus); stroke-width: 0.6; pointer-events: none; }
-${inputIs("pointer")} .netslide-board .cursor { display: none; }
-@media (prefers-reduced-motion: reduce) { .netslide-board .tile { transition: none; } }
+.net-slide-board { display: block; width: 100%; height: 100%; touch-action: none; user-select: none; -webkit-user-select: none; }
+.net-slide-board .slot { fill: var(--surface-2); }
+.net-slide-board .tile { cursor: grab; transition: transform 100ms ease-out; }
+.net-slide-board .tile.jump { transition: none; }
+.net-slide-board .tile.fixed { cursor: default; }
+.net-slide-board .tile rect { fill: var(--cell); stroke: var(--border); stroke-width: 0.2; }
+.net-slide-board .pipe { stroke: var(--text-dim); stroke-width: 2; stroke-linecap: butt; fill: none; }
+.net-slide-board .cap { fill: var(--cell); stroke: var(--text-dim); stroke-width: 0.9; }
+.net-slide-board .tile.on .pipe { stroke: var(--accent); }
+.net-slide-board .tile.on .cap { stroke: var(--accent); }
+.net-slide-board .hub { fill: var(--accent); }
+.net-slide-board .barrier { stroke: var(--text); stroke-width: 1.2; stroke-linecap: round; pointer-events: none; }
+.net-slide-board .arrow { fill: var(--text-dim); cursor: pointer; }
+.net-slide-board .arrow:hover { fill: var(--accent); }
+.net-slide-board .arrow-hit { fill: transparent; cursor: pointer; }
+.net-slide-board .mark { fill: none; stroke: var(--hint); pointer-events: none; }
+.net-slide-board .ghost { pointer-events: none; opacity: 0.55; }
+.net-slide-board .ghost rect { fill: color-mix(in srgb, var(--cell) 60%, transparent); stroke: var(--text-dim); stroke-width: 0.35; stroke-dasharray: 1 0.7; }
+.net-slide-board .mark.moving { stroke-width: 0.5; stroke-opacity: 0.8; }
+.net-slide-board .mark.home { stroke-width: 0.7; stroke-dasharray: 1.2 0.8; }
+.net-slide-board .mark.tile { stroke-width: 1; }
+.net-slide-board .cursor { fill: none; stroke: var(--focus); stroke-width: 0.6; pointer-events: none; }
+${inputIs("pointer")} .net-slide-board .cursor { display: none; }
+@media (prefers-reduced-motion: reduce) { .net-slide-board .tile { transition: none; } }
 `;
 
 const BINDINGS = {
-  "netslide.left": { label: "cursor left", category: "netslide", keys: ["ArrowLeft", "a"] },
-  "netslide.right": { label: "cursor right", category: "netslide", keys: ["ArrowRight", "d"] },
-  "netslide.up": { label: "cursor up", category: "netslide", keys: ["ArrowUp", "w"] },
-  "netslide.down": { label: "cursor down", category: "netslide", keys: ["ArrowDown", "s"] },
-  "netslide.row-left": { label: "slide row left", category: "netslide", keys: ["shift+ArrowLeft", "shift+a"], description: "slide the selected piece's row one place left" },
-  "netslide.row-right": { label: "slide row right", category: "netslide", keys: ["shift+ArrowRight", "shift+d"], description: "slide the selected piece's row one place right" },
-  "netslide.col-up": { label: "slide column up", category: "netslide", keys: ["shift+ArrowUp", "shift+w"], description: "slide the selected piece's column one place up" },
-  "netslide.col-down": { label: "slide column down", category: "netslide", keys: ["shift+ArrowDown", "shift+s"], description: "slide the selected piece's column one place down" },
+  "net.slide-left": { label: "cursor left", category: "net", keys: ["ArrowLeft", "a"] },
+  "net.slide-right": { label: "cursor right", category: "net", keys: ["ArrowRight", "d"] },
+  "net.slide-up": { label: "cursor up", category: "net", keys: ["ArrowUp", "w"] },
+  "net.slide-down": { label: "cursor down", category: "net", keys: ["ArrowDown", "s"] },
+  "net.row-left": { label: "slide row left", category: "net", keys: ["shift+ArrowLeft", "shift+a"], description: "slide the selected piece's row one place left" },
+  "net.row-right": { label: "slide row right", category: "net", keys: ["shift+ArrowRight", "shift+d"], description: "slide the selected piece's row one place right" },
+  "net.col-up": { label: "slide column up", category: "net", keys: ["shift+ArrowUp", "shift+w"], description: "slide the selected piece's column one place up" },
+  "net.col-down": { label: "slide column down", category: "net", keys: ["shift+ArrowDown", "shift+s"], description: "slide the selected piece's column one place down" },
 } satisfies BindingSchema;
 
 declare module "../../core/commands" {
@@ -76,33 +77,38 @@ const sample = (mask: number, colour: string, extra = "") =>
   (degree(mask) === 1 ? `<rect x="3" y="3" width="4" height="4" rx="0.6" fill="var(--cell)" stroke="${colour}" stroke-width="0.9"/>` : "") + extra;
 const box = (extra: string) => `<rect x="0.5" y="0.5" width="9" height="9" rx="1" fill="none" stroke="var(--hint)" ${extra}/>`;
 
-export const netslideView: View<NetslidePuzzle, NetslideState, NetslideAction, NetslideInteraction> = {
-  id: "netslide.svg",
+export const slideControls = [
+  { how: "click or tap an arrow at the end of a row or column", what: "slide that line one place the way the arrow points" },
+  { how: "drag a piece sideways or up and down", what: "slide its row or column by as many places as you drag" },
+];
+
+export const slideLegend = [
+  { sample: swatch(sample(R | L | D, "var(--text-dim)")), meaning: "a pipe piece not yet joined to the center" },
+  { sample: swatch(sample(R | L | D, "var(--accent)")), meaning: "a piece joined to the center" },
+  { sample: swatch(sample(U, "var(--accent)")), meaning: "a dead end" },
+  { sample: swatch(sample(R | D, "var(--accent)", `<circle cx="5" cy="5" r="2" fill="var(--accent)"/>`)), meaning: "the center piece: it never moves" },
+  { sample: swatch(`<rect width="10" height="10" fill="var(--cell)"/><line x1="10" y1="0" x2="10" y2="10" stroke="var(--text)" stroke-width="1.2"/>`), meaning: "a wall: no pipe may cross it" },
+  { sample: swatch(`<polygon points="${tri(5, 5, 0)}" fill="var(--text-dim)"/>`, "2 2 6 6"), meaning: "slides its row or column this way" },
+  { sample: swatch(sample(R | L, "var(--text-dim)") + box(`stroke-width="1"`)), meaning: "hint: the piece being moved into place" },
+  { sample: swatch(box(`stroke-width="0.7" stroke-dasharray="1.2 0.8"`)), meaning: "hint: where it goes" },
+  { sample: swatch(sample(R | L, "var(--text-dim)") + box(`stroke-width="0.5" stroke-opacity="0.8"`)), meaning: "hint: the pieces the suggested slides move" },
+];
+
+/** The board for sliding rows and columns; the net view mounts it for boards that slide. */
+export const slideView: View<NetPuzzle, NetState, NetAction, NetInteraction> = {
+  id: "net.slide",
   name: "pipes",
-  puzzle: netslide,
-  controls: [
-    { how: "click or tap an arrow at the end of a row or column", what: "slide that line one place the way the arrow points" },
-    { how: "drag a piece sideways or up and down", what: "slide its row or column by as many places as you drag" },
-  ],
-  legend: [
-    { sample: swatch(sample(R | L | D, "var(--text-dim)")), meaning: "a pipe piece not yet joined to the center" },
-    { sample: swatch(sample(R | L | D, "var(--accent)")), meaning: "a piece joined to the center" },
-    { sample: swatch(sample(U, "var(--accent)")), meaning: "a dead end" },
-    { sample: swatch(sample(R | D, "var(--accent)", `<circle cx="5" cy="5" r="2" fill="var(--accent)"/>`)), meaning: "the center piece: it never moves" },
-    { sample: swatch(`<rect width="10" height="10" fill="var(--cell)"/><line x1="10" y1="0" x2="10" y2="10" stroke="var(--text)" stroke-width="1.2"/>`), meaning: "a wall: no pipe may cross it" },
-    { sample: swatch(`<polygon points="${tri(5, 5, 0)}" fill="var(--text-dim)"/>`, "2 2 6 6"), meaning: "slides its row or column this way" },
-    { sample: swatch(sample(R | L, "var(--text-dim)") + box(`stroke-width="1"`)), meaning: "hint: the piece being moved into place" },
-    { sample: swatch(box(`stroke-width="0.7" stroke-dasharray="1.2 0.8"`)), meaning: "hint: where it goes" },
-    { sample: swatch(sample(R | L, "var(--text-dim)") + box(`stroke-width="0.5" stroke-opacity="0.8"`)), meaning: "hint: the pieces the suggested slides move" },
-  ],
+  puzzle: net,
+  controls: slideControls,
+  legend: slideLegend,
   mount(root, { session }) {
-    style("netslide", CSS);
+    style("net-slide", CSS);
     const p = session.puzzle;
     const n = p.w * p.h;
     const W = p.w * SIZE, H = p.h * SIZE;
     const hub = centre(p);
-    const svg = s("svg", { viewBox: `${-EDGE} ${-EDGE} ${W + 2 * EDGE} ${H + 2 * EDGE}`, class: "netslide-board", role: "grid", "aria-label": `${p.w} by ${p.h} netslide` });
-    const clipId = `netslide-clip-${++mounts}`;
+    const svg = s("svg", { viewBox: `${-EDGE} ${-EDGE} ${W + 2 * EDGE} ${H + 2 * EDGE}`, class: "net-slide-board", role: "grid", "aria-label": `${p.w} by ${p.h} sliding pipes` });
+    const clipId = `net-slide-clip-${++mounts}`;
     const slots = Array.from({ length: n }, (_, c) => s("rect", { x: (c % p.w) * SIZE, y: Math.floor(c / p.w) * SIZE, width: SIZE, height: SIZE, class: "slot" }));
     const tileLayer = s("g", { "clip-path": `url(#${clipId})` });
     /** One element per starting cell; ids[c] is the element now at cell c. */
@@ -124,7 +130,7 @@ export const netslideView: View<NetslidePuzzle, NetslideState, NetslideAction, N
     }
     if (!p.wrap) barriers.append(s("rect", { x: 0, y: 0, width: W, height: H, class: "barrier", fill: "none" }));
     const arrows = s("g");
-    const arrow = (cx: number, cy: number, dir: number, a: NetslideAction) => {
+    const arrow = (cx: number, cy: number, dir: number, a: ShiftAction) => {
       if (!movable(p, a)) return;
       const g = s("g", {}, s("rect", { x: cx - EDGE / 2, y: cy - EDGE / 2, width: EDGE, height: EDGE, class: "arrow-hit" }), s("polygon", { points: tri(cx, cy, dir), class: "arrow" }));
       g.addEventListener("pointerdown", (e) => { e.preventDefault(); e.stopPropagation(); session.dispatch(a); });
@@ -142,7 +148,7 @@ export const netslideView: View<NetslidePuzzle, NetslideState, NetslideAction, N
     const overlay = s("g");
     const cursor = s("rect", { width: SIZE, height: SIZE, rx: 1.2, class: "cursor" });
     svg.append(s("defs", {}, s("clipPath", { id: clipId }, s("rect", { x: 0, y: 0, width: W, height: H }))), ...slots, tileLayer, ghost, barriers, arrows, overlay, cursor);
-    let previewing: NetslideState | null = null;
+    let previewing: NetState | null = null;
     root.append(svg);
 
     let ids = Array.from({ length: n }, (_, c) => c);
@@ -175,7 +181,7 @@ export const netslideView: View<NetslidePuzzle, NetslideState, NetslideAction, N
 
     const render = () => {
       track();
-      const on = connected(p, p.barriers, session.state.tiles);
+      const on = connectedFrom(p, session.state.tiles, hub).cells;
       for (let c = 0; c < n; c++) {
         const id = ids[c]!;
         const g = tiles[id]!;
@@ -197,7 +203,7 @@ export const netslideView: View<NetslidePuzzle, NetslideState, NetslideAction, N
         ghost.append(g);
       });
       overlay.replaceChildren();
-      const f = session.activeHint?.focus as NetslideFocus | undefined;
+      const f = session.activeHint?.focus as SlideFocus | undefined;
       const mark = (c: number, cls: string, inset: number) => overlay.append(s("rect", {
         x: (c % p.w) * SIZE + inset, y: Math.floor(c / p.w) * SIZE + inset, width: SIZE - 2 * inset, height: SIZE - 2 * inset, rx: 1, class: `mark ${cls}`,
       }));
@@ -274,31 +280,31 @@ export const netslideView: View<NetslidePuzzle, NetslideState, NetslideAction, N
       aspect: (W + 2 * EDGE) / (H + 2 * EDGE),
       cells: { cols: p.w + 1, rows: p.h + 1 },
       commands: bindCommands(BINDINGS, {
-        "netslide.left": moveCursor(-1, 0),
-        "netslide.right": moveCursor(1, 0),
-        "netslide.up": moveCursor(0, -1),
-        "netslide.down": moveCursor(0, 1),
-        "netslide.row-left": slide("row", -1),
-        "netslide.row-right": slide("row", 1),
-        "netslide.col-up": slide("col", -1),
-        "netslide.col-down": slide("col", 1),
+        "net.slide-left": moveCursor(-1, 0),
+        "net.slide-right": moveCursor(1, 0),
+        "net.slide-up": moveCursor(0, -1),
+        "net.slide-down": moveCursor(0, 1),
+        "net.row-left": slide("row", -1),
+        "net.row-right": slide("row", 1),
+        "net.col-up": slide("col", -1),
+        "net.col-down": slide("col", 1),
       }, {
-        "netslide.row-left": { menu: "board" },
-        "netslide.row-right": { menu: "board" },
-        "netslide.col-up": { menu: "board" },
-        "netslide.col-down": { menu: "board" },
+        "net.row-left": { menu: "board" },
+        "net.row-right": { menu: "board" },
+        "net.col-up": { menu: "board" },
+        "net.col-down": { menu: "board" },
       }),
       preview: (state) => {
-        previewing = state as NetslideState | null;
+        previewing = state as NetState | null;
         render();
       },
       locate: (focus) => {
-        const f = focus as NetslideFocus | undefined;
+        const f = focus as SlideFocus | undefined;
         if (!f) return [];
         return rects([...(f.moving ?? []), ...(f.home !== undefined ? [f.home] : []), ...(f.tile !== undefined ? [f.tile] : [])]);
       },
       locateChange: (a, b) => {
-        const x = (a as NetslideState).tiles, y = (b as NetslideState).tiles;
+        const x = (a as NetState).tiles, y = (b as NetState).tiles;
         return rects(x.flatMap((t, c) => (t !== y[c] ? [c] : [])));
       },
       destroy() {

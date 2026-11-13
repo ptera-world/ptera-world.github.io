@@ -6,15 +6,20 @@ import { generate, params, tierNeeded } from "./generate";
 import { coord, isTree, rotate, turnsBetween, type NetPuzzle } from "./grid";
 import { TIER_LABEL, searchSolutions, solveLogic, type Rule } from "./solver";
 import { listOf } from "../../lib/edge-names";
+import { allJoined, describeShift, shift, shiftOk, slideSolve, type ShiftAction } from "./slide";
 
 export interface NetState {
-  /** Current mask per cell; always a rotation of the puzzle's tile there. */
+  /** Current mask per cell: a rotation of the puzzle's tile there, or (sliding) the tile slid there. */
   tiles: number[];
-  /** 1 = locked (can't be rotated until unlocked). */
+  /** 1 = locked (can't be rotated until unlocked). Never set while sliding. */
   locked: number[];
+  /** Sliding: slides made so far. */
+  moves?: number;
 }
 
 export type NetAction =
+  /** Sliding only: a whole row or column slides round. */
+  | ShiftAction
   /** Rotate by `turns` quarter turns clockwise (negative = counterclockwise). No-op on locked tiles. */
   | { type: "rotate"; cell: number; turns: number }
   | { type: "rotateMany"; cells: number[]; turns: number[] }
@@ -72,6 +77,10 @@ export function analyse(p: NetPuzzle): Analysis {
 }
 
 function reduce(p: NetPuzzle, s: NetState, a: NetAction): NetState {
+  if (p.slide) {
+    if (a.type !== "shift" || !shiftOk(p, a)) return s;
+    return { ...s, tiles: shift(p.w, p.h, s.tiles, a), moves: (s.moves ?? 0) + 1 };
+  }
   const n = p.w * p.h;
   const ok = (c: number) => Number.isInteger(c) && c >= 0 && c < n;
   switch (a.type) {
@@ -114,7 +123,16 @@ function reduce(p: NetPuzzle, s: NetState, a: NetAction): NetState {
   }
 }
 
-function rate(p: NetPuzzle): Rating {
+const slideRatings = new WeakMap<NetPuzzle, Rating | null>();
+
+function rate(p: NetPuzzle): Rating | null {
+  if (p.slide) {
+    if (!slideRatings.has(p)) {
+      const moves = slideSolve(p, p.tiles);
+      slideRatings.set(p, moves ? { label: `${moves.length} slides`, score: moves.length } : null);
+    }
+    return slideRatings.get(p)!;
+  }
   const a = analyse(p);
   const u = a.used;
   if (a.tier > 3) return { label: a.unique ? "needs guessing" : "several solutions", score: 1000 };
@@ -127,15 +145,19 @@ const FEATURES = {
   wrap: (p: NetPuzzle) => p.wrap,
   /** The board has walls between some tiles. */
   walls: (p: NetPuzzle) => p.barriers.some((b) => b),
+  /** Tiles turn in place. */
+  rotate: (p: NetPuzzle) => !p.slide,
+  /** Rows and columns slide instead. */
+  slide: (p: NetPuzzle) => !!p.slide,
 };
 
 export const net: PuzzleDef<NetPuzzle, NetState, NetAction, NetInteraction, typeof params> = {
   id: "net",
   name: "pipes",
-  aliases: ["net", "netwalk", "network", "knetwalk", "freenet"],
-  tags: ["logic", "grid", "rotation", "connection"],
-  description: "every square holds a piece of pipe. turn the pieces so all the pipes join up into one single network, with no pipe ends left open and no loops.",
-  generatorVersion: 1,
+  aliases: ["net", "netwalk", "network", "knetwalk", "freenet", "netslide", "sliding net"],
+  tags: ["logic", "grid", "rotation", "connection", "sliding"],
+  description: "every square holds a piece of pipe. turn the pieces (or, as a setting, slide whole rows and columns of them) so all the pipes join up into one single network, with no pipe ends left open and no loops.",
+  generatorVersion: 2,
   params,
   presets: [
     { label: "5×5 easy", params: { width: 5, height: 5, wrap: false, barriers: 0, difficulty: "easy" } },
@@ -144,15 +166,22 @@ export const net: PuzzleDef<NetPuzzle, NetState, NetAction, NetInteraction, type
     { label: "11×11 wrapping hard", params: { width: 11, height: 11, wrap: true, barriers: 0, difficulty: "hard" } },
     { label: "15×15 walls", params: { width: 15, height: 15, wrap: false, barriers: 30, difficulty: "normal" } },
     { label: "20×14 wrapping hard", params: { width: 20, height: 14, wrap: true, barriers: 0, difficulty: "hard" } },
+    // Simon Tatham's Netslide presets: easy has every spare wall, medium none, hard wraps
+    ...[3, 4, 5].flatMap((n) => [
+      { label: `netslide ${n}×${n} easy`, params: { moves: "slide", width: n, height: n, wrap: false, barriers: 100 } },
+      { label: `netslide ${n}×${n} medium`, params: { moves: "slide", width: n, height: n, wrap: false, barriers: 0 } },
+      { label: `netslide ${n}×${n} hard`, params: { moves: "slide", width: n, height: n, wrap: true, barriers: 0 } },
+    ]),
   ],
   generate,
   formats,
-  init: (p) => ({ tiles: p.tiles.slice(), locked: p.tiles.map(() => 0) }),
+  init: (p) => ({ tiles: p.tiles.slice(), locked: p.tiles.map(() => 0), ...(p.slide ? { moves: 0 } : {}) }),
   initInteraction: (p) => ({ cursor: p.source, ox: 0, oy: 0, source: p.source, drag: null, tap: "cw" }),
   reduce,
   describeAction: (p, a, before, after) => {
     const turn = (k: number) => (["", "clockwise", "halfway round", "counterclockwise"][((k % 4) + 4) % 4] ?? "");
     switch (a.type) {
+      case "shift": return describeShift(a);
       case "rotate": return `turn ${coord(p, a.cell)} ${turn(a.turns)}`;
       case "rotateMany": return `turn ${listOf(a.cells, (c) => coord(p, c))}`;
       case "set": {
@@ -162,13 +191,22 @@ export const net: PuzzleDef<NetPuzzle, NetState, NetAction, NetInteraction, type
       case "lock": return `${a.on ?? after.locked[a.cells[0]!] ? "lock" : "unlock"} ${listOf(a.cells, (c) => coord(p, c))}`;
     }
   },
-  isSolved: (p, s) => isTree(p, s.tiles),
-  solve(p) {
+  isSolved: (p, s) => (p.slide ? allJoined(p, s.tiles) : isTree(p, s.tiles)),
+  solve(p, s) {
+    if (p.slide) {
+      const moves = slideSolve(p, s.tiles);
+      return moves ? { moves } : null;
+    }
     const sol = analyse(p).solution;
     return sol ? { board: { tiles: sol.slice(), locked: sol.map(() => 0) } } : null;
   },
   isRetraction: (a) => a.type === "lock" && a.on === false,
-  rules: (p) => [
+  rules: (p) => p.slide ? [
+    "a move slides one whole row or column along by one; the piece pushed off one end comes back on at the other.",
+    "the middle row and the middle column can't slide, so the middle piece never moves.",
+    `connect every piece into one network with the middle: pipe ends must meet, and can't cross the thick walls${p.wrap ? "" : " or the board's edge"}.`,
+    ...(p.wrap ? ["pipes may run off one edge and come back on the opposite one."] : []),
+  ] : [
     "you can only turn tiles, never move them. each tile has a fixed piece: a dead end, a straight, a bend, a T or a cross.",
     "every pipe end has to meet a pipe end on the tile next to it.",
     "all the tiles join up into one network, and there are no loops in it.",
@@ -179,7 +217,7 @@ export const net: PuzzleDef<NetPuzzle, NetState, NetAction, NetInteraction, type
   ],
   features: featureTests(FEATURES),
   rate,
-  describe: (p) => `${p.w}×${p.h}${p.wrap ? " wrapping" : ""}${p.barriers.some((b) => b) ? " with walls" : ""}`,
+  describe: (p) => `${p.w}×${p.h}${p.slide ? " sliding" : ""}${p.wrap ? " wrapping" : ""}${p.barriers.some((b) => b) ? " with walls" : ""}`,
 };
 
 declare module "../../core/types" {

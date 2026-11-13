@@ -7,6 +7,7 @@ import { s, style, inputIs } from "../../core/dom";
 import { KEYS } from "./assists";
 import { D, DIRS, L, R, U, degree, orientations, turnsBetween, type NetPuzzle } from "./grid";
 import { net, type NetAction, type NetHintFocus, type NetInteraction, type NetState, type TapMode } from "./logic";
+import { slideControls, slideLegend, slideView } from "./slide-view";
 
 const SIZE = 10;
 const MID = SIZE / 2;
@@ -165,9 +166,11 @@ export function netView({ look = (_id, fallback) => fallback, labelSides = () =>
     name: "grid",
     puzzle: net,
     settings,
-    controls,
-    legend,
-    mount(root, { session, settings }) {
+    controls: (p) => (p.slide ? slideControls : controls),
+    legend: (p) => (p.slide ? slideLegend : legend),
+    mount(root, ctx) {
+      if (ctx.session.puzzle.slide) return slideView.mount(root, ctx);
+      const { session, settings } = ctx;
       style("net", CSS);
       const p = session.puzzle;
       const n = p.w * p.h;

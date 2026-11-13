@@ -177,7 +177,7 @@ export const fifteen: PuzzleDef<FifteenPuzzle, FifteenState, FifteenAction, Fift
   ],
   tags: ["classic", "sliding", "moves", "permutation", "rotation"],
   description: "put the numbered tiles back in order. what a move does is a setting: slide tiles into the one gap, shift whole rows and columns round, or turn square blocks of tiles.",
-  generatorVersion: 1,
+  generatorVersion: 2,
   params,
   presets: [
     { label: "8-puzzle", params: { moves: "slide", width: 3, height: 3 } },

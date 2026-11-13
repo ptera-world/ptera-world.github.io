@@ -19,6 +19,7 @@ function finish(p: NetPuzzle): NetPuzzle {
     throw new Error(`the tiles have ${ends} ends in total, but a single connected network of ${n} tiles needs exactly ${2 * (n - 1)}`);
   }
   if (p.source < 0 || p.source >= n) throw new Error("source is outside the grid");
+  if (p.slide && (p.w < 3 || p.h < 3)) throw new Error("sliding needs at least 3 tiles each way: the middle row and column never move");
   return { ...p, barriers: normalizeBarriers(p, p.barriers) };
 }
 
@@ -69,16 +70,38 @@ export const sgtFormat: Format<NetPuzzle> = {
   serialize: (p) => `${p.w}x${p.h}${p.wrap ? "w" : ""}:${writeDesc(p)}`,
 };
 
-const NATIVE_RE = /^net:(\d+)x(\d+)(w?):([0-9a-fA-Fhv]+)(?::s(\d+),(\d+))?$/;
+const NETSLIDE_RE = /^(\d+)(?:x(\d+))?(w?)(?:b[\d.]+)?(m\d+)?:([0-9a-fA-Fhv]+)$/;
 
-/** Compact single line: `net:WxH[w]:tiles[:sX,Y]`, tiles as in the sgt id, source 1-based. */
+/**
+ * Simon Tatham's Netslide game id: `WxH[w][bP][mN]:` then the tiles as in a net id. Net and Netslide
+ * ids look alike; only Netslide's move limit (`mN`, ignored here) tells them apart, so an id without
+ * one is taken as net unless this format is picked.
+ */
+export const netslideFormat: Format<NetPuzzle> = {
+  id: "sgt-netslide",
+  label: "sgt netslide game id (WxH[w]:tiles)",
+  detect: (t) => !!NETSLIDE_RE.exec(t.trim())?.[4],
+  parse(text) {
+    const m = NETSLIDE_RE.exec(text.trim());
+    if (!m) throw new Error("expected an sgt netslide id like 3x3:2a9c…");
+    const w = Number(m[1]), h = Number(m[2] ?? m[1]);
+    checkSize(w, h);
+    const g = { w, h, wrap: m[3] === "w" };
+    return finish({ ...g, ...parseDesc(w, h, m[5]!), source: centre(g), slide: true });
+  },
+  serialize: (p) => `${p.w}x${p.h}${p.wrap ? "w" : ""}:${writeDesc(p)}`,
+};
+
+const NATIVE_RE = /^net:(\d+)x(\d+)(w?):([0-9a-fA-Fhv]+)(?::s(\d+),(\d+))?(:slide)?$/;
+
+/** Compact single line: `net:WxH[w]:tiles[:sX,Y][:slide]`, tiles as in the sgt id, source 1-based. */
 export const compactFormat: Format<NetPuzzle> = {
   id: "net",
-  label: "compact (net:WxH[w]:tiles:sX,Y)",
+  label: "compact (net:WxH[w]:tiles:sX,Y[:slide])",
   detect: (t) => t.trim().startsWith("net:"),
   parse(text) {
     const m = NATIVE_RE.exec(text.trim());
-    if (!m) throw new Error("expected net:WxH[w]:tiles[:sX,Y]");
+    if (!m) throw new Error("expected net:WxH[w]:tiles[:sX,Y][:slide]");
     const w = Number(m[1]), h = Number(m[2]);
     checkSize(w, h);
     const g = { w, h, wrap: m[3] === "w" };
@@ -86,11 +109,12 @@ export const compactFormat: Format<NetPuzzle> = {
     if (m[5] && (Number(m[5]) < 1 || Number(m[5]) > w || Number(m[6]) < 1 || Number(m[6]) > h)) {
       throw new Error("source is outside the grid");
     }
-    return finish({ ...g, ...parseDesc(w, h, m[4]!), source });
+    return finish({ ...g, ...parseDesc(w, h, m[4]!), source, ...(m[7] ? { slide: true } : {}) });
   },
   serialize(p) {
     const base = `net:${p.w}x${p.h}${p.wrap ? "w" : ""}:${writeDesc(p)}`;
-    return p.source === centre(p) ? base : `${base}:s${(p.source % p.w) + 1},${Math.floor(p.source / p.w) + 1}`;
+    const withSource = p.source === centre(p) ? base : `${base}:s${(p.source % p.w) + 1},${Math.floor(p.source / p.w) + 1}`;
+    return p.slide ? `${withSource}:slide` : withSource;
   },
 };
 
@@ -106,24 +130,26 @@ const SIDE_NAMES: Record<string, number> = { right: R, up: U, left: L, down: D }
  * ...
  * barrier 1,2 right
  * ```
- * Coordinates are 1-based column,row. Blank lines and lines starting with # are ignored.
+ * Coordinates are 1-based column,row. Blank lines and lines starting with # are ignored. A board
+ * whose rows and columns slide starts `netslide 3x3 [wrap]` instead.
  */
 export const gridFormat: Format<NetPuzzle> = {
   id: "grid",
   label: "grid (box drawing)",
-  detect: (t) => /^\s*net\s+\d+x\d+/.test(t),
+  detect: (t) => /^\s*(net|netslide)\s+\d+x\d+/.test(t),
   parse(text) {
     const lines = text.split(/\r?\n/).filter((l) => l.trim() !== "" && !l.trimStart().startsWith("#"));
-    const head = /^\s*net\s+(\d+)x(\d+)((?:\s+\S+)*)\s*$/.exec(lines[0] ?? "");
-    if (!head) throw new Error("first line should look like: net 7x7 [wrap] [source=4,4]");
-    const w = Number(head[1]), h = Number(head[2]);
+    const head = /^\s*(net|netslide)\s+(\d+)x(\d+)((?:\s+\S+)*)\s*$/.exec(lines[0] ?? "");
+    if (!head) throw new Error("first line should look like: net 7x7 [wrap] [source=4,4], or netslide 4x4 [wrap]");
+    const slide = head[1] === "netslide";
+    const w = Number(head[2]), h = Number(head[3]);
     checkSize(w, h);
     let wrap = false;
     let src: [number, number] | null = null;
-    for (const tok of head[3]!.trim().split(/\s+/).filter(Boolean)) {
+    for (const tok of head[4]!.trim().split(/\s+/).filter(Boolean)) {
       const s = /^source=(\d+),(\d+)$/.exec(tok);
       if (tok === "wrap") wrap = true;
-      else if (s) src = [Number(s[1]), Number(s[2])];
+      else if (s && !slide) src = [Number(s[1]), Number(s[2])];
       else throw new Error(`unknown option "${tok}" on the first line`);
     }
     const g = { w, h, wrap };
@@ -149,12 +175,12 @@ export const gridFormat: Format<NetPuzzle> = {
     }
     if (src && (src[0] < 1 || src[1] < 1 || src[0] > w || src[1] > h)) throw new Error("source is outside the grid");
     const source = src ? (src[1] - 1) * w + (src[0] - 1) : centre(g);
-    return finish({ ...g, tiles, barriers, source });
+    return finish({ ...g, tiles, barriers, source, ...(slide ? { slide: true } : {}) });
   },
   serialize(p) {
-    const head = [`net ${p.w}x${p.h}`];
+    const head = [`${p.slide ? "netslide" : "net"} ${p.w}x${p.h}`];
     if (p.wrap) head.push("wrap");
-    if (p.source !== centre(p)) head.push(`source=${(p.source % p.w) + 1},${Math.floor(p.source / p.w) + 1}`);
+    if (!p.slide && p.source !== centre(p)) head.push(`source=${(p.source % p.w) + 1},${Math.floor(p.source / p.w) + 1}`);
     const rows: string[] = [];
     for (let y = 0; y < p.h; y++) rows.push(p.tiles.slice(y * p.w, (y + 1) * p.w).map((m) => (m ? GLYPHS[m] : "·")).join(""));
     const bars: string[] = [];
@@ -167,4 +193,4 @@ export const gridFormat: Format<NetPuzzle> = {
   },
 };
 
-export const formats = [compactFormat, sgtFormat, gridFormat] as const;
+export const formats = [compactFormat, netslideFormat, sgtFormat, gridFormat] as const;

@@ -95,6 +95,7 @@ export const techniques: Technique<NetPuzzle, NetState, NetAction>[] = RULES.map
   id: `net.${rule}`,
   name: INFO[rule].name,
   puzzles: [net],
+  requires: ["rotate"],
   level: i + 1,
   description: INFO[rule].description,
   instances(p, s, visit) {

@@ -4,13 +4,15 @@ import { assists } from "./assists";
 import { net } from "./logic";
 import { techniques } from "./techniques";
 import { netView, type NetViewDeps } from "./view";
-import { scrollPad } from "./widgets";
+import { scrollPad, slideCount } from "./widgets";
+import { slideTechniques } from "./slide-techniques";
 
 export function register(registry: Registry, deps: NetViewDeps = {}): void {
-  for (const t of techniques) registry.technique(t);
+  for (const t of [...techniques, ...slideTechniques]) registry.technique(t);
   registry.puzzle(net);
   registry.view(netView(deps));
   registry.widget(scrollPad);
+  registry.widget(slideCount);
   for (const p of assists) registry.plugin(p);
 }
 

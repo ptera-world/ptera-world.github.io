@@ -116,6 +116,7 @@ const powered: NetPlugin = {
   description: "pipes joined to the source are lit",
   category: "assists",
   appliesTo: [net],
+  requires: ["rotate"],
   enabledByDefault: true,
   setup({ session, owner }) {
     session.hooks.derive.tap((d, { puzzle, state, interaction }) => ({
@@ -131,6 +132,7 @@ const loops: NetPlugin = {
   description: "pipes that go round in a circle are marked",
   category: "assists",
   appliesTo: [net],
+  requires: ["rotate"],
   enabledByDefault: true,
   setup({ session, owner }) {
     session.hooks.derive.tap((d, { puzzle, state }) => ({ ...d, [KEYS.loops]: loopSides(puzzle, state.tiles) }), { owner });
@@ -143,6 +145,7 @@ const loose: NetPlugin = {
   description: "pipe ends that don't meet another pipe are marked",
   category: "assists",
   appliesTo: [net],
+  requires: ["rotate"],
   enabledByDefault: false,
   setup({ session, owner }) {
     session.hooks.derive.tap((d, { puzzle, state }) => ({ ...d, [KEYS.loose]: looseSides(puzzle, state.tiles) }), { owner });
@@ -181,6 +184,7 @@ const conflicts: NetPlugin = {
   description: "locked tiles that can't both be right (or that point into a wall) are marked",
   category: "assists",
   appliesTo: [net],
+  requires: ["rotate"],
   enabledByDefault: true,
   setup({ session, owner }) {
     session.hooks.derive.tap((d, { puzzle, state }) => ({ ...d, [KEYS.conflicts]: lockConflicts(puzzle, state) }), { owner });
@@ -194,6 +198,7 @@ const check: NetPlugin = {
   description: "locked tiles that are turned wrong are marked (spoiler)",
   category: "assists",
   appliesTo: [net],
+  requires: ["rotate"],
   enabledByDefault: false,
   setup({ session, owner }) {
     session.hooks.derive.tap((d, { puzzle, state }) => {
@@ -211,6 +216,7 @@ const mistakes: NetPlugin = {
   description: "before suggesting a move, a hint checks your locked tiles against the solution",
   category: "assists",
   appliesTo: [net],
+  requires: ["rotate"],
   enabledByDefault: true,
   setup({ session, owner }) {
     session.hooks.hint.tap(({ puzzle: p, state: s }) => {
